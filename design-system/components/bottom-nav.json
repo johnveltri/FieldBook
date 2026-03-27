@@ -1,0 +1,211 @@
+{
+  "component": {
+    "name": "Bottom Nav",
+    "figmaNodeId": "225:12089",
+    "kind": "componentSet",
+    "description": "Three-tab bottom navigation with selection state.",
+    "dimensions": {
+      "width": 391,
+      "height": 73
+    }
+  },
+  "variantProperties": {
+    "Selection": [
+      "Default",
+      "Home",
+      "Jobs",
+      "Earnings"
+    ]
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Foundation/Border/Default",
+      "Foundation/Text/Primary",
+      "Brand/Primary"
+    ],
+    "spacing": [
+      "Spacing/4",
+      "Spacing/12",
+      "Spacing/32"
+    ],
+    "typography": [
+      "Typography/LABEL"
+    ],
+    "radius": []
+  },
+  "structure": {
+    "container": {
+      "name": "Background",
+      "layout": {
+        "display": "flex",
+        "direction": "row",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      "size": {
+        "width": 391,
+        "height": 73
+      },
+      "backgroundColorToken": "Foundation/Background/Default",
+      "borderTop": {
+        "width": 1,
+        "colorToken": "Foundation/Border/Default"
+      }
+    },
+    "tabs": {
+      "count": 3,
+      "items": [
+        {
+          "name": "Home",
+          "label": "HOME"
+        },
+        {
+          "name": "Jobs",
+          "label": "JOBS"
+        },
+        {
+          "name": "Earnings",
+          "label": "EARNINGS"
+        }
+      ],
+      "itemLayout": {
+        "width": 125,
+        "height": 64,
+        "paddingToken": "Spacing/12",
+        "contentGapToken": "Spacing/12",
+        "iconSize": 24
+      },
+      "labelTypographyToken": "Typography/LABEL",
+      "defaultLabelColorToken": "Foundation/Text/Primary",
+      "selectedLabelColorToken": "Brand/Primary"
+    },
+    "activeIndicator": {
+      "size": {
+        "widthToken": "Spacing/32",
+        "heightToken": "Spacing/4"
+      },
+      "colorToken": "Brand/Primary",
+      "cornerRadius": 9999,
+      "positionBySelection": {
+        "Home": {
+          "x": 53,
+          "y": 2.5
+        },
+        "Jobs": {
+          "x": 179,
+          "y": 2.5
+        },
+        "Earnings": {
+          "x": 305,
+          "y": 2.5
+        },
+        "Default": null
+      }
+    }
+  },
+  "variants": [
+    {
+      "Selection": "Default",
+      "selectedTab": null,
+      "activeIndicatorVisible": false,
+      "tabStates": {
+        "Home": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        },
+        "Jobs": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        },
+        "Earnings": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        }
+      }
+    },
+    {
+      "Selection": "Home",
+      "selectedTab": "Home",
+      "activeIndicatorVisible": true,
+      "tabStates": {
+        "Home": {
+          "labelColorToken": "Brand/Primary",
+          "iconColorToken": "Brand/Primary"
+        },
+        "Jobs": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        },
+        "Earnings": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        }
+      }
+    },
+    {
+      "Selection": "Jobs",
+      "selectedTab": "Jobs",
+      "activeIndicatorVisible": true,
+      "tabStates": {
+        "Home": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        },
+        "Jobs": {
+          "labelColorToken": "Brand/Primary",
+          "iconColorToken": "Brand/Primary"
+        },
+        "Earnings": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        }
+      }
+    },
+    {
+      "Selection": "Earnings",
+      "selectedTab": "Earnings",
+      "activeIndicatorVisible": true,
+      "tabStates": {
+        "Home": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        },
+        "Jobs": {
+          "labelColorToken": "Foundation/Text/Primary",
+          "iconColorToken": "Foundation/Text/Primary"
+        },
+        "Earnings": {
+          "labelColorToken": "Brand/Primary",
+          "iconColorToken": "Brand/Primary"
+        }
+      }
+    }
+  ],
+  "qualityAudit": {
+    "isClean": false,
+    "findings": [
+      {
+        "severity": "medium",
+        "type": "token-binding",
+        "detail": "Color token bindings in this component currently point to variables under an older color collection ID instead of the canonical consolidated color collection."
+      },
+      {
+        "severity": "medium",
+        "type": "token-binding",
+        "detail": "Background fill appears as an unbound solid paint value matching Foundation/Background/Default instead of an explicit variable alias binding."
+      },
+      {
+        "severity": "low",
+        "type": "token-binding",
+        "detail": "Label typography is visually aligned to Typography/LABEL, but text properties are not currently bound to typography variables."
+      }
+    ],
+    "recommendedCleanup": [
+      "Rebind all color fills and text fills in this component set to variables from the canonical Color Styles collection.",
+      "Bind Background fill explicitly to Foundation/Background/Default.",
+      "Bind label text properties to Typography/LABEL variables (font family, style, size, weight, letter spacing, line height).",
+      "If desired, replace absolute indicator x-positions with auto-layout-friendly anchoring to improve maintainability."
+    ]
+  }
+}
