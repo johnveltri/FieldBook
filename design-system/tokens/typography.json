@@ -1,0 +1,66 @@
+{
+  "Typography/Body": {
+    "family": "Ubuntu Sans Mono",
+    "style": "SemiBold",
+    "size": 14,
+    "weight": 600,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
+  "Typography/Body-Small": {
+    "family": "Ubuntu Sans Mono",
+    "style": "SemiBold",
+    "size": 10,
+    "weight": 600,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
+  "Typography/Display-H1": {
+    "family": "PT Serif",
+    "style": "Bold",
+    "size": 28,
+    "weight": 700,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
+  "Typography/Heading-H2": {
+    "family": "PT Serif",
+    "style": "Bold",
+    "size": 24,
+    "weight": 700,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
+  "Typography/LABEL": {
+    "family": "Ubuntu Sans Mono",
+    "style": "Bold",
+    "size": 10,
+    "weight": 700,
+    "lineHeight": 100,
+    "letterSpacing": 10
+  },
+  "Typography/Metric": {
+    "family": "Ubuntu Sans Mono",
+    "style": "Bold",
+    "size": 18,
+    "weight": 700,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
+  "Typography/Metric-XL": {
+    "family": "Ubuntu Sans Mono",
+    "style": "Bold",
+    "size": 42,
+    "weight": 700,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
+  "Typography/Title-H3": {
+    "family": "PT Serif",
+    "style": "Bold",
+    "size": 20,
+    "weight": 700,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  }
+}
