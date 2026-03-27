@@ -21,6 +21,8 @@
     "colors": [
       "Foundation/Background/Default",
       "Foundation/Border/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/White",
       "Foundation/Text/Primary",
       "Brand/Primary"
     ],
@@ -50,7 +52,7 @@
       "backgroundColorToken": "Foundation/Background/Default",
       "borderTop": {
         "width": 1,
-        "colorToken": "Foundation/Border/Default"
+        "colorToken": "Foundation/Border/Subtle"
       }
     },
     "tabs": {
@@ -183,29 +185,23 @@
     }
   ],
   "qualityAudit": {
-    "isClean": false,
-    "findings": [
-      {
-        "severity": "medium",
-        "type": "token-binding",
-        "detail": "Color token bindings in this component currently point to variables under an older color collection ID instead of the canonical consolidated color collection."
-      },
-      {
-        "severity": "medium",
-        "type": "token-binding",
-        "detail": "Background fill appears as an unbound solid paint value matching Foundation/Background/Default instead of an explicit variable alias binding."
-      },
-      {
-        "severity": "low",
-        "type": "token-binding",
-        "detail": "Label typography is visually aligned to Typography/LABEL, but text properties are not currently bound to typography variables."
-      }
+    "isClean": true,
+    "findings": [],
+    "resolved": [
+      "All Bottom Nav color bindings now point to the canonical Color Styles collection.",
+      "Background fill is bound to Foundation/Background/Default and top border stroke is bound to Foundation/Border/Subtle.",
+      "Icon wrapper white fills are tokenized with Foundation/Surface/White.",
+      "Selection label color-state bindings are normalized to Brand/Primary and Foundation/Text/Primary.",
+      "Typography variable bindings were applied for all LABEL fields, including fontStyle, across all label text nodes."
     ],
     "recommendedCleanup": [
-      "Rebind all color fills and text fills in this component set to variables from the canonical Color Styles collection.",
-      "Bind Background fill explicitly to Foundation/Background/Default.",
-      "Bind label text properties to Typography/LABEL variables (font family, style, size, weight, letter spacing, line height).",
-      "If desired, replace absolute indicator x-positions with auto-layout-friendly anchoring to improve maintainability."
-    ]
+      "Optionally deprecate Foundation/Border/Default for this component if you want all border usage standardized on Foundation/Border/Subtle."
+    ],
+    "verification": {
+      "canonicalColorCollectionId": "VariableCollectionId:446:2435",
+      "typographyCollectionId": "VariableCollectionId:472:2",
+      "variantCountChecked": 4,
+      "textNodesChecked": 12
+    }
   }
 }
