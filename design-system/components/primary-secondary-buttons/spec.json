@@ -1,0 +1,99 @@
+{
+  "component": {
+    "name": "Primary-Secondary Buttons",
+    "figmaNodeId": "604:35",
+    "kind": "componentSet",
+    "description": "Paired call-to-action row: primary (filled or outline) plus secondary outline. Layout is either full-width block buttons or compact inline buttons with optional leading icons. Labels and icons are instance overrides in Figma—not separate variants.",
+    "dimensions": {
+      "width": 392,
+      "height": 418
+    }
+  },
+  "variantProperties": {
+    "Layout": ["Inline", "Block"],
+    "Primary": ["Success", "Info", "Neutral", "Outline", "Warning"]
+  },
+  "layoutSemantics": {
+    "Inline": "Compact horizontal pair (≈38px row height); primary and secondary support optional leading icons (e.g. check, close).",
+    "Block": "Larger horizontal pair with generous padding; text-only primary and secondary (no icons in default Figma)."
+  },
+  "primaryToneSemantics": {
+    "Success": "Primary fill uses semantic success green; label example: MARK PAID.",
+    "Info": "Primary fill uses semantic info blue; label examples: MARK IN PROGRESS, RESUME JOB (same tone—override text per screen).",
+    "Warning": "Primary fill uses semantic warning orange; example: MARK COMPLETED.",
+    "Neutral": "Primary fill uses foundation primary text color on white label; example: REOPEN JOB.",
+    "Outline": "Primary is outline: white fill, default border, primary text; example: MARK UNPAID."
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Border/Default",
+      "Foundation/Surface/Default",
+      "Foundation/Text/Primary",
+      "Semantic/Status/Info/Text",
+      "Semantic/Status/Success/Text",
+      "Semantic/Status/Warning/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/10", "Spacing/16", "Spacing/40"],
+    "typography": ["Typography/Body"],
+    "radius": ["Radius/12"]
+  },
+  "structure": {
+    "container": {
+      "layout": "row",
+      "gapToken": "Spacing/8",
+      "alignItems": "center",
+      "justifyContent": "center"
+    },
+    "block": {
+      "primary": {
+        "minWidth": 200,
+        "paddingXToken": "Spacing/40",
+        "paddingYToken": "Spacing/16",
+        "radiusToken": "Radius/12"
+      },
+      "secondary": {
+        "minWidth": 144,
+        "paddingXToken": "Spacing/40",
+        "paddingYToken": "Spacing/16",
+        "radiusToken": "Radius/12"
+      }
+    },
+    "inline": {
+      "rowHeight": 38,
+      "primary": {
+        "minHeight": 32,
+        "paddingY": 14,
+        "paddingX": 0,
+        "gapToken": "Spacing/4",
+        "radiusPx": 8
+      },
+      "secondary": {
+        "minHeight": 32,
+        "paddingY": 14,
+        "gapToken": "Spacing/10",
+        "radiusPx": 8
+      }
+    },
+    "elevation": {
+      "boxShadow": "0px 1px 2px rgba(0, 0, 0, 0.05)"
+    }
+  },
+  "codeProps": {
+    "layout": "block or inline (matches Figma Layout)",
+    "primaryTone": "success, info, warning, neutral, or outline (matches Figma Primary)",
+    "primaryLabel": "string",
+    "secondaryLabel": "string",
+    "leadingPrimary": "optional React node; inline layout",
+    "leadingSecondary": "optional React node; inline layout",
+    "onPrimaryClick": "optional",
+    "onSecondaryClick": "optional"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-03-28: Removed duplicate Block+Info variant that only differed by label (RESUME JOB vs MARK IN PROGRESS); use Primary=Info with text overrides.",
+      "Renamed variants from Property 1 to Layout + Primary so the component set is valid.",
+      "Duplicate RESUME JOB row can be recreated as an instance of Layout=Block, Primary=Info with label override."
+    ]
+  }
+}
