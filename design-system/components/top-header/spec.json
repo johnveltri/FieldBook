@@ -1,0 +1,140 @@
+{
+  "component": {
+    "name": "Top Header",
+    "figmaNodeId": "231:817",
+    "kind": "componentSet",
+    "description": "App top bar: brand / section titles, actions (profile, inbox, back, close, edit), optional subtitle.",
+    "maxWidth": 391
+  },
+  "variantProperties": {
+    "Property 1": [
+      "Title + Profile",
+      "Title Only",
+      "Title + Inbox",
+      "Title + Back",
+      "Title + Back + Subtitle",
+      "X (Close &Edit)"
+    ]
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Brand/Accent",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Foundation/Surface/Subtle",
+      "Foundation/Surface/White",
+      "Brand/Primary",
+      "Semantic/Status/Error/BG",
+      "Semantic/Status/Error/Text"
+    ],
+    "spacing": [
+      "Spacing/8",
+      "Spacing/12",
+      "Spacing/16",
+      "Spacing/20",
+      "Spacing/32",
+      "Spacing/40"
+    ],
+    "typography": [
+      "Typography/Display-H1",
+      "Typography/Body",
+      "Typography/Body-Small"
+    ],
+    "radius": []
+  },
+  "structure": {
+    "surface": {
+      "backgroundToken": "Foundation/Background/Default",
+      "shadow": "0 1px 2px rgba(0, 0, 0, 0.05)"
+    },
+    "accentStrip": {
+      "heightPx": 6,
+      "backgroundToken": "Brand/Accent",
+      "variants": ["Title + Profile", "Title Only", "Title + Inbox"]
+    },
+    "title": {
+      "typographyToken": "Typography/Display-H1",
+      "colorToken": "Foundation/Text/Primary"
+    },
+    "subtitle": {
+      "typographyToken": "Typography/Body",
+      "colorToken": "Foundation/Text/Secondary",
+      "variant": "Title + Back + Subtitle"
+    },
+    "editAction": {
+      "typographyToken": "Typography/Body-Small",
+      "backgroundToken": "Semantic/Status/Error/BG",
+      "foregroundToken": "Semantic/Status/Error/Text",
+      "variant": "X (Close &Edit)"
+    }
+  },
+  "variants": [
+    {
+      "Property 1": "Title + Profile",
+      "minHeightPx": 102,
+      "accentVisible": true,
+      "defaultTitle": "FIELD BOOK",
+      "endAction": "profile"
+    },
+    {
+      "Property 1": "Title Only",
+      "minHeightPx": 102,
+      "accentVisible": true,
+      "defaultTitle": "EARNINGS",
+      "endAction": null
+    },
+    {
+      "Property 1": "Title + Inbox",
+      "minHeightPx": 102,
+      "accentVisible": true,
+      "defaultTitle": "JOBS",
+      "endAction": "inbox",
+      "notes": [
+        "Inbox icon may use a transparent hit-area fill in Figma (left intentionally unbound).",
+        "Badge count uses small type; consider a dedicated badge token later."
+      ]
+    },
+    {
+      "Property 1": "Title + Back",
+      "minHeightPx": 88,
+      "accentVisible": false,
+      "defaultTitle": "PROFILE",
+      "startAction": "back"
+    },
+    {
+      "Property 1": "Title + Back + Subtitle",
+      "minHeightPx": 116.5,
+      "accentVisible": false,
+      "defaultTitle": "INBOX",
+      "defaultSubtitle": "Unsorted quick captures",
+      "startAction": "back"
+    },
+    {
+      "Property 1": "X (Close &Edit)",
+      "minHeightPx": 88,
+      "accentVisible": false,
+      "startAction": "close",
+      "endAction": "edit"
+    }
+  ],
+  "qualityAudit": {
+    "isClean": true,
+    "findings": [
+      {
+        "severity": "low",
+        "type": "figma-technical",
+        "detail": "Title + Inbox variant: one layer keeps a fully transparent fill for the inbox control hit target; not mapped to a color token by design."
+      }
+    ],
+    "resolved": [
+      "Solid fills and strokes bound to canonical Color Styles variables where applicable.",
+      "Text layers bound to Typography variables (Display-H1, Body, Body-Small) where sizes match tokens.",
+      "Inbox badge uses Brand/Primary; edit pill uses Semantic/Status/Error BG and text tokens."
+    ],
+    "recommendations": [
+      "Optional: replace Inter on the small inbox badge number with Ubuntu Sans Mono Bold for full monospace alignment.",
+      "Optional: add explicit spacing tokens for 6px accent height and 10px gaps if you want everything on-scale."
+    ]
+  }
+}
