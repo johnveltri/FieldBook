@@ -1,0 +1,50 @@
+{
+  "component": {
+    "name": "Section Header",
+    "figmaNodeId": "371:2179",
+    "kind": "componentSet",
+    "description": "Section title row with optional leading icon, optional ADD/EDIT action, or stacked subtitle. Consolidated to three structural layouts; content (copy, icons, tones) is driven by instance overrides / code props—not separate Figma variants.",
+    "maxWidth": 353
+  },
+  "variantProperties": {
+    "Layout": ["Row", "Stack", "Title only"]
+  },
+  "layoutSemantics": {
+    "Row": "Leading icon + title (accent/secondary tone) + optional trailing ADD/EDIT pill.",
+    "Stack": "Leading icon + title row + subtitle row (status / helper copy). No trailing pill in the default Figma example.",
+    "Title only": "Single title, no leading icon, no action—e.g. “This Week”."
+  },
+  "tokens": {
+    "colors": [
+      "Brand/Accent",
+      "Brand/Primary",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Status/Error/BG",
+      "Semantic/Status/Error/Text",
+      "Semantic/Status/Info/Text",
+      "Semantic/Status/Warning/Text"
+    ],
+    "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/24"],
+    "typography": ["Typography/Body", "Typography/Body-Small"],
+    "radius": []
+  },
+  "codeProps": {
+    "layout": "Row, Stack, or Title only",
+    "title": "string",
+    "subtitle": "optional string; Stack layout",
+    "action": "none, add, or edit; Row layout only",
+    "leading": "optional React node; Row and Stack",
+    "titleTone": "accent, secondary, warning, info, or primary",
+    "subtitleTone": "warning, info, secondary, or primary",
+    "onActionClick": "optional callback when action pill is pressed"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "Previous one-off Figma variants (Variant9–14, etc.) were removed; use instances + overrides for section-specific copy and icons.",
+      "2026-03-28: Plugin pass bound remaining unbound solid fills inside this set to local color variables where RGBA matched a token; strokes were included—one component-set stroke color did not match any file color variable (review in Figma if it should become a token).",
+      "Text still uses assigned text styles; swap to variable-bound text styles in Figma if you add them later."
+    ]
+  }
+}
