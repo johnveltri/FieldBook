@@ -1,0 +1,60 @@
+{
+  "component": {
+    "name": "Action Tile",
+    "figmaNodeId": "452:2740",
+    "kind": "componentSet",
+    "description": "Compact square action for a grid: 40px circular accent well (semantic activity / session color) plus two-line uppercase label. Icons are instance/content—supply SVG or image in code; Figma uses exported vectors per Kind.",
+    "dimensions": {
+      "width": 106.33,
+      "height": 112
+    }
+  },
+  "variantProperties": {
+    "Kind": [
+      "Start session",
+      "New note",
+      "Add photo",
+      "Voice memo",
+      "Upload file",
+      "New material"
+    ]
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Border/Default",
+      "Foundation/Surface/Default",
+      "Foundation/Text/Primary",
+      "Semantic/Activity/Attachment",
+      "Semantic/Activity/Material",
+      "Semantic/Activity/Note",
+      "Semantic/Activity/Photo",
+      "Semantic/Activity/Voice",
+      "Semantic/Status/Error/Text"
+    ],
+    "spacing": ["Spacing/8", "Spacing/12", "Spacing/16"],
+    "typography": ["Typography/Body-Small"],
+    "radius": ["Radius/16"]
+  },
+  "codeProps": {
+    "kind": "Maps to accent token + default line1/line2 (overridable).",
+    "icon": "ReactNode; target ~20×20 centered in well.",
+    "onClick": "optional; renders as button when set.",
+    "line1": "optional override",
+    "line2": "optional override"
+  },
+  "kindToFigma": {
+    "startSession": "Start session",
+    "newNote": "New note",
+    "addPhoto": "Add photo",
+    "voiceMemo": "Voice memo",
+    "uploadFile": "Upload file",
+    "newMaterial": "New material"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-03-28: Renamed Figma axis to `Kind` with human-readable variant values; former `Property 1=Default|Variant2…` removed.",
+      "START SESSION well uses Semantic/Status/Error/Text in Figma (rust); other kinds use Semantic/Activity/* tokens."
+    ]
+  }
+}

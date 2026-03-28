@@ -7,6 +7,14 @@
     "lineHeight": 100,
     "letterSpacing": 0
   },
+  "Typography/Metric-S": {
+    "family": "Ubuntu Sans Mono",
+    "style": "SemiBold",
+    "size": 14,
+    "weight": 600,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
   "Typography/Body-Small": {
     "family": "Ubuntu Sans Mono",
     "style": "SemiBold",

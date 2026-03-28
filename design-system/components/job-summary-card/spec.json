@@ -1,0 +1,47 @@
+{
+  "component": {
+    "name": "Job Summary Card",
+    "figmaNodeId": "258:1549",
+    "kind": "componentSet",
+    "description": "Compact earnings breakdown for a job: section label, line items (Revenue, Materials, optional Fees), and a bordered Net Earnings total. Line copy and amounts are driven by props / instance text, not structural variants.",
+    "dimensions": {
+      "width": 353,
+      "height": "192–228 depending on Layout"
+    }
+  },
+  "variantProperties": {
+    "Layout": ["Default (3 lines)", "2 Lines", "Negative"]
+  },
+  "layoutSemantics": {
+    "Default (3 lines)": "Revenue, Materials, Fees rows; net total in Semantic/Status/Success/Text.",
+    "2 Lines": "Revenue and Materials only; net total green (positive).",
+    "Negative": "Includes Fees row; net total uses Brand/Primary with negative prefix."
+  },
+  "tokens": {
+    "colors": [
+      "Brand/Primary",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/Default",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Status/Success/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/24"],
+    "typography": ["Typography/LABEL", "Typography/Body", "Typography/Metric"],
+    "radius": ["Radius/16"]
+  },
+  "codeProps": {
+    "title": "optional; default Earnings Summary",
+    "revenue": "label, value, optional valuePrefix, optional valueTone",
+    "materials": "typically valueTone brand for cost",
+    "fees": "omit null for 2-line layout",
+    "total": "label (default Net Earnings), value, valuePrefix optional, sentiment positive|negative"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-03-28: Figma variant axis renamed from `Property 1` to `Layout`.",
+      "Figma ‘Inter’ on currency glyph is cosmetic; implementation uses Ubuntu Sans Mono via Typography/Body for prefix + amount."
+    ]
+  }
+}

@@ -72,8 +72,17 @@ export function typographyBodyStyle(): CSSProperties {
   return typographyFromToken('Typography/Body');
 }
 
+export function typographyTitleH3Style(): CSSProperties {
+  return typographyFromToken('Typography/Title-H3');
+}
+
 export function typographyBodySmallStyle(): CSSProperties {
   return typographyFromToken('Typography/Body-Small');
+}
+
+/** Same ramp as Body (14 SemiBold); use for job-card metric values and other dense numeric rows. */
+export function typographyMetricSStyle(): CSSProperties {
+  return typographyFromToken('Typography/Metric-S');
 }
 
 export function typographyMetricStyle(): CSSProperties {

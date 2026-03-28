@@ -1,0 +1,36 @@
+{
+  "component": {
+    "name": "Status pill",
+    "figmaNodeId": "622:143",
+    "kind": "componentSet",
+    "description": "Rounded pill for job lifecycle and similar states. Typography/LABEL; padding Spacing/12 × Spacing/4; stroke 1px. Fills and strokes are bound to semantic status color variables in Figma (see `tokens.colors`). Embedded in **Job Card** (`622:161`) header in the Field Book file."
+  },
+  "variants": {
+    "paid": "Success: BG + Text + stroke **Semantic/Status/Success/** (mint / teal).",
+    "notStarted": "Neutral: **10%** tint fill + **Semantic/Status/Neutral/Text** stroke and label (flattened BG in `colors.json`).",
+    "inProgress": "Info: **10%** blue tint **Semantic/Status/Info/BG** + **Semantic/Status/Info/Text** stroke and label.",
+    "completed": "Warning: **Semantic/Status/Warning/BG**, stroke **Semantic/Status/Warning/Stroke** at **50%** paint opacity, label **Semantic/Status/Warning/Label** (amber `#92400E`).",
+    "onHold": "Paused: **10%** purple tint **Semantic/Status/Paused/BG** + **Semantic/Status/Paused/Text** stroke and label.",
+    "cancelled": "Error: **Semantic/Status/Error/BG** + **Semantic/Status/Error/Text** stroke and label."
+  },
+  "tokens": {
+    "colors": [
+      "Semantic/Status/Error/BG",
+      "Semantic/Status/Error/Text",
+      "Semantic/Status/Info/BG",
+      "Semantic/Status/Info/Text",
+      "Semantic/Status/Neutral/BG",
+      "Semantic/Status/Neutral/Text",
+      "Semantic/Status/Paused/BG",
+      "Semantic/Status/Paused/Text",
+      "Semantic/Status/Success/BG",
+      "Semantic/Status/Success/Text",
+      "Semantic/Status/Warning/BG",
+      "Semantic/Status/Warning/Label",
+      "Semantic/Status/Warning/Stroke",
+      "Semantic/Status/Warning/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/12"],
+    "typography": ["Typography/LABEL"]
+  }
+}

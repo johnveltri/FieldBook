@@ -1,0 +1,121 @@
+{
+  "component": {
+    "name": "Job Card",
+    "figmaNodeId": "622:161",
+    "kind": "componentSet",
+    "description": "Primary list/detail surface for a single job: left accent rail, title + customer/date row, optional category chip, **Status pill** (`622:143`) in the header, and a four-column metrics footer (TIME, REV, MAT, NET). Auto layout end-to-end. Copy and metrics are instance/code-driven.",
+    "dimensions": {
+      "width": 351,
+      "height": "auto by variant: ~227.5px Default (`661:2`), ~189px No job category (`622:162`), ~167px Empty State (`622:199`)"
+    },
+    "figmaVariants": {
+      "Property 1=Default": "Node `661:2`. Category chip visible; example job + category + metrics.",
+      "Property 1=No job category": "Node `622:162`. Same as Default but **no** category chip (row removed; shorter height).",
+      "Property 1=Empty State": "Node `622:199`. No category chip; placeholder **Untitled Job**, **No customer**, **Last updated Mar 13**. Status is a **`Status pill`** component instance (**Not started** / `622:144`), not inline text. Metrics **0.0h** / **$0** / **-$0** / **$0**."
+    }
+  },
+  "layoutSemantics": {
+    "base": "Figma **component set** `622:161` with property **Property 1** (`Default` | `No job category` | `Empty State`). Code: `variant` **`withCategory`** | **`noCategory`** | **`emptyState`**.",
+    "categoryVariant": "`withCategory` (default): show category chip when `categoryLabel` is set. `noCategory` and `emptyState`: omit chip (matches **No job category** and **Empty State**). `emptyState` applies default copy when props are omitted (see `codeProps`).",
+    "statusPill": "Header uses the **`Status pill`** component (`622:143`) via `StatusPill` in code. Map `statusVariant` to pill kind (`success` → paid, `neutral` → not started) or pass `statusPillKind` for full lifecycle control."
+  },
+  "regions": {
+    "card": "Outer frame: **Foundation/Surface/White** fill; **1px** stroke **Foundation/Border/Subtle** at **~10%** paint opacity (matches variable binding in file); corner **Radius/16**. Drop shadow **0 / 1 / 2 / 5%** black (local effect; same family as other cards).",
+    "accentRail": "2px-wide vertical strip; **Brand/Primary** at **15%** paint opacity (matches reference frame `622:90`; `#D4572A`).",
+    "header": "Title: Typography/Title-H3. Metadata: Typography/Body. Status: **Status pill** (`Typography/LABEL`) — see `Status pill` spec and `tokens.colors`.",
+    "category": "Chip fill **Foundation/Text/Primary**; label **Typography/LABEL** + **Foundation/Background/Default** (warm off-white), not pure white—matches reference `622:90`.",
+    "metrics": "Typography/**Body** (14 SemiBold) for values. Labels: Typography/LABEL + **Foundation/Text/Muted**. Colors: **Foundation/Text/Primary** (TIME/REV), **Brand/Accent** (MAT value — matches Figma binding), **Semantic/Status/Success/Text** or **Brand/Primary** (NET) per `netSentiment`.",
+    "autoLayout": "Root horizontal (accent + content stack); header row horizontal; status pill and category chip horizontal hug; metrics row horizontal with equal-grow columns; each metric column vertical; accent strip vertical fill on the cross axis.",
+    "spacing": "Root padding **Spacing/24** horizontal, **0** vertical. Inner **Container**: **Spacing/24** top + bottom, **Spacing/16** between header / category / metrics. Nested spacing uses **Spacing** tokens—see `spacingLayout`."
+  },
+  "spacingLayout": {
+    "rootPaddingHorizontal": "Spacing/24",
+    "rootPaddingVertical": "0",
+    "contentPaddingVertical": "Spacing/24 on inner **Container** (top + bottom); horizontal padding 0 on that frame (root supplies horizontal inset)",
+    "sectionStackGap": "Spacing/16 between header / category / metrics on inner **Container**",
+    "headerRowGap": "Spacing/8",
+    "titleBlockGap": "Spacing/4",
+    "titleHeadingGap": "0 on **Heading** frame (Spacing token; multi-line title still uses Title-H3 line wrapping)",
+    "headingFramePaddingY": "Spacing/4 top + bottom on **Heading**",
+    "metaRowGap": "Spacing/4",
+    "metaRowPaddingY": "0 top + bottom on **Meta row**",
+    "statusPillPaddingX": "Spacing/12 (from `Status pill` component)",
+    "statusPillPaddingY": "Spacing/4",
+    "categoryChipPaddingX": "Spacing/8",
+    "categoryChipPaddingY": "Spacing/4",
+    "metricsRowPaddingTop": "Spacing/16",
+    "metricsColumnGap": "Spacing/32",
+    "metricLabelValueGap": "Spacing/4"
+  },
+  "tokens": {
+    "collections": "Figma variables are grouped as in the file: **Color Styles** (palette), **Spacing**, **Radius**, **Typography** (family/size/weight as string or float vars backing text styles). Prefer binding to those variables—not raw hex—in production components.",
+    "colors": [
+      "Brand/Accent",
+      "Brand/Primary",
+      "Decorative/NotebookLineRed",
+      "Foundation/Background/Default",
+      "Foundation/Border/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/Default",
+      "Foundation/Surface/Subtle",
+      "Foundation/Surface/White",
+      "Foundation/Text/Muted",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Activity/Material",
+      "Semantic/Status/Error/BG",
+      "Semantic/Status/Error/Text",
+      "Semantic/Status/Info/BG",
+      "Semantic/Status/Info/Text",
+      "Semantic/Status/Neutral/BG",
+      "Semantic/Status/Neutral/Text",
+      "Semantic/Status/Paused/BG",
+      "Semantic/Status/Paused/Text",
+      "Semantic/Status/Success/BG",
+      "Semantic/Status/Success/Text",
+      "Semantic/Status/Warning/BG",
+      "Semantic/Status/Warning/Label",
+      "Semantic/Status/Warning/Stroke",
+      "Semantic/Status/Warning/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/24", "Spacing/32", "Spacing/40"],
+    "typography": [
+      "Typography/Body",
+      "Typography/Body-Small",
+      "Typography/LABEL",
+      "Typography/Metric",
+      "Typography/Metric-S",
+      "Typography/Title-H3"
+    ],
+    "radius": ["Radius/12", "Radius/16", "Radius/24"]
+  },
+  "codeProps": {
+    "variant": "`withCategory` | `noCategory` | `emptyState` — align with Figma **Property 1** (Default / No job category / Empty State).",
+    "title": "Required when `variant` is not `emptyState`. For `emptyState`, defaults to **Untitled Job**.",
+    "customerName": "optional; for `emptyState` defaults to **No customer**.",
+    "lastWorkedLabel": "optional; for `emptyState` defaults to **Last updated Mar 13**.",
+    "categoryLabel": "optional; chip only when `variant` is `withCategory` and label is non-empty.",
+    "status": "Required when `variant` is not `emptyState`. For `emptyState`, defaults to **NOT STARTED**.",
+    "statusVariant": "`success` | `neutral` — maps to `StatusPill` kind when `statusPillKind` omitted. `emptyState` defaults to **neutral**.",
+    "statusPillKind": "Optional override: any `StatusPill` `kind` from `components/status-pill`.",
+    "timeHours": "For `emptyState` defaults to **0.0h**.",
+    "revenue": "For `emptyState` defaults to **$0**.",
+    "materials": "For `emptyState` defaults to **-$0**.",
+    "net": "For `emptyState` defaults to **$0**.",
+    "netSentiment": "NET value color; positive uses **Semantic/Status/Success/Text**.",
+    "onPress": "optional callback when the card is pressed"
+  },
+  "qualityAudit": {
+    "isClean": false,
+    "notes": [
+      "2026-03-28: Figma **component set** `622:161` with three variants; master Default remains `661:2`.",
+      "MAT value color synced from Figma: **Brand/Accent** (`#C44B2B`); Empty State status uses **`Status pill`** instance (Not started).",
+      "Root **Spacing/24** horizontal; inner **Container** **Spacing/24** vertical + **Spacing/16** section gaps.",
+      "Spacing tokens on nested frames: **Heading** gap **0**, **Meta row** pad **0**; metrics row **Spacing/16** top inset, **Spacing/32** column gap.",
+      "Header status uses **`Status pill`** (`622:143`) + semantic tokens in `colors.json`. Accent stripe: **Brand/Primary** @ **15%** paint opacity.",
+      "Metric values use **Typography/Body**; category chip **Typography/LABEL** + **Foundation/Background/Default**.",
+      "Bind fills and strokes to variables via the file’s Color Styles collection; avoid raw hex on production components.",
+      "Paused/on-hold styling for **Status pill** uses **Semantic/Status/Paused/BG** + **Semantic/Status/Paused/Text** in `colors.json`."
+    ]
+  }
+}
