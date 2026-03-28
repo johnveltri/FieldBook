@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { PlusIcon } from '../../icons/PlusIcon';
 import {
   color,
   space,
@@ -67,7 +68,6 @@ function ActionPill({
 }) {
   const errBg = color('Semantic/Status/Error/BG');
   const errFg = color('Semantic/Status/Error/Text');
-  const label = mode === 'add' ? '+ ADD' : '✎ EDIT';
 
   return (
     <button
@@ -94,7 +94,14 @@ function ActionPill({
         textTransform: 'uppercase',
       }}
     >
-      {label}
+      {mode === 'add' ? (
+        <>
+          <PlusIcon size={12} />
+          <span>ADD</span>
+        </>
+      ) : (
+        '✎ EDIT'
+      )}
     </button>
   );
 }

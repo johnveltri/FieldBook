@@ -1,0 +1,51 @@
+{
+  "component": {
+    "name": "Floating Action Button",
+    "figmaNodeId": "613:4",
+    "kind": "componentSet",
+    "description": "Brand-primary elevated control for global actions. Icon-only (circular) opens the quick-add bottom sheet; extended pill opens the new-job flow (navigation handled by the app, not this component).",
+    "variantProperties": {
+      "Style": ["Icon", "Extended"]
+    },
+    "figma": {
+      "componentSet": { "nodeId": "613:4", "name": "Floating Action Button" },
+      "variants": {
+        "Style=Icon": { "nodeId": "613:2" },
+        "Style=Extended": { "nodeId": "613:3" }
+      },
+      "plusIconReference": {
+        "nodeId": "371:2175",
+        "note": "Same plus geometry as Section Header ADD control; implement with `PlusIcon`."
+      }
+    }
+  },
+  "variants": {
+    "icon": {
+      "sizePx": 56,
+      "iconPx": 28,
+      "shape": "circle"
+    },
+    "extended": {
+      "heightPx": 48,
+      "iconPx": 20,
+      "minWidthPx": 140,
+      "shape": "pill"
+    }
+  },
+  "tokens": {
+    "colors": ["Brand/Primary", "Foundation/Surface/Default"],
+    "spacing": ["Spacing/8", "Spacing/24"],
+    "typography": ["Typography/Body-Small"],
+    "radius": []
+  },
+  "elevation": {
+    "boxShadow": "0px 2px 6px 0px rgba(212, 87, 42, 0.16)",
+    "figmaDropShadow": "Single drop shadow: offset y=2, blur 6, brand tint ~16% opacity (replaces previous stacked heavy shadows)."
+  },
+  "codeProps": {
+    "variant": "icon or extended",
+    "label": "optional; extended only, e.g. New Job",
+    "onClick": "handler; parent decides bottom sheet vs navigation",
+    "ariaLabel": "required meaningful name for icon-only; extended can default from label"
+  }
+}

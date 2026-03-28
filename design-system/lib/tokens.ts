@@ -75,3 +75,11 @@ export function typographyBodyStyle(): CSSProperties {
 export function typographyBodySmallStyle(): CSSProperties {
   return typographyFromToken('Typography/Body-Small');
 }
+
+export function typographyMetricStyle(): CSSProperties {
+  return typographyFromToken('Typography/Metric');
+}
+
+export function typographyMetricXLStyle(): CSSProperties {
+  return typographyFromToken('Typography/Metric-XL');
+}

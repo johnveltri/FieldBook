@@ -1,0 +1,59 @@
+{
+  "component": {
+    "name": "Metric Card",
+    "figmaNodeId": "258:1161",
+    "kind": "componentSet",
+    "description": "Dashboard metric summary: optional hero metric (Metric-XL, success), optional two-column row (Revenue / Materials style), optional three-column row (Time / NET·HR / Jobs or Sessions). Content and number formatting are instance / code props—not extra Figma variants.",
+    "dimensions": {
+      "width": 353,
+      "maxHeight": "varies by variant"
+    }
+  },
+  "variantProperties": {
+    "Sections": [
+      "Default",
+      "Primary Secondary",
+      "Primary only",
+      "Secondary only",
+      "Tertiary Only",
+      "Tertiary Only (Job)",
+      "Default (Clean)"
+    ]
+  },
+  "layoutSemantics": {
+    "Default": "Primary + secondary + tertiary; horizontal dividers and vertical rules between columns (subtle border).",
+    "Default (Clean)": "Same sections; vertical dividers between columns removed.",
+    "Primary Secondary": "Primary block + two-column row only.",
+    "Primary only": "Hero metric block only.",
+    "Secondary only": "Two-column row only (tighter vertical padding on card).",
+    "Tertiary Only": "Three-column row; third column label Jobs.",
+    "Tertiary Only (Job)": "Three-column row; third column label SESSIONS."
+  },
+  "tokens": {
+    "colors": [
+      "Brand/Primary",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/Default",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Status/Success/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/32"],
+    "typography": ["Typography/LABEL", "Typography/Metric", "Typography/Metric-XL"],
+    "radius": ["Radius/24"]
+  },
+  "codeProps": {
+    "cleanLayout": "boolean; maps to Default (Clean) — no vertical column dividers.",
+    "primary": "optional hero: label, value, valuePrefix (default $).",
+    "secondary": "optional pair: left/right columns with label, value, valuePrefix, tone (primary|brand|success), align.",
+    "tertiary": "optional triple: left/center/right columns; use labels NET/HR and Jobs vs Sessions via props.",
+    "tones": "primary = Foundation/Text/Primary; brand = Brand/Primary; success = Semantic/Status/Success/Text."
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-03-28: Figma variant axis renamed from `Property 1` to `Sections` (component set `258:1161`).",
+      "Code composes sections via props—Figma variants illustrate layouts; Jobs vs Sessions is a label override, not a separate structural variant in code."
+    ]
+  }
+}
