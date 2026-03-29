@@ -1,0 +1,21 @@
+{
+  "component": {
+    "name": "Inbox icon",
+    "figmaNodeId": "786:16",
+    "kind": "componentSet",
+    "description": "24×24 inbox/tray stroke icon on a 40×40 frame with optional notification badge (Brand/Primary, Typography/Body-Small label on cream per Figma). Glyph paths match Figma-exported `inbox.svg` (24×24, stroke 2). Used in Top Header **Title + Inbox** (`231:817`). Variants in file: with badge vs no notifications."
+  },
+  "variants": {
+    "withBadge": "Badge top-right: min 16px height, pill; count uses Typography/Body-Small; text Foundation/Background/Default.",
+    "noNotifications": "Icon only, no badge."
+  },
+  "tokens": {
+    "colors": [
+      "Brand/Primary",
+      "Foundation/Background/Default",
+      "Foundation/Text/Primary"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/16"],
+    "typography": ["Typography/Body-Small"]
+  }
+}

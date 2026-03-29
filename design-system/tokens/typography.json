@@ -39,6 +39,22 @@
     "lineHeight": 100,
     "letterSpacing": 0
   },
+  "Typography/Input": {
+    "family": "Ubuntu Sans Mono",
+    "style": "Regular",
+    "size": 14,
+    "weight": 400,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
+  "Typography/Input-Small": {
+    "family": "Ubuntu Sans Mono",
+    "style": "Regular",
+    "size": 10,
+    "weight": 400,
+    "lineHeight": 100,
+    "letterSpacing": 0
+  },
   "Typography/LABEL": {
     "family": "Ubuntu Sans Mono",
     "style": "Bold",

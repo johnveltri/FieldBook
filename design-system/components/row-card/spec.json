@@ -1,0 +1,49 @@
+{
+  "component": {
+    "name": "Row Card",
+    "figmaNodeId": "786:28",
+    "kind": "componentSet",
+    "description": "Attention, roster, and empty-state rows: 353px-wide rounded cards with optional leading count/icon, two-line title stack, and trailing metric or CTA. Padding `Spacing/20` × `Spacing/16`, radius `Radius/16`, shadow `0 1px 2px rgba(0,0,0,0.05)`."
+  },
+  "variants": {
+    "unsortedCaptures": "Brand tint surface (`Brand/PrimaryBg`) + `Brand/PrimaryStroke` border; leading count well `Brand/Primary`; trailing link tone `Brand/Primary`.",
+    "incompleteJob": "Warning surface + stroke; subtitle line `Semantic/Status/Error/Text` (Missing: …); trailing `Fix →`.",
+    "pendingPayment": "Warning surface + stroke; leading well `Semantic/Status/Warning/Label` + muted number; trailing amount `Typography/Metric` + warning label tone.",
+    "rankedJobWithMetric": "White surface; neutral rank well; trailing `Semantic/Status/Success/Text` metric (e.g. $/hr).",
+    "simpleJob": "White surface; title + subtitle only (no lead, no trail).",
+    "quickActionDefault": "Solid `Brand/Primary` fill; leading `Brand/PrimaryHover` well + plus; title/subtitle in light tints (`Foundation/Text/Muted`, `Brand/PrimaryStroke`).",
+    "activityCard": "White surface; 28px activity well (10% `Brand/Primary` tint); clock glyph; session title + time.",
+    "emptyCard": "White surface; centered `Foundation/Text/Secondary` single line.",
+    "emptyWithButton": "White surface; column: empty message + pill button (`Foundation/Surface/Subtle`, `Typography/LABEL`). Taller frame (90px)."
+  },
+  "tokens": {
+    "colors": [
+      "Brand/Primary",
+      "Brand/PrimaryBg",
+      "Brand/PrimaryHover",
+      "Brand/PrimaryStroke",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/Default",
+      "Foundation/Surface/Subtle",
+      "Foundation/Text/Muted",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Status/Error/Text",
+      "Semantic/Status/Neutral/BG",
+      "Semantic/Status/Success/Text",
+      "Semantic/Status/Warning/BG",
+      "Semantic/Status/Warning/Label",
+      "Semantic/Status/Warning/Stroke",
+      "Semantic/Status/Warning/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20"],
+    "typography": [
+      "Typography/Body",
+      "Typography/Body-Small",
+      "Typography/LABEL",
+      "Typography/Metric",
+      "Typography/Metric-S"
+    ],
+    "radius": ["Radius/16"]
+  }
+}

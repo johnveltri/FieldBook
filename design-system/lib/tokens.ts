@@ -80,6 +80,16 @@ export function typographyBodySmallStyle(): CSSProperties {
   return typographyFromToken('Typography/Body-Small');
 }
 
+/** Typography/Input — form fields, 14 Regular (Figma Text Styles, `790:268` / `Typography/Input`). */
+export function typographyInputStyle(): CSSProperties {
+  return typographyFromToken('Typography/Input');
+}
+
+/** Typography/Input-Small — dense inputs, 10 Regular (Figma `790:270` / `Typography/Input Small`). */
+export function typographyInputSmallStyle(): CSSProperties {
+  return typographyFromToken('Typography/Input-Small');
+}
+
 /** Same ramp as Body (14 SemiBold); use for job-card metric values and other dense numeric rows. */
 export function typographyMetricSStyle(): CSSProperties {
   return typographyFromToken('Typography/Metric-S');
