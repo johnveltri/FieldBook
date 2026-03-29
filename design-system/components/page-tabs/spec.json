@@ -1,0 +1,23 @@
+{
+  "component": {
+    "name": "Page tabs",
+    "figmaNodeId": "806:20",
+    "kind": "componentSet",
+    "description": "Three-segment pill control (345×44.5): track `Foundation/Surface/Subtle`, `Spacing/4` inset; each segment `Typography/LABEL`, `Spacing/12` vertical padding, pill radius. Active segment `Foundation/Surface/Default` + `Foundation/Text/Primary`; inactive `Foundation/Surface/Subtle` (flush with track) + `Foundation/Text/Secondary`. Center column always carries light elevation shadow per file."
+  },
+  "variants": {
+    "Job Left | Middle | Right": "Preset copy All / Open / Paid with selection on first, second, or third tab.",
+    "Earnings Left | Middle | Right": "Preset copy This week / This month / This year."
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Surface/Default",
+      "Foundation/Surface/Subtle",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary"
+    ],
+    "spacing": ["Spacing/4", "Spacing/12"],
+    "typography": ["Typography/LABEL"],
+    "radius": ["9999 (pill)"]
+  }
+}
