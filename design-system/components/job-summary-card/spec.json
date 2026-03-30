@@ -27,7 +27,7 @@
       "Semantic/Status/Success/Text"
     ],
     "spacing": ["Spacing/4", "Spacing/8", "Spacing/24"],
-    "typography": ["Typography/LABEL", "Typography/Body", "Typography/Metric"],
+    "typography": ["Typography/LABEL", "Typography/Body", "Typography/Body-Bold", "Typography/Metric"],
     "radius": ["Radius/16"]
   },
   "codeProps": {
@@ -41,7 +41,7 @@
     "isClean": true,
     "notes": [
       "2026-03-28: Figma variant axis renamed from `Property 1` to `Layout`.",
-      "Figma ‘Inter’ on currency glyph is cosmetic; implementation uses Ubuntu Sans Mono via Typography/Body for prefix + amount."
+      "Figma ‘Inter’ on currency glyph is cosmetic; row labels use Typography/Body, values Typography/Body-Bold (Ubuntu Sans Mono)."
     ]
   }
 }

@@ -2,13 +2,15 @@ import type { CSSProperties } from 'react';
 import {
   color,
   space,
+  typographyBodyBoldStyle,
   typographyBodyStyle,
   typographyLabelStyle,
   typographyMetricStyle,
 } from '../../lib/tokens';
 
 const labelHeading = typographyLabelStyle();
-const bodySemi = typographyBodyStyle();
+const body = typographyBodyStyle();
+const bodyBold = typographyBodyBoldStyle();
 const metricBold = typographyMetricStyle();
 
 const borderSubtle = color('Foundation/Border/Subtle');
@@ -181,7 +183,7 @@ function SummaryRow({ line }: { line: JobSummaryLine }) {
       >
         <span
           style={{
-            ...bodySemi,
+            ...body,
             color: textSecondary,
             flex: '1 1 0',
             minWidth: 0,
@@ -195,7 +197,7 @@ function SummaryRow({ line }: { line: JobSummaryLine }) {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 0,
-            ...bodySemi,
+            ...bodyBold,
             color: lineValueColor(tone),
             paddingTop: 2,
             paddingBottom: 2,

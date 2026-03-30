@@ -24,7 +24,7 @@
     "accentRail": "2px-wide vertical strip; **Brand/Primary** at **15%** paint opacity (matches reference frame `622:90`; `#D4572A`).",
     "header": "Title: Typography/Title-H3. Metadata: Typography/Body. Status: **Status pill** (`Typography/LABEL`) — see `Status pill` spec and `tokens.colors`.",
     "category": "Chip fill **Foundation/Text/Primary**; label **Typography/LABEL** + **Foundation/Background/Default** (warm off-white), not pure white—matches reference `622:90`.",
-    "metrics": "Typography/**Body** (14 SemiBold) for values. Labels: Typography/LABEL + **Foundation/Text/Muted**. Colors: **Foundation/Text/Primary** (TIME/REV), **Brand/Accent** (MAT value — matches Figma binding), **Semantic/Status/Success/Text** or **Brand/Primary** (NET) per `netSentiment`.",
+    "metrics": "Typography/**Body-Bold** (14 SemiBold) for values. Labels: Typography/LABEL + **Foundation/Text/Muted**. Colors: **Foundation/Text/Primary** (TIME/REV), **Brand/Accent** (MAT value — matches Figma binding), **Semantic/Status/Success/Text** or **Brand/Primary** (NET) per `netSentiment`.",
     "autoLayout": "Root horizontal (accent + content stack); header row horizontal; status pill and category chip horizontal hug; metrics row horizontal with equal-grow columns; each metric column vertical; accent strip vertical fill on the cross axis.",
     "spacing": "Root padding **Spacing/24** horizontal, **0** vertical. Inner **Container**: **Spacing/24** top + bottom, **Spacing/16** between header / category / metrics. Nested spacing uses **Spacing** tokens—see `spacingLayout`."
   },
@@ -81,6 +81,7 @@
     "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/24", "Spacing/32", "Spacing/40"],
     "typography": [
       "Typography/Body",
+      "Typography/Body-Bold",
       "Typography/Body-Small",
       "Typography/LABEL",
       "Typography/Metric",
@@ -113,7 +114,7 @@
       "Root **Spacing/24** horizontal; inner **Container** **Spacing/24** vertical + **Spacing/16** section gaps.",
       "Spacing tokens on nested frames: **Heading** gap **0**, **Meta row** pad **0**; metrics row **Spacing/16** top inset, **Spacing/32** column gap.",
       "Header status uses **`Status pill`** (`622:143`) + semantic tokens in `colors.json`. Accent stripe: **Brand/Primary** @ **15%** paint opacity.",
-      "Metric values use **Typography/Body**; category chip **Typography/LABEL** + **Foundation/Background/Default**.",
+      "Metric values use **Typography/Body-Bold**; category chip **Typography/LABEL** + **Foundation/Background/Default**.",
       "Bind fills and strokes to variables via the file’s Color Styles collection; avoid raw hex on production components.",
       "Paused/on-hold styling for **Status pill** uses **Semantic/Status/Paused/BG** + **Semantic/Status/Paused/Text** in `colors.json`."
     ]

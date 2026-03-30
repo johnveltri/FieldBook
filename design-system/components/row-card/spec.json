@@ -38,7 +38,7 @@
     ],
     "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20"],
     "typography": [
-      "Typography/Body",
+      "Typography/Body-Bold",
       "Typography/Body-Small",
       "Typography/LABEL",
       "Typography/Metric",

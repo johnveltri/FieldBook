@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { color, space, typographyBodyStyle } from '../../lib/tokens';
+import { color, space, typographyMetricSStyle } from '../../lib/tokens';
 
 export const PRIMARY_SECONDARY_LAYOUTS = ['block', 'inline'] as const;
 export type PrimarySecondaryLayout = (typeof PRIMARY_SECONDARY_LAYOUTS)[number];
@@ -17,7 +17,7 @@ const shadow: CSSProperties = {
   boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
 };
 
-const body = typographyBodyStyle();
+const metricS = typographyMetricSStyle();
 
 function primarySurface(tone: PrimaryTone): {
   background: string;
@@ -104,7 +104,7 @@ export function PrimarySecondaryButtons({
 
   const primaryStyle: CSSProperties = isBlock
     ? {
-        ...body,
+        ...metricS,
         flex: '1 1 auto',
         minWidth: 200,
         minHeight: 48,
@@ -122,11 +122,10 @@ export function PrimarySecondaryButtons({
         alignItems: 'center',
         justifyContent: 'center',
         gap: leadingPrimary != null ? space('Spacing/4') : 0,
-        textTransform: 'uppercase',
         ...shadow,
       }
     : {
-        ...body,
+        ...metricS,
         flex: '1 1 auto',
         minWidth: 0,
         minHeight: 32,
@@ -144,13 +143,12 @@ export function PrimarySecondaryButtons({
         alignItems: 'center',
         justifyContent: 'center',
         gap: leadingPrimary != null ? space('Spacing/4') : 0,
-        textTransform: 'uppercase',
         ...shadow,
       };
 
   const secondaryStyle: CSSProperties = isBlock
     ? {
-        ...body,
+        ...metricS,
         flex: '0 1 auto',
         minWidth: 144,
         minHeight: 48,
@@ -168,11 +166,10 @@ export function PrimarySecondaryButtons({
         alignItems: 'center',
         justifyContent: 'center',
         gap: leadingSecondary != null ? space('Spacing/10') : 0,
-        textTransform: 'uppercase',
         ...shadow,
       }
     : {
-        ...body,
+        ...metricS,
         flex: '0 1 auto',
         minWidth: 0,
         minHeight: 32,
@@ -190,7 +187,6 @@ export function PrimarySecondaryButtons({
         alignItems: 'center',
         justifyContent: 'center',
         gap: leadingSecondary != null ? space('Spacing/10') : 0,
-        textTransform: 'uppercase',
         ...shadow,
       };
 

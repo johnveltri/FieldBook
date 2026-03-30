@@ -16,6 +16,7 @@ const typography = typographyJson as Record<
     weight: number;
     lineHeight: number;
     letterSpacing: number;
+    textTransform?: 'uppercase' | 'none';
   }
 >;
 
@@ -47,7 +48,7 @@ export function typographyLabelStyle(): CSSProperties {
 
 function typographyFromToken(token: keyof typeof typography): CSSProperties {
   const t = typography[token];
-  return {
+  const out: CSSProperties = {
     fontFamily:
       t.family === 'PT Serif'
         ? `"${t.family}", Georgia, "Times New Roman", serif`
@@ -59,17 +60,24 @@ function typographyFromToken(token: keyof typeof typography): CSSProperties {
     letterSpacing:
       t.letterSpacing === 0 ? 'normal' : `${t.letterSpacing / 100}em`,
   };
+  if (t.textTransform === 'uppercase') {
+    out.textTransform = 'uppercase';
+  }
+  return out;
 }
 
 export function typographyDisplayH1Style(): CSSProperties {
-  return {
-    ...typographyFromToken('Typography/Display-H1'),
-    textTransform: 'uppercase',
-  };
+  return typographyFromToken('Typography/Display-H1');
 }
 
+/** Typography/Body — 14 Regular (Figma variable `Typography/Body`). */
 export function typographyBodyStyle(): CSSProperties {
   return typographyFromToken('Typography/Body');
+}
+
+/** Typography/Body Bold — 14 SemiBold (Figma `Typography/Body Bold`). */
+export function typographyBodyBoldStyle(): CSSProperties {
+  return typographyFromToken('Typography/Body-Bold');
 }
 
 export function typographyTitleH3Style(): CSSProperties {
@@ -90,7 +98,7 @@ export function typographyInputSmallStyle(): CSSProperties {
   return typographyFromToken('Typography/Input-Small');
 }
 
-/** Same ramp as Body (14 SemiBold); use for job-card metric values and other dense numeric rows. */
+/** Metric-S (14 SemiBold, uppercase per token); block buttons and dense labels. */
 export function typographyMetricSStyle(): CSSProperties {
   return typographyFromToken('Typography/Metric-S');
 }

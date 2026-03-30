@@ -25,8 +25,8 @@
       "Semantic/Status/Info/Text",
       "Semantic/Status/Warning/Text"
     ],
-    "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/24"],
-    "typography": ["Typography/Body", "Typography/Body-Small"],
+    "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/36"],
+    "typography": ["Typography/Metric-S", "Typography/Body-Small"],
     "radius": []
   },
   "codeProps": {

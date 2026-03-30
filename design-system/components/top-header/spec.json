@@ -38,7 +38,7 @@
     ],
     "typography": [
       "Typography/Display-H1",
-      "Typography/Body",
+      "Typography/Body-Bold",
       "Typography/Body-Small"
     ],
     "radius": []
@@ -58,7 +58,7 @@
       "colorToken": "Foundation/Text/Primary"
     },
     "subtitle": {
-      "typographyToken": "Typography/Body",
+      "typographyToken": "Typography/Body-Bold",
       "colorToken": "Foundation/Text/Secondary",
       "variant": "Title + Back + Subtitle"
     },

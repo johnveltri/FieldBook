@@ -10,6 +10,7 @@
  */
 import * as Font from 'expo-font';
 import {
+  UbuntuSansMono_400Regular,
   UbuntuSansMono_600SemiBold,
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
@@ -17,7 +18,9 @@ import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 
 /** Registered keys for `fontFamily` after `loadFieldbookFonts()` resolves. */
 export const fieldbookExpoFontFamily = {
-  /** Body, Body-Small (SemiBold 600) */
+  /** Typography/Body, Typography/Body-Small (Regular 400) */
+  ubuntuSansMonoRegular: 'UbuntuSansMono_400Regular',
+  /** Typography/Body-Bold, Metric-S (SemiBold 600) */
   ubuntuSansMonoSemiBold: 'UbuntuSansMono_600SemiBold',
   /** LABEL, Metric, Metric-XL (Bold 700) */
   ubuntuSansMonoBold: 'UbuntuSansMono_700Bold',
@@ -27,6 +30,7 @@ export const fieldbookExpoFontFamily = {
 
 export async function loadFieldbookFonts(): Promise<void> {
   await Font.loadAsync({
+    [fieldbookExpoFontFamily.ubuntuSansMonoRegular]: UbuntuSansMono_400Regular,
     [fieldbookExpoFontFamily.ubuntuSansMonoSemiBold]: UbuntuSansMono_600SemiBold,
     [fieldbookExpoFontFamily.ubuntuSansMonoBold]: UbuntuSansMono_700Bold,
     [fieldbookExpoFontFamily.ptSerifBold]: PTSerif_700Bold,

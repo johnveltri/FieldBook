@@ -2,8 +2,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
   space,
+  typographyBodyBoldStyle,
   typographyBodySmallStyle,
-  typographyBodyStyle,
   typographyDisplayH1Style,
 } from '../../lib/tokens';
 
@@ -314,7 +314,7 @@ export function TopHeader({
         >
           <span
             style={{
-              ...typographyBodyStyle(),
+              ...typographyBodyBoldStyle(),
               color: secondary,
             }}
           >

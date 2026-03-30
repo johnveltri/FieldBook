@@ -3,7 +3,7 @@
     "name": "Search bar",
     "figmaNodeId": "790:261",
     "kind": "componentSet",
-    "description": "Jobs search field: 48px-tall row, typography Input, leading search glyph (20px), optional clear when value present. Default border `Foundation/Border/Subtle`; focused ring `2px` `Brand/PrimaryStroke`. Optional **Empty State Results** card (≈345×159) with large search icon, `Typography/Body` title, `Typography/Input-Small` hint."
+    "description": "Jobs search field: 48px-tall row, typography Input, leading search glyph (20px), optional clear when value present. Default border `Foundation/Border/Subtle`; focused ring `2px` `Brand/PrimaryStroke`. Optional **Empty State Results** card (≈345×159) with large search icon, `Typography/Body-Bold` title, `Typography/Input-Small` hint."
   },
   "variants": {
     "Default": "Placeholder `Typography/Input`, `Foundation/Text/Secondary`; 12px radius; 1px subtle border.",
@@ -21,7 +21,7 @@
       "Foundation/Text/Secondary"
     ],
     "spacing": ["Spacing/4", "Spacing/8", "Spacing/10", "Spacing/12", "Spacing/16", "Spacing/20"],
-    "typography": ["Typography/Body", "Typography/Input", "Typography/Input-Small"],
+    "typography": ["Typography/Body-Bold", "Typography/Input", "Typography/Input-Small"],
     "radius": ["Radius/12", "Radius/16"]
   }
 }

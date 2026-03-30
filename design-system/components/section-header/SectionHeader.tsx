@@ -4,7 +4,7 @@ import {
   color,
   space,
   typographyBodySmallStyle,
-  typographyBodyStyle,
+  typographyMetricSStyle,
 } from '../../lib/tokens';
 
 export const SECTION_HEADER_LAYOUTS = ['Row', 'Stack', 'Title only'] as const;
@@ -56,8 +56,21 @@ export type SectionHeaderProps = {
   onActionClick?: () => void;
 };
 
-const rowText = typographyBodyStyle();
+const titleText = typographyMetricSStyle();
 const smallText = typographyBodySmallStyle();
+
+function IconPencil({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 20l4.5-1 9-9-3.5-3.5-9 9L4 20z"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function ActionPill({
   mode,
@@ -100,7 +113,10 @@ function ActionPill({
           <span>ADD</span>
         </>
       ) : (
-        '✎ EDIT'
+        <>
+          <IconPencil size={12} />
+          <span>EDIT</span>
+        </>
       )}
     </button>
   );
@@ -126,7 +142,7 @@ export function SectionHeader({
   const subColor = color(SUBTITLE_TONE[subtitleTone]);
 
   const pad = {
-    paddingTop: space('Spacing/24'),
+    paddingTop: space('Spacing/36'),
     paddingBottom: space('Spacing/16'),
     paddingLeft: space('Spacing/20'),
     paddingRight: space('Spacing/20'),
@@ -135,7 +151,7 @@ export function SectionHeader({
   const titleEl = (
     <span
       style={{
-        ...rowText,
+        ...titleText,
         color: titleColor,
         margin: 0,
       }}

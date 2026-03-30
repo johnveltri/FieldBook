@@ -2,13 +2,15 @@ import type { CSSProperties } from 'react';
 import {
   color,
   space,
+  typographyBodyBoldStyle,
   typographyBodyStyle,
   typographyLabelStyle,
   typographyTitleH3Style,
 } from '../../lib/tokens';
 import { StatusPill, type StatusPillKind } from '../status-pill';
 
-const bodySemi = typographyBodyStyle();
+const body = typographyBodyStyle();
+const bodyBold = typographyBodyBoldStyle();
 const labelCaps = typographyLabelStyle();
 
 /** LABEL token without forced uppercase (Figma instances use mixed case for category chip). */
@@ -213,7 +215,7 @@ export function JobCard({
                   flexWrap: 'wrap',
                   alignItems: 'center',
                   gap: space('Spacing/4'),
-                  ...bodySemi,
+                  ...body,
                   color: textSecondary,
                 }}
               >
@@ -363,7 +365,7 @@ function MetricColumn({
       <span style={{ ...labelCaps, color: textMuted }}>{label}</span>
       <span
         style={{
-          ...bodySemi,
+          ...bodyBold,
           color: valueColor,
           textAlign: alignEnd ? 'right' : 'left',
           width: alignEnd ? '100%' : undefined,

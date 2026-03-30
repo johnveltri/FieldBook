@@ -39,6 +39,7 @@ export function InboxIcon({
 
   const badgeTextStyle: CSSProperties = {
     ...typographyBodySmallStyle(),
+    fontWeight: 600,
   };
 
   return (

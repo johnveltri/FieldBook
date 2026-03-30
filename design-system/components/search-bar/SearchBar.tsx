@@ -3,8 +3,8 @@ import { useId, useRef, useState } from 'react';
 import {
   color,
   space,
+  typographyBodyBoldStyle,
   typographyBodySmallStyle,
-  typographyBodyStyle,
   typographyInputSmallStyle,
   typographyInputStyle,
 } from '../../lib/tokens';
@@ -273,7 +273,7 @@ export function SearchBar({
           </span>
           <p
             style={{
-              ...typographyBodyStyle(),
+              ...typographyBodyBoldStyle(),
               color: color('Foundation/Text/Secondary'),
               textAlign: 'center',
               margin: 0,

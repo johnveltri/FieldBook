@@ -2,8 +2,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
   space,
+  typographyBodyBoldStyle,
   typographyBodySmallStyle,
-  typographyBodyStyle,
   typographyLabelStyle,
   typographyMetricSStyle,
   typographyMetricStyle,
@@ -14,7 +14,7 @@ const cardShadow: CSSProperties = {
   boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
 };
 
-const body = typographyBodyStyle();
+const body = typographyBodyBoldStyle();
 const small = typographyBodySmallStyle();
 const labelBtn = typographyLabelStyle();
 
@@ -62,7 +62,7 @@ export type RowCardVariant = (typeof ROW_CARD_VARIANTS)[number];
 
 export type RowCardProps = {
   variant: RowCardVariant;
-  /** Primary line (`Typography/Body`). */
+  /** Primary line (`Typography/Body-Bold`). */
   title?: string;
   /** Secondary line (`Typography/Body-Small`), when applicable. */
   subtitle?: string;
