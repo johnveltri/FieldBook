@@ -47,5 +47,15 @@
     "label": "optional; extended only, e.g. New Job",
     "onClick": "handler; parent decides bottom sheet vs navigation",
     "ariaLabel": "required meaningful name for icon-only; extended can default from label"
+  },
+  "screenPlacement": {
+    "figmaFrame": { "nodeId": "12:9727", "name": "Home / Default", "width": 393 },
+    "bottomNav": { "nodeId": "225:12089", "heightPx": 73 },
+    "fabIcon": { "nodeId": "613:2", "sizePx": 56 },
+    "fixedPosition": {
+      "rightInsetPx": 28,
+      "gapAboveNavPx": 29,
+      "note": "Prefer `ScreenShell` (`design-system/components/screen-shell`) for scroll + nav + FAB; or import `fabFixedAboveBottomNavStyle` from `lib/fabAnchor.ts` onto a wrapper. Values include iOS safe-area via env()."
+    }
   }
 }

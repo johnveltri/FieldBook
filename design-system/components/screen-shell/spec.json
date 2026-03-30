@@ -1,0 +1,32 @@
+{
+  "component": {
+    "name": "Screen Shell",
+    "figmaReference": {
+      "frameNodeId": "12:9727",
+      "frameName": "Home / Default",
+      "note": "Layout chrome only; screen content is `children`. Bottom nav `225:12089`; FAB position from `lib/fabAnchor.ts`."
+    },
+    "description": "Column layout: optional non-scrolling header, flex scroll body, full-width bottom nav, fixed FAB above nav. Use for mobile-first shells where the FAB must not scroll with content."
+  },
+  "tokens": {
+    "colors": ["Foundation/Background/Default"],
+    "spacing": [],
+    "typography": [],
+    "radius": []
+  },
+  "structure": {
+    "root": "flex column, minHeight 100dvh, foundation background",
+    "header": "optional flexShrink 0",
+    "main": "flex 1, minHeight 0, overflow auto; extra paddingBottom when FAB visible",
+    "bottomNav": "flexShrink 0, composes BottomNav",
+    "fab": "portal-like fixed positioning via fabFixedAboveBottomNavStyle; wrapper pointer-events none, button auto"
+  },
+  "codeProps": {
+    "header": "optional ReactNode (e.g. TopHeader)",
+    "children": "scrollable screen body",
+    "navSelection": "BottomNav selection",
+    "onNavSelect": "optional tab handler",
+    "onFabClick": "optional; omit to hide FAB",
+    "fabAriaLabel": "icon FAB: defaults to Add"
+  }
+}
