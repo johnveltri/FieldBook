@@ -1,0 +1,49 @@
+{
+  "component": {
+    "name": "Button",
+    "figmaNodeId": "1287:1563",
+    "kind": "componentSet",
+    "description": "High-emphasis CTAs: **Semantic/Activity/Note** fill + self-tinted `0px 1px 2px` shadow (`SAVE TO JOB` / `SAVE CHANGES`), **`brandPrimaryXl`** **Brand/Primary** fill with note-colored shadow + **Typography/Metric** 18 uppercase (`END SESSION`), optional paired **delete** control (white, `1px rgba(212,87,42,0.2)`, **Radius/8**, trash **Semantic/Status/Error/Text`).",
+    "dimensions": {
+      "width": 343,
+      "rowHeights": {
+        "notePrimary": "~52",
+        "notePrimaryWithDelete": 71,
+        "brandPrimaryXl": "~taller (py 24)"
+      }
+    },
+    "variantSymbols": {
+      "Property 1=Button Primary": "1287:1562",
+      "Property 1=Button Primary+Delete": "1287:1566",
+      "Property 1=Button XL": "1287:1567"
+    }
+  },
+  "codeVariantMap": {
+    "notePrimary": "Button Primary",
+    "notePrimaryWithDelete": "Button Primary+Delete",
+    "brandPrimaryXl": "Button XL"
+  },
+  "tokens": {
+    "colors": [
+      "Brand/Primary",
+      "Foundation/Surface/Default",
+      "Semantic/Activity/Note",
+      "Semantic/Status/Error/Text"
+    ],
+    "typography": ["Typography/Body-Bold", "Typography/Metric"],
+    "radius": ["Radius/8", "Radius/12"],
+    "spacing": ["Spacing/24"]
+  },
+  "codeProps": {
+    "variant": "notePrimary | notePrimaryWithDelete | brandPrimaryXl",
+    "primaryLabel": "optional override of default uppercase label",
+    "onPrimaryClick": "optional",
+    "onDeleteClick": "optional; notePrimaryWithDelete only"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-08: `FieldBookCtaButton` in `field-book-cta/` from Figma `1287:1563`; trash is inline SVG to match Edit Session sheet."
+    ]
+  }
+}

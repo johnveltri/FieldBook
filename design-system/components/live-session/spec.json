@@ -1,0 +1,45 @@
+{
+  "component": {
+    "name": "Live Session",
+    "figmaNodeId": "1287:1545",
+    "kind": "componentSet",
+    "description": "**Open:** `Foundation/Border/Default` panel (391×260), **Brand/Accent** 6px top rule, dual shadow, **Active Session** (`Typography/LABEL` + **Foundation/Text/Muted**), PT Serif **24 Bold** white title, centered **70px** mono timer (white, uppercase), collapse control (white chevron). **Minimized:** 359px-wide bar, **16** radius, `1px rgba(255,255,255,0.1)` border, deeper shadow, dot + label stack + **Typography/Body-Bold** title in muted, **Brand/Primary** **Typography/Metric** timer + chevron up.",
+    "variantSymbols": {
+      "Property 1=Open Header": "1287:1544",
+      "Property 1=Minimized": "1287:1561"
+    }
+  },
+  "codeVariantMap": {
+    "openHeader": "Open Header",
+    "minimized": "Minimized"
+  },
+  "tokens": {
+    "colors": [
+      "Brand/Accent",
+      "Brand/Primary",
+      "Foundation/Border/Default",
+      "Foundation/Surface/White",
+      "Foundation/Text/Muted"
+    ],
+    "typography": [
+      "Typography/Body-Bold",
+      "Typography/LABEL",
+      "Typography/Metric",
+      "Typography/Heading-H2 (in code as local PT Serif 24)"
+    ],
+    "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/24", "Spacing/32"]
+  },
+  "codeProps": {
+    "variant": "openHeader | minimized",
+    "sessionTitle": "string",
+    "timerOpen": "string; large display in open state",
+    "timerMinimized": "optional; strip timer when minimized (defaults to timerOpen)",
+    "onToggle": "optional; chevron button"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-08: `LiveSessionCard` from Figma `1287:1545`. Chevrons are inline SVG (white); raster assets not used."
+    ]
+  }
+}
