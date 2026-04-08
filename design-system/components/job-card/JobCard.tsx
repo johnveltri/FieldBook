@@ -39,14 +39,19 @@ export type JobCardStatusVariant = 'success' | 'neutral';
 
 /**
  * Matches Figma **Job Card** component set `622:161` — `Property 1`:
- * **Default** (`withCategory`), **No job category** (`noCategory`), **Empty State** (`emptyState`).
+ * **Default** (`withCategory`), **No job category** (`noCategory`),
+ * **Empty State** (`emptyState`), **No Metrics** (`noMetrics`).
  */
-export type JobCardVariant = 'withCategory' | 'noCategory' | 'emptyState';
+export type JobCardVariant =
+  | 'withCategory'
+  | 'noCategory'
+  | 'emptyState'
+  | 'noMetrics';
 
-/** @deprecated Use `JobCardVariant` (includes `emptyState`). */
+/** @deprecated Use `JobCardVariant`. */
 export type JobCardCategoryVariant = Extract<
   JobCardVariant,
-  'withCategory' | 'noCategory'
+  'withCategory' | 'noCategory' | 'noMetrics'
 >;
 
 export type JobCardProps = {
@@ -54,7 +59,7 @@ export type JobCardProps = {
   customerName?: string;
   lastWorkedLabel?: string;
   categoryLabel?: string | null;
-  /** Figma `Property 1`: default shows category chip when `categoryLabel` is set; `noCategory` / `emptyState` omit it. */
+  /** Figma `Property 1`: `withCategory` / `noMetrics` show category chip when `categoryLabel` is set; `noCategory` / `emptyState` omit it. `noMetrics` hides the metrics row. */
   variant?: JobCardVariant;
   status?: string;
   /** Maps to `StatusPill` `kind` when `statusPillKind` is omitted: `success` → paid, `neutral` → not started. */
@@ -81,7 +86,8 @@ function netValueColor(sentiment: 'positive' | 'negative'): string {
 
 /**
  * Job list/detail card with accent rail, header, optional category chip, status pill, and metrics.
- * Figma: **Job Card** component set `622:161` (variants: Default `661:2`, No job category `622:162`, Empty State `622:199`).
+ * Figma: **Job Card** component set `622:161` (Default `661:2`, No job category `622:162`,
+ * Empty State `622:199`, No Metrics `1286:816`).
  */
 export function JobCard({
   title,
@@ -102,6 +108,7 @@ export function JobCard({
   style,
 }: JobCardProps) {
   const isEmpty = variant === 'emptyState';
+  const showMetrics = variant !== 'noMetrics';
 
   if (!isEmpty) {
     if (title === undefined || title === '') {
@@ -135,7 +142,7 @@ export function JobCard({
     (resolvedCustomer && resolvedCustomer.length > 0) ||
     (resolvedLastWorked && resolvedLastWorked.length > 0);
   const showCategory =
-    variant === 'withCategory' &&
+    (variant === 'withCategory' || variant === 'noMetrics') &&
     categoryLabel !== null &&
     categoryLabel !== undefined &&
     categoryLabel.length > 0;
@@ -259,39 +266,41 @@ export function JobCard({
           </div>
         ) : null}
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'flex-end',
-            justifyContent: 'flex-start',
-            gap: space('Spacing/32'),
-            paddingTop: space('Spacing/16'),
-            width: '100%',
-          }}
-        >
-          <MetricColumn
-            label="TIME"
-            value={resolvedTimeHours}
-            valueColor={textPrimary}
-          />
-          <MetricColumn
-            label="REV"
-            value={resolvedRevenue}
-            valueColor={textPrimary}
-          />
-          <MetricColumn
-            label="MAT"
-            value={resolvedMaterials}
-            valueColor={metricMatValue}
-          />
-          <MetricColumn
-            label="NET"
-            value={resolvedNet}
-            valueColor={netValueColor(resolvedNetSentiment)}
-            alignEnd
-          />
-        </div>
+        {showMetrics ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'flex-end',
+              justifyContent: 'flex-start',
+              gap: space('Spacing/32'),
+              paddingTop: space('Spacing/16'),
+              width: '100%',
+            }}
+          >
+            <MetricColumn
+              label="TIME"
+              value={resolvedTimeHours}
+              valueColor={textPrimary}
+            />
+            <MetricColumn
+              label="REV"
+              value={resolvedRevenue}
+              valueColor={textPrimary}
+            />
+            <MetricColumn
+              label="MAT"
+              value={resolvedMaterials}
+              valueColor={metricMatValue}
+            />
+            <MetricColumn
+              label="NET"
+              value={resolvedNet}
+              valueColor={netValueColor(resolvedNetSentiment)}
+              alignEnd
+            />
+          </div>
+        ) : null}
       </div>
     </>
   );

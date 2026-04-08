@@ -16,6 +16,13 @@
       "Edit Session Material": "1283:479"
     }
   },
+  "codeVariantMap": {
+    "newQuickMaterial": "New Quick Material",
+    "newJobMaterial": "New Job Material",
+    "newSessionMaterial": "New Session Material",
+    "editJobMaterial": "Add Job Material / Edit Job Material UX (`1283:426`)",
+    "editSessionMaterial": "Edit Session Material"
+  },
   "tokens": {
     "colors": [
       "Foundation/Background/Default",
@@ -24,17 +31,26 @@
       "Foundation/Text/Primary",
       "Foundation/Text/Secondary",
       "Semantic/Activity/Material",
+      "Semantic/Status/Success/Text",
       "Semantic/Status/Error/BG",
       "Semantic/Status/Error/Text"
     ],
     "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/24"],
     "typography": [
+      "Typography/Body",
       "Typography/Body-Bold",
       "Typography/Body-Small",
-      "Typography/Input",
       "Typography/Title-H3"
     ],
     "radius": ["Radius/8", "Radius/12", "Radius/32"]
+  },
+  "fieldTypography": {
+    "note": "Inputs use `Typography/Body` (Ubuntu Sans Mono 14) per updated Figma fields, not `Typography/Input`."
+  },
+  "primaryCta": {
+    "fill": "Semantic/Activity/Material",
+    "shadowNewModes": "0px 1px 2px Semantic/Status/Success/Text",
+    "shadowEditMode": "0px 1px 2px Semantic/Activity/Material"
   },
   "codeProps": {
     "variant": "newQuickMaterial | newJobMaterial | newSessionMaterial | editJobMaterial | editSessionMaterial",
@@ -57,7 +73,8 @@
   "qualityAudit": {
     "isClean": true,
     "notes": [
-      "2026-04-07: Leading wrench uses `QuickCaptureTileIcon` `newMaterial` scaled to 14px. Unit control is a styled `<select>`; chevron is decorative."
+      "2026-04-08: Fields + unit `select` use `typographyBodyStyle`. Primary CTA on create flows uses drop shadow tinted with `Semantic/Status/Success/Text`; edit SAVE CHANGES uses `Semantic/Activity/Material` shadow to match Figma.",
+      "Leading wrench: `QuickCaptureTileIcon` `newMaterial` scaled to 14px."
     ]
   }
 }

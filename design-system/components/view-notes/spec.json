@@ -1,0 +1,48 @@
+{
+  "component": {
+    "name": "View Notes",
+    "figmaNodeId": "1287:432",
+    "kind": "componentSet",
+    "description": "Card grouping field notes: warm **Unassigned** band (`Foundation/Background/Default` + `Typography/LABEL` secondary), stacked rows with 16px activity icon + `Typography/Body` excerpt + `Typography/Body-Small` date. **Notes Multi Session** adds a top-divided block with the same band behind **{date} SESSION** and additional rows (e.g. material-styled line in reference).",
+    "dimensions": {
+      "width": 353,
+      "outerPaddingY": 9
+    },
+    "variantSymbols": {
+      "Property 1=Notes Multi Session": "1287:431",
+      "Property 1=Notes Same Session": "1287:537",
+      "Property 1=Notes Single Session": "1287:586"
+    }
+  },
+  "codeVariantMap": {
+    "notesMultiSession": "Notes Multi Session",
+    "notesSameSession": "Notes Same Session",
+    "notesSingleSession": "Notes Single Session"
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/White",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Activity/Material",
+      "Semantic/Activity/Note"
+    ],
+    "typography": ["Typography/Body", "Typography/Body-Small", "Typography/LABEL"],
+    "radius": ["Radius/16"]
+  },
+  "codeProps": {
+    "variant": "notesMultiSession | notesSameSession | notesSingleSession",
+    "bucketLabel": "optional string; default Unassigned",
+    "unassignedNotes": "ViewNotesNoteItem[] — use two items for Same Session, one for Single / Multi (first block)",
+    "sessionBlock": "optional { sessionDateLabel, notes }; rendered only when variant is notesMultiSession and notes.length > 0",
+    "ViewNotesNoteItem": "{ excerpt, dateLabel, iconKind?: newNote | newMaterial }"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: `ViewNotesCard` in `view-notes/` from Figma `1287:432`. Icons via `QuickCaptureTileIcon` scaled to ~16px."
+    ]
+  }
+}

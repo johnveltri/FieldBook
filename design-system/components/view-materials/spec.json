@@ -1,0 +1,45 @@
+{
+  "component": {
+    "name": "View Materials",
+    "figmaNodeId": "1287:618",
+    "kind": "componentSet",
+    "description": "White card with **Unassigned** band (`Foundation/Background/Default` + `Typography/LABEL` secondary), material rows: name + quantity (`Typography/Body` secondary) left, price (`Typography/Body-Bold`) right, `Spacing/16` padding. Consecutive rows in the same group separated by `1px rgba(43,52,65,0.05)`. **Materials Multi Session** adds a top-divided block with `{date} SESSION` band + more rows.",
+    "dimensions": {
+      "width": 353,
+      "outerPaddingY": 9
+    },
+    "variantSymbols": {
+      "Property 1=Materials Multi Session": "1287:668",
+      "Property 1=Materials Single Session": "1287:755"
+    }
+  },
+  "codeVariantMap": {
+    "materialsMultiSession": "Materials Multi Session",
+    "materialsSingleSession": "Materials Single Session"
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/White",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary"
+    ],
+    "typography": ["Typography/Body", "Typography/Body-Bold", "Typography/LABEL"],
+    "spacing": ["Spacing/8", "Spacing/16"],
+    "radius": ["Radius/16"]
+  },
+  "codeProps": {
+    "variant": "materialsMultiSession | materialsSingleSession",
+    "bucketLabel": "optional; default Unassigned",
+    "unassignedItems": "ViewMaterialsLineItem[]",
+    "sessionBlock": "optional; rendered when variant is materialsMultiSession and items.length > 0",
+    "ViewMaterialsLineItem": "{ name, quantityLabel, priceLabel }"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: `ViewMaterialsCard` in `view-materials/` from Figma `1287:618`. Row chrome matches View Notes session headers; no leading icons in reference."
+    ]
+  }
+}

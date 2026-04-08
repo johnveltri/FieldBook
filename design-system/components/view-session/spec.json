@@ -1,0 +1,68 @@
+{
+  "component": {
+    "name": "View Session",
+    "figmaNodeId": "1284:577",
+    "kind": "componentSet",
+    "description": "Session row card: date (`Typography/Body-Bold`), time range (11.9px secondary), duration (`Typography/Metric` scale, non-uppercase), chevron. Expanded panel: tinted `Foundation/Surface/Subtle` @ 30%, top border `rgba(43,52,65,0.05)`, EDIT pill (`Semantic/Status/Error/BG` + Error text + pencil), “Add to Session” + four 56×~74 quick tiles (Note / Material / Photo / Voice) with activity icon colors, then empty copy or attachment rows.",
+    "dimensions": {
+      "width": 353,
+      "heights": {
+        "collapsed": 80,
+        "expandedEmpty": "~261",
+        "expandedAttachments": "~332"
+      }
+    },
+    "variantSymbols": {
+      "Property 1=Collapsed": "1284:576",
+      "Property 1=Expanded Empty": "1284:578",
+      "Property 1=Expanded Attachments": "1285:465"
+    }
+  },
+  "codeVariantMap": {
+    "collapsed": "Collapsed",
+    "expandedEmpty": "Expanded Empty",
+    "expandedAttachments": "Expanded Attachments"
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/White",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Activity/Attachment",
+      "Semantic/Activity/Material",
+      "Semantic/Activity/Note",
+      "Semantic/Activity/Photo",
+      "Semantic/Activity/Voice",
+      "Semantic/Status/Error/BG",
+      "Semantic/Status/Error/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16"]
+  },
+  "implementationNotes": [
+    "Quick-capture glyphs: `QuickCaptureTileIcon` (`newNote`, `newMaterial`, `addPhoto`, `voiceMemo`) scaled to ~16px in tiles and rows.",
+    "Time range: Ubuntu Sans Mono 11.9px / 20px line height + secondary color to align with Field Book density (Figma lists Inter for this line).",
+    "Attachment list: pass `attachments`; `expandedAttachments` with an empty array shows the same empty message as `expandedEmpty`."
+  ],
+  "codeProps": {
+    "variant": "collapsed | expandedEmpty | expandedAttachments",
+    "dateLabel": "string",
+    "timeRangeLabel": "string",
+    "durationLabel": "string (e.g. 1.0h)",
+    "attachments": "optional ViewSessionAttachment[]; listed when variant is expandedAttachments and length > 0",
+    "emptyMessage": "optional; default No notes, materials or photos yet",
+    "onToggle": "optional; header becomes a button with aria-expanded",
+    "onEdit": "optional",
+    "onAddNote": "optional",
+    "onAddMaterial": "optional",
+    "onAddPhoto": "optional",
+    "onAddVoice": "optional",
+    "children": "optional slot under list/empty region"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: Initial `ViewSessionCard` in `view-session/` mapped from Figma `1284:577`."
+    ]
+  }
+}

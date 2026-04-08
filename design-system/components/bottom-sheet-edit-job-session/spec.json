@@ -1,0 +1,73 @@
+{
+  "component": {
+    "name": "Edit Job, Session",
+    "figmaNodeId": "1284:789",
+    "kind": "component_set",
+    "description": "Handle, Back, session header (16px Brand/Accent clock + Title-H3 “Edit Session”) with Start/End Time labels and four body inputs — or job header (“Edit Job”) with stacked fields; footer: Brand/Accent SAVE CHANGES (shadow Brand/Primary) + destructive outline trash.",
+    "dimensions": {
+      "width": 391,
+      "heights": {
+        "editSession": 451,
+        "editJobPlaceholder": 453,
+        "editJobFilled": 457
+      }
+    },
+    "variantSymbols": {
+      "Edit Session": "1284:726",
+      "Edit Job Empty": "1286:701",
+      "Edit Job": "1286:754"
+    }
+  },
+  "figmaNamingNote": "Figma **Edit Job** uses placeholder copy on inputs; **Edit Job Empty** shows the populated sample job row (`1286:701`). Code maps these to `editJobPlaceholder` and `editJobFilled` respectively.",
+  "codeVariantMap": {
+    "editSession": "Edit Session",
+    "editJobPlaceholder": "Edit Job",
+    "editJobFilled": "Edit Job Empty"
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/Default",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Foundation/Border/Default",
+      "Brand/Accent",
+      "Brand/Primary",
+      "Semantic/Status/Error/Text"
+    ],
+    "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/24"],
+    "typography": [
+      "Typography/Body",
+      "Typography/Body-Bold",
+      "Typography/Body-Small",
+      "Typography/Title-H3"
+    ],
+    "radius": ["Radius/8", "Radius/12", "Radius/32"]
+  },
+  "primaryCta": {
+    "fill": "Brand/Accent",
+    "shadow": "0px 1px 2px Brand/Primary"
+  },
+  "deleteControl": {
+    "border": "1px solid rgba(212, 87, 42, 0.2)",
+    "icon": "Semantic/Status/Error/Text"
+  },
+  "codeProps": {
+    "variant": "editSession | editJobPlaceholder | editJobFilled",
+    "job": "optional Partial<EditJobFormValues>; merged with per-variant defaults",
+    "onJobChange": "optional (next: EditJobFormValues) => void",
+    "session": "optional Partial<EditSessionTimes>; merged with defaults",
+    "onSessionChange": "optional (next: EditSessionTimes) => void",
+    "children": "optional; replaces default job field stack for editJob*",
+    "onBack": "optional",
+    "onSaveChanges": "optional",
+    "onDelete": "optional"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: `EditJobSessionBottomSheet` mirrors handle, Back, headers, field shells, and SAVE + delete footer per Figma `1284:789`."
+    ]
+  }
+}

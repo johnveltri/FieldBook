@@ -3,34 +3,34 @@
     "name": "Bottom Sheet: Choose Session",
     "figmaNodeId": "1279:381",
     "kind": "frame",
-    "description": "Session assignment for job notes: back + Title-H3, optional featured row (orange “Add Job Note” or error “Remove From Session”), LABEL divider, then simple job rows for session selection.",
+    "description": "Session flows: attach/detach job notes (featured row + optional divider + job list), pick a session from a list, or create a session type (live vs log past).",
     "dimensions": {
       "width": 391,
       "height": 491.5
     },
     "variantSymbols": {
-      "New Initial": "1185:377",
+      "New Attachment for Session": "1185:377",
       "Add to Session": "1279:380",
-      "Remove/Edit Session": "1279:423"
+      "Remove/Edit From Session": "1279:423",
+      "New Session Type": "1286:602"
     }
   },
   "variants": {
-    "newNote": "Title “New Note”; featured row `Semantic/Activity/Note` + note icon well; divider “or attach to SESSION”; session list.",
-    "addToSession": "Title “Add to Session”; list only (no featured row, no divider).",
-    "removeEditSession": "Title “Edit Session”; featured row `Semantic/Status/Error/BG` (no icon); divider “ATTACH TO DIFFERENT SESSION”; list."
+    "newAttachmentForSession": "Title “New Note”; note featured row `Semantic/Activity/Note` + well + `QuickCaptureTileIcon` newNote; divider “or attach to SESSION”; `RowCard` simpleJob list.",
+    "addToSession": "Title “Add to Session”; list only.",
+    "removeEditFromSession": "Title “Edit Session”; error featured row `Semantic/Status/Error/BG`; divider “ATTACH TO DIFFERENT SESSION”; list.",
+    "newSessionType": "Title “New Session”; stacked rows: `Brand/Primary` “Live Session” (`QuickCaptureTileIcon` startSession) and `Semantic/Status/Neutral/BG` + `Foundation/Text/Primary` border “Log Past Session” (pencil well on `Foundation/Text/Secondary`); no list."
   },
   "composition": {
     "rowCard": {
       "figmaNodeId": "786:28",
       "variant": "simpleJob",
       "code": "RowCard"
-    },
-    "noteIcon": {
-      "code": "QuickCaptureTileIcon kind=`newNote` in 40px well for New Initial featured row only."
     }
   },
   "tokens": {
     "colors": [
+      "Brand/Primary",
       "Foundation/Background/Default",
       "Foundation/Border/Subtle",
       "Foundation/Surface/Default",
@@ -39,7 +39,8 @@
       "Foundation/Text/Secondary",
       "Semantic/Activity/Note",
       "Semantic/Status/Error/BG",
-      "Semantic/Status/Error/Text"
+      "Semantic/Status/Error/Text",
+      "Semantic/Status/Neutral/BG"
     ],
     "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/24"],
     "typography": [
@@ -51,16 +52,18 @@
     "radius": ["Radius/16", "Radius/32"]
   },
   "codeProps": {
-    "variant": "newNote | addToSession | removeEditSession",
-    "jobs": "{ id, title, subtitle }[] for RowCard simpleJob rows",
+    "variant": "newAttachmentForSession | addToSession | removeEditFromSession | newSessionType",
+    "jobs": "optional list; unused for `newSessionType`",
     "onBack": "optional",
-    "onFeaturedAction": "optional; New Note and Remove/Edit featured rows",
-    "onSelectJob": "optional (jobId: string)"
+    "onFeaturedAction": "optional; newAttachment + removeEdit featured rows",
+    "onSelectJob": "optional (jobId: string); list variants only",
+    "onLiveSession": "optional; `newSessionType` top row",
+    "onLogPastSession": "optional; `newSessionType` bottom row"
   },
   "qualityAudit": {
     "isClean": true,
     "notes": [
-      "2026-04-07: Divider copy matches Figma casing (“SESSION” / “DIFFERENT SESSION”)."
+      "2026-04-07: Variants renamed to match Figma property labels (incl. New Session Type `1286:602`). Code enum uses camelCase `newAttachmentForSession`, `removeEditFromSession`, `newSessionType`."
     ]
   }
 }

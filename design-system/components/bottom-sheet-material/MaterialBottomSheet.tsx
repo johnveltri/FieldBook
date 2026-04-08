@@ -4,7 +4,7 @@ import {
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
-  typographyInputStyle,
+  typographyBodyStyle,
   typographyTitleH3Style,
 } from '../../lib/tokens';
 import { PlusIcon } from '../../icons/PlusIcon';
@@ -18,7 +18,8 @@ const handleBg = 'rgba(43, 52, 65, 0.2)';
 
 const bodyBold = typographyBodyBoldStyle();
 const bodySmall = typographyBodySmallStyle();
-const inputText = typographyInputStyle();
+/** Figma `1283:350` fields use Ubuntu Sans Mono 14 (`Typography/Body`), not `Typography/Input`. */
+const fieldText = typographyBodyStyle();
 
 export const MATERIAL_SHEET_VARIANTS = [
   'newQuickMaterial',
@@ -241,6 +242,7 @@ export function MaterialBottomSheet({
   const backFg = color('Foundation/Text/Secondary');
   const fg = color('Foundation/Text/Primary');
   const material = color('Semantic/Activity/Material');
+  const materialShadow = color('Semantic/Status/Success/Text');
   const errorBg = color('Semantic/Status/Error/BG');
   const errorText = color('Semantic/Status/Error/Text');
   const secondary = color('Foundation/Text/Secondary');
@@ -251,7 +253,7 @@ export function MaterialBottomSheet({
     : [...unitOptions, unit];
 
   const inputShell: CSSProperties = {
-    ...inputText,
+    ...fieldText,
     boxSizing: 'border-box',
     height: 38,
     borderRadius: 8,
@@ -505,9 +507,8 @@ export function MaterialBottomSheet({
             >
               <span
                 style={{
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  ...bodyBold,
                   fontSize: 11.9,
-                  fontWeight: 700,
                   color: secondary,
                   flexShrink: 0,
                   lineHeight: '20px',
@@ -610,7 +611,7 @@ export function MaterialBottomSheet({
             border: 'none',
             backgroundColor: material,
             cursor: onPrimaryAction ? 'pointer' : 'default',
-            boxShadow: `0px 1px 2px ${material}`,
+            boxShadow: `0px 1px 2px ${materialShadow}`,
             ...bodyBold,
             color: color('Foundation/Surface/Default'),
             textTransform: 'uppercase',

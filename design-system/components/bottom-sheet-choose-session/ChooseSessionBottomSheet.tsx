@@ -23,21 +23,24 @@ const bodySmall = typographyBodySmallStyle();
 const labelDivider = typographyLabelStyle();
 
 export const CHOOSE_SESSION_VARIANTS = [
-  'newNote',
+  'newAttachmentForSession',
   'addToSession',
-  'removeEditSession',
+  'removeEditFromSession',
+  'newSessionType',
 ] as const;
 
 export type ChooseSessionVariant = (typeof CHOOSE_SESSION_VARIANTS)[number];
 
 function sheetTitle(variant: ChooseSessionVariant): string {
   switch (variant) {
-    case 'newNote':
+    case 'newAttachmentForSession':
       return 'New Note';
     case 'addToSession':
       return 'Add to Session';
-    case 'removeEditSession':
+    case 'removeEditFromSession':
       return 'Edit Session';
+    case 'newSessionType':
+      return 'New Session';
     default: {
       const _e: never = variant;
       return _e;
@@ -66,6 +69,27 @@ function ChevronBackIcon() {
   );
 }
 
+/** Pencil for “Log Past Session” well (Figma `1286:622` icon slot). */
+function PencilLightGlyph() {
+  return (
+    <svg
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        d="M11.5 4.5 16 9 7.5 17.5H4v-3.5L11.5 4.5z"
+        stroke={color('Foundation/Surface/Default')}
+        strokeWidth={1.25}
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export type ChooseSessionJobRow = {
   id: string;
   title: string;
@@ -74,24 +98,32 @@ export type ChooseSessionJobRow = {
 
 export type ChooseSessionBottomSheetProps = {
   variant: ChooseSessionVariant;
-  jobs: ChooseSessionJobRow[];
+  /** Session/job rows; omitted or empty for `newSessionType`. */
+  jobs?: ChooseSessionJobRow[];
   onBack?: () => void;
-  /** New Note: “Add Job Note” row. Remove/Edit Session: “Remove From Session” row. */
+  /** `newAttachmentForSession`: “Add Job Note”. `removeEditFromSession`: “Remove From Session”. */
   onFeaturedAction?: () => void;
   onSelectJob?: (jobId: string) => void;
+  /** `newSessionType` only: primary orange “Live Session” row. */
+  onLiveSession?: () => void;
+  /** `newSessionType` only: neutral “Log Past Session” row. */
+  onLogPastSession?: () => void;
   className?: string;
   style?: CSSProperties;
 };
 
 /**
- * Pick or detach a session for a job note (Figma: **Bottom Sheet: Choose Session** `1279:381`).
+ * Pick or detach a session for a job note, or choose how to create a session
+ * (Figma: **Bottom Sheet: Choose Session** `1279:381`).
  */
 export function ChooseSessionBottomSheet({
   variant,
-  jobs,
+  jobs = [],
   onBack,
   onFeaturedAction,
   onSelectJob,
+  onLiveSession,
+  onLogPastSession,
   className,
   style,
 }: ChooseSessionBottomSheetProps) {
@@ -101,19 +133,54 @@ export function ChooseSessionBottomSheet({
   const backFg = color('Foundation/Text/Secondary');
   const titleMuted = color('Foundation/Text/Muted');
   const note = color('Semantic/Activity/Note');
+  const brandPrimary = color('Brand/Primary');
   const errorBg = color('Semantic/Status/Error/BG');
   const errorText = color('Semantic/Status/Error/Text');
+  const neutralBg = color('Semantic/Status/Neutral/BG');
+  const secondaryWell = color('Foundation/Text/Secondary');
   const sheetTitleId = 'fieldbook-choose-session-title';
   const wellBg = 'rgba(250, 246, 240, 0.2)';
 
-  const showFeatured = variant === 'newNote' || variant === 'removeEditSession';
+  const showList =
+    variant === 'newAttachmentForSession' ||
+    variant === 'addToSession' ||
+    variant === 'removeEditFromSession';
+
+  const showFeatured =
+    variant === 'newAttachmentForSession' ||
+    variant === 'removeEditFromSession';
+
   const showDivider =
-    variant === 'newNote' || variant === 'removeEditSession';
+    variant === 'newAttachmentForSession' ||
+    variant === 'removeEditFromSession';
 
   const dividerLabel =
-    variant === 'newNote'
+    variant === 'newAttachmentForSession'
       ? 'or attach to SESSION'
       : 'ATTACH TO DIFFERENT SESSION';
+
+  const sessionTypeRowStyle = (
+    accentBg: string,
+    extra: CSSProperties,
+  ): CSSProperties => ({
+    width: '100%',
+    maxWidth: 353,
+    margin: '0 auto',
+    display: 'flex',
+    boxSizing: 'border-box',
+    alignItems: 'center',
+    minHeight: 85,
+    paddingLeft: space('Spacing/20'),
+    paddingRight: space('Spacing/20'),
+    paddingTop: space('Spacing/16'),
+    paddingBottom: space('Spacing/16'),
+    borderRadius: 16,
+    border: `1px solid ${borderSubtle}`,
+    backgroundColor: accentBg,
+    textAlign: 'left',
+    ...cardShadow,
+    ...extra,
+  });
 
   return (
     <section
@@ -209,28 +276,14 @@ export function ChooseSessionBottomSheet({
           <div style={{ width: 72, flexShrink: 0 }} aria-hidden />
         </div>
 
-        {variant === 'newNote' ? (
+        {variant === 'newAttachmentForSession' ? (
           <button
             type="button"
             onClick={onFeaturedAction}
             style={{
-              width: '100%',
-              maxWidth: 353,
-              margin: '0 auto',
-              display: 'flex',
-              boxSizing: 'border-box',
-              alignItems: 'center',
-              minHeight: 85,
-              paddingLeft: space('Spacing/20'),
-              paddingRight: space('Spacing/20'),
-              paddingTop: space('Spacing/16'),
-              paddingBottom: space('Spacing/16'),
-              borderRadius: 16,
-              border: `1px solid ${borderSubtle}`,
-              backgroundColor: note,
-              cursor: onFeaturedAction ? 'pointer' : 'default',
-              textAlign: 'left',
-              ...cardShadow,
+              ...sessionTypeRowStyle(note, {
+                cursor: onFeaturedAction ? 'pointer' : 'default',
+              }),
             }}
           >
             <div
@@ -283,28 +336,14 @@ export function ChooseSessionBottomSheet({
           </button>
         ) : null}
 
-        {variant === 'removeEditSession' ? (
+        {variant === 'removeEditFromSession' ? (
           <button
             type="button"
             onClick={onFeaturedAction}
             style={{
-              width: '100%',
-              maxWidth: 353,
-              margin: '0 auto',
-              display: 'flex',
-              boxSizing: 'border-box',
-              alignItems: 'center',
-              minHeight: 85,
-              paddingLeft: space('Spacing/20'),
-              paddingRight: space('Spacing/20'),
-              paddingTop: space('Spacing/16'),
-              paddingBottom: space('Spacing/16'),
-              borderRadius: 16,
-              border: `1px solid ${borderSubtle}`,
-              backgroundColor: errorBg,
-              cursor: onFeaturedAction ? 'pointer' : 'default',
-              textAlign: 'left',
-              ...cardShadow,
+              ...sessionTypeRowStyle(errorBg, {
+                cursor: onFeaturedAction ? 'pointer' : 'default',
+              }),
             }}
           >
             <div
@@ -323,6 +362,121 @@ export function ChooseSessionBottomSheet({
               </div>
             </div>
           </button>
+        ) : null}
+
+        {variant === 'newSessionType' ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: space('Spacing/12'),
+              width: '100%',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={onLiveSession}
+              style={{
+                ...sessionTypeRowStyle(brandPrimary, {
+                  cursor: onLiveSession ? 'pointer' : 'default',
+                }),
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: space('Spacing/12'),
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    minWidth: 40,
+                    minHeight: 40,
+                    borderRadius: 9999,
+                    backgroundColor: wellBg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    color: titleMuted,
+                  }}
+                >
+                  <QuickCaptureTileIcon kind="startSession" />
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: space('Spacing/4'),
+                    minWidth: 0,
+                  }}
+                >
+                  <div style={{ ...bodyBold, color: titleMuted }}>
+                    Live Session
+                  </div>
+                  <div style={{ ...bodySmall, color: titleMuted }}>
+                    Start a timer now
+                  </div>
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={onLogPastSession}
+              style={{
+                ...sessionTypeRowStyle(neutralBg, {
+                  cursor: onLogPastSession ? 'pointer' : 'default',
+                  border: `1px solid ${fg}`,
+                }),
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: space('Spacing/12'),
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    minWidth: 40,
+                    minHeight: 40,
+                    borderRadius: 9999,
+                    backgroundColor: secondaryWell,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <PencilLightGlyph />
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: space('Spacing/4'),
+                    minWidth: 0,
+                  }}
+                >
+                  <div style={{ ...bodyBold, color: fg }}>Log Past Session</div>
+                  <div style={{ ...bodySmall, color: backFg }}>
+                    Log a completed session manually
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
         ) : null}
 
         {showDivider ? (
@@ -368,27 +522,29 @@ export function ChooseSessionBottomSheet({
           </div>
         ) : null}
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-            alignItems: 'center',
-            marginTop: variant === 'addToSession' ? space('Spacing/24') : 0,
-          }}
-        >
-          {jobs.map((job) => (
-            <RowCard
-              key={job.id}
-              variant="simpleJob"
-              title={job.title}
-              subtitle={job.subtitle}
-              onPress={
-                onSelectJob ? () => onSelectJob(job.id) : undefined
-              }
-            />
-          ))}
-        </div>
+        {showList ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              alignItems: 'center',
+              marginTop: variant === 'addToSession' ? space('Spacing/24') : 0,
+            }}
+          >
+            {jobs.map((job) => (
+              <RowCard
+                key={job.id}
+                variant="simpleJob"
+                title={job.title}
+                subtitle={job.subtitle}
+                onPress={
+                  onSelectJob ? () => onSelectJob(job.id) : undefined
+                }
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
     </section>
   );
