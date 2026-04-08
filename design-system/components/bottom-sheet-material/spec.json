@@ -1,0 +1,63 @@
+{
+  "component": {
+    "name": "Material",
+    "figmaNodeId": "1283:351",
+    "kind": "frame",
+    "description": "Material line-item entry: handle, back, green wrench + Title-H3, helper line, name field, price ($) + quantity + unit row, primary `Semantic/Activity/Material` CTA — or edit footer with SESSION pill and delete.",
+    "dimensions": {
+      "width": 391,
+      "height": 347
+    },
+    "variantSymbols": {
+      "New Quick Material": "1283:350",
+      "New Job Material": "1283:352",
+      "New Session Material": "1283:389",
+      "Add Job Material": "1283:426",
+      "Edit Session Material": "1283:479"
+    }
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/Default",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Activity/Material",
+      "Semantic/Status/Error/BG",
+      "Semantic/Status/Error/Text"
+    ],
+    "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/24"],
+    "typography": [
+      "Typography/Body-Bold",
+      "Typography/Body-Small",
+      "Typography/Input",
+      "Typography/Title-H3"
+    ],
+    "radius": ["Radius/8", "Radius/12", "Radius/32"]
+  },
+  "codeProps": {
+    "variant": "newQuickMaterial | newJobMaterial | newSessionMaterial | editJobMaterial | editSessionMaterial",
+    "materialName": "string",
+    "price": "string",
+    "quantity": "string",
+    "unit": "string",
+    "onMaterialNameChange": "optional",
+    "onPriceChange": "optional",
+    "onQuantityChange": "optional",
+    "onUnitChange": "optional",
+    "unitOptions": "optional string[]; default [\"ea\"]",
+    "subtitle": "optional",
+    "sessionLabel": "optional",
+    "onBack": "optional",
+    "onPrimaryAction": "optional",
+    "onDelete": "optional; edit variants",
+    "onSessionPillPress": "optional; edit variants"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: Leading wrench uses `QuickCaptureTileIcon` `newMaterial` scaled to 14px. Unit control is a styled `<select>`; chevron is decorative."
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "component": {
+    "name": "Bottom Sheet: Choose Job",
+    "figmaNodeId": "1075:1948",
+    "kind": "frame",
+    "description": "Second step after quick capture: back affordance, contextual Title-H3, full-width accent quick-action row (icon well + two lines), LABEL divider “or attach to existing job”, then a stack of simple job row cards.",
+    "dimensions": {
+      "width": 391,
+      "height": 491.5
+    },
+    "variantSymbols": {
+      "Session": "1075:1947",
+      "Note": "1075:1949",
+      "Material": "1075:2030",
+      "Photo": "1185:156",
+      "File": "1185:216",
+      "Voice Memo": "1185:285"
+    }
+  },
+  "captureAxis": {
+    "mapsFrom": "ActionTileKind",
+    "sessionUsesInboxCopy": false,
+    "note": "Featured row subtitle is session-style (“Begin tracking…”) only for `startSession`; all other kinds use inbox copy (“Save to inbox…”)."
+  },
+  "composition": {
+    "rowCardSimpleJob": {
+      "figmaNodeId": "786:28",
+      "variant": "simpleJob",
+      "code": "RowCard"
+    },
+    "quickIcons": {
+      "note": "Reuses `QuickCaptureTileIcon` from Quick Capture sheet for the 40px accent well."
+    }
+  },
+  "tokens": {
+    "colors": [
+      "Brand/Primary",
+      "Foundation/Background/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Text/Muted",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Activity/Attachment",
+      "Semantic/Activity/Note",
+      "Semantic/Activity/Voice",
+      "Semantic/Status/Info/Text",
+      "Semantic/Status/Success/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20"],
+    "typography": [
+      "Typography/Body-Bold",
+      "Typography/Body-Small",
+      "Typography/LABEL",
+      "Typography/Title-H3"
+    ],
+    "radius": ["Radius/16", "Radius/32"]
+  },
+  "layout": {
+    "pullHandle": {
+      "widthPx": 40,
+      "heightPx": 6,
+      "offsetTopPx": 24
+    },
+    "contentInsetPx": 18,
+    "featuredQuickRow": {
+      "heightPx": 85,
+      "iconWell": {
+        "sizePx": 40,
+        "background": "rgba(250, 246, 240, 0.2)"
+      }
+    },
+    "elevation": {
+      "sheetShadow": "0px 25px 50px rgba(0, 0, 0, 0.25)"
+    }
+  },
+  "codeProps": {
+    "captureKind": "ActionTileKind — drives sheet title, accent fill, quick-action copy, and icon.",
+    "jobs": "Array of { id, title, subtitle } for simple job rows.",
+    "onBack": "optional () => void",
+    "onQuickAction": "optional () => void — primary accent row",
+    "onSelectJob": "optional (jobId: string) => void"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: Figma frame name restored to “Bottom Sheet: Choose Job”. Code: `ChooseJobBottomSheet` in `bottom-sheet-choose-job/`.",
+      "Material variant uses `Semantic/Status/Success/Text` for the featured row fill in Figma (`1075:2030`); other non-session kinds use activity / info tokens per file."
+    ]
+  }
+}

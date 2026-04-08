@@ -1,0 +1,69 @@
+{
+  "component": {
+    "name": "Note",
+    "figmaNodeId": "1279:351",
+    "kind": "frame",
+    "description": "Note composer and editor: drag handle, back, leading note glyph + Title-H3 (and SESSION pill in edit modes), helper line, bordered textarea, and primary CTA — or edit footer with save + delete.",
+    "dimensions": {
+      "width": 391,
+      "height": 471.5
+    },
+    "variantSymbols": {
+      "New Quick Note": "1279:349",
+      "New Job Note": "1279:350",
+      "New Session Note": "1279:377",
+      "Edit Job Note": "1279:378",
+      "Edit Session Note": "1279:379"
+    }
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/Default",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Activity/Note",
+      "Semantic/Status/Error/BG",
+      "Semantic/Status/Error/Text"
+    ],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16", "Spacing/24"],
+    "typography": [
+      "Typography/Body",
+      "Typography/Body-Bold",
+      "Typography/Body-Small",
+      "Typography/Title-H3"
+    ],
+    "radius": ["Radius/12", "Radius/32"]
+  },
+  "layout": {
+    "pullHandle": {
+      "fill": "rgba(43, 52, 65, 0.2)",
+      "widthPx": 40,
+      "heightPx": 6
+    },
+    "contentPaddingPx": { "horizontal": 24, "vertical": 18 },
+    "textarea": {
+      "minHeightPx": 245,
+      "radiusPx": 12
+    }
+  },
+  "codeProps": {
+    "variant": "newQuickNote | newJobNote | newSessionNote | editJobNote | editSessionNote",
+    "value": "optional controlled body",
+    "onChange": "optional",
+    "placeholder": "optional",
+    "subtitle": "optional override",
+    "sessionLabel": "optional session line when variant uses session copy",
+    "onBack": "optional",
+    "onPrimaryAction": "optional",
+    "onDelete": "optional; edit modes",
+    "onSessionPillPress": "optional; edit modes SESSION control"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: Pull handle uses 20% primary tint vs other sheets’ subtle border — matches Figma `1279:349`."
+    ]
+  }
+}

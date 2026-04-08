@@ -1,0 +1,72 @@
+{
+  "component": {
+    "name": "Bottom Sheet: Quick Capture",
+    "figmaNodeId": "1075:1946",
+    "kind": "frame",
+    "description": "Modal-style bottom sheet opened from the FAB: drag handle, Title-H3 heading, and a 2×3 grid of Action Tile instances for session, notes, media, and materials.",
+    "dimensions": {
+      "width": 391,
+      "height": 375
+    },
+    "composition": {
+      "actionTile": {
+        "figmaNodeId": "452:2740",
+        "code": "ActionTile"
+      },
+      "gridOrder": [
+        ["startSession", "newNote", "newMaterial"],
+        ["addPhoto", "uploadFile", "voiceMemo"]
+      ]
+    }
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Text/Primary"
+    ],
+    "spacing": ["Spacing/24", "Spacing/32"],
+    "typography": ["Typography/Title-H3", "Typography/Body-Small"],
+    "radius": ["Radius/32"]
+  },
+  "layout": {
+    "pullHandle": {
+      "widthPx": 40,
+      "heightPx": 6,
+      "fill": "Foundation/Border/Subtle",
+      "offsetTopPx": 24
+    },
+    "title": {
+      "text": "Quick Capture",
+      "style": "Typography/Title-H3",
+      "alignment": "center"
+    },
+    "grid": {
+      "columns": 3,
+      "rows": 2,
+      "gapPx": 10,
+      "horizontalInsetPx": 23,
+      "note": "Figma uses 10px gutters; no Spacing/10 token in repo—code uses literal 10 for parity."
+    },
+    "elevation": {
+      "boxShadow": "0px 25px 50px rgba(0, 0, 0, 0.25)"
+    },
+    "chrome": {
+      "borderTop": "1px Foundation/Border/Subtle",
+      "topRadiusPx": 32
+    }
+  },
+  "codeProps": {
+    "title": "optional; default Quick Capture",
+    "onAction": "optional (kind: ActionTileKind) => void; fired when a tile is activated",
+    "className": "optional",
+    "style": "optional root styles"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: Figma frame uses Action Tile masters; grid matches row-major order above. In Figma, consider binding the 10px grid gap to a variable if Spacing/10 is added to the library.",
+      "Pull handle + title + grid spacing implemented with flex gaps to approximate Figma absolute positions (handle top 24, heading ~62, grid ~108)."
+    ]
+  }
+}

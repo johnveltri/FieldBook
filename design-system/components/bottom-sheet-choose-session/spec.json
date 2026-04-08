@@ -1,0 +1,66 @@
+{
+  "component": {
+    "name": "Bottom Sheet: Choose Session",
+    "figmaNodeId": "1279:381",
+    "kind": "frame",
+    "description": "Session assignment for job notes: back + Title-H3, optional featured row (orange “Add Job Note” or error “Remove From Session”), LABEL divider, then simple job rows for session selection.",
+    "dimensions": {
+      "width": 391,
+      "height": 491.5
+    },
+    "variantSymbols": {
+      "New Initial": "1185:377",
+      "Add to Session": "1279:380",
+      "Remove/Edit Session": "1279:423"
+    }
+  },
+  "variants": {
+    "newNote": "Title “New Note”; featured row `Semantic/Activity/Note` + note icon well; divider “or attach to SESSION”; session list.",
+    "addToSession": "Title “Add to Session”; list only (no featured row, no divider).",
+    "removeEditSession": "Title “Edit Session”; featured row `Semantic/Status/Error/BG` (no icon); divider “ATTACH TO DIFFERENT SESSION”; list."
+  },
+  "composition": {
+    "rowCard": {
+      "figmaNodeId": "786:28",
+      "variant": "simpleJob",
+      "code": "RowCard"
+    },
+    "noteIcon": {
+      "code": "QuickCaptureTileIcon kind=`newNote` in 40px well for New Initial featured row only."
+    }
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Background/Default",
+      "Foundation/Border/Subtle",
+      "Foundation/Surface/Default",
+      "Foundation/Text/Muted",
+      "Foundation/Text/Primary",
+      "Foundation/Text/Secondary",
+      "Semantic/Activity/Note",
+      "Semantic/Status/Error/BG",
+      "Semantic/Status/Error/Text"
+    ],
+    "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/24"],
+    "typography": [
+      "Typography/Body-Bold",
+      "Typography/Body-Small",
+      "Typography/LABEL",
+      "Typography/Title-H3"
+    ],
+    "radius": ["Radius/16", "Radius/32"]
+  },
+  "codeProps": {
+    "variant": "newNote | addToSession | removeEditSession",
+    "jobs": "{ id, title, subtitle }[] for RowCard simpleJob rows",
+    "onBack": "optional",
+    "onFeaturedAction": "optional; New Note and Remove/Edit featured rows",
+    "onSelectJob": "optional (jobId: string)"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-07: Divider copy matches Figma casing (“SESSION” / “DIFFERENT SESSION”)."
+    ]
+  }
+}
