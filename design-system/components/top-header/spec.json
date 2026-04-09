@@ -44,6 +44,17 @@
     "radius": []
   },
   "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Top Header (vertical stack of variant masters, 16px gap)",
+      "accentStrip": "top-header-accent-strip",
+      "mainRow": "top-header-content",
+      "title": "top-header-title",
+      "subtitle": "top-header-subtitle",
+      "leadingAction": "top-header-leading-action",
+      "trailingAction": "top-header-trailing-action",
+      "inboxBadge": "top-header-badge",
+      "actionIconWrapper": "top-header-icon"
+    },
     "surface": {
       "backgroundToken": "Foundation/Background/Default",
       "shadow": "0 1px 2px rgba(0, 0, 0, 0.05)"
@@ -125,6 +136,11 @@
         "severity": "low",
         "type": "figma-technical",
         "detail": "Title + Inbox variant: one layer keeps a fully transparent fill for the inbox control hit target; not mapped to a color token by design."
+      },
+      {
+        "severity": "info",
+        "type": "structure",
+        "detail": "2026-04-08: Figma cleanup aligned with design-system conventions — `COMPONENT_SET` uses vertical auto layout (16px gap) between variant masters. Structural layers use `top-header-*` kebab-case (`top-header-accent-strip`, `top-header-content`, `top-header-title`, `top-header-leading-action` / `top-header-trailing-action`, `top-header-subtitle`, `top-header-badge`, `top-header-icon`). Title Only: removed stray empty placeholder control; title row uses auto layout (no absolute-positioned title). Accent strip node remains where variants omit the bar but is hidden (`visible: false`) so layout height stays consistent; vectors left un-flattened in automation."
       }
     ],
     "resolved": [

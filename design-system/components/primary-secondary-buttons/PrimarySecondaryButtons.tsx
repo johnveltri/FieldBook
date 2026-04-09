@@ -85,6 +85,7 @@ export type PrimarySecondaryButtonsProps = {
 
 /**
  * Primary + secondary action pair (Figma: `Primary-Secondary Buttons`, node `604:35`).
+ * Structural `data-name` values match kebab-case layers (`primary-secondary-buttons-*`).
  */
 export function PrimarySecondaryButtons({
   layout,
@@ -203,18 +204,44 @@ export function PrimarySecondaryButtons({
   };
 
   return (
-    <div className={className} style={rowStyle} role="group" aria-label="Primary and secondary actions">
-      <button type="button" onClick={onPrimaryClick} style={primaryStyle}>
+    <div
+      className={className}
+      data-name="primary-secondary-buttons"
+      style={rowStyle}
+      role="group"
+      aria-label="Primary and secondary actions"
+    >
+      <button
+        type="button"
+        data-name="primary-secondary-buttons-primary"
+        onClick={onPrimaryClick}
+        style={primaryStyle}
+      >
         {leadingPrimary != null ? (
-          <span style={{ display: 'inline-flex', flexShrink: 0 }}>{leadingPrimary}</span>
+          <span
+            data-name="primary-secondary-buttons-leading-icon"
+            style={{ display: 'inline-flex', flexShrink: 0 }}
+          >
+            {leadingPrimary}
+          </span>
         ) : null}
-        <span>{primaryLabel}</span>
+        <span data-name="primary-secondary-buttons-primary-label">{primaryLabel}</span>
       </button>
-      <button type="button" onClick={onSecondaryClick} style={secondaryStyle}>
+      <button
+        type="button"
+        data-name="primary-secondary-buttons-secondary"
+        onClick={onSecondaryClick}
+        style={secondaryStyle}
+      >
         {leadingSecondary != null ? (
-          <span style={{ display: 'inline-flex', flexShrink: 0 }}>{leadingSecondary}</span>
+          <span
+            data-name="primary-secondary-buttons-leading-icon"
+            style={{ display: 'inline-flex', flexShrink: 0 }}
+          >
+            {leadingSecondary}
+          </span>
         ) : null}
-        <span>{secondaryLabel}</span>
+        <span data-name="primary-secondary-buttons-secondary-label">{secondaryLabel}</span>
       </button>
     </div>
   );

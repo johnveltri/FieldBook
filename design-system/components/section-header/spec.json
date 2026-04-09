@@ -39,12 +39,26 @@
     "subtitleTone": "warning, info, secondary, or primary",
     "onActionClick": "optional callback when action pill is pressed"
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Section Header (vertical stack of variant masters, 16px gap)",
+      "headingRow": "section-header-heading",
+      "leadingIcon": "section-header-leading-icon",
+      "titleText": "section-header-title",
+      "subtitleBlock": "section-header-subtitle",
+      "subtitleText": "section-header-subtitle-text",
+      "action": "section-header-action",
+      "actionIcon": "section-header-action-icon",
+      "actionLabel": "section-header-action-label"
+    }
+  },
   "qualityAudit": {
     "isClean": true,
     "notes": [
       "Previous one-off Figma variants (Variant9–14, etc.) were removed; use instances + overrides for section-specific copy and icons.",
       "2026-03-28: Plugin pass bound remaining unbound solid fills inside this set to local color variables where RGBA matched a token; strokes were included—one component-set stroke color did not match any file color variable (review in Figma if it should become a token).",
-      "Text still uses assigned text styles; swap to variable-bound text styles in Figma if you add them later."
+      "Text still uses assigned text styles; swap to variable-bound text styles in Figma if you add them later.",
+      "2026-04-08: `COMPONENT_SET` uses vertical auto layout (16px gap). Structural layers use `section-header-*` kebab-case (`section-header-heading`, `section-header-leading-icon`, `section-header-title`, `section-header-subtitle` / `section-header-subtitle-text`, `section-header-action` + `section-header-action-icon` / `section-header-action-label`). `clipsContent` cleared on heading/action/subtitle frames. Vector artwork left un-flattened in automation."
     ]
   }
 }

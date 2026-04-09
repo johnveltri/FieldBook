@@ -37,6 +37,18 @@
     "radius": []
   },
   "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Bottom Nav (vertical stack of variant masters, 16px gap)",
+      "background": "bottom-nav-background",
+      "tabStrip": "bottom-nav-tab-strip",
+      "tabHome": "bottom-nav-tab-home",
+      "tabJobs": "bottom-nav-tab-jobs",
+      "tabEarnings": "bottom-nav-tab-earnings",
+      "tabContent": "bottom-nav-tab-content",
+      "tabIcon": "bottom-nav-tab-icon-{home|jobs|earnings}",
+      "tabLabel": "bottom-nav-tab-label-{home|jobs|earnings}",
+      "activeIndicator": "bottom-nav-active-indicator"
+    },
     "container": {
       "name": "Background",
       "layout": {
@@ -186,7 +198,10 @@
   ],
   "qualityAudit": {
     "isClean": true,
-    "findings": [],
+    "findings": [
+      "2026-04-08: Auto layout pass — inactive Selected-* layers removed per variant; active indicator moved into selected `bottom-nav-tab-*` as `bottom-nav-active-indicator`. Icon/label `ABSOLUTE` positioning removed; icon frames use horizontal centered auto layout (flattened vectors untouched — no `flatten()` in automation). `bottom-nav-tab-strip` horizontal padding 8px; tab cells `layoutGrow`/`FILL`. Structural rename to `bottom-nav-*` kebab-case. Verify in Figma + multi-width instances as needed.",
+      "2026-04-08: Tab layout — each `bottom-nav-tab-*` is vertical auto layout with `bottom-nav-active-indicator` (when present) first at the top; icon + label live in `bottom-nav-tab-content` with vertical `CENTER` alignment inside that frame and 2px gap. `bottom-nav-tab-content` is bottom-pinned in the tab: `primaryAxisAlignItems` `SPACE_BETWEEN` when the indicator exists, else `MAX`; content uses `layoutGrow` 0 and vertical `HUG` so the icon/label block sits on the bottom strip of the cell."
+    ],
     "resolved": [
       "All Bottom Nav color bindings now point to the canonical Color Styles collection.",
       "Background fill is bound to Foundation/Background/Default and top border stroke is bound to Foundation/Border/Subtle.",

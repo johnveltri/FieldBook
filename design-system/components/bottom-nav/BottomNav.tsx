@@ -19,6 +19,11 @@ const TABS: { id: BottomNavTab; label: string }[] = [
   { id: 'Earnings', label: 'EARNINGS' },
 ];
 
+/** Matches Figma `bottom-nav-tab-{home|jobs|earnings}` suffix. */
+function tabSlug(tab: BottomNavTab): string {
+  return tab.toLowerCase();
+}
+
 function tabIcon(tab: BottomNavTab, iconColor: string) {
   const common = {
     width: space('Spacing/12') * 2,
@@ -64,15 +69,16 @@ function tabIcon(tab: BottomNavTab, iconColor: string) {
   }
 }
 
-function selectedTabIndex(selection: BottomNavSelection): number | null {
-  if (selection === 'Home') return 0;
-  if (selection === 'Jobs') return 1;
-  if (selection === 'Earnings') return 2;
+function selectedTab(selection: BottomNavSelection): BottomNavTab | null {
+  if (selection === 'Home') return 'Home';
+  if (selection === 'Jobs') return 'Jobs';
+  if (selection === 'Earnings') return 'Earnings';
   return null;
 }
 
 /**
  * Three-tab bottom navigation (Figma: `Bottom Nav`, node 225:12089).
+ * DOM mirrors `bottom-nav-*` layers: strip → tab cells → optional indicator + `bottom-nav-tab-content` (icon + label).
  * Tokens: `../../tokens/*.json`; spec: `./spec.json`.
  */
 export function BottomNav({
@@ -87,69 +93,61 @@ export function BottomNav({
   const brand = color('Brand/Primary');
   const surfaceWhite = color('Foundation/Surface/White');
 
-  const pad = space('Spacing/12');
-  const gap = space('Spacing/12');
+  const stripPad = space('Spacing/8');
+  const tabPad = space('Spacing/12');
+  const iconPad = space('Spacing/4');
+  const contentGap = 2;
   const indicatorH = space('Spacing/4');
   const indicatorW = space('Spacing/32');
+  const iconSize = space('Spacing/12') * 2;
+  const iconFrame = iconSize + iconPad * 2;
 
   const labelStyle = typographyLabelStyle();
-  const selIdx = selectedTabIndex(selection);
-
-  const indicatorLeft =
-    selIdx === null
-      ? undefined
-      : `calc(${(selIdx + 0.5) * (100 / 3)}% - ${indicatorW / 2}px)`;
+  const active = selectedTab(selection);
 
   return (
     <nav
       className={className}
+      data-name="bottom-nav-background"
       style={{
         position: 'relative',
         width: '100%',
         maxWidth: 391,
         minHeight: 73,
         boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
         backgroundColor: bg,
         borderTop: `1px solid ${borderSubtle}`,
         ...style,
       }}
       aria-label="Primary"
     >
-      {selIdx !== null && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 2.5,
-            left: indicatorLeft,
-            width: indicatorW,
-            height: indicatorH,
-            borderRadius: 9999,
-            backgroundColor: brand,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
       <div
+        data-name="bottom-nav-tab-strip"
         style={{
+          flex: 1,
           display: 'flex',
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: 'stretch',
           justifyContent: 'center',
-          minHeight: 73,
           boxSizing: 'border-box',
+          paddingLeft: stripPad,
+          paddingRight: stripPad,
+          minHeight: 0,
         }}
       >
         {TABS.map((tab) => {
-          const isSelected =
-            selection !== 'Default' && selection === tab.id;
+          const isSelected = active !== null && active === tab.id;
           const labelColor = isSelected ? brand : textPrimary;
           const iconColor = isSelected ? brand : textPrimary;
+          const slug = tabSlug(tab.id);
 
           return (
             <button
               key={tab.id}
               type="button"
+              data-name={`bottom-nav-tab-${slug}`}
               aria-current={isSelected ? 'page' : undefined}
               onClick={() => onSelect?.(tab.id)}
               style={{
@@ -157,37 +155,68 @@ export function BottomNav({
                 minWidth: 0,
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap,
-                padding: pad,
+                alignItems: 'stretch',
+                justifyContent: isSelected ? 'space-between' : 'flex-end',
+                padding: 0,
                 border: 'none',
                 background: 'transparent',
                 cursor: onSelect ? 'pointer' : 'default',
                 WebkitTapHighlightColor: 'transparent',
               }}
             >
-              <span
+              {isSelected && (
+                <div
+                  data-name="bottom-nav-active-indicator"
+                  style={{
+                    alignSelf: 'center',
+                    width: indicatorW,
+                    height: indicatorH,
+                    borderRadius: 9999,
+                    backgroundColor: brand,
+                    pointerEvents: 'none',
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+              <div
+                data-name="bottom-nav-tab-content"
                 style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: space('Spacing/12') * 2,
-                  height: space('Spacing/12') * 2,
-                  backgroundColor: surfaceWhite,
+                  gap: contentGap,
+                  padding: tabPad,
+                  boxSizing: 'border-box',
+                  width: '100%',
                 }}
               >
-                {tabIcon(tab.id, iconColor)}
-              </span>
-              <span
-                style={{
-                  ...labelStyle,
-                  color: labelColor,
-                  textAlign: 'center',
-                }}
-              >
-                {tab.label}
-              </span>
+                <span
+                  data-name={`bottom-nav-tab-icon-${slug}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: iconFrame,
+                    height: iconFrame,
+                    padding: iconPad,
+                    boxSizing: 'border-box',
+                    backgroundColor: surfaceWhite,
+                  }}
+                >
+                  {tabIcon(tab.id, iconColor)}
+                </span>
+                <span
+                  data-name={`bottom-nav-tab-label-${slug}`}
+                  style={{
+                    ...labelStyle,
+                    color: labelColor,
+                    textAlign: 'center',
+                  }}
+                >
+                  {tab.label}
+                </span>
+              </div>
             </button>
           );
         })}

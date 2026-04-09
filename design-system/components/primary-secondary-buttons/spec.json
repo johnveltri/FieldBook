@@ -38,6 +38,14 @@
     "radius": ["Radius/12"]
   },
   "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Primary-Secondary Buttons (vertical stack of variant masters, 16px gap)",
+      "primary": "primary-secondary-buttons-primary",
+      "secondary": "primary-secondary-buttons-secondary",
+      "leadingIcon": "primary-secondary-buttons-leading-icon",
+      "primaryLabel": "primary-secondary-buttons-primary-label",
+      "secondaryLabel": "primary-secondary-buttons-secondary-label"
+    },
     "container": {
       "layout": "row",
       "gapToken": "Spacing/8",
@@ -93,7 +101,8 @@
     "notes": [
       "2026-03-28: Removed duplicate Block+Info variant that only differed by label (RESUME JOB vs MARK IN PROGRESS); use Primary=Info with text overrides.",
       "Renamed variants from Property 1 to Layout + Primary so the component set is valid.",
-      "Duplicate RESUME JOB row can be recreated as an instance of Layout=Block, Primary=Info with label override."
+      "Duplicate RESUME JOB row can be recreated as an instance of Layout=Block, Primary=Info with label override.",
+      "2026-04-08: `COMPONENT_SET` vertical auto layout (16px gap). Structural layers `primary-secondary-buttons-primary` / `secondary`; optional `primary-secondary-buttons-leading-icon` + label text nodes; `clipsContent` cleared on primary/secondary frames. Vectors left un-flattened in automation."
     ]
   }
 }
