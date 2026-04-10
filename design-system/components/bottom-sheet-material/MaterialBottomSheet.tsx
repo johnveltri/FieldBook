@@ -1,6 +1,9 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadowFromColor,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -11,10 +14,10 @@ import { PlusIcon } from '../../icons/PlusIcon';
 import { QuickCaptureTileIcon } from '../bottom-sheet-quick-capture/QuickCaptureTileIcons';
 
 const sheetShadow: CSSProperties = {
-  boxShadow: '0px 25px 50px rgba(0, 0, 0, 0.25)',
+  boxShadow: shadow('Shadow/Overlay/Default'),
 };
 
-const handleBg = 'rgba(43, 52, 65, 0.2)';
+const handleBg = colorWithAlpha('Foundation/Text/Primary', 0.2);
 
 const bodyBold = typographyBodyBoldStyle();
 const bodySmall = typographyBodySmallStyle();
@@ -186,6 +189,7 @@ function MaterialLeadIcon() {
 }
 
 export type MaterialBottomSheetProps = {
+  /** Matches Figma `Property 1` (`New Quick Material` | `New Job Material` | `New Session Material` | `Edit Session Material`). */
   variant: MaterialSheetVariant;
   materialName?: string;
   onMaterialNameChange?: (value: string) => void;
@@ -261,12 +265,13 @@ export function MaterialBottomSheet({
     backgroundColor: color('Foundation/Surface/Default'),
     outline: 'none',
     width: '100%',
-    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+    boxShadow: shadow('Shadow/Card/Default'),
   };
 
   return (
     <section
       className={className}
+      data-name="material-bottom-sheet"
       aria-labelledby={titleId}
       style={{
         width: '100%',
@@ -280,19 +285,35 @@ export function MaterialBottomSheet({
         borderBottom: 'none',
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
-        paddingLeft: space('Spacing/24'),
-        paddingRight: space('Spacing/24'),
-        paddingTop: 18,
-        paddingBottom: 18,
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: space('Spacing/16'),
         ...sheetShadow,
         ...style,
       }}
     >
       <div
+        data-name="material-content"
+        style={{
+          width: '100%',
+          maxWidth: 391,
+          boxSizing: 'border-box',
+          paddingLeft: space('Spacing/24'),
+          paddingRight: space('Spacing/24'),
+          paddingTop: 18,
+          paddingBottom: 18,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: space('Spacing/16'),
+        }}
+      >
+      <div
+        data-name="material-drag-handle"
         style={{
           width: 40,
           height: 6,
@@ -303,9 +324,10 @@ export function MaterialBottomSheet({
         aria-hidden
       />
 
-      <div style={{ width: '100%', maxWidth: 343 }}>
+      <div data-name="material-body" style={{ width: '100%', maxWidth: 343 }}>
         <button
           type="button"
+          data-name="material-back-button"
           onClick={onBack}
           style={{
             display: 'inline-flex',
@@ -320,11 +342,14 @@ export function MaterialBottomSheet({
             ...bodyBold,
           }}
         >
-          <ChevronBackIcon />
-          Back
+          <span data-name="material-back-icon">
+            <ChevronBackIcon />
+          </span>
+          <span data-name="material-back-label">Back</span>
         </button>
 
         <div
+          data-name="material-header"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -335,18 +360,22 @@ export function MaterialBottomSheet({
             minHeight: 28,
           }}
         >
+          <span data-name="material-title-icon">
+            <MaterialLeadIcon />
+          </span>
           {!isEdit ? (
             <div
+              data-name="material-title"
               style={{
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: space('Spacing/12'),
                 minWidth: 0,
+                flex: 1,
               }}
             >
-              <MaterialLeadIcon />
               <h2
+                data-name="material-title-text"
                 id={titleId}
                 style={{
                   margin: 0,
@@ -359,19 +388,29 @@ export function MaterialBottomSheet({
               </h2>
             </div>
           ) : (
-            <>
+            <div
+              data-name="material-title-row"
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: space('Spacing/12'),
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
               <div
+                data-name="material-title"
                 style={{
                   display: 'flex',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: space('Spacing/12'),
                   minWidth: 0,
                   flex: 1,
                 }}
               >
-                <MaterialLeadIcon />
                 <h2
+                  data-name="material-title-text"
                   id={titleId}
                   style={{
                     margin: 0,
@@ -386,6 +425,7 @@ export function MaterialBottomSheet({
               {variant === 'editJobMaterial' ? (
                 <button
                   type="button"
+                  data-name="material-session-pill"
                   onClick={onSessionPillPress}
                   style={{
                     display: 'inline-flex',
@@ -403,8 +443,11 @@ export function MaterialBottomSheet({
                     cursor: onSessionPillPress ? 'pointer' : 'default',
                   }}
                 >
-                  <PlusIcon size={12} style={{ color: errorText }} />
+                  <span data-name="material-session-pill-icon">
+                    <PlusIcon size={12} style={{ color: errorText }} />
+                  </span>
                   <span
+                    data-name="material-session-pill-label"
                     style={{
                       ...bodySmall,
                       color: errorText,
@@ -417,6 +460,7 @@ export function MaterialBottomSheet({
               ) : (
                 <button
                   type="button"
+                  data-name="material-session-pill"
                   onClick={onSessionPillPress}
                   style={{
                     display: 'inline-flex',
@@ -434,8 +478,11 @@ export function MaterialBottomSheet({
                     cursor: onSessionPillPress ? 'pointer' : 'default',
                   }}
                 >
-                  <PencilGlyph />
+                  <span data-name="material-session-pill-icon">
+                    <PencilGlyph />
+                  </span>
                   <span
+                    data-name="material-session-pill-label"
                     style={{
                       ...bodySmall,
                       color: errorText,
@@ -446,11 +493,12 @@ export function MaterialBottomSheet({
                   </span>
                 </button>
               )}
-            </>
+            </div>
           )}
         </div>
 
         <p
+          data-name="material-subtitle"
           style={{
             ...bodySmall,
             color: secondary,
@@ -458,10 +506,11 @@ export function MaterialBottomSheet({
             marginTop: space('Spacing/8'),
           }}
         >
-          {subtitle}
+          <span data-name="material-subtitle-text">{subtitle}</span>
         </p>
 
         <div
+          data-name="material-fields-frame"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -470,127 +519,137 @@ export function MaterialBottomSheet({
             width: '100%',
           }}
         >
-          <input
-            type="text"
-            value={materialName}
-            onChange={(e) => onMaterialNameChange?.(e.target.value)}
-            placeholder={namePlaceholder}
-            aria-label="Material name"
-            style={{
-              ...inputShell,
-              paddingLeft: 13,
-              paddingRight: 13,
-              paddingTop: 9,
-              paddingBottom: 9,
-              color: materialName ? fg : placeholderMuted,
-            }}
-          />
+          <div data-name="material-fields" style={{ display: 'flex', flexDirection: 'column', gap: space('Spacing/8'), width: '100%' }}>
+            <input
+              type="text"
+              data-name="material-name-input"
+              value={materialName}
+              onChange={(e) => onMaterialNameChange?.(e.target.value)}
+              placeholder={namePlaceholder}
+              aria-label="Material name"
+              style={{
+                ...inputShell,
+                paddingLeft: 13,
+                paddingRight: 13,
+                paddingTop: 9,
+                paddingBottom: 9,
+                color: materialName ? fg : placeholderMuted,
+              }}
+            />
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: space('Spacing/8'),
-              width: '100%',
-            }}
-          >
             <div
+              data-name="material-price-row"
               style={{
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 10,
-                flex: 1,
-                minWidth: 0,
+                gap: space('Spacing/8'),
+                width: '100%',
               }}
             >
-              <span
+              <div
+                data-name="material-price-group"
                 style={{
-                  ...bodyBold,
-                  fontSize: 11.9,
-                  color: secondary,
-                  flexShrink: 0,
-                  lineHeight: '20px',
-                }}
-                aria-hidden
-              >
-                $
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={price}
-                onChange={(e) => onPriceChange?.(e.target.value)}
-                placeholder="0.00"
-                aria-label="Price"
-                style={{
-                  ...inputShell,
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
                   flex: 1,
                   minWidth: 0,
-                  paddingLeft: space('Spacing/12'),
-                  paddingRight: space('Spacing/12'),
-                  paddingTop: space('Spacing/8'),
-                  paddingBottom: space('Spacing/8'),
-                  color: price ? fg : placeholderMuted,
                 }}
-              />
-            </div>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={quantity}
-              onChange={(e) => onQuantityChange?.(e.target.value)}
-              aria-label="Quantity"
-              style={{
-                ...inputShell,
-                width: 56,
-                flexShrink: 0,
-                padding: 9,
-                textAlign: 'center',
-                color: fg,
-              }}
-            />
-            <div style={{ position: 'relative', width: 60, flexShrink: 0 }}>
-              <select
-                value={unit}
-                onChange={(e) => onUnitChange?.(e.target.value)}
-                aria-label="Unit"
+              >
+                <span
+                  data-name="material-price-prefix"
+                  style={{
+                    ...bodyBold,
+                    fontSize: 11.9,
+                    color: secondary,
+                    flexShrink: 0,
+                    lineHeight: '20px',
+                  }}
+                  aria-hidden
+                >
+                  $
+                </span>
+                <input
+                  type="text"
+                  data-name="material-price-input"
+                  inputMode="decimal"
+                  value={price}
+                  onChange={(e) => onPriceChange?.(e.target.value)}
+                  placeholder="0.00"
+                  aria-label="Price"
+                  style={{
+                    ...inputShell,
+                    flex: 1,
+                    minWidth: 0,
+                    paddingLeft: space('Spacing/12'),
+                    paddingRight: space('Spacing/12'),
+                    paddingTop: space('Spacing/8'),
+                    paddingBottom: space('Spacing/8'),
+                    color: price ? fg : placeholderMuted,
+                  }}
+                />
+              </div>
+              <input
+                type="text"
+                data-name="material-quantity-input"
+                inputMode="numeric"
+                value={quantity}
+                onChange={(e) => onQuantityChange?.(e.target.value)}
+                aria-label="Quantity"
                 style={{
                   ...inputShell,
-                  width: '100%',
-                  height: 38,
-                  paddingLeft: 9,
-                  paddingRight: 22,
-                  paddingTop: 9,
-                  paddingBottom: 9,
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
+                  width: 56,
+                  flexShrink: 0,
+                  padding: 9,
+                  textAlign: 'center',
                   color: fg,
-                  cursor: 'pointer',
                 }}
-              >
-                {unitChoices.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
-                ))}
-              </select>
-              <span
-                style={{
-                  position: 'absolute',
-                  right: 8,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: 8.5,
-                  color: secondary,
-                  pointerEvents: 'none',
-                  lineHeight: 1,
-                }}
-                aria-hidden
-              >
-                ▼
-              </span>
+              />
+              <div data-name="material-unit-select" style={{ position: 'relative', width: 60, flexShrink: 0 }}>
+                <select
+                  value={unit}
+                  data-name="material-unit-select-input"
+                  onChange={(e) => onUnitChange?.(e.target.value)}
+                  aria-label="Unit"
+                  style={{
+                    ...inputShell,
+                    width: '100%',
+                    height: 38,
+                    paddingLeft: 9,
+                    paddingRight: 22,
+                    paddingTop: 9,
+                    paddingBottom: 9,
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    color: fg,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {unitChoices.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+                <span
+                  data-name="material-unit-select-caret"
+                  style={{
+                    position: 'absolute',
+                    right: 8,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: 8.5,
+                    color: secondary,
+                    pointerEvents: 'none',
+                    lineHeight: 1,
+                  }}
+                  aria-hidden
+                >
+                  ▼
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -599,6 +658,7 @@ export function MaterialBottomSheet({
       {!isEdit ? (
         <button
           type="button"
+          data-name="material-primary-action"
           onClick={onPrimaryAction}
           style={{
             width: '100%',
@@ -611,16 +671,17 @@ export function MaterialBottomSheet({
             border: 'none',
             backgroundColor: material,
             cursor: onPrimaryAction ? 'pointer' : 'default',
-            boxShadow: `0px 1px 2px ${materialShadow}`,
+            boxShadow: shadowFromColor(materialShadow),
             ...bodyBold,
             color: color('Foundation/Surface/Default'),
             textTransform: 'uppercase',
           }}
         >
-          {primaryLabel(variant)}
+          <span data-name="material-primary-action-label">{primaryLabel(variant)}</span>
         </button>
       ) : (
         <div
+          data-name="material-footer"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -633,6 +694,7 @@ export function MaterialBottomSheet({
         >
           <button
             type="button"
+            data-name="material-primary-action"
             onClick={onPrimaryAction}
             style={{
               flex: 1,
@@ -645,16 +707,17 @@ export function MaterialBottomSheet({
               border: 'none',
               backgroundColor: material,
               cursor: onPrimaryAction ? 'pointer' : 'default',
-              boxShadow: `0px 1px 2px ${material}`,
+              boxShadow: shadowFromColor(material),
               ...bodyBold,
               color: color('Foundation/Surface/Default'),
               textTransform: 'uppercase',
             }}
           >
-            {primaryLabel(variant)}
+            <span data-name="material-primary-action-label">{primaryLabel(variant)}</span>
           </button>
           <button
             type="button"
+            data-name="material-delete-button"
             onClick={onDelete}
             aria-label="Delete material"
             style={{
@@ -668,15 +731,18 @@ export function MaterialBottomSheet({
               paddingTop: 18,
               paddingBottom: 18,
               borderRadius: 8,
-              border: `1px solid rgba(212, 87, 42, 0.2)`,
+              border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
               backgroundColor: color('Foundation/Surface/Default'),
               cursor: onDelete ? 'pointer' : 'default',
             }}
           >
-            <TrashGlyph />
+            <span data-name="material-delete-icon">
+              <TrashGlyph />
+            </span>
           </button>
         </div>
       )}
+      </div>
     </section>
   );
 }

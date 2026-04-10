@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -11,12 +13,12 @@ import { QuickCaptureTileIcon } from '../bottom-sheet-quick-capture/QuickCapture
 import type { ActionTileKind } from '../action-tile';
 
 const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
-const panelTopBorder = 'rgba(43, 52, 65, 0.05)';
-const rowBorder = 'rgba(43, 52, 65, 0.05)';
-const panelBg = 'rgba(240, 235, 227, 0.3)';
+const panelTopBorder = color('Foundation/Border/Subtle');
+const rowBorder = color('Foundation/Border/Subtle');
+const panelBg = colorWithAlpha('Foundation/Surface/Subtle', 0.3);
 
 export const VIEW_SESSION_VARIANTS = [
   'collapsed',
@@ -197,6 +199,7 @@ export function ViewSessionCard({
 
   const headerInner = (
     <div
+      data-name="view-session-header"
       style={{
         display: 'flex',
         flexDirection: 'row',
@@ -212,6 +215,7 @@ export function ViewSessionCard({
       }}
     >
       <div
+        data-name="view-session-header-leading"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -221,6 +225,7 @@ export function ViewSessionCard({
         }}
       >
         <div
+          data-name="view-session-date-row"
           style={{
             paddingTop: space('Spacing/4'),
             paddingBottom: space('Spacing/4'),
@@ -238,13 +243,14 @@ export function ViewSessionCard({
             {dateLabel}
           </p>
         </div>
-        <div style={{ paddingTop: 1, paddingBottom: 1 }}>
+        <div data-name="view-session-time-range-row" style={{ paddingTop: 1, paddingBottom: 1 }}>
           <p style={{ margin: 0, ...timeRangeStyle, whiteSpace: 'nowrap' }}>
             {timeRangeLabel}
           </p>
         </div>
       </div>
       <div
+        data-name="view-session-header-trailing"
         style={{
           display: 'flex',
           flexDirection: 'row',
@@ -254,19 +260,23 @@ export function ViewSessionCard({
           flexShrink: 0,
         }}
       >
-        <p
-          style={{
-            margin: 0,
-            ...metric,
-            color: fg,
-            textTransform: 'none',
-            minWidth: 40,
-            textAlign: 'right',
-          }}
-        >
-          {durationLabel}
-        </p>
-        <ChevronIcon expanded={isExpanded} />
+        <div data-name="view-session-duration">
+          <p
+            style={{
+              margin: 0,
+              ...metric,
+              color: fg,
+              textTransform: 'none',
+              minWidth: 40,
+              textAlign: 'right',
+            }}
+          >
+            {durationLabel}
+          </p>
+        </div>
+        <div data-name="view-session-chevron">
+          <ChevronIcon expanded={isExpanded} />
+        </div>
       </div>
     </div>
   );
@@ -278,6 +288,7 @@ export function ViewSessionCard({
     const accent = TILE_ACCENT[kind];
     return (
       <button
+        data-name="view-session-capture-tile"
         key={kind}
         type="button"
         onClick={onClick}
@@ -322,6 +333,7 @@ export function ViewSessionCard({
 
   const expandedPanel = isExpanded ? (
     <div
+      data-name="view-session-expanded"
       style={{
         width: '100%',
         borderTop: `1px solid ${panelTopBorder}`,
@@ -334,6 +346,7 @@ export function ViewSessionCard({
       }}
     >
       <div
+        data-name="view-session-panel-inner"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -343,6 +356,7 @@ export function ViewSessionCard({
         }}
       >
         <div
+          data-name="view-session-edit-row"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -351,39 +365,43 @@ export function ViewSessionCard({
             paddingRight: space('Spacing/16'),
           }}
         >
-          <button
-            type="button"
-            onClick={onEdit}
-            style={{
-              display: 'inline-flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: space('Spacing/8'),
-              height: 24,
-              paddingLeft: space('Spacing/12'),
-              paddingRight: space('Spacing/12'),
-              paddingTop: space('Spacing/4'),
-              paddingBottom: space('Spacing/4'),
-              borderRadius: 9999,
-              border: 'none',
-              backgroundColor: errorBg,
-              cursor: onEdit ? 'pointer' : 'default',
-            }}
-          >
-            <PencilIcon />
-            <span
+          <div data-name="view-session-edit-button-wrap">
+            <button
+              data-name="view-session-edit-button"
+              type="button"
+              onClick={onEdit}
               style={{
-                ...small,
-                color: errorText,
+                display: 'inline-flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: space('Spacing/8'),
+                height: 24,
+                paddingLeft: space('Spacing/12'),
+                paddingRight: space('Spacing/12'),
+                paddingTop: space('Spacing/4'),
+                paddingBottom: space('Spacing/4'),
+                borderRadius: 9999,
+                border: 'none',
+                backgroundColor: errorBg,
+                cursor: onEdit ? 'pointer' : 'default',
               }}
             >
-              EDIT
-            </span>
-          </button>
+              <PencilIcon />
+              <span
+                style={{
+                  ...small,
+                  color: errorText,
+                }}
+              >
+                EDIT
+              </span>
+            </button>
+          </div>
         </div>
 
         <div
+          data-name="view-session-capture-section"
           style={{
             marginTop: space('Spacing/16'),
             paddingLeft: space('Spacing/16'),
@@ -395,6 +413,7 @@ export function ViewSessionCard({
           }}
         >
           <p
+            data-name="view-session-capture-heading"
             style={{
               margin: 0,
               marginBottom: space('Spacing/8'),
@@ -405,6 +424,7 @@ export function ViewSessionCard({
             Add to Session
           </p>
           <div
+            data-name="view-session-tile-row"
             style={{
               display: 'flex',
               flexDirection: 'row',
@@ -421,6 +441,7 @@ export function ViewSessionCard({
         </div>
 
         <div
+          data-name="view-session-list-section"
           style={{
             padding: space('Spacing/16'),
             width: '100%',
@@ -431,6 +452,7 @@ export function ViewSessionCard({
         >
           {variant === 'expandedAttachments' && attachments.length > 0 ? (
             <div
+              data-name="view-session-attachment-list"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -442,6 +464,7 @@ export function ViewSessionCard({
             >
               {attachments.map((row, i) => (
                 <div
+                  data-name="view-session-attachment-row"
                   key={`${row.kind}-${i}-${row.title}`}
                   style={{
                     display: 'flex',
@@ -460,6 +483,7 @@ export function ViewSessionCard({
                   }}
                 >
                   <span
+                    data-name="view-session-attachment-icon"
                     style={{
                       color: TILE_ACCENT[row.kind],
                       display: 'flex',
@@ -471,6 +495,7 @@ export function ViewSessionCard({
                     </Icon16>
                   </span>
                   <span
+                    data-name="view-session-attachment-title"
                     style={{
                       ...small,
                       color: fg,
@@ -483,6 +508,7 @@ export function ViewSessionCard({
                   </span>
                   {row.price !== undefined && row.price.length > 0 ? (
                     <span
+                      data-name="view-session-attachment-price"
                       style={{
                         ...small,
                         color: fg,
@@ -498,6 +524,7 @@ export function ViewSessionCard({
             </div>
           ) : (
             <div
+              data-name="view-session-empty"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -510,6 +537,7 @@ export function ViewSessionCard({
               }}
             >
               <p
+                data-name="view-session-empty-message"
                 style={{
                   margin: 0,
                   ...small,
@@ -529,6 +557,7 @@ export function ViewSessionCard({
 
   return (
     <section
+      data-name="view-session-card"
       className={className}
       style={{
         width: '100%',
@@ -567,10 +596,24 @@ export function ViewSessionCard({
             width: '100%',
           }}
         >
-          {headerInner}
+          {isExpanded ? (
+            <div data-name="view-session-header-wrap" style={{ width: '100%' }}>
+              {headerInner}
+            </div>
+          ) : (
+            headerInner
+          )}
         </button>
       ) : (
-        <div style={{ width: '100%' }}>{headerInner}</div>
+        <div style={{ width: '100%' }}>
+          {isExpanded ? (
+            <div data-name="view-session-header-wrap" style={{ width: '100%' }}>
+              {headerInner}
+            </div>
+          ) : (
+            headerInner
+          )}
+        </div>
       )}
 
       {expandedPanel}

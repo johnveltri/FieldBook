@@ -10,6 +10,20 @@
     "Focus": "Typed value `Foundation/Text/Primary`; 2px `Brand/PrimaryStroke`; trailing clear control on muted circle.",
     "Empty State Results": "White card, 16px radius, subtle border, centered hint copy — show when search UI is active and query empty (product logic)."
   },
+  "structure": {
+    "figmaLayerNames": {
+      "root": "search-bar",
+      "field": "search-bar-field",
+      "input": "search-bar-input",
+      "searchIcon": "search-bar-search-icon",
+      "clearButton": "search-bar-clear-button",
+      "clearIcon": "search-bar-clear-icon",
+      "emptyResultsPanel": "search-bar-empty-results-panel",
+      "emptyResultsIcon": "search-bar-empty-results-icon",
+      "emptyResultsTitle": "search-bar-empty-results-title",
+      "emptyResultsSubtitle": "search-bar-empty-results-subtitle"
+    }
+  },
   "tokens": {
     "colors": [
       "Brand/PrimaryStroke",
@@ -23,5 +37,15 @@
     "spacing": ["Spacing/4", "Spacing/8", "Spacing/10", "Spacing/12", "Spacing/16", "Spacing/20"],
     "typography": ["Typography/Body-Bold", "Typography/Input", "Typography/Input-Small"],
     "radius": ["Radius/12", "Radius/16"]
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-10: Added kebab-case structural hooks for the field, icons, clear action, and empty-results panel.",
+      "2026-04-10: Search bar remains token-driven for color, spacing, radius, and shadow; only structural naming changed."
+    ],
+    "findings": [
+      "2026-04-08: Component set `790:261` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. **Default** and **Focus**: `search-bar-search-icon` reparented under `search-bar-field` (before input/clear) so layer order matches `SearchBar.tsx`. **Empty State Results** unchanged. Root wrapper `data-name` is `search-bar` in TSX. No `flatten()` in automation."
+    ]
   }
 }

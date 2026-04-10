@@ -1,6 +1,9 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadowFromColor,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -9,10 +12,10 @@ import {
 } from '../../lib/tokens';
 
 const sheetShadow: CSSProperties = {
-  boxShadow: '0px 25px 50px rgba(0, 0, 0, 0.25)',
+  boxShadow: shadow('Shadow/Overlay/Default'),
 };
 
-const handleBg = 'rgba(43, 52, 65, 0.2)';
+const handleBg = colorWithAlpha('Foundation/Text/Primary', 0.2);
 
 const bodyBold = typographyBodyBoldStyle();
 const bodySmall = typographyBodySmallStyle();
@@ -202,7 +205,6 @@ export function EditJobSessionBottomSheet({
 
   const titleId = 'fieldbook-edit-job-session-title';
   const isSession = variant === 'editSession';
-  const isJob = variant === 'editJobPlaceholder' || variant === 'editJobFilled';
   const isPlaceholderJob = variant === 'editJobPlaceholder';
 
   const minHeight =
@@ -255,6 +257,7 @@ export function EditJobSessionBottomSheet({
       <>
         <input
           type="text"
+          data-name="edit-job-session-job-title-input"
           value={j.jobTitle}
           placeholder={JOB_PLACEHOLDER_COPY.jobTitle}
           onChange={(e) =>
@@ -265,6 +268,7 @@ export function EditJobSessionBottomSheet({
         />
         <input
           type="text"
+          data-name="edit-job-session-job-customer-input"
           value={j.customerName}
           placeholder={JOB_PLACEHOLDER_COPY.customerName}
           onChange={(e) =>
@@ -275,6 +279,7 @@ export function EditJobSessionBottomSheet({
         />
         <input
           type="text"
+          data-name="edit-job-session-job-address-input"
           value={j.addressLine1}
           placeholder={JOB_PLACEHOLDER_COPY.addressLine1}
           onChange={(e) =>
@@ -283,10 +288,28 @@ export function EditJobSessionBottomSheet({
           aria-label="Service address"
           style={inputShell(38, jc.body)}
         />
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', ...inputShell(38, jc.body), paddingLeft: 12 }}>
-          <span style={revenuePrefixStyle} aria-hidden>$</span>
+        <div
+          data-name="edit-job-session-job-revenue-row"
+          style={
+            {
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              ...inputShell(38, jc.body),
+              paddingLeft: 12,
+            }
+          }
+        >
+          <span
+            data-name="edit-job-session-job-revenue-prefix"
+            style={revenuePrefixStyle}
+            aria-hidden
+          >
+            $
+          </span>
           <input
             type="text"
+            data-name="edit-job-session-job-revenue-input"
             value={j.revenue}
             placeholder={JOB_PLACEHOLDER_COPY.revenue}
             onChange={(e) =>
@@ -307,6 +330,7 @@ export function EditJobSessionBottomSheet({
         </div>
         <input
           type="text"
+          data-name="edit-job-session-job-type-input"
           value={j.jobType}
           placeholder={JOB_PLACEHOLDER_COPY.jobType}
           onChange={(e) =>
@@ -320,6 +344,7 @@ export function EditJobSessionBottomSheet({
       <>
         <input
           type="text"
+          data-name="edit-job-session-job-title-input"
           value={j.jobTitle}
           onChange={(e) =>
             onJobChange?.({ ...j, jobTitle: e.target.value })
@@ -329,6 +354,7 @@ export function EditJobSessionBottomSheet({
         />
         <input
           type="text"
+          data-name="edit-job-session-job-customer-input"
           value={j.customerName}
           onChange={(e) =>
             onJobChange?.({ ...j, customerName: e.target.value })
@@ -337,6 +363,7 @@ export function EditJobSessionBottomSheet({
           style={inputShell(38, jc.body)}
         />
         <div
+          data-name="edit-job-session-job-address-block"
           style={{
             ...inputShell(38, jc.body),
             display: 'flex',
@@ -348,10 +375,28 @@ export function EditJobSessionBottomSheet({
           <p style={{ margin: 0, lineHeight: 'normal' }}>{j.addressLine1}</p>
           <p style={{ margin: 0, lineHeight: 'normal' }}>{j.addressLine2}</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', ...inputShell(38, jc.body), paddingLeft: 12 }}>
-          <span style={revenuePrefixStyle} aria-hidden>$</span>
+        <div
+          data-name="edit-job-session-job-revenue-row"
+          style={
+            {
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              ...inputShell(38, jc.body),
+              paddingLeft: 12,
+            }
+          }
+        >
+          <span
+            data-name="edit-job-session-job-revenue-prefix"
+            style={revenuePrefixStyle}
+            aria-hidden
+          >
+            $
+          </span>
           <input
             type="text"
+            data-name="edit-job-session-job-revenue-input"
             value={j.revenue}
             onChange={(e) =>
               onJobChange?.({ ...j, revenue: e.target.value })
@@ -371,6 +416,7 @@ export function EditJobSessionBottomSheet({
         </div>
         <input
           type="text"
+          data-name="edit-job-session-job-type-input"
           value={j.jobType}
           onChange={(e) =>
             onJobChange?.({ ...j, jobType: e.target.value })
@@ -382,17 +428,16 @@ export function EditJobSessionBottomSheet({
     );
 
   const sessionBody = (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: space('Spacing/8'),
-        width: '100%',
-      }}
-    >
-      <span style={{ ...bodySmall, color: secondary }}>Start Time</span>
+    <>
+      <span
+        data-name="edit-job-session-start-time-label"
+        style={{ ...bodySmall, color: secondary }}
+      >
+        Start Time
+      </span>
       <input
         type="text"
+        data-name="edit-job-session-start-date-input"
         value={s.startDate}
         onChange={(e) =>
           onSessionChange?.({ ...s, startDate: e.target.value })
@@ -402,6 +447,7 @@ export function EditJobSessionBottomSheet({
       />
       <input
         type="text"
+        data-name="edit-job-session-start-time-input"
         value={s.startTime}
         onChange={(e) =>
           onSessionChange?.({ ...s, startTime: e.target.value })
@@ -409,9 +455,15 @@ export function EditJobSessionBottomSheet({
         aria-label="Start time"
         style={inputShell(38)}
       />
-      <span style={{ ...bodySmall, color: secondary }}>End Time</span>
+      <span
+        data-name="edit-job-session-end-time-label"
+        style={{ ...bodySmall, color: secondary }}
+      >
+        End Time
+      </span>
       <input
         type="text"
+        data-name="edit-job-session-end-date-input"
         value={s.endDate}
         onChange={(e) =>
           onSessionChange?.({ ...s, endDate: e.target.value })
@@ -421,6 +473,7 @@ export function EditJobSessionBottomSheet({
       />
       <input
         type="text"
+        data-name="edit-job-session-end-time-input"
         value={s.endTime}
         onChange={(e) =>
           onSessionChange?.({ ...s, endTime: e.target.value })
@@ -428,12 +481,47 @@ export function EditJobSessionBottomSheet({
         aria-label="End time"
         style={inputShell(38)}
       />
+    </>
+  );
+
+  const sessionFields = (
+    <div
+      data-name="edit-job-session-session-fields"
+      style={{ marginTop: space('Spacing/8'), width: '100%' }}
+    >
+      <div
+        data-name="edit-job-session-session-fields-stack"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: space('Spacing/8'),
+          width: '100%',
+        }}
+      >
+        {sessionBody}
+      </div>
+    </div>
+  );
+
+  const jobFields = (
+    <div
+      data-name="edit-job-session-job-fields"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: space('Spacing/8'),
+        width: '100%',
+        maxWidth: 343,
+      }}
+    >
+      {children ?? defaultJobBody}
     </div>
   );
 
   return (
     <section
       className={className}
+      data-name="edit-job-session-sheet"
       aria-labelledby={titleId}
       style={{
         width: '100%',
@@ -447,154 +535,187 @@ export function EditJobSessionBottomSheet({
         borderBottom: 'none',
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
-        paddingLeft: space('Spacing/24'),
-        paddingRight: space('Spacing/24'),
-        paddingTop: 18,
-        paddingBottom: 18,
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: space('Spacing/16'),
         ...sheetShadow,
         ...style,
       }}
     >
       <div
-        style={{
-          width: 40,
-          height: 6,
-          borderRadius: 9999,
-          backgroundColor: handleBg,
-          flexShrink: 0,
-        }}
-        aria-hidden
-      />
-
-      <div
+        data-name="edit-job-session-content"
         style={{
           width: '100%',
-          maxWidth: 343,
+          maxWidth: 391,
+          boxSizing: 'border-box',
+          paddingLeft: space('Spacing/24'),
+          paddingRight: space('Spacing/24'),
+          paddingTop: 18,
+          paddingBottom: 18,
           display: 'flex',
           flexDirection: 'column',
-          gap: space('Spacing/12'),
-          flex: 1,
-          minHeight: 0,
+          alignItems: 'center',
+          gap: space('Spacing/16'),
         }}
       >
-        <button
-          type="button"
-          onClick={onBack}
+        <div
+          data-name="edit-job-session-drag-handle"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: space('Spacing/4'),
-            padding: 0,
-            margin: 0,
-            border: 'none',
-            background: 'none',
-            cursor: onBack ? 'pointer' : 'default',
-            color: backFg,
-            ...bodyBold,
-            alignSelf: 'flex-start',
+            width: 40,
+            height: 6,
+            borderRadius: 9999,
+            backgroundColor: handleBg,
+            flexShrink: 0,
           }}
-        >
-          <ChevronBackIcon />
-          Back
-        </button>
+          aria-hidden
+        />
 
         <div
+          data-name="edit-job-session-body"
+          style={{
+            width: '100%',
+            maxWidth: 343,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: space('Spacing/12'),
+            flex: isSession ? 1 : undefined,
+            minHeight: 0,
+          }}
+        >
+          <button
+            type="button"
+            data-name="edit-job-session-back-button"
+            onClick={onBack}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: space('Spacing/4'),
+              padding: 0,
+              margin: 0,
+              border: 'none',
+              background: 'none',
+              cursor: onBack ? 'pointer' : 'default',
+              color: backFg,
+              ...bodyBold,
+              alignSelf: 'flex-start',
+            }}
+          >
+            <span data-name="edit-job-session-back-icon">
+              <ChevronBackIcon />
+            </span>
+            <span data-name="edit-job-session-back-label">Back</span>
+          </button>
+
+          <div
+            data-name="edit-job-session-header"
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: space('Spacing/12'),
+            }}
+          >
+            {isSession ? (
+              <span data-name="edit-job-session-title-icon">
+                <SessionClockIcon />
+              </span>
+            ) : null}
+            <div
+              data-name="edit-job-session-title"
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                minWidth: 0,
+              }}
+            >
+              <h2
+                data-name="edit-job-session-title-text"
+                id={titleId}
+                style={{
+                  margin: 0,
+                  ...typographyTitleH3Style(),
+                  color: fg,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {isSession ? 'Edit Session' : 'Edit Job'}
+              </h2>
+            </div>
+          </div>
+
+          {isSession ? sessionFields : null}
+        </div>
+
+        {!isSession ? jobFields : null}
+
+        <div
+          data-name="edit-job-session-footer"
           style={{
             display: 'flex',
             flexDirection: 'row',
-            alignItems: 'center',
-            gap: space('Spacing/12'),
+            alignItems: 'stretch',
+            gap: 18,
+            width: '100%',
+            maxWidth: 343,
+            minHeight: 71,
           }}
         >
-          {isSession ? <SessionClockIcon /> : null}
-          <h2
-            id={titleId}
+          <button
+            type="button"
+            data-name="edit-job-session-primary-action"
+            onClick={onSaveChanges}
             style={{
-              margin: 0,
-              ...typographyTitleH3Style(),
-              color: fg,
-              whiteSpace: 'nowrap',
+              flex: 1,
+              minWidth: 0,
+              paddingTop: 17,
+              paddingBottom: 17,
+              paddingLeft: 100,
+              paddingRight: 100,
+              borderRadius: 12,
+              border: 'none',
+              backgroundColor: accent,
+              cursor: onSaveChanges ? 'pointer' : 'default',
+              boxShadow: shadowFromColor(primary),
+              ...bodyBold,
+              color: surface,
+              textTransform: 'uppercase',
             }}
           >
-            {isSession ? 'Edit Session' : 'Edit Job'}
-          </h2>
-        </div>
-
-        {isSession ? (
-          <div style={{ marginTop: space('Spacing/8') }}>{sessionBody}</div>
-        ) : (
-          <div
+            <span data-name="edit-job-session-primary-action-label">
+              SAVE CHANGES
+            </span>
+          </button>
+          <button
+            type="button"
+            data-name="edit-job-session-delete-button"
+            onClick={onDelete}
+            aria-label="Delete"
             style={{
+              flexShrink: 0,
+              width: 48,
               display: 'flex',
-              flexDirection: 'column',
-              gap: space('Spacing/8'),
-              width: '100%',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingLeft: 14,
+              paddingRight: 14,
+              paddingTop: 18,
+              paddingBottom: 18,
+              borderRadius: 8,
+              border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
+              backgroundColor: surface,
+              cursor: onDelete ? 'pointer' : 'default',
             }}
           >
-            {children ?? defaultJobBody}
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'stretch',
-          gap: 18,
-          width: '100%',
-          maxWidth: 343,
-          minHeight: 71,
-        }}
-      >
-        <button
-          type="button"
-          onClick={onSaveChanges}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            paddingTop: 17,
-            paddingBottom: 17,
-            paddingLeft: 100,
-            paddingRight: 100,
-            borderRadius: 12,
-            border: 'none',
-            backgroundColor: accent,
-            cursor: onSaveChanges ? 'pointer' : 'default',
-            boxShadow: `0px 1px 2px ${primary}`,
-            ...bodyBold,
-            color: surface,
-            textTransform: 'uppercase',
-          }}
-        >
-          SAVE CHANGES
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label="Delete"
-          style={{
-            flexShrink: 0,
-            width: 48,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingLeft: 14,
-            paddingRight: 14,
-            paddingTop: 18,
-            paddingBottom: 18,
-            borderRadius: 8,
-            border: `1px solid rgba(212, 87, 42, 0.2)`,
-            backgroundColor: surface,
-            cursor: onDelete ? 'pointer' : 'default',
-          }}
-        >
-          <TrashGlyph />
-        </button>
+            <span data-name="edit-job-session-delete-icon">
+              <TrashGlyph />
+            </span>
+          </button>
+        </div>
       </div>
     </section>
   );

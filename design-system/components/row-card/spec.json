@@ -16,6 +16,24 @@
     "emptyCard": "White surface; centered `Foundation/Text/Secondary` single line.",
     "emptyWithButton": "White surface; column: empty message + pill button (`Foundation/Surface/Subtle`, `Typography/LABEL`). Taller frame (90px)."
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Row Card (vertical stack of variant masters, 16px gap)",
+      "root": "row-card (variant master surface)",
+      "main": "row-card-main",
+      "trailing": "row-card-trailing",
+      "leading": "row-card-leading (count/icon well)",
+      "leadingValue": "row-card-leading-value (metric text in well)",
+      "leadingIcon": "row-card-leading-icon (plus slot or clock vectors)",
+      "leadingRow": "row-card-leading-row (activity: wraps icon frame)",
+      "titleStack": "row-card-title-stack",
+      "titleLine": "row-card-title-line",
+      "subtitleLine": "row-card-subtitle-line",
+      "missingDetail": "row-card-missing-detail (incomplete job second line)",
+      "emptyMessage": "row-card-empty-message",
+      "emptyAction": "row-card-empty-action"
+    }
+  },
   "tokens": {
     "colors": [
       "Brand/Primary",
@@ -45,5 +63,10 @@
       "Typography/Metric-S"
     ],
     "radius": ["Radius/16"]
+  },
+  "qualityAudit": {
+    "findings": [
+      "2026-04-08: Component set `786:28` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Structural frames renamed to `row-card-*` kebab-case: main/trailing split where two columns; `row-card-leading` + `row-card-leading-value` or `row-card-leading-icon`; activity uses `row-card-leading-row` → `row-card-leading-icon`; title stack uses `row-card-title-line` / `row-card-subtitle-line`, incomplete uses `row-card-missing-detail`; empty states use `row-card-empty-message` and `row-card-empty-action`. No `flatten()` in automation. React `RowCard.tsx` mirrors layers via `data-name`."
+    ]
   }
 }

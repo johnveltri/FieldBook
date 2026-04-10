@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadowFromColor,
   space,
   typographyBodyBoldStyle,
   typographyMetricStyle,
@@ -78,10 +80,10 @@ export function FieldBookCtaButton({
   const brand = color('Brand/Primary');
   const deleteIcon = color('Semantic/Status/Error/Text');
   const noteShadow: CSSProperties = {
-    boxShadow: `0px 1px 2px ${note}`,
+    boxShadow: shadowFromColor(note),
   };
   const xlShadow: CSSProperties = {
-    boxShadow: `0px 1px 2px ${note}`,
+    boxShadow: shadowFromColor(note),
   };
 
   const resolvedPrimaryLabel =
@@ -111,6 +113,7 @@ export function FieldBookCtaButton({
   if (variant === 'brandPrimaryXl') {
     return (
       <button
+        data-name="field-book-cta-xl"
         type="button"
         className={className}
         onClick={onPrimaryClick}
@@ -123,7 +126,9 @@ export function FieldBookCtaButton({
           ...style,
         }}
       >
-        <span style={labelBrandXl}>{resolvedPrimaryLabel}</span>
+        <span data-name="field-book-cta-label" style={labelBrandXl}>
+          {resolvedPrimaryLabel}
+        </span>
       </button>
     );
   }
@@ -131,6 +136,7 @@ export function FieldBookCtaButton({
   if (variant === 'notePrimary') {
     return (
       <button
+        data-name="field-book-cta-primary"
         type="button"
         className={className}
         onClick={onPrimaryClick}
@@ -143,13 +149,16 @@ export function FieldBookCtaButton({
           ...style,
         }}
       >
-        <span style={labelNotePrimary}>{resolvedPrimaryLabel}</span>
+        <span data-name="field-book-cta-label" style={labelNotePrimary}>
+          {resolvedPrimaryLabel}
+        </span>
       </button>
     );
   }
 
   return (
     <div
+      data-name="field-book-cta-with-delete"
       className={className}
       style={{
         display: 'flex',
@@ -165,6 +174,7 @@ export function FieldBookCtaButton({
       }}
     >
       <button
+        data-name="field-book-cta-primary"
         type="button"
         onClick={onPrimaryClick}
         style={{
@@ -186,9 +196,12 @@ export function FieldBookCtaButton({
           ...noteShadow,
         }}
       >
-        <span style={labelNotePrimary}>{resolvedPrimaryLabel}</span>
+        <span data-name="field-book-cta-label" style={labelNotePrimary}>
+          {resolvedPrimaryLabel}
+        </span>
       </button>
       <button
+        data-name="field-book-cta-delete"
         type="button"
         onClick={onDeleteClick}
         aria-label="Delete"
@@ -200,7 +213,7 @@ export function FieldBookCtaButton({
           paddingTop: 18,
           paddingBottom: 18,
           borderRadius: 8,
-          border: `1px solid rgba(212, 87, 42, 0.2)`,
+          border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
           backgroundColor: surfaceWhite,
           cursor: onDeleteClick ? 'pointer' : 'default',
           display: 'flex',
@@ -208,7 +221,9 @@ export function FieldBookCtaButton({
           justifyContent: 'flex-end',
         }}
       >
-        <TrashGlyph strokeColor={deleteIcon} />
+        <span data-name="field-book-cta-delete-icon">
+          <TrashGlyph strokeColor={deleteIcon} />
+        </span>
       </button>
     </div>
   );

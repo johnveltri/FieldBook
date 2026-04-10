@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  radius,
+  shadow,
   space,
   typographyLabelStyle,
   typographyMetricStyle,
@@ -10,10 +12,6 @@ import {
 const labelText = typographyLabelStyle();
 const metricText = typographyMetricStyle();
 const metricXL = typographyMetricXLStyle();
-
-const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
-};
 
 const borderSubtle = color('Foundation/Border/Subtle');
 const textSecondary = color('Foundation/Text/Secondary');
@@ -103,6 +101,7 @@ export function MetricCard({
 
   return (
     <section
+      data-name="metric-card"
       className={className}
       style={{
         width: '100%',
@@ -112,16 +111,17 @@ export function MetricCard({
         flexDirection: 'column',
         alignItems: 'stretch',
         gap: sectionCount > 1 ? 3 : 0,
-        borderRadius: 24,
+        borderRadius: radius('Radius/24'),
         border: `1px solid ${borderSubtle}`,
         backgroundColor: color('Foundation/Surface/Default'),
-        ...cardShadow,
+        boxShadow: shadow('Shadow/Card/Default'),
         ...pad,
         ...style,
       }}
     >
       {primary ? (
         <div
+          data-name="metric-card-primary"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -131,6 +131,7 @@ export function MetricCard({
           }}
         >
           <div
+            data-name="metric-card-metric"
             style={{
               ...labelText,
               color: textSecondary,
@@ -141,6 +142,7 @@ export function MetricCard({
             {primary.label}
           </div>
           <div
+            data-name="metric-card-metric-value"
             style={{
               ...metricXL,
               color: textSuccess,
@@ -160,6 +162,7 @@ export function MetricCard({
 
       {secondary ? (
         <div
+          data-name="metric-card-secondary"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -186,6 +189,7 @@ export function MetricCard({
 
       {tertiary ? (
         <div
+          data-name="metric-card-tertiary"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -204,6 +208,7 @@ export function MetricCard({
             column={tertiary.left}
             vDividerRight={vDivider}
             widthStyle={{ flex: '1 1 0', minWidth: 0 }}
+            slot="left"
           />
           <MetricTripleCell
             column={tertiary.center}
@@ -215,11 +220,13 @@ export function MetricCard({
               paddingRight: space('Spacing/12'),
             }}
             center
+            slot="center"
           />
           <MetricTripleCell
             column={tertiary.right}
             vDividerRight="none"
             widthStyle={{ flex: '1 1 0', minWidth: 0 }}
+            slot="right"
           />
         </div>
       ) : null}
@@ -240,6 +247,7 @@ function MetricPairCell({
   const tone = column.tone ?? 'primary';
   return (
     <div
+      data-name={`metric-card-${position}`}
       style={{
         flex: '1 1 0',
         minWidth: 0,
@@ -250,6 +258,7 @@ function MetricPairCell({
       }}
     >
       <div
+        data-name="metric-card-metric"
         style={{
           ...labelText,
           color: textSecondary,
@@ -262,6 +271,7 @@ function MetricPairCell({
         {column.label}
       </div>
       <div
+        data-name="metric-card-metric-value"
         style={{
           ...metricText,
           color: toneColor(tone),
@@ -285,11 +295,13 @@ function MetricTripleCell({
   vDividerRight,
   widthStyle,
   center,
+  slot,
 }: {
   column: MetricTripleColumn;
   vDividerRight: string;
   widthStyle: CSSProperties;
   center?: boolean;
+  slot: 'left' | 'center' | 'right';
 }) {
   const tone = column.tone ?? 'primary';
   const align = column.align ?? (center ? 'center' : 'start');
@@ -304,6 +316,7 @@ function MetricTripleCell({
 
   return (
     <div
+      data-name={`metric-card-${slot}`}
       style={{
         ...widthStyle,
         display: 'flex',
@@ -314,6 +327,7 @@ function MetricTripleCell({
       }}
     >
       <div
+        data-name="metric-card-metric"
         style={{
           ...labelText,
           color: textSecondary,
@@ -326,6 +340,7 @@ function MetricTripleCell({
         {column.label}
       </div>
       <div
+        data-name="metric-card-metric-value"
         style={{
           ...metricText,
           color: toneColor(tone),

@@ -85,6 +85,7 @@ export function StatusPill({ kind, label, className, style }: StatusPillProps) {
   return (
     <span
       className={className}
+      data-name="status-pill"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -100,7 +101,7 @@ export function StatusPill({ kind, label, className, style }: StatusPillProps) {
         ...style,
       }}
     >
-      {text}
+      <span data-name="status-pill-label">{text}</span>
     </span>
   );
 }

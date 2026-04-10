@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'react';
 import { PlusIcon } from '../../icons/PlusIcon';
-import { color, space, typographyBodySmallStyle } from '../../lib/tokens';
+import { color, shadow, space, typographyBodySmallStyle } from '../../lib/tokens';
 
 /** Subtle single shadow (matches reduced Figma DROP_SHADOW on FAB variants). */
 const fabShadow: CSSProperties = {
-  boxShadow: '0px 2px 6px 0px rgba(212, 87, 42, 0.16)',
+  boxShadow: shadow('Shadow/Accent/Brand'),
 };
 
 export const FLOATING_ACTION_VARIANTS = ['icon', 'extended'] as const;
@@ -32,6 +32,7 @@ const labelStyle: CSSProperties = {
 /**
  * Floating action button (Figma component set `613:4`, variants `Style=Icon` | `Style=Extended`).
  * Uses shared {@link PlusIcon} (same asset as Section Header `371:2175`).
+ * `data-name` matches kebab-case Figma layers (`floating-action-button-*`).
  */
 export function FloatingActionButton({
   variant,
@@ -48,6 +49,7 @@ export function FloatingActionButton({
     return (
       <button
         type="button"
+        data-name="floating-action-button"
         onClick={onClick}
         aria-label={ariaLabel ?? 'Add'}
         className={className}
@@ -67,7 +69,9 @@ export function FloatingActionButton({
           ...style,
         }}
       >
-        <PlusIcon size={28} />
+        <span data-name="floating-action-button-icon" style={{ display: 'inline-flex', lineHeight: 0 }}>
+          <PlusIcon size={28} />
+        </span>
       </button>
     );
   }
@@ -75,6 +79,7 @@ export function FloatingActionButton({
   return (
     <button
       type="button"
+      data-name="floating-action-button"
       onClick={onClick}
       aria-label={ariaLabel ?? label}
       className={className}
@@ -94,13 +99,29 @@ export function FloatingActionButton({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: space('Spacing/8'),
         ...fabShadow,
         ...style,
       }}
     >
-      <PlusIcon size={20} />
-      <span style={labelStyle}>{label}</span>
+      <span
+        data-name="floating-action-button-extended-body"
+        style={{
+          display: 'inline-flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: space('Spacing/8'),
+        }}
+      >
+        <span data-name="floating-action-button-icon" style={{ display: 'inline-flex', lineHeight: 0 }}>
+          <PlusIcon size={20} />
+        </span>
+        <span data-name="floating-action-button-label">
+          <span data-name="floating-action-button-label-text" style={labelStyle}>
+            {label}
+          </span>
+        </span>
+      </span>
     </button>
   );
 }

@@ -2,7 +2,8 @@
   "component": {
     "name": "Bottom Sheet: Choose Job",
     "figmaNodeId": "1075:1948",
-    "kind": "frame",
+    "kind": "componentSet",
+    "variantProperty": "Property 1",
     "description": "Second step after quick capture: back affordance, contextual Title-H3, full-width accent quick-action row (icon well + two lines), LABEL divider “or attach to existing job”, then a stack of simple job row cards.",
     "dimensions": {
       "width": 391,
@@ -30,6 +31,31 @@
     },
     "quickIcons": {
       "note": "Reuses `QuickCaptureTileIcon` from Quick Capture sheet for the 40px accent well."
+    }
+  },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Bottom Sheet: Choose Job (vertical stack of variant masters, 16px gap)",
+      "surface": "choose-job-sheet",
+      "handleWrap": "choose-job-sheet-handle-wrap (TSX only; Figma uses handle bar under surface)",
+      "handle": "choose-job-sheet-handle",
+      "content": "choose-job-sheet-content",
+      "header": "choose-job-sheet-header (sheet title text; back button is a sibling frame)",
+      "backButton": "choose-job-sheet-back-button",
+      "backLabelWrap": "choose-job-sheet-back-label-wrap",
+      "backLabel": "choose-job-sheet-back-label",
+      "backIcon": "choose-job-sheet-back-icon",
+      "title": "choose-job-sheet-title",
+      "jobList": "choose-job-sheet-job-list (featured Row Card, divider, simple job Row Cards)",
+      "quickAction": "choose-job-sheet-quick-action",
+      "quickActionContent": "choose-job-sheet-quick-action-content (TSX)",
+      "quickActionIcon": "choose-job-sheet-quick-action-icon (TSX)",
+      "quickActionCopy": "choose-job-sheet-quick-action-copy (TSX)",
+      "divider": "choose-job-sheet-divider",
+      "dividerLineLeft": "choose-job-sheet-divider-line-left",
+      "dividerLabelWrap": "choose-job-sheet-divider-label-wrap",
+      "dividerLabel": "choose-job-sheet-divider-label",
+      "dividerLineRight": "choose-job-sheet-divider-line-right"
     }
   },
   "tokens": {
@@ -84,7 +110,11 @@
     "isClean": true,
     "notes": [
       "2026-04-07: Figma frame name restored to “Bottom Sheet: Choose Job”. Code: `ChooseJobBottomSheet` in `bottom-sheet-choose-job/`.",
+      "2026-04-10: Added kebab-case structural hooks for the sheet wrapper, handle, header, quick-action row, divider, and job list.",
       "Material variant uses `Semantic/Status/Success/Text` for the featured row fill in Figma (`1075:2030`); other non-session kinds use activity / info tokens per file."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1075:1948` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Session master (`1075:1947`) surface corrected to `choose-job-sheet` (was mislabeled `choose-job-sheet-content`); `choose-job-sheet-body` → `choose-job-sheet-content`. All six variants: `Card Rows` → `choose-job-sheet-job-list`; `Heading` / `choose-job-sheet-header-title` → `choose-job-sheet-header` + `choose-job-sheet-title`; `Back Button` → `choose-job-sheet-back-button` (+ label wrap / label / icon); featured Row Card instance → `choose-job-sheet-quick-action`; divider container → `choose-job-sheet-divider` (+ line-left/right, label wrap, label). React keeps a single `choose-job-sheet-header` wrapper with back + title; Figma keeps title header frame and back as siblings under content. No `flatten()` in automation."
     ]
   }
 }

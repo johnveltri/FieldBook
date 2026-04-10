@@ -9,6 +9,17 @@
     "Job Left | Middle | Right": "Preset copy All / Open / Paid with selection on first, second, or third tab.",
     "Earnings Left | Middle | Right": "Preset copy This week / This month / This year."
   },
+  "structure": {
+    "figmaLayerNames": {
+      "root": "page-tabs",
+      "tab0": "page-tabs-tab-0",
+      "tab0Label": "page-tabs-tab-0-label",
+      "tab1": "page-tabs-tab-1",
+      "tab1Label": "page-tabs-tab-1-label",
+      "tab2": "page-tabs-tab-2",
+      "tab2Label": "page-tabs-tab-2-label"
+    }
+  },
   "tokens": {
     "colors": [
       "Foundation/Surface/Default",
@@ -19,5 +30,15 @@
     "spacing": ["Spacing/4", "Spacing/12"],
     "typography": ["Typography/LABEL"],
     "radius": ["9999 (pill)"]
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-10: Added kebab-case `page-tabs-*` structural hooks in TSX and spec.",
+      "2026-04-10: Component remains token-driven; no layout or shadow change was needed for the structure pass."
+    ],
+    "findings": [
+      "2026-04-08: Component set `806:20` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Each variant’s three segments renamed from mixed `page-tabs-tab-N-label` / `Button` to `page-tabs-tab-0` | `page-tabs-tab-1` | `page-tabs-tab-2` with TEXT layers `page-tabs-tab-0-label` … `page-tabs-tab-2-label` (matches `PageTabs.tsx`). Variant master node names (`page-tabs-tab-0`…`tab-5`) unchanged—organizational only. No `flatten()` in automation."
+    ]
   }
 }

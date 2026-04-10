@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -11,11 +13,11 @@ import { QuickCaptureTileIcon } from '../bottom-sheet-quick-capture/QuickCapture
 import { RowCard } from '../row-card';
 
 const sheetShadow: CSSProperties = {
-  boxShadow: '0px 25px 50px rgba(0, 0, 0, 0.25)',
+  boxShadow: shadow('Shadow/Overlay/Default'),
 };
 
 const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 const bodyBold = typographyBodyBoldStyle();
@@ -139,7 +141,7 @@ export function ChooseSessionBottomSheet({
   const neutralBg = color('Semantic/Status/Neutral/BG');
   const secondaryWell = color('Foundation/Text/Secondary');
   const sheetTitleId = 'fieldbook-choose-session-title';
-  const wellBg = 'rgba(250, 246, 240, 0.2)';
+  const wellBg = colorWithAlpha('Foundation/Background/Default', 0.2);
 
   const showList =
     variant === 'newAttachmentForSession' ||
@@ -184,6 +186,7 @@ export function ChooseSessionBottomSheet({
 
   return (
     <section
+      data-name="bottom-sheet-choose-session"
       className={className}
       aria-labelledby={sheetTitleId}
       style={{
@@ -214,6 +217,7 @@ export function ChooseSessionBottomSheet({
         }}
       >
         <div
+          data-name="bottom-sheet-choose-session-handle"
           style={{
             width: 40,
             height: 6,
@@ -225,7 +229,7 @@ export function ChooseSessionBottomSheet({
         />
       </div>
 
-      <div style={{ paddingTop: space('Spacing/32') }}>
+      <div data-name="bottom-sheet-choose-session-content" style={{ paddingTop: space('Spacing/32') }}>
         <div
           style={{
             display: 'flex',
@@ -236,6 +240,7 @@ export function ChooseSessionBottomSheet({
           }}
         >
           <button
+            data-name="bottom-sheet-choose-session-back"
             type="button"
             onClick={onBack}
             style={{
@@ -255,10 +260,13 @@ export function ChooseSessionBottomSheet({
               flexShrink: 0,
             }}
           >
-            <ChevronBackIcon />
-            Back
+            <span data-name="bottom-sheet-choose-session-back-icon" style={{ display: 'inline-flex' }}>
+              <ChevronBackIcon />
+            </span>
+            <span data-name="bottom-sheet-choose-session-back-label">Back</span>
           </button>
           <h2
+            data-name="bottom-sheet-choose-session-heading"
             id={sheetTitleId}
             style={{
               position: 'absolute',
@@ -326,7 +334,7 @@ export function ChooseSessionBottomSheet({
                 <div
                   style={{
                     ...bodySmall,
-                    color: 'rgba(255, 255, 255, 0.7)',
+                  color: colorWithAlpha('Foundation/Surface/Default', 0.7),
                   }}
                 >
                   Save as unassigned — assign to a session later
@@ -481,6 +489,7 @@ export function ChooseSessionBottomSheet({
 
         {showDivider ? (
           <div
+            data-name="bottom-sheet-choose-session-divider"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -492,6 +501,7 @@ export function ChooseSessionBottomSheet({
             }}
           >
             <div
+              data-name="bottom-sheet-choose-session-divider-line-start"
               style={{
                 height: 1,
                 flex: 1,
@@ -501,6 +511,7 @@ export function ChooseSessionBottomSheet({
               aria-hidden
             />
             <span
+              data-name="bottom-sheet-choose-session-divider-label"
               style={{
                 ...labelDivider,
                 color: color('Foundation/Text/Secondary'),
@@ -511,6 +522,7 @@ export function ChooseSessionBottomSheet({
               {dividerLabel}
             </span>
             <div
+              data-name="bottom-sheet-choose-session-divider-line-end"
               style={{
                 height: 1,
                 flex: 1,
@@ -524,6 +536,7 @@ export function ChooseSessionBottomSheet({
 
         {showList ? (
           <div
+            data-name="bottom-sheet-choose-session-card-rows"
             style={{
               display: 'flex',
               flexDirection: 'column',

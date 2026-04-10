@@ -19,6 +19,15 @@
       }
     }
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Floating Action Button (vertical stack of variant masters, 16px gap)",
+      "iconFrame": "floating-action-button-icon",
+      "extendedBody": "floating-action-button-extended-body",
+      "label": "floating-action-button-label",
+      "labelText": "floating-action-button-label-text"
+    }
+  },
   "variants": {
     "icon": {
       "sizePx": 56,
@@ -47,6 +56,12 @@
     "label": "optional; extended only, e.g. New Job",
     "onClick": "handler; parent decides bottom sheet vs navigation",
     "ariaLabel": "required meaningful name for icon-only; extended can default from label"
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-08: `COMPONENT_SET` vertical auto layout (16px gap). Renamed layers to `floating-action-button-*` (icon frame, extended horizontal body, label + label text). `clipsContent` cleared on renamed frames. No `flatten()` in automation."
+    ]
   },
   "screenPlacement": {
     "figmaFrame": { "nodeId": "12:9727", "name": "Home / Default", "width": 393 },

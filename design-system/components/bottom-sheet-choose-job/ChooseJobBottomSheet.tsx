@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -12,11 +14,11 @@ import { RowCard } from '../row-card';
 import type { ActionTileKind } from '../action-tile';
 
 const sheetShadow: CSSProperties = {
-  boxShadow: '0px 25px 50px rgba(0, 0, 0, 0.25)',
+  boxShadow: shadow('Shadow/Overlay/Default'),
 };
 
 const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 const bodyBold = typographyBodyBoldStyle();
@@ -137,11 +139,12 @@ export function ChooseJobBottomSheet({
   const actionSubtitle =
     captureKind === 'startSession' ? sessionSubtitle() : inboxSubtitle();
 
-  const wellBg = 'rgba(250, 246, 240, 0.2)';
+  const wellBg = colorWithAlpha('Foundation/Background/Default', 0.2);
 
   return (
     <section
       className={className}
+      data-name="choose-job-sheet"
       aria-labelledby={sheetTitleId}
       style={{
         width: '100%',
@@ -163,6 +166,7 @@ export function ChooseJobBottomSheet({
       }}
     >
       <div
+        data-name="choose-job-sheet-handle-wrap"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -171,6 +175,7 @@ export function ChooseJobBottomSheet({
         }}
       >
         <div
+          data-name="choose-job-sheet-handle"
           style={{
             width: 40,
             height: 6,
@@ -182,8 +187,9 @@ export function ChooseJobBottomSheet({
         />
       </div>
 
-      <div style={{ paddingTop: space('Spacing/32') }}>
+      <div data-name="choose-job-sheet-content" style={{ paddingTop: space('Spacing/32') }}>
         <div
+          data-name="choose-job-sheet-header"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -194,6 +200,7 @@ export function ChooseJobBottomSheet({
         >
           <button
             type="button"
+            data-name="choose-job-sheet-back-button"
             onClick={onBack}
             style={{
               position: 'relative',
@@ -212,11 +219,14 @@ export function ChooseJobBottomSheet({
               flexShrink: 0,
             }}
           >
-            <ChevronBackIcon />
-            Back
+            <span data-name="choose-job-sheet-back-icon">
+              <ChevronBackIcon />
+            </span>
+            <span data-name="choose-job-sheet-back-label">Back</span>
           </button>
           <h2
             id={sheetTitleId}
+            data-name="choose-job-sheet-title"
             style={{
               position: 'absolute',
               left: 0,
@@ -235,6 +245,7 @@ export function ChooseJobBottomSheet({
 
         <button
           type="button"
+          data-name="choose-job-sheet-quick-action"
           onClick={onQuickAction}
           style={{
             width: '100%',
@@ -257,6 +268,7 @@ export function ChooseJobBottomSheet({
           }}
         >
           <div
+            data-name="choose-job-sheet-quick-action-content"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -266,6 +278,7 @@ export function ChooseJobBottomSheet({
             }}
           >
             <div
+              data-name="choose-job-sheet-quick-action-icon"
               style={{
                 width: 40,
                 height: 40,
@@ -283,6 +296,7 @@ export function ChooseJobBottomSheet({
               <QuickCaptureTileIcon kind={captureKind} />
             </div>
             <div
+              data-name="choose-job-sheet-quick-action-copy"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -301,7 +315,7 @@ export function ChooseJobBottomSheet({
               <div
                 style={{
                   ...bodySmall,
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: colorWithAlpha('Foundation/Surface/Default', 0.7),
                 }}
               >
                 {actionSubtitle}
@@ -311,6 +325,7 @@ export function ChooseJobBottomSheet({
         </button>
 
         <div
+          data-name="choose-job-sheet-divider"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -331,6 +346,7 @@ export function ChooseJobBottomSheet({
             aria-hidden
           />
           <span
+            data-name="choose-job-sheet-divider-label"
             style={{
               ...labelDivider,
               color: color('Foundation/Text/Secondary'),
@@ -352,6 +368,7 @@ export function ChooseJobBottomSheet({
         </div>
 
         <div
+          data-name="choose-job-sheet-job-list"
           style={{
             display: 'flex',
             flexDirection: 'column',

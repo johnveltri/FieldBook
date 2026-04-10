@@ -3,7 +3,7 @@
     "name": "View Notes",
     "figmaNodeId": "1287:432",
     "kind": "componentSet",
-    "description": "Card grouping field notes: warm **Unassigned** band (`Foundation/Background/Default` + `Typography/LABEL` secondary), stacked rows with 16px activity icon + `Typography/Body` excerpt + `Typography/Body-Small` date. **Notes Multi Session** adds a top-divided block with the same band behind **{date} SESSION** and additional rows (e.g. material-styled line in reference).",
+    "description": "Card grouping field notes: warm **Unassigned** band (`Foundation/Background/Default` + `Typography/LABEL` secondary), stacked rows with 16px activity icon + `Typography/Body` excerpt + `Typography/Body-Small` date. **Notes Multi Session** adds a top-divided block with the same band behind **{date} SESSION** and additional rows (e.g. material-styled line in reference). The Figma file uses a vertical stack of variant masters under the `View Notes` component set.",
     "dimensions": {
       "width": 353,
       "outerPaddingY": 9
@@ -12,6 +12,36 @@
       "Property 1=Notes Multi Session": "1287:431",
       "Property 1=Notes Same Session": "1287:537",
       "Property 1=Notes Single Session": "1287:586"
+    }
+  },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "View Notes (vertical stack of variant masters, 16px gap)",
+      "card": "view-notes-card",
+      "cardSurface": "view-notes-card-surface",
+      "body": "view-notes-body",
+      "bucketHeader": "view-notes-bucket-header",
+      "bucketLabel": "view-notes-bucket-label",
+      "unassignedSection": "view-notes-unassigned-section",
+      "noteRow": "view-notes-note-row",
+      "noteIcon": "view-notes-note-icon",
+      "noteIconFrame": "view-notes-note-icon-frame",
+      "noteContent": "view-notes-note-content",
+      "noteExcerptWrap": "view-notes-note-excerpt-wrap",
+      "noteExcerpt": "view-notes-note-excerpt",
+      "noteDateWrap": "view-notes-note-date-wrap",
+      "noteDate": "view-notes-note-date",
+      "sessionSection": "view-notes-session-section",
+      "sessionHeader": "view-notes-session-header",
+      "sessionHeaderText": "view-notes-session-header-text",
+      "sessionNotes": "view-notes-session-notes",
+      "sessionNoteRow": "view-notes-session-note-row",
+      "sessionNoteIcon": "view-notes-session-note-icon",
+      "sessionNoteContent": "view-notes-session-note-content",
+      "sessionNoteExcerptWrap": "view-notes-session-note-excerpt-wrap",
+      "sessionNoteExcerpt": "view-notes-session-note-excerpt",
+      "sessionNoteDateWrap": "view-notes-session-note-date-wrap",
+      "sessionNoteDate": "view-notes-session-note-date"
     }
   },
   "codeVariantMap": {
@@ -42,7 +72,8 @@
   "qualityAudit": {
     "isClean": true,
     "notes": [
-      "2026-04-07: `ViewNotesCard` in `view-notes/` from Figma `1287:432`. Icons via `QuickCaptureTileIcon` scaled to ~16px."
+      "2026-04-07: `ViewNotesCard` in `view-notes/` from Figma `1287:432`. Icons via `QuickCaptureTileIcon` scaled to ~16px.",
+      "2026-04-10: Figma cleaned up to a vertical `COMPONENT_SET` stack with 16px gap and kebab-case structural wrappers (`view-notes-card`, `view-notes-card-surface`, `view-notes-bucket-header`, `view-notes-note-row`, `view-notes-session-section`, etc.). Wrapper / row frames no longer use generic `Container` / `Frame` labels. No `flatten()` introduced in automation."
     ]
   }
 }

@@ -42,6 +42,17 @@
     "line1": "optional override",
     "line2": "optional override"
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Action Tile (vertical stack of variant masters, 16px gap)",
+      "root": "action-tile",
+      "iconWell": "action-tile-icon-circle",
+      "icon": "action-tile-icon",
+      "label": "action-tile-label",
+      "labelLine1": "action-tile-label-line-1",
+      "labelLine2": "action-tile-label-line-2"
+    }
+  },
   "kindToFigma": {
     "startSession": "Start session",
     "newNote": "New note",
@@ -54,6 +65,8 @@
     "isClean": true,
     "notes": [
       "2026-03-28: Renamed Figma axis to `Kind` with human-readable variant values; former `Property 1=Default|Variant2…` removed.",
+      "2026-04-10: Renamed structural wrappers to kebab-case `action-tile-*` and mirrored them with `data-name` hooks in TSX.",
+      "2026-04-11: `COMPONENT_SET` vertical auto layout (16px gap). `clipsContent` cleared on `action-tile-icon-circle`, `action-tile-icon`, and `action-tile-label` frames. Variant internals remain absolute-positioned in Figma (icon above label); TSX uses column flex (icon then label).",
       "START SESSION well uses Semantic/Status/Error/Text in Figma (rust); other kinds use Semantic/Activity/* tokens."
     ]
   }

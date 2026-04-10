@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { color, space, typographyTitleH3Style } from '../../lib/tokens';
+import { color, shadow, space, typographyTitleH3Style } from '../../lib/tokens';
 import {
   ActionTile,
   type ActionTileKind,
@@ -7,7 +7,7 @@ import {
 import { QuickCaptureTileIcon } from './QuickCaptureTileIcons';
 
 const sheetShadow: CSSProperties = {
-  boxShadow: '0px 25px 50px rgba(0, 0, 0, 0.25)',
+  boxShadow: shadow('Shadow/Overlay/Default'),
 };
 
 /** Row-major: matches Figma grid `1075:1704`. */

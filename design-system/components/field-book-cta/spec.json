@@ -23,6 +23,16 @@
     "notePrimaryWithDelete": "Button Primary+Delete",
     "brandPrimaryXl": "Button XL"
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Button (vertical stack of variant masters, 16px gap)",
+      "label": "field-book-cta-label (uppercase TEXT in single-button variants; primary side of +Delete)",
+      "primary": "field-book-cta-primary (note save / SAVE CHANGES row)",
+      "delete": "field-book-cta-delete (paired trash control)",
+      "deleteIcon": "field-book-cta-delete-icon (vector frame inside delete)",
+      "codeDataNames": "`field-book-cta-xl` on XL button; `field-book-cta-with-delete` on the two-button row wrapper."
+    }
+  },
   "tokens": {
     "colors": [
       "Brand/Primary",
@@ -44,6 +54,9 @@
     "isClean": true,
     "notes": [
       "2026-04-08: `FieldBookCtaButton` in `field-book-cta/` from Figma `1287:1563`; trash is inline SVG to match Edit Session sheet."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1287:1563` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Structural renames: `field-book-cta-label` on label TEXT nodes; `Button Primary+Delete` frames → `field-book-cta-primary`, `field-book-cta-delete`, `field-book-cta-delete-icon`. Single-TEXT variants (Primary / XL) keep label-only structure. No `flatten()` in automation. `FieldBookCtaButton.tsx` uses `data-name` for primary, XL, with-delete row, label, delete, and delete-icon wrapper."
     ]
   }
 }

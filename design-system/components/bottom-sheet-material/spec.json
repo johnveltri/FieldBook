@@ -2,8 +2,9 @@
   "component": {
     "name": "Material",
     "figmaNodeId": "1283:351",
-    "kind": "frame",
-    "description": "Material line-item entry: handle, back, green wrench + Title-H3, helper line, name field, price ($) + quantity + unit row, primary `Semantic/Activity/Material` CTA — or edit footer with SESSION pill and delete.",
+    "kind": "componentSet",
+    "variantProperty": "Property 1 (Add Job Material `1283:426` omits the prefix)",
+    "description": "Material line-item bottom sheet: vertical stack (`material-content`) with drag handle, body (back, header with wrench + title + optional SESSION row, subtitle, fields), and primary CTA or edit footer. `Add Job Material` shares edit layout without the `Property 1=` prefix.",
     "dimensions": {
       "width": 391,
       "height": 347
@@ -14,6 +15,44 @@
       "New Session Material": "1283:389",
       "Add Job Material": "1283:426",
       "Edit Session Material": "1283:479"
+    }
+  },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Material (vertical stack of variant masters, 16px gap)",
+      "root": "material-bottom-sheet (React `section`; Figma variant = `COMPONENT` root)",
+      "content": "material-content (VERTICAL auto layout, 16px gap, sheet padding)",
+      "body": "material-body",
+      "dragHandle": "material-drag-handle",
+      "backButton": "material-back-button",
+      "backIcon": "material-back-icon",
+      "backLabel": "material-back-label",
+      "header": "material-header",
+      "titleRow": "material-title-row (edit modes: groups `material-title` + `material-session-pill`)",
+      "title": "material-title",
+      "titleIcon": "material-title-icon",
+      "titleText": "material-title-text",
+      "sessionPill": "material-session-pill",
+      "sessionPillIcon": "material-session-pill-icon",
+      "sessionPillLabel": "material-session-pill-label",
+      "subtitle": "material-subtitle",
+      "subtitleText": "material-subtitle-text",
+      "fieldsFrame": "material-fields-frame",
+      "fields": "material-fields",
+      "nameInput": "material-name-input",
+      "priceRow": "material-price-row",
+      "priceGroup": "material-price-group",
+      "pricePrefix": "material-price-prefix",
+      "priceInput": "material-price-input",
+      "quantityInput": "material-quantity-input",
+      "unitSelect": "material-unit-select",
+      "unitSelectInput": "material-unit-select-input",
+      "unitSelectCaret": "material-unit-select-caret",
+      "primaryAction": "material-primary-action",
+      "primaryActionLabel": "material-primary-action-label",
+      "footer": "material-footer",
+      "deleteButton": "material-delete-button",
+      "deleteIcon": "material-delete-icon"
     }
   },
   "codeVariantMap": {
@@ -74,7 +113,11 @@
     "isClean": true,
     "notes": [
       "2026-04-08: Fields + unit `select` use `typographyBodyStyle`. Primary CTA on create flows uses drop shadow tinted with `Semantic/Status/Success/Text`; edit SAVE CHANGES uses `Semantic/Activity/Material` shadow to match Figma.",
+      "2026-04-10: Renamed generic structural layers to kebab-case `material-*` slots (`material-content`, `material-header`, `material-title`, `material-session-pill`, `material-fields`, `material-price-row`, `material-unit-select`, `material-primary-action`, `material-footer`). Kept the variant property strings unchanged, and treated `Material` as a frame wrapper rather than a full component set. No `flatten()` was introduced in automation.",
       "Leading wrench: `QuickCaptureTileIcon` `newMaterial` scaled to 14px."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1283:351` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and all five variant masters. Canvas already uses kebab-case `material-*` (`material-content` stack, `material-drag-handle`, `material-body`, fields, actions). React: `material-content` is the padded vertical stack; pull bar `material-drag-handle` (replacing misapplied `material-content` on the handle); header matches Figma (`material-title-icon` + `material-title` / `material-title-text` for create; edit adds `material-title-row` with pill); `material-price-group` on $ + price inputs. No `flatten()` in automation."
     ]
   }
 }

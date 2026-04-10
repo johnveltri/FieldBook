@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
+  shadow,
   space,
   typographyBodySmallStyle,
 } from '../../lib/tokens';
@@ -13,11 +14,11 @@ const labelStyle: CSSProperties = {
 };
 
 const tileShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 const iconWellShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 export const ACTION_TILE_KINDS = [
@@ -81,6 +82,7 @@ export type ActionTileProps = {
 
 /**
  * Quick action cell: accent icon well + two-line label (Figma: `Action Tile`, `452:2740`).
+ * `data-name` values match `structure.figmaLayerNames` in `spec.json` (icon above label in code; Figma uses absolute layout for the same visual).
  */
 export function ActionTile({
   kind,
@@ -101,6 +103,7 @@ export function ActionTile({
   const inner = (
     <>
       <div
+        data-name="action-tile-icon-circle"
         style={{
           width: 40,
           height: 40,
@@ -113,10 +116,11 @@ export function ActionTile({
           color: color('Foundation/Surface/Default'),
           ...iconWellShadow,
         }}
-      >
-        {icon}
+        >
+        <div data-name="action-tile-icon">{icon}</div>
       </div>
       <div
+        data-name="action-tile-label"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -125,8 +129,12 @@ export function ActionTile({
           width: '100%',
         }}
       >
-        <span style={{ ...labelStyle, lineHeight: 1.25 }}>{line1}</span>
-        <span style={{ ...labelStyle, lineHeight: 1.25 }}>{line2}</span>
+        <span data-name="action-tile-label-line-1" style={{ ...labelStyle, lineHeight: 1.25 }}>
+          {line1}
+        </span>
+        <span data-name="action-tile-label-line-2" style={{ ...labelStyle, lineHeight: 1.25 }}>
+          {line2}
+        </span>
       </div>
     </>
   );
@@ -156,6 +164,7 @@ export function ActionTile({
       <button
         type="button"
         className={className}
+        data-name="action-tile"
         onClick={onClick}
         aria-label={ariaLabel ?? defaultLabel}
         style={{
@@ -173,6 +182,7 @@ export function ActionTile({
   return (
     <div
       className={className}
+      data-name="action-tile"
       style={shellStyle}
       role="group"
       aria-label={ariaLabel ?? defaultLabel}

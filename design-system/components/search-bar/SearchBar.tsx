@@ -2,6 +2,8 @@ import type { CSSProperties, InputHTMLAttributes } from 'react';
 import { useId, useRef, useState } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -10,11 +12,11 @@ import {
 } from '../../lib/tokens';
 
 const fieldShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 const panelShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 function SearchGlyph({ size = 20 }: { size?: number }) {
@@ -184,7 +186,7 @@ export function SearchBar({
     boxSizing: 'border-box',
     border: 'none',
     borderRadius: 9999,
-    backgroundColor: 'rgba(43, 52, 65, 0.1)',
+    backgroundColor: colorWithAlpha('Foundation/Text/Primary', 0.1),
     color: color('Foundation/Text/Secondary'),
     cursor: 'pointer',
     display: 'flex',
@@ -229,18 +231,19 @@ export function SearchBar({
   };
 
   return (
-    <div className={className} style={{ ...row, ...style }}>
+    <div data-name="search-bar" className={className} style={{ ...row, ...style }}>
       <style>{`
         .fieldbook-search-bar-${uid}::placeholder {
           color: ${placeholderColor};
           opacity: 1;
         }
       `}</style>
-      <div style={fieldRow}>
-        <span style={iconAbs}>
+      <div data-name="search-bar-field" style={fieldRow}>
+        <span data-name="search-bar-search-icon" style={iconAbs}>
           <SearchGlyph size={20} />
         </span>
         <input
+          data-name="search-bar-input"
           ref={inputRef}
           className={inputClass}
           type="search"
@@ -256,22 +259,26 @@ export function SearchBar({
         {showClear && (
           <button
             type="button"
+            data-name="search-bar-clear-button"
             aria-label="Clear search"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleClear}
             style={clearBtn}
           >
-            <ClearGlyph size={14} />
+            <span data-name="search-bar-clear-icon">
+              <ClearGlyph size={14} />
+            </span>
           </button>
         )}
       </div>
 
       {showEmptyHint && (
-        <div style={hintPanel}>
-          <span style={hintIconWrap} aria-hidden>
+        <div data-name="search-bar-empty-results-panel" style={hintPanel}>
+          <span data-name="search-bar-empty-results-icon" style={hintIconWrap} aria-hidden>
             <SearchGlyph size={32} />
           </span>
           <p
+            data-name="search-bar-empty-results-title"
             style={{
               ...typographyBodyBoldStyle(),
               color: color('Foundation/Text/Secondary'),
@@ -282,6 +289,7 @@ export function SearchBar({
             {emptyHintTitle}
           </p>
           <p
+            data-name="search-bar-empty-results-subtitle"
             style={{
               ...typographyInputSmallStyle(),
               color: color('Foundation/Text/Secondary'),

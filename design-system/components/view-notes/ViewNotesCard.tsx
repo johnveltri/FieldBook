@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
+  shadow,
   space,
   typographyBodySmallStyle,
   typographyBodyStyle,
@@ -10,10 +11,10 @@ import { QuickCaptureTileIcon } from '../bottom-sheet-quick-capture/QuickCapture
 import type { ActionTileKind } from '../action-tile';
 
 const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
-const sectionDivider = 'rgba(43, 52, 65, 0.05)';
+const sectionDivider = color('Foundation/Border/Subtle');
 
 export const VIEW_NOTES_VARIANTS = [
   'notesMultiSession',
@@ -41,6 +42,7 @@ export type ViewNotesSessionBlock = {
 function Icon16({ children }: { children: ReactNode }) {
   return (
     <span
+      data-name="view-notes-note-icon-frame"
       style={{
         width: 16,
         height: 16,
@@ -74,13 +76,21 @@ function rowAccent(kind: ViewNotesRowIcon): string {
     : color('Semantic/Activity/Note');
 }
 
-function NoteRow({ item }: { item: ViewNotesNoteItem }) {
+function NoteRow({
+  item,
+  scope = 'note',
+}: {
+  item: ViewNotesNoteItem;
+  scope?: 'note' | 'session-note';
+}) {
   const iconKind = item.iconKind ?? 'newNote';
   const body = typographyBodyStyle();
   const small = typographyBodySmallStyle();
+  const prefix = scope === 'session-note' ? 'view-notes-session-note' : 'view-notes-note';
 
   return (
     <div
+      data-name={`${prefix}-row`}
       style={{
         paddingLeft: space('Spacing/16'),
         paddingRight: space('Spacing/16'),
@@ -95,6 +105,7 @@ function NoteRow({ item }: { item: ViewNotesNoteItem }) {
       }}
     >
       <span
+        data-name={`${prefix}-icon`}
         style={{
           color: rowAccent(iconKind),
           display: 'flex',
@@ -107,6 +118,7 @@ function NoteRow({ item }: { item: ViewNotesNoteItem }) {
         </Icon16>
       </span>
       <div
+        data-name={`${prefix}-content`}
         style={{
           flex: '1 1 0',
           minWidth: 0,
@@ -116,24 +128,30 @@ function NoteRow({ item }: { item: ViewNotesNoteItem }) {
           gap: space('Spacing/4'),
         }}
       >
-        <p
-          style={{
-            margin: 0,
-            ...body,
-            color: color('Foundation/Text/Primary'),
-          }}
-        >
-          {item.excerpt}
-        </p>
-        <p
-          style={{
-            margin: 0,
-            ...small,
-            color: color('Foundation/Text/Secondary'),
-          }}
-        >
-          {item.dateLabel}
-        </p>
+        <div data-name={`${prefix}-excerpt-wrap`} style={{ width: '100%' }}>
+          <p
+            data-name={`${prefix}-excerpt`}
+            style={{
+              margin: 0,
+              ...body,
+              color: color('Foundation/Text/Primary'),
+            }}
+          >
+            {item.excerpt}
+          </p>
+        </div>
+        <div data-name={`${prefix}-date-wrap`} style={{ width: '100%' }}>
+          <p
+            data-name={`${prefix}-date`}
+            style={{
+              margin: 0,
+              ...small,
+              color: color('Foundation/Text/Secondary'),
+            }}
+          >
+            {item.dateLabel}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -145,6 +163,7 @@ function SessionGroupHeader({ sessionDateLabel }: { sessionDateLabel: string }) 
 
   return (
     <div
+      data-name="view-notes-session-header"
       style={{
         height: 32,
         boxSizing: 'border-box',
@@ -155,7 +174,10 @@ function SessionGroupHeader({ sessionDateLabel }: { sessionDateLabel: string }) 
         alignItems: 'center',
       }}
     >
-      <span style={{ ...label, color: secondary }}>
+      <span
+        data-name="view-notes-session-header-text"
+        style={{ ...label, color: secondary }}
+      >
         {`${sessionDateLabel.trim()} SESSION`}
       </span>
     </div>
@@ -201,6 +223,7 @@ export function ViewNotesCard({
   return (
     <section
       className={className}
+      data-name="view-notes-card"
       style={{
         width: '100%',
         maxWidth: 353,
@@ -211,6 +234,7 @@ export function ViewNotesCard({
       }}
     >
       <div
+        data-name="view-notes-card-surface"
         style={{
           width: '100%',
           borderRadius: 16,
@@ -222,6 +246,7 @@ export function ViewNotesCard({
         }}
       >
         <div
+          data-name="view-notes-body"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -229,6 +254,7 @@ export function ViewNotesCard({
           }}
         >
           <div
+            data-name="view-notes-bucket-header"
             style={{
               backgroundColor: color('Foundation/Background/Default'),
               paddingLeft: space('Spacing/16'),
@@ -237,15 +263,27 @@ export function ViewNotesCard({
               paddingBottom: space('Spacing/8'),
             }}
           >
-            <span style={{ ...label, color: secondary }}>{bucketLabel}</span>
+            <span data-name="view-notes-bucket-label" style={{ ...label, color: secondary }}>
+              {bucketLabel}
+            </span>
           </div>
 
-          {unassignedNotes.map((item, i) => (
-            <NoteRow key={`u-${i}-${item.excerpt.slice(0, 12)}`} item={item} />
-          ))}
+          <div
+            data-name="view-notes-unassigned-section"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'stretch',
+            }}
+          >
+            {unassignedNotes.map((item, i) => (
+              <NoteRow key={`u-${i}-${item.excerpt.slice(0, 12)}`} item={item} />
+            ))}
+          </div>
 
           {showSessionBlock ? (
             <div
+              data-name="view-notes-session-section"
               style={{
                 borderTop: `1px solid ${sectionDivider}`,
                 display: 'flex',
@@ -256,12 +294,22 @@ export function ViewNotesCard({
               <SessionGroupHeader
                 sessionDateLabel={sessionBlock!.sessionDateLabel}
               />
-              {sessionBlock!.notes.map((item, i) => (
-                <NoteRow
-                  key={`s-${i}-${item.excerpt.slice(0, 12)}`}
-                  item={item}
-                />
-              ))}
+              <div
+                data-name="view-notes-session-notes"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                }}
+              >
+                {sessionBlock!.notes.map((item, i) => (
+                  <NoteRow
+                    key={`s-${i}-${item.excerpt.slice(0, 12)}`}
+                    item={item}
+                    scope="session-note"
+                  />
+                ))}
+              </div>
             </div>
           ) : null}
         </div>

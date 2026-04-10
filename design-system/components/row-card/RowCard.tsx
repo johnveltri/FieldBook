@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -11,7 +13,7 @@ import {
 import { PlusIcon } from '../../icons/PlusIcon';
 
 const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 const body = typographyBodyBoldStyle();
@@ -187,6 +189,7 @@ export function RowCard({
 
   const leadWell = (children: ReactNode, wellStyle: CSSProperties) => (
     <div
+      data-name="row-card-leading"
       style={{
         position: 'relative',
         width: 40,
@@ -208,6 +211,7 @@ export function RowCard({
       case 'unsortedCaptures':
         return leadWell(
           <span
+            data-name="row-card-leading-value"
             style={{
               ...typographyMetricStyle(),
               color: color('Foundation/Text/Muted'),
@@ -221,6 +225,7 @@ export function RowCard({
       case 'pendingPayment':
         return leadWell(
           <span
+            data-name="row-card-leading-value"
             style={{
               ...typographyMetricStyle(),
               color: color('Foundation/Text/Muted'),
@@ -234,6 +239,7 @@ export function RowCard({
       case 'rankedJobWithMetric':
         return leadWell(
           <span
+            data-name="row-card-leading-value"
             style={{
               ...typographyMetricStyle(),
               color: color('Foundation/Text/Secondary'),
@@ -249,7 +255,9 @@ export function RowCard({
         );
       case 'quickActionDefault':
         return leadWell(
-          <PlusIcon size={20} style={{ color: color('Foundation/Surface/White') }} />,
+          <span data-name="row-card-leading-icon">
+            <PlusIcon size={20} style={{ color: color('Foundation/Surface/White') }} />
+          </span>,
           {
             backgroundColor: color('Brand/PrimaryHover'),
             minWidth: 40,
@@ -258,19 +266,22 @@ export function RowCard({
         );
       case 'activityCard':
         return (
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 9999,
-              flexShrink: 0,
-              backgroundColor: 'rgba(212, 87, 42, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <ActivityClockGlyph strokeColor={color('Brand/Primary')} />
+          <div data-name="row-card-leading-row">
+            <div
+              data-name="row-card-leading-icon"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 9999,
+                flexShrink: 0,
+                backgroundColor: colorWithAlpha('Brand/Primary', 0.1),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ActivityClockGlyph strokeColor={color('Brand/Primary')} />
+            </div>
           </div>
         );
       default:
@@ -308,7 +319,10 @@ export function RowCard({
   const renderCenter = (): ReactNode => {
     if (variant === 'emptyCard') {
       return (
-        <div style={{ ...body, color: color('Foundation/Text/Secondary'), textAlign: 'center', width: '100%' }}>
+        <div
+          data-name="row-card-empty-message"
+          style={{ ...body, color: color('Foundation/Text/Secondary'), textAlign: 'center', width: '100%' }}
+        >
           {emptyMessage}
         </div>
       );
@@ -317,6 +331,7 @@ export function RowCard({
       return (
         <>
           <div
+            data-name="row-card-empty-message"
             style={{
               ...body,
               color: color('Foundation/Text/Secondary'),
@@ -327,6 +342,7 @@ export function RowCard({
             {emptyMessage}
           </div>
           <button
+            data-name="row-card-empty-action"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -354,6 +370,7 @@ export function RowCard({
 
     return (
       <div
+        data-name="row-card-main"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -365,6 +382,7 @@ export function RowCard({
       >
         {lead}
         <div
+          data-name="row-card-title-stack"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -373,9 +391,12 @@ export function RowCard({
             minWidth: 0,
           }}
         >
-          <div style={titleStyle()}>{title}</div>
+          <div data-name="row-card-title-line" style={titleStyle()}>
+            {title}
+          </div>
           {variant === 'incompleteJob' ? (
             <div
+              data-name="row-card-missing-detail"
               style={{
                 display: 'flex',
                 flexDirection: 'row',
@@ -390,9 +411,15 @@ export function RowCard({
               <span>{missingDetail}</span>
             </div>
           ) : variant === 'activityCard' ? (
-            <div style={subtitleStyle()}>{activityTime}</div>
+            <div data-name="row-card-subtitle-line" style={subtitleStyle()}>
+              {activityTime}
+            </div>
           ) : (
-            subtitle !== '' && <div style={subtitleStyle()}>{subtitle}</div>
+            subtitle !== '' && (
+              <div data-name="row-card-subtitle-line" style={subtitleStyle()}>
+                {subtitle}
+              </div>
+            )
           )}
         </div>
       </div>
@@ -438,7 +465,7 @@ export function RowCard({
     }
 
     return (
-      <div style={wrap}>
+      <div data-name="row-card-trailing" style={wrap}>
         <div style={{ ...textStyle, lineHeight: 1.2 }}>{trailing}</div>
       </div>
     );
@@ -446,6 +473,7 @@ export function RowCard({
 
   return (
     <div
+      data-name="row-card"
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
       className={className}

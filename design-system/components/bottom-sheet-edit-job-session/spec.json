@@ -2,7 +2,8 @@
   "component": {
     "name": "Edit Job, Session",
     "figmaNodeId": "1284:789",
-    "kind": "component_set",
+    "kind": "componentSet",
+    "variantProperty": "Property 1",
     "description": "Handle, Back, session header (16px Brand/Accent clock + Title-H3 “Edit Session”) with Start/End Time labels and four body inputs — or job header (“Edit Job”) with stacked fields; footer: Brand/Accent SAVE CHANGES (shadow Brand/Primary) + destructive outline trash.",
     "dimensions": {
       "width": 391,
@@ -19,6 +20,36 @@
     }
   },
   "figmaNamingNote": "Figma **Edit Job** uses placeholder copy on inputs; **Edit Job Empty** shows the populated sample job row (`1286:701`). Code maps these to `editJobPlaceholder` and `editJobFilled` respectively.",
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Edit Job, Session (vertical stack of variant masters, 16px gap)",
+      "surface": "edit-job-session-sheet",
+      "content": "edit-job-session-content (React; Figma stacks handle + body + job slot + footer in the sheet)",
+      "dragHandle": "edit-job-session-drag-handle",
+      "body": "edit-job-session-body (back + header + session fields when `Edit Session`)",
+      "jobFields": "edit-job-session-job-fields (Figma `SLOT` for job variants — sits between body and footer)",
+      "backButton": "edit-job-session-back-button",
+      "backIcon": "edit-job-session-back-icon",
+      "backLabel": "edit-job-session-back-label",
+      "header": "edit-job-session-header",
+      "titleIcon": "edit-job-session-title-icon (session clock; job variants omit)",
+      "title": "edit-job-session-title",
+      "titleText": "edit-job-session-title-text",
+      "sessionFields": "edit-job-session-session-fields",
+      "sessionFieldsStack": "edit-job-session-session-fields-stack",
+      "startTimeLabel": "edit-job-session-start-time-label",
+      "startDateInput": "edit-job-session-start-date-input",
+      "startTimeInput": "edit-job-session-start-time-input",
+      "endTimeLabel": "edit-job-session-end-time-label",
+      "endDateInput": "edit-job-session-end-date-input",
+      "endTimeInput": "edit-job-session-end-time-input",
+      "footer": "edit-job-session-footer",
+      "primaryAction": "edit-job-session-primary-action",
+      "primaryActionLabel": "edit-job-session-primary-action-label",
+      "deleteButton": "edit-job-session-delete-button",
+      "deleteIcon": "edit-job-session-delete-icon"
+    }
+  },
   "codeVariantMap": {
     "editSession": "Edit Session",
     "editJobPlaceholder": "Edit Job",
@@ -68,6 +99,9 @@
     "isClean": true,
     "notes": [
       "2026-04-07: `EditJobSessionBottomSheet` mirrors handle, Back, headers, field shells, and SAVE + delete footer per Figma `1284:789`."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1284:789` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Structural frames renamed to `edit-job-session-*` (surface, handle, body, session fields, job slot, footer, back, header, title icon/text, session inputs, primary/delete). `Edit Session` nests date/time fields under `edit-job-session-body`; job variants use `edit-job-session-job-fields` (`SLOT` in Figma) between body and footer. React uses `data-name` on the same hooks; `edit-job-session-content` wraps padded stack. No `flatten()` in automation."
     ]
   }
 }

@@ -3,11 +3,17 @@
     "name": "Inbox icon",
     "figmaNodeId": "786:16",
     "kind": "componentSet",
-    "description": "24×24 inbox/tray stroke icon on a 40×40 frame with optional notification badge (Brand/Primary, Typography/Body-Small label on cream per Figma). Glyph paths match Figma-exported `inbox.svg` (24×24, stroke 2). Used in Top Header **Title + Inbox** (`231:817`). Variants in file: with badge vs no notifications."
+    "description": "24×24 inbox/tray stroke icon on a 40×40 frame with optional notification badge (Brand/Primary, Typography/Body-Small label on cream per Figma). Glyph paths match Figma-exported `inbox.svg` (24×24, stroke 2). Used in Top Header **Title + Inbox** (`231:817`). Variants in file: `Default` (badge visible, sample count 5) vs `No Notifications`."
   },
-  "variants": {
-    "withBadge": "Badge top-right: min 16px height, pill; count uses Typography/Body-Small; text Foundation/Background/Default.",
-    "noNotifications": "Icon only, no badge."
+  "variantProperties": {
+    "Property 1": [
+      "Default",
+      "No Notifications"
+    ]
+  },
+  "codeProps": {
+    "property1": "Mirrors Figma `Property 1`; maps `Default` to the badge variant and `No Notifications` to the icon-only variant.",
+    "badgeCount": "Code-only override for the badge label when `property1=Default`."
   },
   "tokens": {
     "colors": [
@@ -17,5 +23,21 @@
     ],
     "spacing": ["Spacing/4", "Spacing/8", "Spacing/16"],
     "typography": ["Typography/Body-Small"]
+  },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Inbox Icon (vertical stack of variant masters, 16px gap)",
+      "glyphFrame": "inbox-icon-glyph",
+      "glyphVector": "inbox-icon-glyph-vector",
+      "badge": "inbox-icon-badge",
+      "badgeValue": "inbox-icon-badge-value"
+    }
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-10: Figma cleanup aligned the `COMPONENT_SET` to a vertical stack with 16px gap. Generic layers were renamed to `inbox-icon-glyph`, `inbox-icon-glyph-vector`, `inbox-icon-badge`, and `inbox-icon-badge-value`. `clipsContent` was cleared on the set and variant frames; no flattening was introduced in automation.",
+      "2026-04-10: TSX mirrors the renamed layer structure with `data-name` hooks and keeps `Property 1` mapped to `Default` / `No Notifications`; `badgeCount` remains a code-only override for the default variant."
+    ]
   }
 }

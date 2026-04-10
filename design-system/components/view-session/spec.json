@@ -23,6 +23,37 @@
     "expandedEmpty": "Expanded Empty",
     "expandedAttachments": "Expanded Attachments"
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "View Session (vertical stack of variant masters, 16px gap)",
+      "card": "view-session-card (collapsed: only header; expanded: header-wrap + expanded panel)",
+      "headerWrap": "view-session-header-wrap (expanded variants only)",
+      "header": "view-session-header",
+      "headerLeading": "view-session-header-leading",
+      "dateRow": "view-session-date-row",
+      "timeRangeRow": "view-session-time-range-row",
+      "headerTrailing": "view-session-header-trailing",
+      "duration": "view-session-duration",
+      "chevron": "view-session-chevron",
+      "expanded": "view-session-expanded (tinted panel)",
+      "panelInner": "view-session-panel-inner",
+      "editRow": "view-session-edit-row",
+      "editButtonWrap": "view-session-edit-button-wrap",
+      "editButton": "view-session-edit-button",
+      "captureSection": "view-session-capture-section",
+      "captureHeading": "view-session-capture-heading",
+      "tileRow": "view-session-tile-row",
+      "captureTile": "view-session-capture-tile",
+      "listSection": "view-session-list-section",
+      "empty": "view-session-empty",
+      "emptyMessage": "view-session-empty-message",
+      "attachmentList": "view-session-attachment-list",
+      "attachmentRow": "view-session-attachment-row",
+      "attachmentIcon": "view-session-attachment-icon",
+      "attachmentTitle": "view-session-attachment-title",
+      "attachmentPrice": "view-session-attachment-price"
+    }
+  },
   "tokens": {
     "colors": [
       "Foundation/Border/Subtle",
@@ -63,6 +94,9 @@
     "isClean": true,
     "notes": [
       "2026-04-07: Initial `ViewSessionCard` in `view-session/` mapped from Figma `1284:577`."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1284:577` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Structural frames renamed to `view-session-*` (header leading/trailing, duration, chevron; expanded panel with edit row, capture section + tiles, list section with empty or attachment rows). No `flatten()` in automation. `ViewSessionCard.tsx` mirrors layers via `data-name`; expanded-only `view-session-header-wrap` wraps the header block to match Figma siblings (`header-wrap` + `expanded`)."
     ]
   }
 }

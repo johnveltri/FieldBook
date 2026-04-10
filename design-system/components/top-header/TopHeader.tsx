@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -64,7 +65,7 @@ const shell = (
   minHeight: minH,
   boxSizing: 'border-box',
   backgroundColor: bg,
-  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
   display: 'flex',
   flexDirection: 'column',
   ...extra,

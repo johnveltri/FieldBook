@@ -107,11 +107,32 @@
     "netSentiment": "NET value color; positive uses **Semantic/Status/Success/Text**.",
     "onPress": "optional callback when the card is pressed"
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Job Card (vertical stack of variant masters, 16px gap)",
+      "root": "job-card",
+      "accentRail": "job-card-accent-rail",
+      "content": "job-card-content",
+      "headerRow": "job-card-header-row",
+      "titleBlock": "job-card-title-block",
+      "heading": "job-card-heading",
+      "metaRow": "job-card-meta-row",
+      "statusPill": "job-card-status-pill",
+      "categoryChip": "job-card-category-chip",
+      "metrics": "job-card-metrics",
+      "metricTime": "job-card-metric-time",
+      "metricRevenue": "job-card-metric-rev",
+      "metricMaterials": "job-card-metric-mat",
+      "metricNet": "job-card-metric-net"
+    }
+  },
   "qualityAudit": {
     "isClean": false,
     "notes": [
       "2026-03-28: Figma **component set** `622:161` with three variants; master Default remains `661:2`.",
       "2026-04-07: Figma **No Metrics** variant (`1286:816`): code `noMetrics` — category + header like Default, metrics row omitted.",
+      "2026-04-10: Renamed structural wrappers to kebab-case `job-card-*` and mirrored them with `data-name` hooks in TSX.",
+      "2026-04-11: `COMPONENT_SET` vertical auto layout (16px gap). `clipsContent` cleared on all layers whose names start with `job-card`. Structural naming already aligned; TSX unchanged aside from docs.",
       "MAT value color synced from Figma: **Brand/Accent** (`#C44B2B`); Empty State status uses **`Status pill`** instance (Not started).",
       "Root **Spacing/24** horizontal; inner **Container** **Spacing/24** vertical + **Spacing/16** section gaps.",
       "Spacing tokens on nested frames: **Heading** gap **0**, **Meta row** pad **0**; metrics row **Spacing/16** top inset, **Spacing/32** column gap.",

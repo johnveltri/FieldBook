@@ -5,12 +5,18 @@
     "kind": "componentSet",
     "description": "Rounded pill for job lifecycle and similar states. Typography/LABEL; padding Spacing/12 × Spacing/4; stroke 1px. Fills and strokes are bound to semantic status color variables in Figma (see `tokens.colors`). Embedded in **Job Card** (`622:161`) header in the Field Book file."
   },
+  "structure": {
+    "figmaLayerNames": {
+      "root": "status-pill",
+      "label": "status-pill-label"
+    }
+  },
   "variants": {
-    "paid": "Success: BG + Text + stroke **Semantic/Status/Success/** (mint / teal).",
-    "notStarted": "Neutral: **10%** tint fill + **Semantic/Status/Neutral/Text** stroke and label (flattened BG in `colors.json`).",
-    "inProgress": "Info: **10%** blue tint **Semantic/Status/Info/BG** + **Semantic/Status/Info/Text** stroke and label.",
-    "completed": "Warning: **Semantic/Status/Warning/BG**, stroke **Semantic/Status/Warning/Stroke** at **50%** paint opacity, label **Semantic/Status/Warning/Label** (amber `#92400E`).",
-    "onHold": "Paused: **10%** purple tint **Semantic/Status/Paused/BG** + **Semantic/Status/Paused/Text** stroke and label.",
+    "paid": "Success: BG + Text + stroke **Semantic/Status/Success/** (mint / teal). Figma variant label appears as `Paid` in the set.",
+    "notStarted": "Neutral: **10%** tint fill + **Semantic/Status/Neutral/Text** stroke and label (flattened BG in `colors.json`). Figma variant label is `Not started`.",
+    "inProgress": "Info: **10%** blue tint **Semantic/Status/Info/BG** + **Semantic/Status/Info/Text** stroke and label. Figma variant label is `In Progress`.",
+    "completed": "Warning: **Semantic/Status/Warning/BG**, stroke **Semantic/Status/Warning/Stroke** at **50%** paint opacity, label **Semantic/Status/Warning/Label** (amber `#92400E`). Figma variant label is `COMPLETED`.",
+    "onHold": "Paused: **10%** purple tint **Semantic/Status/Paused/BG** + **Semantic/Status/Paused/Text** stroke and label. Figma variant label is `ON HOLD`.",
     "cancelled": "Error: **Semantic/Status/Error/BG** + **Semantic/Status/Error/Text** stroke and label."
   },
   "tokens": {
@@ -32,5 +38,15 @@
     ],
     "spacing": ["Spacing/4", "Spacing/12"],
     "typography": ["Typography/LABEL"]
+  },
+  "qualityAudit": {
+    "isClean": true,
+    "notes": [
+      "2026-04-10: Added explicit `status-pill` / `status-pill-label` data-name hooks in TSX to mirror the component set structure.",
+      "2026-04-10: Figma variant labels in `622:143` are mixed-case and uppercase; code preserves semantic `kind` names and maps labels in `StatusPill.tsx`."
+    ],
+    "findings": [
+      "2026-04-08: Component set `622:143` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Each variant is a horizontal auto-layout pill with `status-pill-label` TEXT; matches `StatusPill.tsx` `data-name`. No `flatten()` in automation. If Figma reports component-set errors, likely duplicate variant master names (`status-pill` ×6)—fix by disambiguating variant properties in Figma if instances break; not changed in automation."
+    ]
   }
 }

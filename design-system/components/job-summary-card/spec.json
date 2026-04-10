@@ -37,11 +37,32 @@
     "fees": "omit null for 2-line layout",
     "total": "label (default Net Earnings), value, valuePrefix optional, sentiment positive|negative"
   },
+  "structure": {
+    "figmaLayerNames": {
+      "root": "job-summary-card",
+      "heading": "job-summary-card-heading",
+      "breakdown": "job-summary-card-breakdown",
+      "row": "job-summary-card-row",
+      "rowLabel": "job-summary-card-row-label",
+      "rowValue": "job-summary-card-row-value",
+      "rowValuePrefix": "job-summary-card-row-value-prefix",
+      "rowValueAmount": "job-summary-card-row-value-amount",
+      "total": "job-summary-card-total",
+      "totalLabel": "job-summary-card-total-label",
+      "totalValue": "job-summary-card-total-value",
+      "totalValuePrefix": "job-summary-card-total-value-prefix",
+      "totalValueAmount": "job-summary-card-total-value-amount"
+    }
+  },
   "qualityAudit": {
     "isClean": true,
     "notes": [
       "2026-03-28: Figma variant axis renamed from `Property 1` to `Layout`.",
+      "2026-04-10: Renamed structural wrappers to kebab-case `job-summary-card-*` and mirrored them with `data-name` hooks in TSX.",
       "Figma ‘Inter’ on currency glyph is cosmetic; row labels use Typography/Body, values Typography/Body-Bold (Ubuntu Sans Mono)."
+    ],
+    "findings": [
+      "2026-04-08: Component set `258:1549` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Net Earnings row in each layout variant renamed from `job-summary-card-row` to `job-summary-card-total` with `job-summary-card-total-label`, `job-summary-card-total-value`, `job-summary-card-total-value-prefix`, `job-summary-card-total-value-amount` to match `JobSummaryCard.tsx` and `structure.figmaLayerNames`. No `flatten()` in automation."
     ]
   }
 }

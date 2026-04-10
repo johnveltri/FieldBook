@@ -1,5 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { color, space, typographyMetricSStyle } from '../../lib/tokens';
+import {
+  color,
+  shadow,
+  space,
+  typographyMetricSStyle,
+} from '../../lib/tokens';
 
 export const PRIMARY_SECONDARY_LAYOUTS = ['block', 'inline'] as const;
 export type PrimarySecondaryLayout = (typeof PRIMARY_SECONDARY_LAYOUTS)[number];
@@ -13,8 +18,8 @@ export const PRIMARY_TONES = [
 ] as const;
 export type PrimaryTone = (typeof PRIMARY_TONES)[number];
 
-const shadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+const buttonShadow: CSSProperties = {
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 const metricS = typographyMetricSStyle();
@@ -123,7 +128,7 @@ export function PrimarySecondaryButtons({
         alignItems: 'center',
         justifyContent: 'center',
         gap: leadingPrimary != null ? space('Spacing/4') : 0,
-        ...shadow,
+        ...buttonShadow,
       }
     : {
         ...metricS,
@@ -144,7 +149,7 @@ export function PrimarySecondaryButtons({
         alignItems: 'center',
         justifyContent: 'center',
         gap: leadingPrimary != null ? space('Spacing/4') : 0,
-        ...shadow,
+        ...buttonShadow,
       };
 
   const secondaryStyle: CSSProperties = isBlock
@@ -167,7 +172,7 @@ export function PrimarySecondaryButtons({
         alignItems: 'center',
         justifyContent: 'center',
         gap: leadingSecondary != null ? space('Spacing/10') : 0,
-        ...shadow,
+        ...buttonShadow,
       }
     : {
         ...metricS,
@@ -188,7 +193,7 @@ export function PrimarySecondaryButtons({
         alignItems: 'center',
         justifyContent: 'center',
         gap: leadingSecondary != null ? space('Spacing/10') : 0,
-        ...shadow,
+        ...buttonShadow,
       };
 
   const rowStyle: CSSProperties = {

@@ -1,6 +1,9 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadowFromColor,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodySmallStyle,
@@ -10,10 +13,10 @@ import {
 import { PlusIcon } from '../../icons/PlusIcon';
 
 const sheetShadow: CSSProperties = {
-  boxShadow: '0px 25px 50px rgba(0, 0, 0, 0.25)',
+  boxShadow: shadow('Shadow/Overlay/Default'),
 };
 
-const handleBg = 'rgba(43, 52, 65, 0.2)';
+const handleBg = colorWithAlpha('Foundation/Text/Primary', 0.2);
 
 const bodyBold = typographyBodyBoldStyle();
 const bodySmall = typographyBodySmallStyle();
@@ -187,6 +190,7 @@ function TrashGlyph() {
 }
 
 export type NoteBottomSheetProps = {
+  /** Matches Figma `Property 1` (`New Quick Note` | `New Job Note` | `New Session Note` | `Edit Job Note` | `Edit Session Note`). */
   variant: NoteSheetVariant;
   value?: string;
   onChange?: (value: string) => void;
@@ -247,6 +251,7 @@ export function NoteBottomSheet({
   return (
     <section
       className={className}
+      data-name="note-bottom-sheet"
       aria-labelledby={titleId}
       style={{
         width: '100%',
@@ -260,19 +265,35 @@ export function NoteBottomSheet({
         borderBottom: 'none',
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
-        paddingLeft: space('Spacing/24'),
-        paddingRight: space('Spacing/24'),
-        paddingTop: 18,
-        paddingBottom: 18,
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: space('Spacing/16'),
         ...sheetShadow,
         ...style,
       }}
     >
       <div
+        data-name="note-content"
+        style={{
+          width: '100%',
+          maxWidth: 391,
+          boxSizing: 'border-box',
+          paddingLeft: space('Spacing/24'),
+          paddingRight: space('Spacing/24'),
+          paddingTop: 18,
+          paddingBottom: 18,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: space('Spacing/16'),
+        }}
+      >
+      <div
+        data-name="note-drag-handle"
         style={{
           width: 40,
           height: 6,
@@ -283,9 +304,10 @@ export function NoteBottomSheet({
         aria-hidden
       />
 
-      <div style={{ width: '100%', maxWidth: 343 }}>
+      <div data-name="note-body" style={{ width: '100%', maxWidth: 343 }}>
         <button
           type="button"
+          data-name="note-back-button"
           onClick={onBack}
           style={{
             display: 'inline-flex',
@@ -300,11 +322,14 @@ export function NoteBottomSheet({
             ...bodyBold,
           }}
         >
-          <ChevronBackIcon />
-          Back
+          <span data-name="note-back-icon">
+            <ChevronBackIcon />
+          </span>
+          <span data-name="note-back-label">Back</span>
         </button>
 
         <div
+          data-name="note-header"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -315,18 +340,21 @@ export function NoteBottomSheet({
             minHeight: 28,
           }}
         >
+          <span data-name="note-title-icon">
+            <NoteDocGlyph />
+          </span>
           <div
+            data-name="note-title"
             style={{
               display: 'flex',
               flexDirection: 'row',
               alignItems: 'center',
-              gap: space('Spacing/12'),
               minWidth: 0,
               flex: 1,
             }}
           >
-            <NoteDocGlyph />
             <h2
+              data-name="note-title-text"
               id={titleId}
               style={{
                 margin: 0,
@@ -341,6 +369,7 @@ export function NoteBottomSheet({
           {variant === 'editJobNote' ? (
             <button
               type="button"
+              data-name="note-session-pill"
               onClick={onSessionPillPress}
               style={{
                 display: 'inline-flex',
@@ -358,8 +387,11 @@ export function NoteBottomSheet({
                 cursor: onSessionPillPress ? 'pointer' : 'default',
               }}
             >
-              <PlusIcon size={12} style={{ color: errorText }} />
+              <span data-name="note-session-pill-icon">
+                <PlusIcon size={12} style={{ color: errorText }} />
+              </span>
               <span
+                data-name="note-session-pill-label"
                 style={{
                   ...bodySmall,
                   color: errorText,
@@ -373,6 +405,7 @@ export function NoteBottomSheet({
           {variant === 'editSessionNote' ? (
             <button
               type="button"
+              data-name="note-session-pill"
               onClick={onSessionPillPress}
               style={{
                 display: 'inline-flex',
@@ -390,8 +423,11 @@ export function NoteBottomSheet({
                 cursor: onSessionPillPress ? 'pointer' : 'default',
               }}
             >
-              <PencilGlyph />
+              <span data-name="note-session-pill-icon">
+                <PencilGlyph />
+              </span>
               <span
+                data-name="note-session-pill-label"
                 style={{
                   ...bodySmall,
                   color: errorText,
@@ -405,6 +441,7 @@ export function NoteBottomSheet({
         </div>
 
         <p
+          data-name="note-subtitle"
           style={{
             ...bodySmall,
             color: secondary,
@@ -412,10 +449,13 @@ export function NoteBottomSheet({
             marginTop: space('Spacing/8'),
           }}
         >
+          <span data-name="note-subtitle-text">
           {subtitle}
+          </span>
         </p>
 
         <textarea
+          data-name="note-textarea"
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
           placeholder={placeholder}
@@ -437,7 +477,7 @@ export function NoteBottomSheet({
             color: textareaTextColor,
             resize: 'vertical',
             outline: 'none',
-            boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+            boxShadow: shadow('Shadow/Card/Default'),
           }}
         />
       </div>
@@ -445,6 +485,7 @@ export function NoteBottomSheet({
       {!isEdit ? (
         <button
           type="button"
+          data-name="note-primary-action"
           onClick={onPrimaryAction}
           style={{
             width: '100%',
@@ -458,16 +499,17 @@ export function NoteBottomSheet({
             border: 'none',
             backgroundColor: note,
             cursor: onPrimaryAction ? 'pointer' : 'default',
-            boxShadow: `0px 1px 2px ${note}`,
+            boxShadow: shadowFromColor(note),
             ...bodyBold,
             color: color('Foundation/Surface/Default'),
             textTransform: 'uppercase',
           }}
         >
-          {primaryLabel(variant)}
+          <span data-name="note-primary-action-label">{primaryLabel(variant)}</span>
         </button>
       ) : (
         <div
+          data-name="note-footer"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -480,6 +522,7 @@ export function NoteBottomSheet({
         >
           <button
             type="button"
+            data-name="note-primary-action"
             onClick={onPrimaryAction}
             style={{
               flex: 1,
@@ -492,16 +535,17 @@ export function NoteBottomSheet({
               border: 'none',
               backgroundColor: note,
               cursor: onPrimaryAction ? 'pointer' : 'default',
-              boxShadow: `0px 1px 2px ${note}`,
+              boxShadow: shadowFromColor(note),
               ...bodyBold,
               color: color('Foundation/Surface/Default'),
               textTransform: 'uppercase',
             }}
           >
-            {primaryLabel(variant)}
+            <span data-name="note-primary-action-label">{primaryLabel(variant)}</span>
           </button>
           <button
             type="button"
+            data-name="note-delete-button"
             onClick={onDelete}
             aria-label="Delete note"
             style={{
@@ -515,15 +559,18 @@ export function NoteBottomSheet({
               paddingTop: 18,
               paddingBottom: 18,
               borderRadius: 8,
-              border: `1px solid rgba(212, 87, 42, 0.2)`,
+              border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
               backgroundColor: color('Foundation/Surface/Default'),
               cursor: onDelete ? 'pointer' : 'default',
             }}
           >
-            <TrashGlyph />
+            <span data-name="note-delete-icon">
+              <TrashGlyph />
+            </span>
           </button>
         </div>
       )}
+      </div>
     </section>
   );
 }

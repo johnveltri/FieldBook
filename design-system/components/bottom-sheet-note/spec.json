@@ -2,8 +2,9 @@
   "component": {
     "name": "Note",
     "figmaNodeId": "1279:351",
-    "kind": "frame",
-    "description": "Note composer and editor: drag handle, back, leading note glyph + Title-H3 (and SESSION pill in edit modes), helper line, bordered textarea, and primary CTA — or edit footer with save + delete.",
+    "kind": "componentSet",
+    "variantProperty": "Property 1",
+    "description": "Note composer / editor bottom sheet: vertical stack (`note-content`) with drag handle, body (back, header with icon + title + optional SESSION pill, subtitle, textarea), and primary CTA or edit footer (save + delete).",
     "dimensions": {
       "width": 391,
       "height": 471.5
@@ -48,6 +49,34 @@
       "radiusPx": 12
     }
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Note (vertical stack of variant masters, 16px gap)",
+      "root": "note-bottom-sheet (React `section`; Figma variant = `COMPONENT` root)",
+      "content": "note-content (VERTICAL auto layout, 16px gap, sheet padding)",
+      "body": "note-body",
+      "dragHandle": "note-drag-handle",
+      "backButton": "note-back-button",
+      "backIcon": "note-back-icon",
+      "backLabel": "note-back-label",
+      "header": "note-header",
+      "title": "note-title",
+      "titleIcon": "note-title-icon",
+      "titleText": "note-title-text",
+      "sessionPill": "note-session-pill",
+      "sessionPillIcon": "note-session-pill-icon",
+      "sessionPillLabel": "note-session-pill-label",
+      "subtitle": "note-subtitle",
+      "subtitleText": "note-subtitle-text",
+      "textarea": "note-textarea",
+      "textareaValue": "note-textarea-value",
+      "primaryAction": "note-primary-action",
+      "primaryActionLabel": "note-primary-action-label",
+      "footer": "note-footer",
+      "deleteButton": "note-delete-button",
+      "deleteIcon": "note-delete-icon"
+    }
+  },
   "codeProps": {
     "variant": "newQuickNote | newJobNote | newSessionNote | editJobNote | editSessionNote",
     "value": "optional controlled body",
@@ -63,7 +92,11 @@
   "qualityAudit": {
     "isClean": true,
     "notes": [
-      "2026-04-07: Pull handle uses 20% primary tint vs other sheets’ subtle border — matches Figma `1279:349`."
+      "2026-04-07: Pull handle uses 20% primary tint vs other sheets’ subtle border — matches Figma `1279:349`.",
+      "2026-04-10: Renamed generic structural layers to kebab-case `note-*` slots (`note-content`, `note-header`, `note-title`, `note-session-pill`, `note-textarea`, `note-primary-action`, `note-delete-button`). Kept variant property strings unchanged; this is still a frame wrapper around component masters, not a new component set. No `flatten()` was introduced in automation."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1279:351` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and all five variant masters. Canvas already used kebab-case `note-*` layers (`note-content` → handle, body, primary/footer). React updated: `note-content` is the padded vertical stack; pull bar `note-drag-handle` (replacing misapplied `note-content` on the handle); `note-header` matches Figma siblings `note-title-icon`, `note-title` / `note-title-text`, optional `note-session-pill`. No `flatten()` in automation."
     ]
   }
 }

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodyStyle,
@@ -8,10 +9,10 @@ import {
 } from '../../lib/tokens';
 
 const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
-const rowDivider = 'rgba(43, 52, 65, 0.05)';
+const rowDivider = color('Foundation/Border/Subtle');
 
 export const VIEW_MATERIALS_VARIANTS = [
   'materialsMultiSession',
@@ -37,6 +38,7 @@ function SessionGroupHeader({ sessionDateLabel }: { sessionDateLabel: string }) 
 
   return (
     <div
+      data-name="view-materials-session-header"
       style={{
         height: 32,
         boxSizing: 'border-box',
@@ -47,7 +49,7 @@ function SessionGroupHeader({ sessionDateLabel }: { sessionDateLabel: string }) 
         alignItems: 'center',
       }}
     >
-      <span style={{ ...label, color: secondary }}>
+      <span data-name="view-materials-session-header-text" style={{ ...label, color: secondary }}>
         {`${sessionDateLabel.trim()} SESSION`}
       </span>
     </div>
@@ -62,6 +64,7 @@ function MaterialRow({ item }: { item: ViewMaterialsLineItem }) {
 
   return (
     <div
+      data-name="view-materials-row"
       style={{
         display: 'flex',
         flexDirection: 'row',
@@ -74,6 +77,7 @@ function MaterialRow({ item }: { item: ViewMaterialsLineItem }) {
       }}
     >
       <div
+        data-name="view-materials-row-content"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -84,6 +88,7 @@ function MaterialRow({ item }: { item: ViewMaterialsLineItem }) {
         }}
       >
         <p
+          data-name="view-materials-row-name"
           style={{
             margin: 0,
             ...bodyBold,
@@ -93,6 +98,7 @@ function MaterialRow({ item }: { item: ViewMaterialsLineItem }) {
           {item.name}
         </p>
         <p
+          data-name="view-materials-row-quantity"
           style={{
             margin: 0,
             ...body,
@@ -103,6 +109,7 @@ function MaterialRow({ item }: { item: ViewMaterialsLineItem }) {
         </p>
       </div>
       <p
+        data-name="view-materials-row-price"
         style={{
           margin: 0,
           ...bodyBold,
@@ -119,20 +126,20 @@ function MaterialRow({ item }: { item: ViewMaterialsLineItem }) {
 
 function MaterialItemList({ items }: { items: ViewMaterialsLineItem[] }) {
   return (
-    <>
+    <div data-name="view-materials-item-list" style={{ display: 'flex', flexDirection: 'column' }}>
       {items.map((item, i) => (
         <div
+          data-name={`view-materials-row-group-${i}`}
           key={`${i}-${item.name}-${item.priceLabel}`}
           style={{
-            borderTop:
-              i > 0 ? `1px solid ${rowDivider}` : undefined,
+            borderTop: i > 0 ? `1px solid ${rowDivider}` : undefined,
             width: '100%',
           }}
         >
           <MaterialRow item={item} />
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -170,6 +177,7 @@ export function ViewMaterialsCard({
   return (
     <section
       className={className}
+      data-name="view-materials-card"
       style={{
         width: '100%',
         maxWidth: 353,
@@ -180,6 +188,7 @@ export function ViewMaterialsCard({
       }}
     >
       <div
+        data-name="view-materials-card-surface"
         style={{
           width: '100%',
           borderRadius: 16,
@@ -191,6 +200,7 @@ export function ViewMaterialsCard({
         }}
       >
         <div
+          data-name="view-materials-body"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -198,6 +208,7 @@ export function ViewMaterialsCard({
           }}
         >
           <div
+            data-name="view-materials-bucket-header"
             style={{
               backgroundColor: color('Foundation/Background/Default'),
               paddingLeft: space('Spacing/16'),
@@ -206,13 +217,16 @@ export function ViewMaterialsCard({
               paddingBottom: space('Spacing/8'),
             }}
           >
-            <span style={{ ...label, color: secondary }}>{bucketLabel}</span>
+            <span data-name="view-materials-bucket-label" style={{ ...label, color: secondary }}>
+              {bucketLabel}
+            </span>
           </div>
 
           <MaterialItemList items={unassignedItems} />
 
           {showSession ? (
             <div
+              data-name="view-materials-session-section"
               style={{
                 borderTop: `1px solid ${rowDivider}`,
                 display: 'flex',

@@ -20,6 +20,18 @@
       "Default (Clean)"
     ]
   },
+  "structure": {
+    "figmaLayerNames": {
+      "Primary": "metric-card-primary",
+      "Secondary": "metric-card-secondary",
+      "TERTIARY": "metric-card-tertiary",
+      "Metric": "metric-card-metric",
+      "Metric Value": "metric-card-metric-value",
+      "Left": "metric-card-left",
+      "Center": "metric-card-center",
+      "Right": "metric-card-right"
+    }
+  },
   "layoutSemantics": {
     "Default": "Primary + secondary + tertiary; horizontal dividers and vertical rules between columns (subtle border).",
     "Default (Clean)": "Same sections; vertical dividers between columns removed.",
@@ -53,7 +65,11 @@
     "isClean": true,
     "notes": [
       "2026-03-28: Figma variant axis renamed from `Property 1` to `Sections` (component set `258:1161`).",
+      "2026-04-10: Standardized structural Figma layer names to kebab-case prefixes (`metric-card-*`) for the component set `258:1161` while preserving the existing variant layout and code behavior.",
       "Code composes sections via props—Figma variants illustrate layouts; Jobs vs Sessions is a label override, not a separate structural variant in code."
+    ],
+    "findings": [
+      "2026-04-08: Component set `258:1161` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set, variant masters, and structural frames. Remaining `Metric` / `Metric Value` frames under secondary and tertiary columns renamed to `metric-card-metric` / `metric-card-metric-value` (primary block already used these names). No `flatten()` in automation. `MetricCard.tsx` already mirrors layers via `data-name`."
     ]
   }
 }

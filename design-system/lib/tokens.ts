@@ -1,11 +1,15 @@
 import type { CSSProperties } from 'react';
 import colorsJson from '../tokens/colors.json';
+import radiusJson from '../tokens/radius.json';
+import shadowsJson from '../tokens/shadows.json';
 import spacingJson from '../tokens/spacing.json';
 import typographyJson from '../tokens/typography.json';
 
 export type ColorToken = keyof typeof colorsJson;
 
 const colors = colorsJson as Record<string, string>;
+const radii = radiusJson as Record<string, number>;
+const shadows = shadowsJson as Record<string, string>;
 const spacing = spacingJson as Record<string, number>;
 const typography = typographyJson as Record<
   string,
@@ -26,10 +30,51 @@ export function color(token: string): string {
   return value;
 }
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const normalized = hex.trim().replace(/^#/, '');
+  if (normalized.length === 3) {
+    const [r, g, b] = normalized.split('').map((part) => part + part);
+    return {
+      r: Number.parseInt(r, 16),
+      g: Number.parseInt(g, 16),
+      b: Number.parseInt(b, 16),
+    };
+  }
+  if (normalized.length === 6) {
+    return {
+      r: Number.parseInt(normalized.slice(0, 2), 16),
+      g: Number.parseInt(normalized.slice(2, 4), 16),
+      b: Number.parseInt(normalized.slice(4, 6), 16),
+    };
+  }
+  throw new Error(`Unsupported hex color value: ${hex}`);
+}
+
+export function colorWithAlpha(token: string, alpha: number): string {
+  const { r, g, b } = hexToRgb(color(token));
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function space(token: string): number {
   const value = spacing[token];
   if (value === undefined) throw new Error(`Unknown spacing token: ${token}`);
   return value;
+}
+
+export function radius(token: string): number {
+  const value = radii[token];
+  if (value === undefined) throw new Error(`Unknown radius token: ${token}`);
+  return value;
+}
+
+export function shadow(token: string): string {
+  const value = shadows[token];
+  if (value === undefined) throw new Error(`Unknown shadow token: ${token}`);
+  return value;
+}
+
+export function shadowFromColor(colorValue: string, spec = '0px 1px 2px'): string {
+  return `${spec} ${colorValue}`;
 }
 
 /** Typography/LABEL → React/CSS-friendly text style (Figma: lineHeight 100 = auto; letterSpacing % of font size). */

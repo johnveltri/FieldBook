@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodyStyle,
@@ -32,7 +33,7 @@ const metricMatValue = color('Brand/Accent');
 const successText = color('Semantic/Status/Success/Text');
 
 const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 export type JobCardStatusVariant = 'success' | 'neutral';
@@ -87,7 +88,7 @@ function netValueColor(sentiment: 'positive' | 'negative'): string {
 /**
  * Job list/detail card with accent rail, header, optional category chip, status pill, and metrics.
  * Figma: **Job Card** component set `622:161` (Default `661:2`, No job category `622:162`,
- * Empty State `622:199`, No Metrics `1286:816`).
+ * Empty State `622:199`, No Metrics `1286:816`). `data-name` matches `structure.figmaLayerNames` in `spec.json`.
  */
 export function JobCard({
   title,
@@ -153,6 +154,7 @@ export function JobCard({
   const inner = (
     <>
       <div
+        data-name="job-card-accent-rail"
         style={{
           width: 2,
           alignSelf: 'stretch',
@@ -163,6 +165,7 @@ export function JobCard({
         aria-hidden
       />
       <div
+        data-name="job-card-content"
         style={{
           flex: '1 1 0',
           minWidth: 0,
@@ -175,6 +178,7 @@ export function JobCard({
         }}
       >
         <div
+          data-name="job-card-header-row"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -185,6 +189,7 @@ export function JobCard({
           }}
         >
           <div
+            data-name="job-card-title-block"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -195,6 +200,7 @@ export function JobCard({
             }}
           >
             <div
+              data-name="job-card-heading"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -216,6 +222,7 @@ export function JobCard({
             </div>
             {showMeta ? (
               <div
+                data-name="job-card-meta-row"
                 style={{
                   display: 'flex',
                   flexDirection: 'row',
@@ -235,6 +242,7 @@ export function JobCard({
             ) : null}
           </div>
           <div
+            data-name="job-card-status-pill"
             style={{
               flexShrink: 0,
               display: 'flex',
@@ -248,6 +256,7 @@ export function JobCard({
 
         {showCategory ? (
           <div
+            data-name="job-card-category-chip"
             style={{
               alignSelf: 'flex-start',
               display: 'inline-flex',
@@ -268,6 +277,7 @@ export function JobCard({
 
         {showMetrics ? (
           <div
+            data-name="job-card-metrics"
             style={{
               display: 'flex',
               flexDirection: 'row',
@@ -279,21 +289,25 @@ export function JobCard({
             }}
           >
             <MetricColumn
+              dataName="job-card-metric-time"
               label="TIME"
               value={resolvedTimeHours}
               valueColor={textPrimary}
             />
             <MetricColumn
+              dataName="job-card-metric-rev"
               label="REV"
               value={resolvedRevenue}
               valueColor={textPrimary}
             />
             <MetricColumn
+              dataName="job-card-metric-mat"
               label="MAT"
               value={resolvedMaterials}
               valueColor={metricMatValue}
             />
             <MetricColumn
+              dataName="job-card-metric-net"
               label="NET"
               value={resolvedNet}
               valueColor={netValueColor(resolvedNetSentiment)}
@@ -328,6 +342,7 @@ export function JobCard({
       <button
         type="button"
         className={className}
+        data-name="job-card"
         onClick={onPress}
         style={{
           ...shellStyle,
@@ -343,7 +358,7 @@ export function JobCard({
   }
 
   return (
-    <section className={className} style={shellStyle}>
+    <section className={className} data-name="job-card" style={shellStyle}>
       {inner}
     </section>
   );
@@ -354,14 +369,17 @@ function MetricColumn({
   value,
   valueColor,
   alignEnd,
+  dataName,
 }: {
   label: string;
   value: string;
   valueColor: string;
   alignEnd?: boolean;
+  dataName: string;
 }) {
   return (
     <div
+      data-name={dataName}
       style={{
         flex: '1 1 0',
         minWidth: 0,
@@ -371,8 +389,11 @@ function MetricColumn({
         gap: space('Spacing/4'),
       }}
     >
-      <span style={{ ...labelCaps, color: textMuted }}>{label}</span>
+      <span data-name={`${dataName}-label`} style={{ ...labelCaps, color: textMuted }}>
+        {label}
+      </span>
       <span
+        data-name={`${dataName}-value`}
         style={{
           ...bodyBold,
           color: valueColor,

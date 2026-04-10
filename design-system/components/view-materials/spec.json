@@ -8,9 +8,11 @@
       "width": 353,
       "outerPaddingY": 9
     },
+    "variantProperty": "Property 1 (Materials Same Session `1287:721` has no `Property 1=` prefix)",
     "variantSymbols": {
-      "Property 1=Materials Multi Session": "1287:668",
-      "Property 1=Materials Single Session": "1287:755"
+      "Materials Multi Session": "1287:668",
+      "Materials Same Session": "1287:721",
+      "Materials Single Session": "1287:755"
     }
   },
   "codeVariantMap": {
@@ -36,10 +38,35 @@
     "sessionBlock": "optional; rendered when variant is materialsMultiSession and items.length > 0",
     "ViewMaterialsLineItem": "{ name, quantityLabel, priceLabel }"
   },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "View Materials (vertical stack of variant masters, 16px gap)",
+      "view-materials-card": "outer wrapper (Single Session + Materials Same Session); Multi Session uses `view-materials-card-surface` as the single bordered frame",
+      "view-materials-card-surface": "white surface with border/shadow",
+      "view-materials-unassigned-block": "Multi Session: bucket + first row stack above `view-materials-session-section`",
+      "view-materials-body": "React-only wrapper inside surface; Figma omits this frame (stack bucket + rows + optional session in surface)",
+      "view-materials-bucket-header": "top bucket band",
+      "view-materials-bucket-label": "bucket label text",
+      "view-materials-item-list": "React `MaterialItemList`; Figma rows are direct children / row stacks",
+      "view-materials-row-group-*": "row group wrapper",
+      "view-materials-row": "material row (horizontal: content + price)",
+      "view-materials-row-content": "left column (name + quantity)",
+      "view-materials-row-name": "name text frame",
+      "view-materials-row-quantity": "quantity text frame",
+      "view-materials-row-price": "price text frame",
+      "view-materials-session-section": "session block (border-top in React)",
+      "view-materials-session-header": "session band",
+      "view-materials-session-header-text": "session band label"
+    }
+  },
   "qualityAudit": {
     "isClean": true,
     "notes": [
+      "2026-04-10: `ViewMaterialsCard` in `view-materials/` from Figma `1287:618`. Structural layers now use `view-materials-*` slots, the card stays a vertical auto-layout-style stack, and no flattening is needed in automation.",
       "2026-04-07: `ViewMaterialsCard` in `view-materials/` from Figma `1287:618`. Row chrome matches View Notes session headers; no leading icons in reference."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1287:618` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Generic `Container` / `Input` chrome renamed to `view-materials-*` (card / surface, bucket header + label, row + row-content + name/quantity/price, session section + session header + text). Multi Session (`1287:668`): outer `view-materials-card-surface` stacks `view-materials-unassigned-block` and `view-materials-session-section`. Materials Same Session (`1287:721`): two unassigned rows, no session block. No `flatten()` in automation."
     ]
   }
 }

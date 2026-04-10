@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  colorWithAlpha,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyLabelStyle,
@@ -8,13 +10,11 @@ import {
 } from '../../lib/tokens';
 
 const openShadow: CSSProperties = {
-  boxShadow:
-    '0px 2px 4px rgba(0, 0, 0, 0.1), 0px 4px 6px rgba(0, 0, 0, 0.1)',
+  boxShadow: shadow('Shadow/Live/Open'),
 };
 
 const minimizedShadow: CSSProperties = {
-  boxShadow:
-    '0px 8px 10px rgba(0, 0, 0, 0.1), 0px 20px 25px rgba(0, 0, 0, 0.1)',
+  boxShadow: shadow('Shadow/Live/Minimized'),
 };
 
 const headingOpen: CSSProperties = {
@@ -128,6 +128,7 @@ export function LiveSessionCard({
     return (
       <section
         className={className}
+        data-name="live-session-minimized"
         style={{
           width: '100%',
           maxWidth: 359,
@@ -135,7 +136,7 @@ export function LiveSessionCard({
           boxSizing: 'border-box',
           backgroundColor: bg,
           borderRadius: 16,
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          border: `1px solid ${colorWithAlpha('Foundation/Surface/Default', 0.1)}`,
           ...minimizedShadow,
           paddingLeft: space('Spacing/16'),
           paddingRight: space('Spacing/16'),
@@ -150,6 +151,7 @@ export function LiveSessionCard({
         }}
       >
         <div
+          data-name="live-session-minimized-main"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -159,8 +161,11 @@ export function LiveSessionCard({
             flex: '1 1 auto',
           }}
         >
-          <LiveDot sizePx={13.5} />
+          <span data-name="live-session-minimized-dot">
+            <LiveDot sizePx={13.5} />
+          </span>
           <div
+            data-name="live-session-minimized-copy"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -170,14 +175,16 @@ export function LiveSessionCard({
             }}
           >
             <span
+              data-name="live-session-minimized-label"
               style={{
                 ...label,
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: colorWithAlpha('Foundation/Surface/Default', 0.7),
               }}
             >
               Active Session
             </span>
             <p
+              data-name="live-session-minimized-title"
               style={{
                 margin: 0,
                 ...bodyBold,
@@ -190,6 +197,7 @@ export function LiveSessionCard({
           </div>
         </div>
         <div
+          data-name="live-session-minimized-actions"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -199,6 +207,7 @@ export function LiveSessionCard({
           }}
         >
           <span
+            data-name="live-session-minimized-timer"
             style={{
               ...metricSmall,
               color: primaryTimer,
@@ -209,6 +218,7 @@ export function LiveSessionCard({
           </span>
           <button
             type="button"
+            data-name="live-session-minimized-toggle"
             onClick={onToggle}
             aria-label="Expand session"
             style={{
@@ -224,7 +234,9 @@ export function LiveSessionCard({
               height: 32,
             }}
           >
-            <ChevronUpIcon />
+            <span data-name="live-session-minimized-toggle-icon">
+              <ChevronUpIcon />
+            </span>
           </button>
         </div>
       </section>
@@ -234,6 +246,7 @@ export function LiveSessionCard({
   return (
     <section
       className={className}
+      data-name="live-session-open-header"
       style={{
         width: '100%',
         maxWidth: 391,
@@ -247,6 +260,7 @@ export function LiveSessionCard({
       }}
     >
       <div
+        data-name="live-session-open-rail"
         style={{
           height: 6,
           width: '100%',
@@ -255,6 +269,7 @@ export function LiveSessionCard({
         aria-hidden
       />
       <div
+        data-name="live-session-open-content"
         style={{
           paddingLeft: space('Spacing/20'),
           paddingRight: space('Spacing/20'),
@@ -263,6 +278,7 @@ export function LiveSessionCard({
         }}
       >
         <div
+          data-name="live-session-open-top-row"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -272,6 +288,7 @@ export function LiveSessionCard({
           }}
         >
           <div
+            data-name="live-session-open-status"
             style={{
               display: 'flex',
               flexDirection: 'row',
@@ -280,11 +297,16 @@ export function LiveSessionCard({
               minWidth: 0,
             }}
           >
-            <LiveDot sizePx={11.5} />
-            <span style={{ ...label, color: muted }}>Active Session</span>
+            <span data-name="live-session-open-status-dot">
+              <LiveDot sizePx={11.5} />
+            </span>
+            <span data-name="live-session-open-status-label" style={{ ...label, color: muted }}>
+              Active Session
+            </span>
           </div>
           <button
             type="button"
+            data-name="live-session-open-toggle"
             onClick={onToggle}
             aria-label="Collapse session"
             style={{
@@ -301,11 +323,14 @@ export function LiveSessionCard({
               flexShrink: 0,
             }}
           >
-            <ChevronDownIcon />
+            <span data-name="live-session-open-toggle-icon">
+              <ChevronDownIcon />
+            </span>
           </button>
         </div>
 
         <h2
+          data-name="live-session-open-title"
           style={{
             margin: 0,
             marginTop: space('Spacing/8'),
@@ -318,6 +343,7 @@ export function LiveSessionCard({
         </h2>
 
         <div
+          data-name="live-session-open-timer-wrap"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -331,6 +357,7 @@ export function LiveSessionCard({
           }}
         >
           <p
+            data-name="live-session-open-timer"
             style={{
               margin: 0,
               fontFamily: bodyBold.fontFamily,

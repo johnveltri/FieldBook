@@ -2,12 +2,13 @@
   "component": {
     "name": "Bottom Sheet: Choose Session",
     "figmaNodeId": "1279:381",
-    "kind": "frame",
+    "kind": "componentSet",
     "description": "Session flows: attach/detach job notes (featured row + optional divider + job list), pick a session from a list, or create a session type (live vs log past).",
     "dimensions": {
       "width": 391,
       "height": 491.5
     },
+    "variantProperty": "Property 1",
     "variantSymbols": {
       "New Attachment for Session": "1185:377",
       "Add to Session": "1279:380",
@@ -20,6 +21,23 @@
     "addToSession": "Title “Add to Session”; list only.",
     "removeEditFromSession": "Title “Edit Session”; error featured row `Semantic/Status/Error/BG`; divider “ATTACH TO DIFFERENT SESSION”; list.",
     "newSessionType": "Title “New Session”; stacked rows: `Brand/Primary` “Live Session” (`QuickCaptureTileIcon` startSession) and `Semantic/Status/Neutral/BG` + `Foundation/Text/Primary` border “Log Past Session” (pencil well on `Foundation/Text/Secondary`); no list."
+  },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "Bottom Sheet: Choose Session (vertical stack of variant masters, 16px gap)",
+      "surface": "bottom-sheet-choose-session",
+      "handle": "bottom-sheet-choose-session-handle (40×6 grabber)",
+      "content": "bottom-sheet-choose-session-content",
+      "cardRows": "bottom-sheet-choose-session-card-rows",
+      "heading": "bottom-sheet-choose-session-heading (sheet title text)",
+      "back": "bottom-sheet-choose-session-back",
+      "backLabel": "bottom-sheet-choose-session-back-label",
+      "backIcon": "bottom-sheet-choose-session-back-icon",
+      "divider": "bottom-sheet-choose-session-divider",
+      "dividerLineStart": "bottom-sheet-choose-session-divider-line-start",
+      "dividerLabel": "bottom-sheet-choose-session-divider-label",
+      "dividerLineEnd": "bottom-sheet-choose-session-divider-line-end"
+    }
   },
   "composition": {
     "rowCard": {
@@ -64,6 +82,9 @@
     "isClean": true,
     "notes": [
       "2026-04-07: Variants renamed to match Figma property labels (incl. New Session Type `1286:602`). Code enum uses camelCase `newAttachmentForSession`, `removeEditFromSession`, `newSessionType`."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1279:381` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Structural frames renamed to `bottom-sheet-choose-session-*`: surface, handle, content, card-rows, heading, back (+ label/icon), session divider (+ line-start/label/line-end). `Remove/Edit From Session` (`1279:423`) nests an instance of `New Attachment for Session` (`1185:377`); shared subtree renames apply through that instance. No `flatten()` in automation. React mirrors layers via `data-name`."
     ]
   }
 }

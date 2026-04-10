@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import {
   color,
+  shadow,
   space,
   typographyBodyBoldStyle,
   typographyBodyStyle,
@@ -20,7 +21,7 @@ const textBrand = color('Brand/Primary');
 const textSuccess = color('Semantic/Status/Success/Text');
 
 const cardShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 export type JobSummaryLineValueTone = 'primary' | 'brand';
@@ -77,6 +78,7 @@ export function JobSummaryCard({
   return (
     <section
       className={className}
+      data-name="job-summary-card"
       style={{
         width: '100%',
         maxWidth: 353,
@@ -94,6 +96,7 @@ export function JobSummaryCard({
       }}
     >
       <header
+        data-name="job-summary-card-heading"
         style={{
           ...labelHeading,
           color: textSecondary,
@@ -105,6 +108,7 @@ export function JobSummaryCard({
       </header>
 
       <div
+        data-name="job-summary-card-breakdown"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -117,6 +121,7 @@ export function JobSummaryCard({
         {fees ? <SummaryRow line={fees} /> : null}
 
         <div
+          data-name="job-summary-card-total"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -132,6 +137,7 @@ export function JobSummaryCard({
               ...metricBold,
               color: textPrimary,
             }}
+            data-name="job-summary-card-total-label"
           >
             {totalLabel}
           </span>
@@ -144,8 +150,9 @@ export function JobSummaryCard({
               alignItems: 'center',
               gap: 0,
             }}
+            data-name="job-summary-card-total-value"
           >
-            <span>{totalPrefix}</span>
+            <span data-name="job-summary-card-total-value-prefix">{totalPrefix}</span>
             <span style={{ textAlign: 'right', marginLeft: 2 }}>
               {total.value}
             </span>
@@ -162,6 +169,7 @@ function SummaryRow({ line }: { line: JobSummaryLine }) {
 
   return (
     <div
+      data-name="job-summary-card-row"
       style={{
         display: 'flex',
         flexDirection: 'row',
@@ -188,6 +196,7 @@ function SummaryRow({ line }: { line: JobSummaryLine }) {
             flex: '1 1 0',
             minWidth: 0,
           }}
+          data-name="job-summary-card-row-label"
         >
           {line.label}
         </span>
@@ -202,9 +211,22 @@ function SummaryRow({ line }: { line: JobSummaryLine }) {
             paddingTop: 2,
             paddingBottom: 2,
           }}
+          data-name="job-summary-card-row-value"
         >
-          {prefix ? <span style={{ whiteSpace: 'nowrap' }}>{prefix}</span> : null}
-          <span style={{ textAlign: 'right', minWidth: 48 }}>{line.value}</span>
+          {prefix ? (
+            <span
+              style={{ whiteSpace: 'nowrap' }}
+              data-name="job-summary-card-row-value-prefix"
+            >
+              {prefix}
+            </span>
+          ) : null}
+          <span
+            style={{ textAlign: 'right', minWidth: 48 }}
+            data-name="job-summary-card-row-value-amount"
+          >
+            {line.value}
+          </span>
         </span>
       </div>
     </div>

@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react';
-import { color, space, typographyLabelStyle } from '../../lib/tokens';
+import { color, shadow, space, typographyLabelStyle } from '../../lib/tokens';
 
 const segmentShadow: CSSProperties = {
-  boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+  boxShadow: shadow('Shadow/Card/Default'),
 };
 
 /** Job list filter labels (Figma preset). */
@@ -56,7 +56,7 @@ export function PageTabs({
   };
 
   return (
-    <div className={className} role="tablist" style={track}>
+    <div className={className} data-name="page-tabs" role="tablist" style={track}>
       {labels.map((text, index) => {
         const selected = value === index;
         const isMiddleSlot = index === 1;
@@ -88,12 +88,13 @@ export function PageTabs({
           <button
             key={`${text}-${index}`}
             type="button"
+            data-name={`page-tabs-tab-${index}`}
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(index as PageTabIndex)}
             style={segment}
           >
-            {text}
+            <span data-name={`page-tabs-tab-${index}-label`}>{text}</span>
           </button>
         );
       })}

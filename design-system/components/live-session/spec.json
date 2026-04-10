@@ -4,14 +4,47 @@
     "figmaNodeId": "1287:1545",
     "kind": "componentSet",
     "description": "**Open:** `Foundation/Border/Default` panel (391×260), **Brand/Accent** 6px top rule, dual shadow, **Active Session** (`Typography/LABEL` + **Foundation/Text/Muted**), PT Serif **24 Bold** white title, centered **70px** mono timer (white, uppercase), collapse control (white chevron). **Minimized:** 359px-wide bar, **16** radius, `1px rgba(255,255,255,0.1)` border, deeper shadow, dot + label stack + **Typography/Body-Bold** title in muted, **Brand/Primary** **Typography/Metric** timer + chevron up.",
+    "variantProperty": "Property 1",
     "variantSymbols": {
-      "Property 1=Open Header": "1287:1544",
-      "Property 1=Minimized": "1287:1561"
+      "Open Header": "1287:1544",
+      "Minimized": "1287:1561"
     }
   },
   "codeVariantMap": {
     "openHeader": "Open Header",
     "minimized": "Minimized"
+  },
+  "structure": {
+    "figmaLayerNames": {
+      "componentSet": "live-session (vertical stack of variant masters, 16px gap)",
+      "openHeader": "live-session-open-header (React `section`; Figma `COMPONENT` root)",
+      "openContent": "live-session-open-content (React wrapper; Figma omits — rail + rows are siblings)",
+      "openTopRow": "live-session-open-top-row (React; Figma uses absolute-position collapse control)",
+      "openRail": "live-session-open-rail",
+      "openToggle": "live-session-open-toggle",
+      "openToggleIcon": "live-session-open-toggle-icon",
+      "openStatus": "live-session-open-status",
+      "openStatusDot": "live-session-open-status-dot",
+      "openStatusLabelWrap": "live-session-open-status-label-wrap",
+      "openStatusLabel": "live-session-open-status-label",
+      "openTitle": "live-session-open-title",
+      "openTitleText": "live-session-open-title-text",
+      "openTimerWrap": "live-session-open-timer-wrap",
+      "openTimer": "live-session-open-timer",
+      "openTimerText": "live-session-open-timer-text",
+      "minimized": "live-session-minimized",
+      "minimizedMain": "live-session-minimized-main",
+      "minimizedDot": "live-session-minimized-dot",
+      "minimizedCopy": "live-session-minimized-copy",
+      "minimizedLabelWrap": "live-session-minimized-label-wrap",
+      "minimizedLabel": "live-session-minimized-label",
+      "minimizedTitleWrap": "live-session-minimized-title-wrap",
+      "minimizedTitle": "live-session-minimized-title",
+      "minimizedActions": "live-session-minimized-actions",
+      "minimizedTimer": "live-session-minimized-timer",
+      "minimizedTimerText": "live-session-minimized-timer-text",
+      "minimizedToggleIcon": "live-session-minimized-toggle-icon (chevron frame; tap target may be the parent row in Figma)"
+    }
   },
   "tokens": {
     "colors": [
@@ -39,7 +72,11 @@
   "qualityAudit": {
     "isClean": true,
     "notes": [
+      "2026-04-10: Added kebab-case `live-session-*` structural hooks in TSX and spec.",
       "2026-04-08: `LiveSessionCard` from Figma `1287:1545`. Chevrons are inline SVG (white); raster assets not used."
+    ],
+    "findings": [
+      "2026-04-08: Component set `1287:1545` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Open Header: `live-session-open-rail`, `live-session-open-toggle` (+ `live-session-open-toggle-icon`), `live-session-open-status` (+ dot, label wrap/label), `live-session-open-title` (+ text), `live-session-open-timer-wrap` / `live-session-open-timer` (+ timer text). Minimized: `live-session-minimized-main` (+ dot, copy column with label/title wraps), `live-session-minimized-actions` (timer + `live-session-minimized-toggle-icon`). React adds `live-session-open-content` / top-row flex and dot/timer text hooks. No `flatten()` in automation."
     ]
   }
 }
