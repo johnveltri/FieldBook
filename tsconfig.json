@@ -1,15 +1,11 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "strict": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true
-  },
-  "include": ["design-system/**/*.ts", "design-system/**/*.tsx"]
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "packages/shared-types/**/*.ts",
+    "packages/api-client/**/*.ts",
+    "packages/design-system/**/*.ts",
+    "packages/design-system/**/*.tsx",
+    "apps/mobile-expo/**/*.ts",
+    "apps/mobile-expo/**/*.tsx"
+  ]
 }

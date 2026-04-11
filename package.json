@@ -2,24 +2,18 @@
   "name": "fieldbook",
   "private": true,
   "version": "0.0.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "react": "^18.3.1"
+    "typecheck": "tsc -p packages/shared-types/tsconfig.json --noEmit && tsc -p packages/api-client/tsconfig.json --noEmit && tsc -p packages/design-system/tsconfig.json --noEmit && tsc -p apps/mobile-expo/tsconfig.json --noEmit",
+    "mobile": "npm run start -w mobile-expo",
+    "db:start": "npx supabase start --workdir backend",
+    "db:stop": "npx supabase stop --workdir backend",
+    "db:reset": "npx supabase db reset --workdir backend"
   },
   "devDependencies": {
-    "@expo-google-fonts/pt-serif": "^0.4.1",
-    "@expo-google-fonts/ubuntu-sans-mono": "^0.4.1",
-    "@types/react": "^18.3.12",
     "typescript": "^5.7.2"
-  },
-  "peerDependencies": {
-    "expo-font": ">=12.0.0"
-  },
-  "peerDependenciesMeta": {
-    "expo-font": {
-      "optional": true
-    }
   }
 }
