@@ -4,7 +4,7 @@
     "figmaNodeId": "1283:351",
     "kind": "componentSet",
     "variantProperty": "Property 1 (Add Job Material `1283:426` omits the prefix)",
-    "description": "Material line-item bottom sheet: vertical stack (`material-content`) with drag handle, body (back, header with wrench + title + optional SESSION row, subtitle, fields), and primary CTA or edit footer. `Add Job Material` shares edit layout without the `Property 1=` prefix.",
+    "description": "Material line-item bottom sheet: vertical stack (`material-content`) with drag handle, body (back, header with wrench + title + optional SESSION row, subtitle, fields), and **Button** (`1287:1563`) **Material** colorway — **Primary Material** (`1808:1148`) / **Primary+Delete Material** (`1808:1154`) — in `material-primary-action` / `material-footer` (header wrench still **Semantic/Activity/Material**).",
     "dimensions": {
       "width": 391,
       "height": 347
@@ -48,11 +48,11 @@
       "unitSelect": "material-unit-select",
       "unitSelectInput": "material-unit-select-input",
       "unitSelectCaret": "material-unit-select-caret",
-      "primaryAction": "material-primary-action",
-      "primaryActionLabel": "material-primary-action-label",
-      "footer": "material-footer",
-      "deleteButton": "material-delete-button",
-      "deleteIcon": "material-delete-icon"
+      "primaryAction": "material-primary-action (INSTANCE `1808:1148` Button Primary Material; nested `field-book-cta-*`)",
+      "primaryActionLabel": "field-book-cta-label (inside Button instance)",
+      "footer": "material-footer (wraps INSTANCE `1808:1154` as `material-footer-cta`)",
+      "deleteButton": "field-book-cta-delete (inside Button instance)",
+      "deleteIcon": "field-book-cta-delete-icon (inside Button instance)"
     }
   },
   "codeVariantMap": {
@@ -87,9 +87,8 @@
     "note": "Inputs use `Typography/Body` (Ubuntu Sans Mono 14) per updated Figma fields, not `Typography/Input`."
   },
   "primaryCta": {
-    "fill": "Semantic/Activity/Material",
-    "shadowNewModes": "0px 1px 2px Semantic/Status/Success/Text",
-    "shadowEditMode": "0px 1px 2px Semantic/Activity/Material"
+    "component": "Shared **Button** set `1287:1563`, **Material** masters (`1808:1148` / `1808:1154`); `FieldBookCtaButton` variants `materialPrimary` / `materialPrimaryWithDelete`.",
+    "headerLeadIcon": "Semantic/Activity/Material on wrench tile (unchanged)"
   },
   "codeProps": {
     "variant": "newQuickMaterial | newJobMaterial | newSessionMaterial | editJobMaterial | editSessionMaterial",
@@ -112,12 +111,13 @@
   "qualityAudit": {
     "isClean": true,
     "notes": [
-      "2026-04-08: Fields + unit `select` use `typographyBodyStyle`. Primary CTA on create flows uses drop shadow tinted with `Semantic/Status/Success/Text`; edit SAVE CHANGES uses `Semantic/Activity/Material` shadow to match Figma.",
+      "2026-04-08: Fields + unit `select` use `typographyBodyStyle`. Footer CTAs now use shared Button (`1287:1563`); superseded: material-tint-only primary shadows.",
       "2026-04-10: Renamed generic structural layers to kebab-case `material-*` slots (`material-content`, `material-header`, `material-title`, `material-session-pill`, `material-fields`, `material-price-row`, `material-unit-select`, `material-primary-action`, `material-footer`). Kept the variant property strings unchanged, and treated `Material` as a frame wrapper rather than a full component set. No `flatten()` was introduced in automation.",
       "Leading wrench: `QuickCaptureTileIcon` `newMaterial` scaled to 14px."
     ],
     "findings": [
-      "2026-04-08: Component set `1283:351` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and all five variant masters. Canvas already uses kebab-case `material-*` (`material-content` stack, `material-drag-handle`, `material-body`, fields, actions). React: `material-content` is the padded vertical stack; pull bar `material-drag-handle` (replacing misapplied `material-content` on the handle); header matches Figma (`material-title-icon` + `material-title` / `material-title-text` for create; edit adds `material-title-row` with pill); `material-price-group` on $ + price inputs. No `flatten()` in automation."
+      "2026-04-08: Component set `1283:351` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and all five variant masters. Canvas already uses kebab-case `material-*` (`material-content` stack, `material-drag-handle`, `material-body`, fields, actions). React: `material-content` is the padded vertical stack; pull bar `material-drag-handle` (replacing misapplied `material-content` on the handle); header matches Figma (`material-title-icon` + `material-title` / `material-title-text` for create; edit adds `material-title-row` with pill); `material-price-group` on $ + price inputs. No `flatten()` in automation.",
+      "2026-04-08: Footer CTAs use **Button** **Material** instances `1808:1148` / `1808:1154` from `1287:1563`. React: `FieldBookCtaButton` (`materialPrimary` / `materialPrimaryWithDelete`)."
     ]
   }
 }

@@ -2,7 +2,6 @@ import type { CSSProperties } from 'react';
 import {
   color,
   colorWithAlpha,
-  shadowFromColor,
   shadow,
   space,
   typographyBodyBoldStyle,
@@ -12,6 +11,7 @@ import {
 } from '../../lib/tokens';
 import { PlusIcon } from '../../icons/PlusIcon';
 import { QuickCaptureTileIcon } from '../bottom-sheet-quick-capture/QuickCaptureTileIcons';
+import { FieldBookCtaButton } from '../field-book-cta';
 
 const sheetShadow: CSSProperties = {
   boxShadow: shadow('Shadow/Overlay/Default'),
@@ -139,28 +139,6 @@ function PencilGlyph() {
   );
 }
 
-function TrashGlyph() {
-  const c = color('Semantic/Status/Error/Text');
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M3.5 4.5h9M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M12.5 4.5V13a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V4.5M6.5 7.5v4M9.5 7.5v4"
-        stroke={c}
-        strokeWidth={1.25}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function MaterialLeadIcon() {
   const fg = color('Semantic/Activity/Material');
   return (
@@ -214,6 +192,7 @@ export type MaterialBottomSheetProps = {
 
 /**
  * Material entry / edit bottom sheet (Figma component set **Material** `1283:351`).
+ * Save actions use **Button** **Material** variants (`1287:1563`) via `FieldBookCtaButton` (header wrench still **Semantic/Activity/Material**).
  */
 export function MaterialBottomSheet({
   variant,
@@ -245,8 +224,6 @@ export function MaterialBottomSheet({
   const borderSubtle = color('Foundation/Border/Subtle');
   const backFg = color('Foundation/Text/Secondary');
   const fg = color('Foundation/Text/Primary');
-  const material = color('Semantic/Activity/Material');
-  const materialShadow = color('Semantic/Status/Success/Text');
   const errorBg = color('Semantic/Status/Error/BG');
   const errorText = color('Semantic/Status/Error/Text');
   const secondary = color('Foundation/Text/Secondary');
@@ -656,90 +633,21 @@ export function MaterialBottomSheet({
       </div>
 
       {!isEdit ? (
-        <button
-          type="button"
-          data-name="material-primary-action"
-          onClick={onPrimaryAction}
-          style={{
-            width: '100%',
-            maxWidth: 343,
-            paddingTop: 17,
-            paddingBottom: 17,
-            paddingLeft: 100,
-            paddingRight: 100,
-            borderRadius: 12,
-            border: 'none',
-            backgroundColor: material,
-            cursor: onPrimaryAction ? 'pointer' : 'default',
-            boxShadow: shadowFromColor(materialShadow),
-            ...bodyBold,
-            color: color('Foundation/Surface/Default'),
-            textTransform: 'uppercase',
-          }}
-        >
-          <span data-name="material-primary-action-label">{primaryLabel(variant)}</span>
-        </button>
+        <div data-name="material-primary-action" style={{ width: '100%', maxWidth: 343 }}>
+          <FieldBookCtaButton
+            variant="materialPrimary"
+            primaryLabel={primaryLabel(variant)}
+            onPrimaryClick={onPrimaryAction}
+          />
+        </div>
       ) : (
-        <div
-          data-name="material-footer"
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'stretch',
-            gap: 18,
-            width: '100%',
-            maxWidth: 343,
-            minHeight: 71,
-          }}
-        >
-          <button
-            type="button"
-            data-name="material-primary-action"
-            onClick={onPrimaryAction}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              paddingTop: 17,
-              paddingBottom: 17,
-              paddingLeft: 100,
-              paddingRight: 100,
-              borderRadius: 12,
-              border: 'none',
-              backgroundColor: material,
-              cursor: onPrimaryAction ? 'pointer' : 'default',
-              boxShadow: shadowFromColor(material),
-              ...bodyBold,
-              color: color('Foundation/Surface/Default'),
-              textTransform: 'uppercase',
-            }}
-          >
-            <span data-name="material-primary-action-label">{primaryLabel(variant)}</span>
-          </button>
-          <button
-            type="button"
-            data-name="material-delete-button"
-            onClick={onDelete}
-            aria-label="Delete material"
-            style={{
-              flexShrink: 0,
-              width: 48,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingLeft: 14,
-              paddingRight: 14,
-              paddingTop: 18,
-              paddingBottom: 18,
-              borderRadius: 8,
-              border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
-              backgroundColor: color('Foundation/Surface/Default'),
-              cursor: onDelete ? 'pointer' : 'default',
-            }}
-          >
-            <span data-name="material-delete-icon">
-              <TrashGlyph />
-            </span>
-          </button>
+        <div data-name="material-footer" style={{ width: '100%', maxWidth: 343 }}>
+          <FieldBookCtaButton
+            variant="materialPrimaryWithDelete"
+            primaryLabel={primaryLabel(variant)}
+            onPrimaryClick={onPrimaryAction}
+            onDeleteClick={onDelete}
+          />
         </div>
       )}
       </div>

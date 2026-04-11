@@ -4,7 +4,7 @@
     "figmaNodeId": "1279:351",
     "kind": "componentSet",
     "variantProperty": "Property 1",
-    "description": "Note composer / editor bottom sheet: vertical stack (`note-content`) with drag handle, body (back, header with icon + title + optional SESSION pill, subtitle, textarea), and primary CTA or edit footer (save + delete).",
+    "description": "Note composer / editor bottom sheet: vertical stack (`note-content`) with drag handle, body (back, header with icon + title + optional SESSION pill, subtitle, textarea), and **Button** (`1287:1563`) **Note** colorway — **Primary Note** (`1287:1562`) / **Primary+Delete Note** (`1287:1566`) — in `note-primary-action` / `note-footer`.",
     "dimensions": {
       "width": 391,
       "height": 471.5
@@ -70,11 +70,11 @@
       "subtitleText": "note-subtitle-text",
       "textarea": "note-textarea",
       "textareaValue": "note-textarea-value",
-      "primaryAction": "note-primary-action",
-      "primaryActionLabel": "note-primary-action-label",
-      "footer": "note-footer",
-      "deleteButton": "note-delete-button",
-      "deleteIcon": "note-delete-icon"
+      "primaryAction": "note-primary-action (INSTANCE `1287:1562` Button Primary Note; nested `field-book-cta-*`)",
+      "primaryActionLabel": "field-book-cta-label (inside Button instance)",
+      "footer": "note-footer (wraps INSTANCE `1287:1566` Button Primary+Delete Note as `note-footer-cta`)",
+      "deleteButton": "field-book-cta-delete (inside Button instance)",
+      "deleteIcon": "field-book-cta-delete-icon (inside Button instance)"
     }
   },
   "codeProps": {
@@ -96,7 +96,8 @@
       "2026-04-10: Renamed generic structural layers to kebab-case `note-*` slots (`note-content`, `note-header`, `note-title`, `note-session-pill`, `note-textarea`, `note-primary-action`, `note-delete-button`). Kept variant property strings unchanged; this is still a frame wrapper around component masters, not a new component set. No `flatten()` was introduced in automation."
     ],
     "findings": [
-      "2026-04-08: Component set `1279:351` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and all five variant masters. Canvas already used kebab-case `note-*` layers (`note-content` → handle, body, primary/footer). React updated: `note-content` is the padded vertical stack; pull bar `note-drag-handle` (replacing misapplied `note-content` on the handle); `note-header` matches Figma siblings `note-title-icon`, `note-title` / `note-title-text`, optional `note-session-pill`. No `flatten()` in automation."
+      "2026-04-08: Component set `1279:351` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and all five variant masters. Canvas already used kebab-case `note-*` layers (`note-content` → handle, body, primary/footer). React updated: `note-content` is the padded vertical stack; pull bar `note-drag-handle` (replacing misapplied `note-content` on the handle); `note-header` matches Figma siblings `note-title-icon`, `note-title` / `note-title-text`, optional `note-session-pill`. No `flatten()` in automation.",
+      "2026-04-08: Primary and edit footers use **Button** **Note** instances `1287:1562` / `1287:1566` from `1287:1563`. React: `FieldBookCtaButton` (`notePrimary` / `notePrimaryWithDelete`). Material and Edit Job sheets use other **Property 1** colorways in the same set."
     ]
   }
 }

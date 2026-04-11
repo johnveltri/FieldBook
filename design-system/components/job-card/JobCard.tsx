@@ -88,7 +88,8 @@ function netValueColor(sentiment: 'positive' | 'negative'): string {
 /**
  * Job list/detail card with accent rail, header, optional category chip, status pill, and metrics.
  * Figma: **Job Card** component set `622:161` (Default `661:2`, No job category `622:162`,
- * Empty State `622:199`, No Metrics `1286:816`). `data-name` matches `structure.figmaLayerNames` in `spec.json`.
+ * Empty State `622:199`, No Metrics `1286:816`). Header status uses **`Status pill`** (`622:143`) instances
+ * in the file (e.g. Paid `622:142` on Default / No Metrics). `data-name` matches `structure.figmaLayerNames` in `spec.json`.
  */
 export function JobCard({
   title,

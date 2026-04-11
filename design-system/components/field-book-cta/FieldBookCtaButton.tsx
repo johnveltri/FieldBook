@@ -13,6 +13,9 @@ const surfaceWhite = color('Foundation/Surface/Default');
 export const FIELD_BOOK_CTA_VARIANTS = [
   'notePrimary',
   'notePrimaryWithDelete',
+  'materialPrimary',
+  'materialPrimaryWithDelete',
+  'jobSessionPrimaryWithDelete',
   'brandPrimaryXl',
 ] as const;
 
@@ -53,12 +56,39 @@ const labelBrandXl: CSSProperties = {
   textAlign: 'center',
 };
 
+function primaryFillAndShadowForVariant(
+  variant: Exclude<FieldBookCtaVariant, 'brandPrimaryXl'>,
+): { bg: string; shadow: CSSProperties } {
+  const note = color('Semantic/Activity/Note');
+  const material = color('Semantic/Activity/Material');
+  const accent = color('Brand/Accent');
+  const brandPrimary = color('Brand/Primary');
+
+  switch (variant) {
+    case 'notePrimary':
+    case 'notePrimaryWithDelete':
+      return { bg: note, shadow: { boxShadow: shadowFromColor(note) } };
+    case 'materialPrimary':
+    case 'materialPrimaryWithDelete':
+      return { bg: material, shadow: { boxShadow: shadowFromColor(material) } };
+    case 'jobSessionPrimaryWithDelete':
+      return {
+        bg: accent,
+        shadow: { boxShadow: shadowFromColor(brandPrimary) },
+      };
+    default: {
+      const _n: never = variant;
+      return _n;
+    }
+  }
+}
+
 export type FieldBookCtaButtonProps = {
   variant: FieldBookCtaVariant;
   /** Default: `SAVE TO JOB` / `SAVE CHANGES` / `END SESSION` per variant. */
   primaryLabel?: string;
   onPrimaryClick?: () => void;
-  /** `notePrimaryWithDelete` only. */
+  /** Primary + delete row variants only. */
   onDeleteClick?: () => void;
   className?: string;
   style?: CSSProperties;
@@ -66,7 +96,7 @@ export type FieldBookCtaButtonProps = {
 
 /**
  * High-emphasis CTAs from Field Book (Figma **Button** `1287:1563`):
- * note-colored save, save + delete row, brand XL end action.
+ * note / material / job-session tint fills + self-shadow, brand XL, optional delete column.
  */
 export function FieldBookCtaButton({
   variant,
@@ -76,23 +106,19 @@ export function FieldBookCtaButton({
   className,
   style,
 }: FieldBookCtaButtonProps) {
-  const note = color('Semantic/Activity/Note');
   const brand = color('Brand/Primary');
   const deleteIcon = color('Semantic/Status/Error/Text');
-  const noteShadow: CSSProperties = {
-    boxShadow: shadowFromColor(note),
-  };
   const xlShadow: CSSProperties = {
-    boxShadow: shadowFromColor(note),
+    boxShadow: shadowFromColor(color('Semantic/Activity/Note')),
   };
 
   const resolvedPrimaryLabel =
     primaryLabel ??
-    (variant === 'notePrimary'
-      ? 'SAVE TO JOB'
-      : variant === 'notePrimaryWithDelete'
-        ? 'SAVE CHANGES'
-        : 'END SESSION');
+    (variant === 'brandPrimaryXl'
+      ? 'END SESSION'
+      : variant === 'notePrimary' || variant === 'materialPrimary'
+        ? 'SAVE TO JOB'
+        : 'SAVE CHANGES');
 
   const primaryButtonBase: CSSProperties = {
     margin: 0,
@@ -133,7 +159,13 @@ export function FieldBookCtaButton({
     );
   }
 
-  if (variant === 'notePrimary') {
+  const { bg: primaryBg, shadow: primaryShadow } =
+    primaryFillAndShadowForVariant(variant);
+
+  if (
+    variant === 'notePrimary' ||
+    variant === 'materialPrimary'
+  ) {
     return (
       <button
         data-name="field-book-cta-primary"
@@ -142,10 +174,10 @@ export function FieldBookCtaButton({
         onClick={onPrimaryClick}
         style={{
           ...primaryButtonBase,
-          backgroundColor: note,
+          backgroundColor: primaryBg,
           paddingTop: 17,
           paddingBottom: 17,
-          ...noteShadow,
+          ...primaryShadow,
           ...style,
         }}
       >
@@ -183,7 +215,7 @@ export function FieldBookCtaButton({
           margin: 0,
           border: 'none',
           borderRadius: 12,
-          backgroundColor: note,
+          backgroundColor: primaryBg,
           cursor: onPrimaryClick ? 'pointer' : 'default',
           display: 'flex',
           flexDirection: 'column',
@@ -193,7 +225,7 @@ export function FieldBookCtaButton({
           paddingRight: 100,
           paddingTop: 17,
           paddingBottom: 17,
-          ...noteShadow,
+          ...primaryShadow,
         }}
       >
         <span data-name="field-book-cta-label" style={labelNotePrimary}>

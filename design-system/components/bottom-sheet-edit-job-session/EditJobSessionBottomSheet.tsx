@@ -2,7 +2,6 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   color,
   colorWithAlpha,
-  shadowFromColor,
   shadow,
   space,
   typographyBodyBoldStyle,
@@ -10,6 +9,7 @@ import {
   typographyBodyStyle,
   typographyTitleH3Style,
 } from '../../lib/tokens';
+import { FieldBookCtaButton } from '../field-book-cta';
 
 const sheetShadow: CSSProperties = {
   boxShadow: shadow('Shadow/Overlay/Default'),
@@ -92,28 +92,6 @@ function ChevronBackIcon() {
   );
 }
 
-function TrashGlyph() {
-  const c = color('Semantic/Status/Error/Text');
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M3.5 4.5h9M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M12.5 4.5V13a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V4.5M6.5 7.5v4M9.5 7.5v4"
-        stroke={c}
-        strokeWidth={1.25}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function SessionClockIcon() {
   const c = color('Brand/Accent');
   return (
@@ -178,7 +156,7 @@ function mergeSession(session: Partial<EditSessionTimes> | undefined): EditSessi
 
 /**
  * Edit job details or session times with save + delete actions
- * (Figma component set **Edit Job, Session** `1284:789`).
+ * (Figma **Edit Job, Session** `1284:789`; footer **Button** Job/Session colorway `1287:1563` via `FieldBookCtaButton`).
  */
 export function EditJobSessionBottomSheet({
   variant,
@@ -200,7 +178,6 @@ export function EditJobSessionBottomSheet({
   const secondary = color('Foundation/Text/Secondary');
   const borderDefault = color('Foundation/Border/Default');
   const accent = color('Brand/Accent');
-  const primary = color('Brand/Primary');
   const surface = color('Foundation/Surface/Default');
 
   const titleId = 'fieldbook-edit-job-session-title';
@@ -653,68 +630,13 @@ export function EditJobSessionBottomSheet({
 
         {!isSession ? jobFields : null}
 
-        <div
-          data-name="edit-job-session-footer"
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'stretch',
-            gap: 18,
-            width: '100%',
-            maxWidth: 343,
-            minHeight: 71,
-          }}
-        >
-          <button
-            type="button"
-            data-name="edit-job-session-primary-action"
-            onClick={onSaveChanges}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              paddingTop: 17,
-              paddingBottom: 17,
-              paddingLeft: 100,
-              paddingRight: 100,
-              borderRadius: 12,
-              border: 'none',
-              backgroundColor: accent,
-              cursor: onSaveChanges ? 'pointer' : 'default',
-              boxShadow: shadowFromColor(primary),
-              ...bodyBold,
-              color: surface,
-              textTransform: 'uppercase',
-            }}
-          >
-            <span data-name="edit-job-session-primary-action-label">
-              SAVE CHANGES
-            </span>
-          </button>
-          <button
-            type="button"
-            data-name="edit-job-session-delete-button"
-            onClick={onDelete}
-            aria-label="Delete"
-            style={{
-              flexShrink: 0,
-              width: 48,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingLeft: 14,
-              paddingRight: 14,
-              paddingTop: 18,
-              paddingBottom: 18,
-              borderRadius: 8,
-              border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
-              backgroundColor: surface,
-              cursor: onDelete ? 'pointer' : 'default',
-            }}
-          >
-            <span data-name="edit-job-session-delete-icon">
-              <TrashGlyph />
-            </span>
-          </button>
+        <div data-name="edit-job-session-footer" style={{ width: '100%', maxWidth: 343 }}>
+          <FieldBookCtaButton
+            variant="jobSessionPrimaryWithDelete"
+            primaryLabel="SAVE CHANGES"
+            onPrimaryClick={onSaveChanges}
+            onDeleteClick={onDelete}
+          />
         </div>
       </div>
     </section>

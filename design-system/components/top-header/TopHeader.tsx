@@ -7,6 +7,7 @@ import {
   typographyBodySmallStyle,
   typographyDisplayH1Style,
 } from '../../lib/tokens';
+import { InboxIcon } from '../inbox-icon';
 
 export const TOP_HEADER_VARIANTS = [
   'Title + Profile',
@@ -98,19 +99,6 @@ function IconProfile({ size = 20 }: { size?: number }) {
   );
 }
 
-function IconInbox({ size = 24 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M4 7h16v10a1 1 0 01-1 1H5a1 1 0 01-1-1V7z"
-        stroke="currentColor"
-        strokeWidth={1.5}
-      />
-      <path d="M2 7l2-3h16l2 3" stroke="currentColor" strokeWidth={1.5} />
-    </svg>
-  );
-}
-
 function IconBack({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -172,11 +160,8 @@ export function TopHeader({
   const primary = color('Foundation/Text/Primary');
   const secondary = color('Foundation/Text/Secondary');
   const subtle = color('Foundation/Surface/Subtle');
-  const brand = color('Brand/Primary');
   const errBg = color('Semantic/Status/Error/BG');
   const errFg = color('Semantic/Status/Error/Text');
-  const surfaceWhite = color('Foundation/Surface/White');
-  const cream = color('Foundation/Background/Default');
 
   const showAccent = ['Title + Profile', 'Title Only', 'Title + Inbox'].includes(
     variant
@@ -428,10 +413,10 @@ export function TopHeader({
         {variant === 'Title + Inbox' && (
           <button
             type="button"
+            data-name="top-header-trailing-action"
             aria-label="Inbox"
             onClick={onInboxClick}
             style={{
-              position: 'relative',
               width: 40,
               height: 40,
               border: 'none',
@@ -442,34 +427,18 @@ export function TopHeader({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              padding: 0,
             }}
           >
-            <IconInbox />
-            {inboxBadgeCount != null && inboxBadgeCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 6,
-                  left: 18,
-                  minWidth: 16,
-                  height: 16,
-                  borderRadius: 9999,
-                  backgroundColor: brand,
-                  border: `2px solid ${cream}`,
-                  color: surfaceWhite,
-                  fontSize: 8,
-                  fontWeight: 700,
-                  fontFamily: typographyBodySmallStyle().fontFamily,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 2px',
-                  boxSizing: 'border-box',
-                }}
-              >
-                {inboxBadgeCount > 9 ? '9+' : inboxBadgeCount}
-              </span>
-            )}
+            <InboxIcon
+              property1={
+                inboxBadgeCount != null && inboxBadgeCount > 0
+                  ? 'Default'
+                  : 'No Notifications'
+              }
+              badgeCount={inboxBadgeCount ?? 0}
+              size={40}
+            />
           </button>
         )}
       </div>

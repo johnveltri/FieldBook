@@ -3,24 +3,31 @@
     "name": "Button",
     "figmaNodeId": "1287:1563",
     "kind": "componentSet",
-    "description": "High-emphasis CTAs: **Semantic/Activity/Note** fill + self-tinted `0px 1px 2px` shadow (`SAVE TO JOB` / `SAVE CHANGES`), **`brandPrimaryXl`** **Brand/Primary** fill with note-colored shadow + **Typography/Metric** 18 uppercase (`END SESSION`), optional paired **delete** control (white, `1px rgba(212,87,42,0.2)`, **Radius/8**, trash **Semantic/Status/Error/Text`).",
+    "description": "High-emphasis CTAs with **Property 1** colorways: **Note** (**Semantic/Activity/Note**), **Material** (**Semantic/Activity/Material**), **Job/Session** primary (**Brand/Accent** + shadow from **Brand/Primary**), plus **Button XL** (**Brand/Primary**). Each colorway has **Primary** (single) and **Primary+Delete** (row) except XL. Delete: white fill, `1px rgba(212,87,42,0.2)`, **Radius/8**, trash **Semantic/Status/Error/Text**.",
     "dimensions": {
       "width": 343,
       "rowHeights": {
-        "notePrimary": "~52",
-        "notePrimaryWithDelete": 71,
+        "primary": "~52",
+        "primaryWithDelete": 71,
         "brandPrimaryXl": "~taller (py 24)"
       }
     },
     "variantSymbols": {
-      "Property 1=Button Primary": "1287:1562",
-      "Property 1=Button Primary+Delete": "1287:1566",
+      "Property 1=Button Primary Note": "1287:1562",
+      "Property 1=Button Primary Material": "1808:1148",
+      "Property 1=Button Primary Job/Session": "1808:1151",
+      "Property 1=Button Primary+Delete Note": "1287:1566",
+      "Property 1=Button Primary+Delete Material": "1808:1154",
+      "Property 1=Button Primary+Delete Job/Session": "1808:1161",
       "Property 1=Button XL": "1287:1567"
     }
   },
   "codeVariantMap": {
-    "notePrimary": "Button Primary",
-    "notePrimaryWithDelete": "Button Primary+Delete",
+    "notePrimary": "Button Primary Note",
+    "notePrimaryWithDelete": "Button Primary+Delete Note",
+    "materialPrimary": "Button Primary Material",
+    "materialPrimaryWithDelete": "Button Primary+Delete Material",
+    "jobSessionPrimaryWithDelete": "Button Primary+Delete Job/Session",
     "brandPrimaryXl": "Button XL"
   },
   "structure": {
@@ -35,8 +42,10 @@
   },
   "tokens": {
     "colors": [
+      "Brand/Accent",
       "Brand/Primary",
       "Foundation/Surface/Default",
+      "Semantic/Activity/Material",
       "Semantic/Activity/Note",
       "Semantic/Status/Error/Text"
     ],
@@ -45,10 +54,10 @@
     "spacing": ["Spacing/24"]
   },
   "codeProps": {
-    "variant": "notePrimary | notePrimaryWithDelete | brandPrimaryXl",
+    "variant": "notePrimary | notePrimaryWithDelete | materialPrimary | materialPrimaryWithDelete | jobSessionPrimaryWithDelete | brandPrimaryXl",
     "primaryLabel": "optional override of default uppercase label",
     "onPrimaryClick": "optional",
-    "onDeleteClick": "optional; notePrimaryWithDelete only"
+    "onDeleteClick": "optional; Primary+Delete variants only"
   },
   "qualityAudit": {
     "isClean": true,
@@ -56,7 +65,9 @@
       "2026-04-08: `FieldBookCtaButton` in `field-book-cta/` from Figma `1287:1563`; trash is inline SVG to match Edit Session sheet."
     ],
     "findings": [
-      "2026-04-08: Component set `1287:1563` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Structural renames: `field-book-cta-label` on label TEXT nodes; `Button Primary+Delete` frames → `field-book-cta-primary`, `field-book-cta-delete`, `field-book-cta-delete-icon`. Single-TEXT variants (Primary / XL) keep label-only structure. No `flatten()` in automation. `FieldBookCtaButton.tsx` uses `data-name` for primary, XL, with-delete row, label, delete, and delete-icon wrapper."
+      "2026-04-08: Component set `1287:1563` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Structural renames: `field-book-cta-label` on label TEXT nodes; `Button Primary+Delete` frames → `field-book-cta-primary`, `field-book-cta-delete`, `field-book-cta-delete-icon`. Single-TEXT variants (Primary / XL) keep label-only structure. No `flatten()` in automation. `FieldBookCtaButton.tsx` uses `data-name` for primary, XL, with-delete row, label, delete, and delete-icon wrapper.",
+      "2026-04-08: **Note** (`1279:351`), **Material** (`1283:351`), and **Edit Job, Session** (`1284:789`) use color-matched instances: **Primary Note** / **Primary+Delete Note**, **Primary Material** / **Primary+Delete Material**, **Primary+Delete Job/Session** respectively.",
+      "2026-04-08: Added **Job/Session** primary-only master `1808:1151` for parity with Figma; React uses `jobSessionPrimaryWithDelete` only until a sheet needs single-primary Job/Session."
     ]
   }
 }

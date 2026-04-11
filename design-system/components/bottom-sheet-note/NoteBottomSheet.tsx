@@ -2,7 +2,6 @@ import type { CSSProperties } from 'react';
 import {
   color,
   colorWithAlpha,
-  shadowFromColor,
   shadow,
   space,
   typographyBodyBoldStyle,
@@ -11,6 +10,7 @@ import {
   typographyTitleH3Style,
 } from '../../lib/tokens';
 import { PlusIcon } from '../../icons/PlusIcon';
+import { FieldBookCtaButton } from '../field-book-cta';
 
 const sheetShadow: CSSProperties = {
   boxShadow: shadow('Shadow/Overlay/Default'),
@@ -167,28 +167,6 @@ function PencilGlyph() {
   );
 }
 
-function TrashGlyph() {
-  const c = color('Semantic/Status/Error/Text');
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M3.5 4.5h9M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M12.5 4.5V13a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V4.5M6.5 7.5v4M9.5 7.5v4"
-        stroke={c}
-        strokeWidth={1.25}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export type NoteBottomSheetProps = {
   /** Matches Figma `Property 1` (`New Quick Note` | `New Job Note` | `New Session Note` | `Edit Job Note` | `Edit Session Note`). */
   variant: NoteSheetVariant;
@@ -209,6 +187,7 @@ export type NoteBottomSheetProps = {
 
 /**
  * Note composer / editor bottom sheet (Figma component set **Note** `1279:351`).
+ * Footer CTAs are **Button** instances (`1287:1563`) via `FieldBookCtaButton`.
  */
 export function NoteBottomSheet({
   variant,
@@ -235,7 +214,6 @@ export function NoteBottomSheet({
   const borderSubtle = color('Foundation/Border/Subtle');
   const backFg = color('Foundation/Text/Secondary');
   const fg = color('Foundation/Text/Primary');
-  const note = color('Semantic/Activity/Note');
   const errorBg = color('Semantic/Status/Error/BG');
   const errorText = color('Semantic/Status/Error/Text');
   const secondary = color('Foundation/Text/Secondary');
@@ -483,91 +461,21 @@ export function NoteBottomSheet({
       </div>
 
       {!isEdit ? (
-        <button
-          type="button"
-          data-name="note-primary-action"
-          onClick={onPrimaryAction}
-          style={{
-            width: '100%',
-            maxWidth: 343,
-            marginTop: 0,
-            paddingTop: 17,
-            paddingBottom: 17,
-            paddingLeft: 100,
-            paddingRight: 100,
-            borderRadius: 12,
-            border: 'none',
-            backgroundColor: note,
-            cursor: onPrimaryAction ? 'pointer' : 'default',
-            boxShadow: shadowFromColor(note),
-            ...bodyBold,
-            color: color('Foundation/Surface/Default'),
-            textTransform: 'uppercase',
-          }}
-        >
-          <span data-name="note-primary-action-label">{primaryLabel(variant)}</span>
-        </button>
+        <div data-name="note-primary-action" style={{ width: '100%', maxWidth: 343 }}>
+          <FieldBookCtaButton
+            variant="notePrimary"
+            primaryLabel={primaryLabel(variant)}
+            onPrimaryClick={onPrimaryAction}
+          />
+        </div>
       ) : (
-        <div
-          data-name="note-footer"
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'stretch',
-            gap: 18,
-            width: '100%',
-            maxWidth: 343,
-            minHeight: 71,
-          }}
-        >
-          <button
-            type="button"
-            data-name="note-primary-action"
-            onClick={onPrimaryAction}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              paddingTop: 17,
-              paddingBottom: 17,
-              paddingLeft: 100,
-              paddingRight: 100,
-              borderRadius: 12,
-              border: 'none',
-              backgroundColor: note,
-              cursor: onPrimaryAction ? 'pointer' : 'default',
-              boxShadow: shadowFromColor(note),
-              ...bodyBold,
-              color: color('Foundation/Surface/Default'),
-              textTransform: 'uppercase',
-            }}
-          >
-            <span data-name="note-primary-action-label">{primaryLabel(variant)}</span>
-          </button>
-          <button
-            type="button"
-            data-name="note-delete-button"
-            onClick={onDelete}
-            aria-label="Delete note"
-            style={{
-              flexShrink: 0,
-              width: 48,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingLeft: 14,
-              paddingRight: 14,
-              paddingTop: 18,
-              paddingBottom: 18,
-              borderRadius: 8,
-              border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
-              backgroundColor: color('Foundation/Surface/Default'),
-              cursor: onDelete ? 'pointer' : 'default',
-            }}
-          >
-            <span data-name="note-delete-icon">
-              <TrashGlyph />
-            </span>
-          </button>
+        <div data-name="note-footer" style={{ width: '100%', maxWidth: 343 }}>
+          <FieldBookCtaButton
+            variant="notePrimaryWithDelete"
+            primaryLabel={primaryLabel(variant)}
+            onPrimaryClick={onPrimaryAction}
+            onDeleteClick={onDelete}
+          />
         </div>
       )}
       </div>

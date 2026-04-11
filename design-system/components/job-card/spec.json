@@ -9,10 +9,10 @@
       "height": "auto by variant: ~227.5px Default (`661:2`), ~189px No job category (`622:162`), ~167px Empty State (`622:199`), shorter **No Metrics** (`1286:816`) — header + category only, no metrics row"
     },
     "figmaVariants": {
-      "Property 1=Default": "Node `661:2`. Category chip visible; example job + category + metrics.",
+      "Property 1=Default": "Node `661:2`. Category chip visible; example job + category + metrics. Header status is a **`Status pill`** instance (**Paid** / `622:142`) inside `job-card-status-pill`, not a duplicated frame.",
       "Property 1=No job category": "Node `622:162`. Same as Default but **no** category chip (row removed; shorter height).",
       "Property 1=Empty State": "Node `622:199`. No category chip; placeholder **Untitled Job**, **No customer**, **Last updated Mar 13**. Status is a **`Status pill`** component instance (**Not started** / `622:144`), not inline text. Metrics **0.0h** / **$0** / **-$0** / **$0**.",
-      "Property 1=No Metrics": "Node `1286:816`. Same as Default for title, metadata, status pill, and **category chip**; **no** TIME/REV/MAT/NET row or divider."
+      "Property 1=No Metrics": "Node `1286:816`. Same as Default for title, metadata, status pill, and **category chip**; **no** TIME/REV/MAT/NET row or divider. Status uses **`Status pill`** instance **Paid** (`622:142`) under `job-card-status-pill`."
     }
   },
   "layoutSemantics": {
@@ -139,7 +139,8 @@
       "Header status uses **`Status pill`** (`622:143`) + semantic tokens in `colors.json`. Accent stripe: **Brand/Primary** @ **15%** paint opacity.",
       "Metric values use **Typography/Body-Bold**; category chip **Typography/LABEL** + **Foundation/Background/Default**.",
       "Bind fills and strokes to variables via the file’s Color Styles collection; avoid raw hex on production components.",
-      "Paused/on-hold styling for **Status pill** uses **Semantic/Status/Paused/BG** + **Semantic/Status/Paused/Text** in `colors.json`."
+      "Paused/on-hold styling for **Status pill** uses **Semantic/Status/Paused/BG** + **Semantic/Status/Paused/Text** in `colors.json`.",
+      "2026-04-08: **Default** (`661:2`) and **No Metrics** (`1286:816`) — replaced hand-built `Status pill` frames + `Status label` text with **`Status pill`** component instances (`622:142` Paid) under `job-card-status-pill`. **No job category** (`622:162`) and **Empty State** (`622:199`) were already instances (`622:153`, `622:144`). Component set `622:161` verified vertical stack 16px; `clipsContent` false on `job-card-*` frames."
     ]
   }
 }

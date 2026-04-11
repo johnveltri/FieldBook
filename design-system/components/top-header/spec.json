@@ -52,8 +52,7 @@
       "subtitle": "top-header-subtitle",
       "leadingAction": "top-header-leading-action",
       "trailingAction": "top-header-trailing-action",
-      "inboxBadge": "top-header-badge",
-      "actionIconWrapper": "top-header-icon"
+      "inboxIconInstance": "top-header-inbox-icon (instance of `Inbox icon` component set Default `786:15`; badge from nested `inbox-icon-badge` / `inbox-icon-badge-value`)"
     },
     "surface": {
       "backgroundToken": "Foundation/Background/Default",
@@ -102,8 +101,8 @@
       "defaultTitle": "JOBS",
       "endAction": "inbox",
       "notes": [
-        "Inbox icon may use a transparent hit-area fill in Figma (left intentionally unbound).",
-        "Badge count uses small type; consider a dedicated badge token later."
+        "Trailing action is a single instance of the shared `Inbox icon` component (`786:16`); master `Default` shows the unread badge.",
+        "Badge count uses Body-Small weight 600 via nested Inbox icon layers; `InboxIcon` in code mirrors those layers."
       ]
     },
     {
@@ -140,7 +139,12 @@
       {
         "severity": "info",
         "type": "structure",
-        "detail": "2026-04-08: Figma cleanup aligned with design-system conventions — `COMPONENT_SET` uses vertical auto layout (16px gap) between variant masters. Structural layers use `top-header-*` kebab-case (`top-header-accent-strip`, `top-header-content`, `top-header-title`, `top-header-leading-action` / `top-header-trailing-action`, `top-header-subtitle`, `top-header-badge`, `top-header-icon`). Title Only: removed stray empty placeholder control; title row uses auto layout (no absolute-positioned title). Accent strip node remains where variants omit the bar but is hidden (`visible: false`) so layout height stays consistent; vectors left un-flattened in automation."
+        "detail": "2026-04-08: Figma cleanup aligned with design-system conventions — `COMPONENT_SET` uses vertical auto layout (16px gap) between variant masters. Structural layers use `top-header-*` kebab-case (`top-header-accent-strip`, `top-header-content`, `top-header-title`, `top-header-leading-action` / `top-header-trailing-action`, `top-header-subtitle`, plus variant-specific trailing content). Title Only: removed stray empty placeholder control; title row uses auto layout (no absolute-positioned title). Accent strip node remains where variants omit the bar but is hidden (`visible: false`) so layout height stays consistent; vectors left un-flattened in automation."
+      },
+      {
+        "severity": "info",
+        "type": "structure",
+        "detail": "2026-04-08: `Title + Inbox` (`236:879`) — replaced separate `top-header-icon` + `top-header-badge` vector frames with an instance of the shared `Inbox icon` component (`786:15` Default) named `top-header-inbox-icon` under `top-header-trailing-action` (`236:872`). TSX uses `InboxIcon` from `inbox-icon/` for parity."
       }
     ],
     "resolved": [
