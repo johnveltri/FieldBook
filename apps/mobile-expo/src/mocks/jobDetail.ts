@@ -82,7 +82,7 @@ export const mockJobDetail: JobDetailMock = {
   customerName: 'Andrew G',
   lastWorkedLabel: 'Last worked Mar 13',
   categoryLabel: 'Handyman / General Home Services',
-  workStatus: 'paid',
+  workStatus: 'inProgress',
   earnings: {
     revenueCents: 2_220_000,
     materialsCents: -2_220_000,

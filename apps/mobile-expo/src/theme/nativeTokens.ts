@@ -105,7 +105,7 @@ export function createTextStyles(f: LoadedFonts) {
     color: fg.muted,
   };
 
-  /** Card headings like `JobSummaryCard` — LABEL style, **Foundation/Text/Secondary**. */
+  /** Uppercase mono label — **Foundation/Text/Secondary** (optional card section titles). */
   const labelHeadingSecondary: TextStyle = {
     fontFamily: f.monoBold,
     fontSize: 10,

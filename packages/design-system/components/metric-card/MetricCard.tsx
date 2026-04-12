@@ -57,8 +57,6 @@ export type MetricTripleColumn = {
 };
 
 export type MetricCardProps = {
-  /** Matches Figma “Default (Clean)”: no vertical dividers between columns. */
-  cleanLayout?: boolean;
   primary?: MetricPrimaryBlock | null;
   secondary?: {
     left: MetricPairColumn;
@@ -78,7 +76,6 @@ export type MetricCardProps = {
  * Compose `primary` / `secondary` / `tertiary` blocks to match variant coverage in the spec.
  */
 export function MetricCard({
-  cleanLayout = false,
   primary,
   secondary,
   tertiary,
@@ -96,8 +93,6 @@ export function MetricCard({
         paddingTop: space('Spacing/12'),
         paddingBottom: space('Spacing/12'),
       };
-
-  const vDivider = cleanLayout ? 'none' : `1px solid ${borderSubtle}`;
 
   return (
     <section
@@ -174,16 +169,8 @@ export function MetricCard({
             borderTop: hasPrimary ? `1px solid ${borderSubtle}` : undefined,
           }}
         >
-          <MetricPairCell
-            column={secondary.left}
-            vDividerRight={vDivider}
-            position="left"
-          />
-          <MetricPairCell
-            column={secondary.right}
-            vDividerRight="none"
-            position="right"
-          />
+          <MetricPairCell column={secondary.left} position="left" />
+          <MetricPairCell column={secondary.right} position="right" />
         </div>
       ) : null}
 
@@ -206,13 +193,11 @@ export function MetricCard({
         >
           <MetricTripleCell
             column={tertiary.left}
-            vDividerRight={vDivider}
             widthStyle={{ flex: '1 1 0', minWidth: 0 }}
             slot="left"
           />
           <MetricTripleCell
             column={tertiary.center}
-            vDividerRight={vDivider}
             widthStyle={{
               width: 120,
               flexShrink: 0,
@@ -224,7 +209,6 @@ export function MetricCard({
           />
           <MetricTripleCell
             column={tertiary.right}
-            vDividerRight="none"
             widthStyle={{ flex: '1 1 0', minWidth: 0 }}
             slot="right"
           />
@@ -236,11 +220,9 @@ export function MetricCard({
 
 function MetricPairCell({
   column,
-  vDividerRight,
   position,
 }: {
   column: MetricPairColumn;
-  vDividerRight: string;
   position: 'left' | 'right';
 }) {
   const align = column.align ?? (position === 'left' ? 'start' : 'end');
@@ -254,7 +236,6 @@ function MetricPairCell({
         display: 'flex',
         flexDirection: 'column',
         alignItems: align === 'end' ? 'flex-end' : 'flex-start',
-        borderRight: vDividerRight,
       }}
     >
       <div
@@ -292,13 +273,11 @@ function MetricPairCell({
 
 function MetricTripleCell({
   column,
-  vDividerRight,
   widthStyle,
   center,
   slot,
 }: {
   column: MetricTripleColumn;
-  vDividerRight: string;
   widthStyle: CSSProperties;
   center?: boolean;
   slot: 'left' | 'center' | 'right';
@@ -322,7 +301,6 @@ function MetricTripleCell({
         display: 'flex',
         flexDirection: 'column',
         alignItems: alignItems,
-        borderRight: vDividerRight,
         boxSizing: 'border-box',
       }}
     >

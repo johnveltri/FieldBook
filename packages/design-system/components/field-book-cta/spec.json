@@ -3,13 +3,13 @@
     "name": "Button",
     "figmaNodeId": "1287:1563",
     "kind": "componentSet",
-    "description": "High-emphasis CTAs with **Property 1** colorways: **Note** (**Semantic/Activity/Note**), **Material** (**Semantic/Activity/Material**), **Job/Session** primary (**Brand/Accent** + shadow from **Brand/Primary**), plus **Button XL** (**Brand/Primary**). **Primary+MORE** (Note): **MARK COMPLETED** + white bordered column with vertical ⋮ (**Foundation/Text/Primary**). Each colorway has **Primary** (single) and **Primary+Delete** (row) except XL. Delete: white fill, `1px rgba(212,87,42,0.2)`, **Radius/8**, trash **Semantic/Status/Error/Text**.",
+    "description": "High-emphasis CTAs with **Property 1** colorways: **Note** (**Semantic/Activity/Note**), **Material** (**Semantic/Activity/Material**), **Job/Session** primary (**Brand/Accent** + shadow from **Brand/Primary**), plus **Button XL** (**Brand/Primary** + shadow from **Brand/Primary**). **Primary+MORE** (Note): **MARK COMPLETED** + white **Foundation/Border/Subtle** stroke, **51px**-tall ⋮ column (**Foundation/Text/Primary**). **Primary+Delete**: **Job/Session** primary fixed **279px** wide; delete/more chrome: white fill, **1px Foundation/Border/Subtle**, **Radius/8**, trash **Semantic/Status/Error/Text**.",
     "dimensions": {
       "width": 343,
       "rowHeights": {
         "primary": "hug — py 17 + label (single-column)",
-        "primaryWithDelete": "hug — row `alignItems: stretch`; primary py 17; delete column py 18 + icon (no fixed row height)",
-        "primaryWithMore": "hug — same row pattern; MORE column stretches to primary height, ⋮ centered (no fixed 51px)",
+        "primaryWithDelete": "hug — row `alignItems: stretch`; primary py 17; **Job/Session** primary **279px** wide; delete column py 18 + icon",
+        "primaryWithMore": "hug — **18px** row gap; MORE column **51px** height, **4px** vertical padding, ⋮ centered; row **alignItems: flex-start**.",
         "brandPrimaryXl": "hug — Spacing/24 vertical padding + metric label"
       }
     },
@@ -49,6 +49,7 @@
     "colors": [
       "Brand/Accent",
       "Brand/Primary",
+      "Foundation/Border/Subtle",
       "Foundation/Surface/Default",
       "Foundation/Text/Primary",
       "Semantic/Activity/Material",
@@ -71,7 +72,8 @@
     "notes": [
       "2026-04-08: `FieldBookCtaButton` in `field-book-cta/` from Figma `1287:1563`; trash is inline SVG to match Edit Session sheet.",
       "2026-04-11: **Button Primary+MORE** (`1836:2011`) — `notePrimaryWithMore`; ⋮ **Foundation/Text/Primary**.",
-      "2026-04-11: Figma **hug height** — removed fixed row / secondary pixel heights; paired rows use `alignItems: stretch` so the icon column matches primary content height."
+      "2026-04-11: Figma **hug height** — paired **+Delete** rows use `alignItems: stretch` so the trash column matches primary height.",
+      "2026-04-12: Figma update — delete/more chrome uses **Foundation/Border/Subtle** (replaces brand-alpha stroke); **Button XL** shadow from **Brand/Primary**; **Primary+MORE** ⋮ column **51px** tall; **Primary+Delete Job/Session** primary **279px** wide."
     ],
     "findings": [
       "2026-04-08: Component set `1287:1563` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Structural renames: `field-book-cta-label` on label TEXT nodes; `Button Primary+Delete` frames → `field-book-cta-primary`, `field-book-cta-delete`, `field-book-cta-delete-icon`. Single-TEXT variants (Primary / XL) keep label-only structure. No `flatten()` in automation. `FieldBookCtaButton.tsx` uses `data-name` for primary, XL, with-delete row, label, delete, and delete-icon wrapper.",

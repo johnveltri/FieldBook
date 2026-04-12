@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import {
   color,
-  colorWithAlpha,
   shadowFromColor,
   space,
   typographyBodyBoldStyle,
@@ -9,6 +8,7 @@ import {
 } from '../../lib/tokens';
 
 const surfaceWhite = color('Foundation/Surface/Default');
+const borderSubtle = color('Foundation/Border/Subtle');
 
 export const FIELD_BOOK_CTA_VARIANTS = [
   'notePrimary',
@@ -137,7 +137,7 @@ export function FieldBookCtaButton({
   const deleteIcon = color('Semantic/Status/Error/Text');
   const moreIcon = color('Foundation/Text/Primary');
   const xlShadow: CSSProperties = {
-    boxShadow: shadowFromColor(color('Semantic/Activity/Note')),
+    boxShadow: shadowFromColor(brand),
   };
 
   const resolvedPrimaryLabel =
@@ -198,7 +198,7 @@ export function FieldBookCtaButton({
         style={{
           display: 'flex',
           flexDirection: 'row',
-          alignItems: 'stretch',
+          alignItems: 'flex-start',
           gap: 18,
           width: '100%',
           maxWidth: 343,
@@ -243,12 +243,14 @@ export function FieldBookCtaButton({
           aria-label="More options"
           style={{
             flexShrink: 0,
-            alignSelf: 'stretch',
+            height: 51,
             margin: 0,
             paddingLeft: 14,
             paddingRight: 14,
+            paddingTop: 4,
+            paddingBottom: 4,
             borderRadius: 8,
-            border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
+            border: `1px solid ${borderSubtle}`,
             backgroundColor: surfaceWhite,
             cursor: onMoreClick ? 'pointer' : 'default',
             display: 'flex',
@@ -290,6 +292,8 @@ export function FieldBookCtaButton({
     );
   }
 
+  const isJobSessionRow = variant === 'jobSessionPrimaryWithDelete';
+
   return (
     <div
       data-name="field-book-cta-with-delete"
@@ -311,8 +315,13 @@ export function FieldBookCtaButton({
         type="button"
         onClick={onPrimaryClick}
         style={{
-          flex: '1 1 0',
-          minWidth: 0,
+          ...(isJobSessionRow
+            ? {
+                flex: 'none',
+                width: 279,
+                flexShrink: 0,
+              }
+            : { flex: '1 1 0', minWidth: 0 }),
           margin: 0,
           border: 'none',
           borderRadius: 12,
@@ -347,7 +356,7 @@ export function FieldBookCtaButton({
           paddingTop: 18,
           paddingBottom: 18,
           borderRadius: 8,
-          border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
+          border: `1px solid ${borderSubtle}`,
           backgroundColor: surfaceWhite,
           cursor: onDeleteClick ? 'pointer' : 'default',
           display: 'flex',

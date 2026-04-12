@@ -3,7 +3,7 @@
     "name": "Job Summary Card",
     "figmaNodeId": "258:1549",
     "kind": "componentSet",
-    "description": "Compact earnings breakdown for a job: section label, line items (Revenue, Materials, optional Fees), and a bordered Net Earnings total. Line copy and amounts are driven by props / instance text, not structural variants.",
+    "description": "Compact earnings breakdown: line items (Revenue, Materials, optional Fees), bordered Net Earnings row. Default Figma layout has no section heading above the breakdown (`258:1549`).",
     "dimensions": {
       "width": 353,
       "height": "192–228 depending on Layout"
@@ -13,13 +13,14 @@
     "Layout": ["Default (3 lines)", "2 Lines", "Negative"]
   },
   "layoutSemantics": {
-    "Default (3 lines)": "Revenue, Materials, Fees rows; net total in Semantic/Status/Success/Text.",
-    "2 Lines": "Revenue and Materials only; net total green (positive).",
-    "Negative": "Includes Fees row; net total uses Brand/Primary with negative prefix."
+    "Default (3 lines)": "Revenue, Materials, Fees rows; net total success green; total row top border Foundation/Border/Default.",
+    "2 Lines": "Revenue and Materials only (omit fees); net total green; total border Default.",
+    "Negative": "Fees row included when applicable; net Brand/Primary; total row top border Foundation/Border/Subtle."
   },
   "tokens": {
     "colors": [
       "Brand/Primary",
+      "Foundation/Border/Default",
       "Foundation/Border/Subtle",
       "Foundation/Surface/Default",
       "Foundation/Text/Primary",
@@ -27,15 +28,15 @@
       "Semantic/Status/Success/Text"
     ],
     "spacing": ["Spacing/4", "Spacing/8", "Spacing/24"],
-    "typography": ["Typography/LABEL", "Typography/Body", "Typography/Body-Bold", "Typography/Metric"],
+    "typography": ["Typography/LABEL", "Typography/Body-Bold", "Typography/Metric"],
     "radius": ["Radius/16"]
   },
   "codeProps": {
-    "title": "optional; default Earnings Summary",
+    "title": "optional; omit for Figma default (no heading)",
     "revenue": "label, value, optional valuePrefix, optional valueTone",
     "materials": "typically valueTone brand for cost",
-    "fees": "omit null for 2-line layout",
-    "total": "label (default Net Earnings), value, valuePrefix optional, sentiment positive|negative"
+    "fees": "omit null for 2-line layout (no fees row)",
+    "total": "label (default Net Earnings), value, valuePrefix optional, sentiment positive|negative (controls net color and total row border token)"
   },
   "structure": {
     "figmaLayerNames": {
@@ -59,7 +60,8 @@
     "notes": [
       "2026-03-28: Figma variant axis renamed from `Property 1` to `Layout`.",
       "2026-04-10: Renamed structural wrappers to kebab-case `job-summary-card-*` and mirrored them with `data-name` hooks in TSX.",
-      "Figma ‘Inter’ on currency glyph is cosmetic; row labels use Typography/Body, values Typography/Body-Bold (Ubuntu Sans Mono)."
+      "2026-04-11: Figma update — no default section heading; row labels Typography/Body-Bold + Foundation/Text/Secondary; net row border Default when sentiment positive, Subtle when negative; `job-summary-card-total-value-amount` on amount span.",
+      "Figma ‘Inter’ on currency glyph is cosmetic; row values Typography/Body-Bold (Ubuntu Sans Mono)."
     ],
     "findings": [
       "2026-04-08: Component set `258:1549` — `VERTICAL` + `NO_WRAP`, 16px `itemSpacing`; `clipsContent` false on set and variant masters. Net Earnings row in each layout variant renamed from `job-summary-card-row` to `job-summary-card-total` with `job-summary-card-total-label`, `job-summary-card-total-value`, `job-summary-card-total-value-prefix`, `job-summary-card-total-value-amount` to match `JobSummaryCard.tsx` and `structure.figmaLayerNames`. No `flatten()` in automation."

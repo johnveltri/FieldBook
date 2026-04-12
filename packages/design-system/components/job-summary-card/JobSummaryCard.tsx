@@ -4,17 +4,16 @@ import {
   shadow,
   space,
   typographyBodyBoldStyle,
-  typographyBodyStyle,
   typographyLabelStyle,
   typographyMetricStyle,
 } from '../../lib/tokens';
 
 const labelHeading = typographyLabelStyle();
-const body = typographyBodyStyle();
 const bodyBold = typographyBodyBoldStyle();
 const metricBold = typographyMetricStyle();
 
 const borderSubtle = color('Foundation/Border/Subtle');
+const borderDefault = color('Foundation/Border/Default');
 const textSecondary = color('Foundation/Text/Secondary');
 const textPrimary = color('Foundation/Text/Primary');
 const textBrand = color('Brand/Primary');
@@ -35,7 +34,8 @@ export type JobSummaryLine = {
 };
 
 export type JobSummaryCardProps = {
-  title?: string;
+  /** Omit or empty — Figma default (`258:1549`) has no heading above the breakdown. */
+  title?: string | null;
   revenue: JobSummaryLine;
   materials: JobSummaryLine;
   fees?: JobSummaryLine | null;
@@ -62,7 +62,7 @@ function totalValueColor(sentiment: 'positive' | 'negative'): string {
  * Job earnings breakdown card (Figma: `Job Summary Card`, node `258:1549`).
  */
 export function JobSummaryCard({
-  title = 'Earnings Summary',
+  title,
   revenue,
   materials,
   fees = null,
@@ -74,6 +74,7 @@ export function JobSummaryCard({
   const totalPrefix =
     total.valuePrefix ??
     (total.sentiment === 'negative' ? '-$' : '$');
+  const showTitle = title != null && title !== '';
 
   return (
     <section
@@ -86,7 +87,7 @@ export function JobSummaryCard({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
-        gap: space('Spacing/8'),
+        gap: showTitle ? space('Spacing/8') : 0,
         padding: space('Spacing/24'),
         borderRadius: 16,
         border: `1px solid ${borderSubtle}`,
@@ -95,17 +96,19 @@ export function JobSummaryCard({
         ...style,
       }}
     >
-      <header
-        data-name="job-summary-card-heading"
-        style={{
-          ...labelHeading,
-          color: textSecondary,
-          paddingTop: space('Spacing/4'),
-          paddingBottom: space('Spacing/4'),
-        }}
-      >
-        {title}
-      </header>
+      {showTitle ? (
+        <header
+          data-name="job-summary-card-heading"
+          style={{
+            ...labelHeading,
+            color: textSecondary,
+            paddingTop: space('Spacing/4'),
+            paddingBottom: space('Spacing/4'),
+          }}
+        >
+          {title}
+        </header>
+      ) : null}
 
       <div
         data-name="job-summary-card-breakdown"
@@ -129,7 +132,9 @@ export function JobSummaryCard({
             justifyContent: 'space-between',
             width: '100%',
             paddingTop: space('Spacing/8'),
-            borderTop: `1px solid ${borderSubtle}`,
+            borderTop: `1px solid ${
+              total.sentiment === 'positive' ? borderDefault : borderSubtle
+            }`,
           }}
         >
           <span
@@ -153,7 +158,10 @@ export function JobSummaryCard({
             data-name="job-summary-card-total-value"
           >
             <span data-name="job-summary-card-total-value-prefix">{totalPrefix}</span>
-            <span style={{ textAlign: 'right', marginLeft: 2 }}>
+            <span
+              data-name="job-summary-card-total-value-amount"
+              style={{ textAlign: 'right', marginLeft: 2 }}
+            >
               {total.value}
             </span>
           </span>
@@ -191,7 +199,7 @@ function SummaryRow({ line }: { line: JobSummaryLine }) {
       >
         <span
           style={{
-            ...body,
+            ...bodyBold,
             color: textSecondary,
             flex: '1 1 0',
             minWidth: 0,

@@ -1,3 +1,15 @@
+/**
+ * Job detail screen — single job: header, earnings, CTAs, metrics, sessions, materials, notes, timeline.
+ *
+ * **Layout:** Full-screen `CanvasTiledBackground` → `ScrollView` (transparent so the lined canvas shows in gutters)
+ * → optional fixed `BottomNavJobs` pinned to the bottom (outside the scroll so it stays visible).
+ *
+ * **Width:** Content uses `CONTENT_MAX_WIDTH` / `TOP_HEADER_MAX_WIDTH` so phones scale edge-to-edge (minus padding)
+ * while wide layouts cap at the Figma frame (~393pt).
+ *
+ * **Typography:** `createTextStyles` maps DS roles to loaded Expo Google Font family names (see `nativeTokens.ts`).
+ * **Money:** Amounts in mock data are integer cents; `formatUsdRow` turns them into `$` / `-$` + formatted digits.
+ */
 import { useFonts } from 'expo-font';
 import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
@@ -5,7 +17,6 @@ import {
   UbuntuSansMono_600SemiBold,
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
-import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import {
@@ -20,6 +31,24 @@ import {
 } from 'react-native';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
+import {
+  BottomNavIconEarnings,
+  BottomNavIconHome,
+  BottomNavIconJobs,
+} from '../components/bottom-nav/BottomNavTabIcons';
+import {
+  JobDetailIconCtaMore,
+  JobDetailIconRowCardLeading,
+  JobDetailIconSectionAdd,
+  JobDetailIconSectionMaterials,
+  JobDetailIconSectionNotes,
+  JobDetailIconSectionSessions,
+  JobDetailIconSectionTimeline,
+  JobDetailIconTopClose,
+  JobDetailIconTopEdit,
+  JobDetailIconViewNote,
+  JobDetailIconViewSessionChevron,
+} from '../components/figma-icons/JobDetailScreenIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/tokens';
 
@@ -40,28 +69,30 @@ import {
 } from '../theme/nativeTokens';
 
 // -----------------------------------------------------------------------------
-// Money — TODO: shared helpers
+// Money — TODO: move to shared helpers when used outside this screen
 // -----------------------------------------------------------------------------
 
+/** Formats one currency column: sign prefix (`$` or `-$`) separate from digits for mixed font weights in the UI. */
 function formatUsdRow(cents: number): { prefix: string; amount: string } {
   const negative = cents < 0;
-  const amount = Math.abs(cents) / 100;
-  const s = new Intl.NumberFormat('en-US', {
+  const dollars = Math.abs(cents) / 100;
+  const formattedDollars = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(dollars);
   return {
     prefix: negative ? '-$' : '$',
-    amount: s,
+    amount: formattedDollars,
   };
 }
 
 // -----------------------------------------------------------------------------
-// Status pill — same tokens as `StatusPill`
+// Status pill — mirrors design-system `StatusPill` (semantic colors per work status)
 // -----------------------------------------------------------------------------
 
+/** Uppercase labels for the pill; `textTransform: 'none'` on the Text avoids double-uppercase on Android. */
 const PILL_LABEL: Record<JobDetailWorkStatus, string> = {
-  paid: 'Paid',
+  paid: 'PAID',
   notStarted: 'NOT STARTED',
   inProgress: 'IN PROGRESS',
   completed: 'COMPLETED',
@@ -69,6 +100,7 @@ const PILL_LABEL: Record<JobDetailWorkStatus, string> = {
   cancelled: 'CANCELLED',
 };
 
+/** Maps mock `workStatus` to DS semantic token triples (fill, stroke, label). */
 function statusPillColors(kind: JobDetailWorkStatus): {
   bg: string;
   border: string;
@@ -114,6 +146,7 @@ function statusPillColors(kind: JobDetailWorkStatus): {
   }
 }
 
+/** Rounded bordered pill next to the job title; uses label caps font but not uppercase transform (labels are already uppercase). */
 function StatusPillRn({
   kind,
   typography,
@@ -138,15 +171,93 @@ function StatusPillRn({
 }
 
 // -----------------------------------------------------------------------------
+// Primary CTA — next action depends on `workStatus` (fill, label, contrast)
+// -----------------------------------------------------------------------------
+
+type JobCtaConfig = {
+  label: string;
+  backgroundColor: string;
+  labelColor: string;
+  shadowColor: string;
+  shadowOpacity: number;
+  borderWidth?: number;
+  borderColor?: string;
+};
+
+/** Suggested next step for the job: colors from DS tokens; white “unpaid” uses border for definition. */
+function jobCtaConfig(status: JobDetailWorkStatus): JobCtaConfig {
+  const surfaceWhite = color('Foundation/Surface/White');
+  const textPrimary = color('Foundation/Text/Primary');
+  const canvas = color('Foundation/Background/Default');
+
+  switch (status) {
+    case 'notStarted':
+    case 'onHold': {
+      const bg = color('Semantic/Status/Info/Text');
+      return {
+        label: 'MARK IN PROGRESS',
+        backgroundColor: bg,
+        labelColor: surfaceWhite,
+        shadowColor: bg,
+        shadowOpacity: 0.35,
+      };
+    }
+    case 'inProgress': {
+      const bg = color('Semantic/Activity/Note');
+      return {
+        label: 'MARK COMPLETED',
+        backgroundColor: bg,
+        labelColor: surfaceWhite,
+        shadowColor: bg,
+        shadowOpacity: 0.35,
+      };
+    }
+    case 'completed': {
+      const bg = color('Semantic/Status/Success/Text');
+      return {
+        label: 'MARK PAID',
+        backgroundColor: bg,
+        labelColor: surfaceWhite,
+        shadowColor: bg,
+        shadowOpacity: 0.35,
+      };
+    }
+    case 'paid':
+      return {
+        label: 'MARK UNPAID',
+        backgroundColor: surfaceWhite,
+        labelColor: textPrimary,
+        shadowColor: '#000000',
+        shadowOpacity: 0.12,
+        borderWidth: 1,
+        borderColor: color('Foundation/Border/Subtle'),
+      };
+    case 'cancelled':
+      return {
+        label: 'REOPEN JOB',
+        backgroundColor: textPrimary,
+        labelColor: canvas,
+        shadowColor: textPrimary,
+        shadowOpacity: 0.35,
+      };
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Screen — composition follows Figma `1836:1875` (Job Detail)
 // -----------------------------------------------------------------------------
 
+/** Vertical gap between stacked blocks inside the padded main column (`1836:1874`). */
 const SLOT_GAP = space('Spacing/20');
-const JOB_CARD_WIDTH = 351;
+
+/** Pull scroll content slightly closer to the status bar (pt). */
+const TOP_INSET_TRIM_PX = 6;
 
 export function JobDetailScreen() {
+  /** Top safe area (status bar); bottom inset used for scroll padding + nav. */
   const insets = useSafeAreaInsets();
 
+  /** Load DS fonts before rendering text (avoids flash of system font / layout jump). */
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,
     UbuntuSansMono_400Regular,
@@ -154,6 +265,7 @@ export function JobDetailScreen() {
     UbuntuSansMono_700Bold,
   });
 
+  /** Memoized text style bundle (serif headings + mono body) tied to loaded font postscript names. */
   const typography = useMemo(
     () =>
       createTextStyles({
@@ -165,12 +277,26 @@ export function JobDetailScreen() {
     [],
   );
 
-  // TODO: job id → Supabase
+  // TODO: replace with `useJobDetail(jobId)` (Supabase / API).
   const job = mockJobDetail;
 
   const onClose = useCallback(() => {}, []);
   const onEdit = useCallback(() => {}, []);
 
+  /** Must run before any early return — Rules of Hooks. */
+  const cta = useMemo(() => jobCtaConfig(job.workStatus), [job.workStatus]);
+  const ctaShadow: ViewStyle = useMemo(
+    () => ({
+      shadowColor: cta.shadowColor,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: cta.shadowOpacity,
+      shadowRadius: 2,
+      elevation: cta.borderWidth ? 2 : 3,
+    }),
+    [cta.shadowColor, cta.shadowOpacity, cta.borderWidth],
+  );
+
+  /** Spinner state: same canvas background as main screen so the transition does not flash a flat color. */
   if (!fontsLoaded) {
     return (
       <View style={styles.loading}>
@@ -180,28 +306,23 @@ export function JobDetailScreen() {
     );
   }
 
-  const noteOrange = color('Semantic/Activity/Note');
-  const ctaShadow: ViewStyle = {
-    shadowColor: noteOrange,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.35,
-    shadowRadius: 2,
-    elevation: 3,
-  };
-
-  /** Fixed bottom nav: margin + border + tab strip (`minHeight` 64) + strip padding + home indicator. */
+  /**
+   * Space reserved under the scroll content so the last section clears the **fixed** bottom tab bar.
+   * Roughly: outer margin + top border + 64px tab row + bottom padding + home indicator (`insets.bottom`).
+   */
   const stripPad = space('Spacing/8');
   const bottomNavReservedHeight =
     stripPad + 1 + 64 + stripPad + insets.bottom;
 
   return (
     <View style={styles.root}>
+      {/* Lined canvas + cream fill — behind all scroll content. */}
       <CanvasTiledBackground />
       <ScrollView
         style={[styles.scroll, styles.scrollTransparent]}
         contentContainerStyle={{
           width: '100%',
-          paddingTop: insets.top,
+          paddingTop: Math.max(0, insets.top - TOP_INSET_TRIM_PX),
           paddingBottom: space('Spacing/24') + bottomNavReservedHeight,
           alignItems: 'center',
         }}
@@ -216,7 +337,7 @@ export function JobDetailScreen() {
               onPress={onClose}
               style={({ pressed }) => [styles.closeCircle, pressed && styles.pressed]}
             >
-              <Ionicons name="close" size={20} color={fg.primary} />
+              <JobDetailIconTopClose color={fg.primary} />
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -224,16 +345,16 @@ export function JobDetailScreen() {
               onPress={onEdit}
               style={({ pressed }) => [styles.editPill, pressed && styles.pressed]}
             >
-              <Ionicons name="pencil" size={14} color={color('Semantic/Status/Error/Text')} />
-              <Text style={styles.editPillLabel}>EDIT</Text>
+              <JobDetailIconTopEdit color={color('Semantic/Status/Error/Text')} />
+              <Text style={styles.addPillText}>EDIT</Text>
             </Pressable>
           </View>
         </View>
 
-        {/* Slot: gap 20px, px 20 — `1836:1874` */}
+        {/* Main column: horizontal padding + vertical gap; width caps at DS max (see `styles.slot`). */}
         <View style={styles.slot}>
-          {/* `JobCard` `Header without card` (`1836:2829`) */}
-          <View style={[styles.jobCardShell, { width: JOB_CARD_WIDTH }]}>
+          {/* Title row + status pill + category chip — no white card surface (Figma “header without card”). */}
+          <View style={styles.jobCardShell}>
             <View style={styles.jobCardContent}>
               <View style={styles.jobHeaderRow}>
                 <View style={styles.jobTitleBlock}>
@@ -258,26 +379,34 @@ export function JobDetailScreen() {
             </View>
           </View>
 
-          {/* `JobSummaryCard` (`258:1549`) */}
+          {/* Bordered white card: revenue / materials / optional fees / net — Figma `258:1549` (no section heading). */}
           <View style={[styles.jobSummaryCard, { maxWidth: CONTENT_MAX_WIDTH }]}>
-            <Text style={[typography.labelHeadingSecondary, { paddingVertical: space('Spacing/4') }]}>
-              Earnings Summary
-            </Text>
             <JobSummaryRows earnings={job.earnings} typography={typography} />
           </View>
 
-          {/* `FieldBookCtaButton` `notePrimaryWithMore` (`1836:2011`) */}
+          {/* Primary action (full width) + overflow menu — Figma FieldBook CTA row. */}
           <View style={styles.ctaRow}>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel={cta.label}
               onPress={() => {}}
               style={({ pressed }) => [
                 styles.ctaPrimary,
-                { backgroundColor: noteOrange, opacity: pressed ? 0.92 : 1 },
+                {
+                  backgroundColor: cta.backgroundColor,
+                  opacity: pressed ? 0.92 : 1,
+                  borderWidth: cta.borderWidth ?? 0,
+                  borderColor: cta.borderColor ?? 'transparent',
+                },
                 ctaShadow,
               ]}
             >
-              <Text style={[typography.bodyBold, styles.ctaPrimaryLabel]}>MARK COMPLETED</Text>
+              <Text
+                numberOfLines={1}
+                style={[typography.bodyBold, styles.ctaPrimaryLabel, { color: cta.labelColor }]}
+              >
+                {cta.label}
+              </Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -287,22 +416,23 @@ export function JobDetailScreen() {
                 pressed && styles.pressed,
               ]}
             >
-              <Ionicons name="ellipsis-vertical" size={18} color={fg.primary} />
+              <JobDetailIconCtaMore color={fg.primary} />
             </Pressable>
           </View>
 
-          {/* `MetricCard` tertiary-only job (`258:1399`) */}
+          {/* Three-column stats: time, net/hr, session count — tertiary metric card variant. */}
           <MetricCardJob metrics={job.metrics} typography={typography} />
         </View>
 
-        {/* `SectionHeader` Row + `ViewSession` collapsed */}
+        {/* Section headers are full-bleed within max width; ADD uses error-tint pill like Figma. */}
         <SectionHeaderFigma
           title="SESSIONS"
-          icon={<Ionicons name="time-outline" size={16} color={color('Brand/Accent')} />}
+          icon={<JobDetailIconSectionSessions color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
         />
         {job.sessions.map((s) => (
+          // One row per session — collapsed “view session” card (chevron for future expand).
           <View key={s.id} style={[styles.viewSessionCard, { maxWidth: CONTENT_MAX_WIDTH }]}>
             <View style={styles.viewSessionInner}>
               <View style={styles.viewSessionLeading}>
@@ -313,7 +443,7 @@ export function JobDetailScreen() {
               </View>
               <View style={styles.viewSessionTrailing}>
                 <Text style={[typography.metric, { textTransform: 'none' }]}>{s.durationLabel}</Text>
-                <Ionicons name="chevron-down" size={20} color={fg.primary} />
+                <JobDetailIconViewSessionChevron color={fg.secondary} />
               </View>
             </View>
           </View>
@@ -321,7 +451,7 @@ export function JobDetailScreen() {
 
         <SectionHeaderFigma
           title="MATERIALS"
-          icon={<Ionicons name="build-outline" size={16} color={color('Brand/Accent')} />}
+          icon={<JobDetailIconSectionMaterials color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
         />
@@ -329,7 +459,7 @@ export function JobDetailScreen() {
 
         <SectionHeaderFigma
           title="NOTES"
-          icon={<Ionicons name="document-text-outline" size={16} color={color('Brand/Accent')} />}
+          icon={<JobDetailIconSectionNotes color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
         />
@@ -337,7 +467,7 @@ export function JobDetailScreen() {
 
         <SectionHeaderFigma
           title="TIMELINE"
-          icon={<Ionicons name="pulse-outline" size={16} color={color('Brand/Accent')} />}
+          icon={<JobDetailIconSectionTimeline color={color('Brand/Accent')} />}
           typography={typography}
           showAdd={false}
         />
@@ -345,7 +475,7 @@ export function JobDetailScreen() {
         {/* `RowCard` `activityCard` (`786:28` / `787:55`) — matches DS: subtle border, 12 gap, icon well. */}
         <View style={[styles.rowCard, { maxWidth: CONTENT_MAX_WIDTH, width: '100%' }]}>
           <View style={styles.rowCardIconWrap}>
-            <Ionicons name="time-outline" size={14} color={color('Brand/Primary')} />
+            <JobDetailIconRowCardLeading color={color('Brand/Primary')} />
           </View>
           <View style={styles.rowCardTextStack}>
             <Text style={[typography.bodyBold, { color: fg.primary }]}>{job.timeline.title}</Text>
@@ -354,7 +484,7 @@ export function JobDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Pinned to screen bottom — not part of scroll (`225:12089`). */}
+      {/* Tab bar stays fixed while list scrolls; `bottomInset` clears home indicator. */}
       <BottomNavJobs typography={typography} bottomInset={insets.bottom} />
     </View>
   );
@@ -362,6 +492,7 @@ export function JobDetailScreen() {
 
 // --- Job summary (matches `JobSummaryCard` rows + total) ---
 
+/** Breakdown rows + bordered total — matches `JobSummaryCard` (`258:1549`). */
 function JobSummaryRows({
   earnings,
   typography,
@@ -373,11 +504,15 @@ function JobSummaryRows({
   const mat = formatUsdRow(earnings.materialsCents);
   const fees = formatUsdRow(earnings.feesCents);
   const net = formatUsdRow(earnings.netEarningsCents);
+  const showFees = earnings.feesCents !== 0;
+  const netPositive = earnings.netEarningsCents >= 0;
+  const netTone = netPositive ? color('Semantic/Status/Success/Text') : color('Brand/Primary');
+  const totalRuleColor = netPositive ? border.default : border.subtle;
 
   return (
     <View style={{ gap: space('Spacing/4'), width: '100%' }}>
       <View style={styles.summaryRow}>
-        <Text style={[typography.body, { color: fg.secondary, flex: 1 }]}>Revenue</Text>
+        <Text style={[typography.bodyBold, { color: fg.secondary, flex: 1 }]}>Revenue</Text>
         <View style={styles.summaryValue}>
           <Text style={[typography.bodyBold, { color: fg.primary }]}>{rev.prefix}</Text>
           <Text style={[typography.bodyBold, { color: fg.primary, minWidth: 72, textAlign: 'right' }]}>
@@ -386,7 +521,7 @@ function JobSummaryRows({
         </View>
       </View>
       <View style={styles.summaryRow}>
-        <Text style={[typography.body, { color: fg.secondary, flex: 1 }]}>Materials</Text>
+        <Text style={[typography.bodyBold, { color: fg.secondary, flex: 1 }]}>Materials</Text>
         <View style={styles.summaryValue}>
           <Text style={[typography.bodyBold, { color: color('Brand/Primary') }]}>{mat.prefix}</Text>
           <Text style={[typography.bodyBold, { color: color('Brand/Primary'), minWidth: 72, textAlign: 'right' }]}>
@@ -394,20 +529,22 @@ function JobSummaryRows({
           </Text>
         </View>
       </View>
-      <View style={styles.summaryRow}>
-        <Text style={[typography.body, { color: fg.secondary, flex: 1 }]}>Fees</Text>
-        <View style={styles.summaryValue}>
-          <Text style={[typography.bodyBold, { color: color('Brand/Primary') }]}>{fees.prefix}</Text>
-          <Text style={[typography.bodyBold, { color: color('Brand/Primary'), minWidth: 48, textAlign: 'right' }]}>
-            {fees.amount}
-          </Text>
+      {showFees ? (
+        <View style={styles.summaryRow}>
+          <Text style={[typography.bodyBold, { color: fg.secondary, flex: 1 }]}>Fees</Text>
+          <View style={styles.summaryValue}>
+            <Text style={[typography.bodyBold, { color: color('Brand/Primary') }]}>{fees.prefix}</Text>
+            <Text style={[typography.bodyBold, { color: color('Brand/Primary'), minWidth: 48, textAlign: 'right' }]}>
+              {fees.amount}
+            </Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.summaryTotal}>
+      ) : null}
+      <View style={[styles.summaryTotal, { borderTopColor: totalRuleColor }]}>
         <Text style={[typography.metric, { flex: 1 }]}>Net Earnings</Text>
         <View style={styles.summaryValue}>
-          <Text style={[typography.metric, { color: color('Semantic/Status/Success/Text') }]}>{net.prefix}</Text>
-          <Text style={[typography.metric, { color: color('Semantic/Status/Success/Text'), minWidth: 88, textAlign: 'right' }]}>
+          <Text style={[typography.metric, { color: netTone }]}>{net.prefix}</Text>
+          <Text style={[typography.metric, { color: netTone, minWidth: 88, textAlign: 'right' }]}>
             {net.amount}
           </Text>
         </View>
@@ -418,14 +555,7 @@ function JobSummaryRows({
 
 // --- Metric card tertiary ---
 
-function MetricColumnDivider() {
-  return (
-    <View style={styles.metricDividerTrack}>
-      <View style={styles.metricDividerLine} />
-    </View>
-  );
-}
-
+/** White bordered rounded card with three equal columns; middle column shows $ + net/hr in success color. */
 function MetricCardJob({
   metrics,
   typography,
@@ -452,21 +582,30 @@ function MetricCardJob({
           <View style={styles.metricLabelPad}>
             <Text style={labelStyle}>TIME</Text>
           </View>
-          <Text style={[typography.metric, styles.metricValueCentered, { textTransform: 'none' }]}>
+          <Text
+            style={[typography.metric, styles.metricValueCentered, { textTransform: 'none' }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+          >
             {metrics.timeLabel}
           </Text>
         </View>
-        <MetricColumnDivider />
         <View style={styles.metricColEqual}>
           <View style={styles.metricLabelPad}>
             <Text style={labelStyle}>NET/HR</Text>
           </View>
           <View style={styles.netHrValue}>
-            <Text style={[typography.metric, { color: success }]}>$</Text>
-            <Text style={[typography.metric, { color: success }]}>{metrics.netPerHrDisplay}</Text>
+            <Text
+              style={[typography.metric, { color: success, textAlign: 'center' }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.78}
+            >
+              {`$ ${metrics.netPerHrDisplay}`}
+            </Text>
           </View>
         </View>
-        <MetricColumnDivider />
         <View style={styles.metricColEqual}>
           <View style={styles.metricLabelPad}>
             <Text style={labelStyle}>SESSIONS</Text>
@@ -482,6 +621,7 @@ function MetricCardJob({
 
 // --- Section header (Figma `371:2179` Row) ---
 
+/** Leading icon + Metric-S title; optional trailing ADD pill (hidden for e.g. Timeline when `showAdd` is false). */
 function SectionHeaderFigma({
   title,
   icon,
@@ -510,7 +650,7 @@ function SectionHeaderFigma({
           onPress={() => {}}
           style={({ pressed }) => [styles.addPill, pressed && styles.pressed]}
         >
-          <Ionicons name="add" size={12} color={color('Semantic/Status/Error/Text')} />
+          <JobDetailIconSectionAdd color={color('Semantic/Status/Error/Text')} />
           <Text style={styles.addPillText}>ADD</Text>
         </Pressable>
       ) : null}
@@ -520,6 +660,16 @@ function SectionHeaderFigma({
 
 // --- View materials (multi-session) ---
 
+/** Session bucket header: `MAR 25, 2026 SESSION` — same caps treatment as unassigned (via `labelCaps`). */
+function bucketSessionHeaderTitle(sessionDateLabel: string | undefined): string {
+  const d = sessionDateLabel?.trim() ?? '';
+  return `${d} SESSION`.replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+/**
+ * Single bordered card listing material buckets (unassigned vs per-session).
+ * Each bucket: tinted header row (`bg.canvas`) then line items with optional top borders between buckets.
+ */
 function ViewMaterialsBuckets({
   buckets,
   typography,
@@ -537,13 +687,10 @@ function ViewMaterialsBuckets({
           >
             <View style={[styles.bucketHeader, bi === 0 && styles.bucketHeaderFirst]}>
               {bucket.kind === 'unassigned' ? (
-                <Text style={[typography.labelCaps, { color: fg.secondary, textTransform: 'none' }]}>
-                  Unassigned
-                </Text>
+                <Text style={[typography.labelCaps, { color: fg.secondary }]}>Unassigned</Text>
               ) : (
-                <Text style={[typography.bodySmall, { color: fg.secondary }]}>
-                  <Text>{`${bucket.sessionDateLabel?.trim() ?? ''} `}</Text>
-                  <Text style={{ textTransform: 'uppercase', letterSpacing: 1 }}>Session</Text>
+                <Text style={[typography.labelCaps, { color: fg.secondary }]}>
+                  {bucketSessionHeaderTitle(bucket.sessionDateLabel)}
                 </Text>
               )}
             </View>
@@ -573,6 +720,7 @@ function ViewMaterialsBuckets({
 
 // --- View notes (multi-session) ---
 
+/** Same outer structure as materials: buckets, header strip, rows with icon + excerpt + date. */
 function ViewNotesBuckets({
   buckets,
   typography,
@@ -591,13 +739,10 @@ function ViewNotesBuckets({
           >
             <View style={[styles.bucketHeader, bi === 0 && styles.bucketHeaderFirst]}>
               {bucket.kind === 'unassigned' ? (
-                <Text style={[typography.labelCaps, { color: fg.secondary, textTransform: 'none' }]}>
-                  Unassigned
-                </Text>
+                <Text style={[typography.labelCaps, { color: fg.secondary }]}>Unassigned</Text>
               ) : (
-                <Text style={[typography.bodySmall, { color: fg.secondary }]}>
-                  <Text>{`${bucket.sessionDateLabel?.trim() ?? ''} `}</Text>
-                  <Text style={{ textTransform: 'uppercase', letterSpacing: 1 }}>Session</Text>
+                <Text style={[typography.labelCaps, { color: fg.secondary }]}>
+                  {bucketSessionHeaderTitle(bucket.sessionDateLabel)}
                 </Text>
               )}
             </View>
@@ -609,7 +754,9 @@ function ViewNotesBuckets({
                   ni > 0 && { borderTopWidth: 1, borderTopColor: color('Foundation/Border/Subtle') },
                 ]}
               >
-                <Ionicons name="document-text" size={16} color={noteIcon} style={{ marginTop: 2 }} />
+                <View style={{ marginTop: 2 }}>
+                  <JobDetailIconViewNote color={noteIcon} />
+                </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[typography.body, { color: fg.primary }]}>{n.excerpt}</Text>
                   <Text style={[typography.bodySmall, { color: fg.secondary, marginTop: space('Spacing/8') }]}>
@@ -625,12 +772,9 @@ function ViewNotesBuckets({
   );
 }
 
-// --- Bottom nav (Figma `225:12089` — mirrors `BottomNav.tsx`) ---
+// --- Bottom nav (Figma `225:12089` — vectors from `BottomNavTabIcons`, not Ionicons) ---
 
-const BOTTOM_NAV_ICON = 24;
-const BOTTOM_NAV_ICON_PAD = space('Spacing/4');
-const BOTTOM_NAV_ICON_FRAME = BOTTOM_NAV_ICON + BOTTOM_NAV_ICON_PAD * 2;
-
+/** One tab: optional orange top indicator when selected; label recolors to brand primary. */
 function BottomNavTabCell({
   selected,
   label,
@@ -661,25 +805,14 @@ function BottomNavTabCell({
         </View>
       ) : null}
       <View style={[styles.bottomNavTabContent, { padding: tabPad }]}>
-        <View
-          style={[
-            styles.bottomNavIconWell,
-            {
-              width: BOTTOM_NAV_ICON_FRAME,
-              height: BOTTOM_NAV_ICON_FRAME,
-              borderRadius: BOTTOM_NAV_ICON_FRAME / 2,
-              padding: BOTTOM_NAV_ICON_PAD,
-            },
-          ]}
-        >
-          {icon}
-        </View>
+        <View style={styles.bottomNavIconSlot}>{icon}</View>
         <Text style={[typography.labelCaps, { color: labelColor, textAlign: 'center' }]}>{label}</Text>
       </View>
     </View>
   );
 }
 
+/** Three tabs (HOME / JOBS / EARNINGS); JOBS selected — placeholder until navigation is wired. */
 function BottomNavJobs({
   typography,
   bottomInset,
@@ -706,39 +839,49 @@ function BottomNavJobs({
           selected={false}
           label="HOME"
           typography={typography}
-          icon={<Ionicons name="home-outline" size={BOTTOM_NAV_ICON} color={primary} />}
+          icon={<BottomNavIconHome color={primary} />}
         />
         <BottomNavTabCell
           selected
           label="JOBS"
           typography={typography}
-          icon={
-            <Ionicons name="briefcase-outline" size={BOTTOM_NAV_ICON} color={color('Brand/Primary')} />
-          }
+          icon={<BottomNavIconJobs color={color('Brand/Primary')} />}
         />
         <BottomNavTabCell
           selected={false}
           label="EARNINGS"
           typography={typography}
-          icon={<Ionicons name="bar-chart-outline" size={BOTTOM_NAV_ICON} color={primary} />}
+          icon={<BottomNavIconEarnings color={primary} />}
         />
       </View>
     </View>
   );
 }
 
+// -----------------------------------------------------------------------------
+// Styles — grouped roughly top-to-bottom to match the component tree
+// -----------------------------------------------------------------------------
+
 const styles = StyleSheet.create({
+  /** Screen root: one column; background comes from `CanvasTiledBackground` under the scroll. */
   root: { flex: 1 },
+  /** Centered spinner over the same lined background as the loaded screen. */
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  /** Scroll fills root; flex lets the fixed bottom nav sit in the same column without overlapping scroll height math incorrectly. */
   scroll: { flex: 1 },
   /** Default scroll content background can read as white on iOS; keep lines visible. */
   scrollTransparent: { backgroundColor: 'transparent' },
+  /** Shared pressed state for `Pressable` opacity feedback. */
   pressed: { opacity: 0.75 },
 
+  /**
+   * Toolbar chrome only — no fill so `CanvasTiledBackground` (sibling under `ScrollView`) shows the same
+   * cream + ruled lines here as in the body. Shadow still separates the header band from content below.
+   */
   topHeader: {
     width: '100%',
     alignSelf: 'center',
-    backgroundColor: bg.canvas,
+    backgroundColor: 'transparent',
     paddingTop: space('Spacing/40'),
     ...cardShadowRn,
   },
@@ -767,12 +910,8 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     backgroundColor: color('Semantic/Status/Error/BG'),
   },
-  editPillLabel: {
-    fontFamily: 'UbuntuSansMono_400Regular',
-    fontSize: 10,
-    color: color('Semantic/Status/Error/Text'),
-  },
 
+  /** Padded column for the “hero” block: job header, summary, CTAs, metric card — width responsive, max DS width. */
   slot: {
     width: '100%',
     maxWidth: TOP_HEADER_MAX_WIDTH,
@@ -781,7 +920,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  /** Shadow-only “card” around title area (no fill — content sits on the lined canvas). */
   jobCardShell: {
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
     borderRadius: radius('Radius/16'),
     ...cardShadowRn,
   },
@@ -802,6 +944,7 @@ const styles = StyleSheet.create({
   jobHeadingPad: {
     paddingVertical: space('Spacing/4'),
   },
+  /** Dark pill behind category — label uses canvas-colored text for contrast. */
   categoryChip: {
     alignSelf: 'flex-start',
     backgroundColor: color('Foundation/Text/Primary'),
@@ -810,6 +953,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
 
+  /** White elevated card — padding only; row stack uses `Spacing/4` (`258:1549`). */
   jobSummaryCard: {
     width: '100%',
     backgroundColor: bg.surface,
@@ -817,7 +961,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: border.subtle,
     padding: space('Spacing/24'),
-    gap: space('Spacing/8'),
     ...cardShadowRn,
   },
   summaryRow: {
@@ -830,6 +973,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 0,
   },
+  /** Net earnings row — `borderTopColor` set per net sign (Default vs Subtle in Figma). */
   summaryTotal: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -837,74 +981,67 @@ const styles = StyleSheet.create({
     paddingTop: space('Spacing/8'),
     marginTop: space('Spacing/8'),
     borderTopWidth: 1,
-    borderTopColor: border.default,
   },
 
+  /** Primary + ⋮ row (`1836:2011`): both **51px**; primary uses `Spacing/16` horizontal inset so labels don’t wrap (full-width DS buttons use `px` 100). */
   ctaRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: space('Spacing/16'),
+    alignItems: 'center',
+    gap: 18,
     width: '100%',
     maxWidth: 343,
   },
   ctaPrimary: {
     flex: 1,
-    minHeight: 51,
+    minWidth: 0,
+    height: 51,
     borderRadius: radius('Radius/12'),
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 17,
-    paddingHorizontal: 24,
+    paddingHorizontal: space('Spacing/16'),
   },
   ctaPrimaryLabel: {
-    color: color('Foundation/Surface/White'),
     textTransform: 'uppercase',
     textAlign: 'center',
+    fontSize: 14,
+    lineHeight: 14,
+    includeFontPadding: false,
   },
   ctaMore: {
-    width: 51,
+    flexShrink: 0,
     height: 51,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colorWithAlpha('Brand/Primary', 0.2),
+    borderColor: border.subtle,
     backgroundColor: bg.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
+  /** Rounded metric “pill” card — slightly tighter horizontal inset than DS default so columns feel balanced. */
   metricCard: {
     width: '100%',
     backgroundColor: bg.surface,
     borderRadius: radius('Radius/24'),
     borderWidth: 1,
     borderColor: border.subtle,
-    paddingHorizontal: space('Spacing/32'),
+    paddingHorizontal: space('Spacing/4'),
     paddingVertical: space('Spacing/12'),
     ...cardShadowRn,
   },
   metricTertiaryRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     width: '100%',
   },
-  /** Tertiary-only: three equal columns; mirrors `MetricCard.tsx` `MetricTripleCell`. */
+  /** Tertiary-only: three equal columns; mirrors `MetricCard.tsx` `MetricTripleCell` (no vertical column rules). */
   metricColEqual: {
     flex: 1,
     minWidth: 0,
     alignItems: 'center',
-  },
-  /** Vertical rules inset from top/bottom (Figma — dividers do not meet card edges). */
-  metricDividerTrack: {
-    alignSelf: 'stretch',
-    paddingVertical: space('Spacing/12'),
-    width: 1,
-  },
-  metricDividerLine: {
-    flex: 1,
-    width: '100%',
-    minWidth: 1,
-    backgroundColor: border.subtle,
   },
   metricLabelPad: {
     paddingVertical: space('Spacing/4'),
@@ -916,13 +1053,12 @@ const styles = StyleSheet.create({
     color: fg.primary,
   },
   netHrValue: {
-    flexDirection: 'row',
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: space('Spacing/4'),
   },
 
+  /** Full-bleed section title + optional ADD; extra top padding separates from previous block. */
   sectionHeader: {
     width: '100%',
     flexDirection: 'row',
@@ -953,11 +1089,12 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
   },
   addPillText: {
-    fontFamily: 'UbuntuSansMono_400Regular',
+    fontFamily: 'UbuntuSansMono_600SemiBold',
     fontSize: 10,
     color: color('Semantic/Status/Error/Text'),
   },
 
+  /** Session list row — white card, optional bottom margin between multiple sessions. */
   viewSessionCard: {
     width: '100%',
     minHeight: 80,
@@ -979,10 +1116,12 @@ const styles = StyleSheet.create({
   viewSessionDatePad: { paddingVertical: space('Spacing/4') },
   viewSessionTrailing: { flexDirection: 'row', alignItems: 'center', gap: space('Spacing/12') },
 
+  /** Vertical breathing room around materials/notes cards (Figma `py-[9px]`). */
   viewCardOuter: {
     width: '100%',
     paddingVertical: space('Spacing/8'),
   },
+  /** Single surface: rounded rect, clip children so bucket headers respect corner radius. */
   viewCardBorder: {
     borderRadius: radius('Radius/16'),
     borderWidth: 1,
@@ -991,6 +1130,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...cardShadowRn,
   },
+  /** Bucket title strip — same cream as page canvas so it reads as “inside” the card. */
   bucketHeader: {
     height: 32,
     justifyContent: 'center',
@@ -1016,6 +1156,7 @@ const styles = StyleSheet.create({
     paddingVertical: space('Spacing/16'),
   },
 
+  /** Timeline activity row — icon well + two-line text stack. */
   rowCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1044,6 +1185,7 @@ const styles = StyleSheet.create({
     gap: space('Spacing/4'),
   },
 
+  /** Pinned below scroll: top hairline + solid canvas so tab strip does not show scroll bleed. */
   bottomNav: {
     width: '100%',
     alignSelf: 'center',
@@ -1053,6 +1195,7 @@ const styles = StyleSheet.create({
     borderTopColor: border.subtle,
     backgroundColor: bg.canvas,
   },
+  /** Three equal tabs; min height matches Figma tab strip. */
   bottomNavInner: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -1076,12 +1219,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
   },
-  bottomNavIconWell: {
-    backgroundColor: bg.surfaceWhite,
+  /** Centers Figma SVG icons (`gap-[2px]` to label is on `bottomNavTabContent`). Max height aligns tabs. */
+  bottomNavIconSlot: {
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 28,
   },
 
+  /** `StatusPillRn` container — pill shape via large radius + horizontal padding. */
   pillOuter: {
     borderWidth: 1,
     borderRadius: 9999,
