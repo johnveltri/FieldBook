@@ -129,6 +129,11 @@ export function typographyTitleH3Style(): CSSProperties {
   return typographyFromToken('Typography/Title-H3');
 }
 
+/** Typography/Heading-H2 — 24 Bold (Figma `Typography/Heading-H2`). */
+export function typographyHeadingH2Style(): CSSProperties {
+  return typographyFromToken('Typography/Heading-H2');
+}
+
 export function typographyBodySmallStyle(): CSSProperties {
   return typographyFromToken('Typography/Body-Small');
 }

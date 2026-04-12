@@ -46,24 +46,13 @@ const DEFAULT_TITLE: Record<TopHeaderVariant, string | undefined> = {
   'X (Close &Edit)': undefined,
 };
 
-const MIN_HEIGHT: Record<TopHeaderVariant, number> = {
-  'Title + Profile': 102,
-  'Title Only': 102,
-  'Title + Inbox': 102,
-  'Title + Back': 88,
-  'Title + Back + Subtitle': 117,
-  'X (Close &Edit)': 88,
-};
+/** Matches Figma `Top Header` (`231:817`) frame width; height hugs content. */
+export const TOP_HEADER_MAX_WIDTH = 393;
 
-const shell = (
-  bg: string,
-  minH: number,
-  extra?: CSSProperties
-): CSSProperties => ({
+const shell = (bg: string, extra?: CSSProperties): CSSProperties => ({
   position: 'relative',
   width: '100%',
-  maxWidth: 391,
-  minHeight: minH,
+  maxWidth: TOP_HEADER_MAX_WIDTH,
   boxSizing: 'border-box',
   backgroundColor: bg,
   boxShadow: shadow('Shadow/Card/Default'),
@@ -72,17 +61,28 @@ const shell = (
   ...extra,
 });
 
-function TitleText({ children }: { children: ReactNode }) {
+function TitleText({
+  children,
+  style: titleWrapStyle,
+}: {
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
   return (
-    <span
-      style={{
-        ...typographyDisplayH1Style(),
-        color: color('Foundation/Text/Primary'),
-        margin: 0,
-      }}
+    <div
+      data-name="top-header-title"
+      style={{ minWidth: 0, ...titleWrapStyle }}
     >
-      {children}
-    </span>
+      <span
+        style={{
+          ...typographyDisplayH1Style(),
+          color: color('Foundation/Text/Primary'),
+          margin: 0,
+        }}
+      >
+        {children}
+      </span>
+    </div>
   );
 }
 
@@ -167,7 +167,6 @@ export function TopHeader({
     variant
   );
   const displayTitle = title ?? DEFAULT_TITLE[variant];
-  const minH = MIN_HEIGHT[variant];
 
   const rowPad = {
     paddingLeft: space('Spacing/20'),
@@ -182,12 +181,13 @@ export function TopHeader({
       <header
         className={className}
         style={{
-          ...shell(bg, minH, style),
+          ...shell(bg, style),
           paddingTop: space('Spacing/40'),
         }}
         aria-label="Header"
       >
         <div
+          data-name="top-header-content"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -197,26 +197,31 @@ export function TopHeader({
             paddingTop: 0,
           }}
         >
+          <div data-name="top-header-leading-action">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={onCloseClick}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9999,
+                border: 'none',
+                backgroundColor: subtle,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: onCloseClick ? 'pointer' : 'default',
+              }}
+            >
+              <span data-name="top-header-icon">
+                <IconClose />
+              </span>
+            </button>
+          </div>
           <button
             type="button"
-            aria-label="Close"
-            onClick={onCloseClick}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 9999,
-              border: 'none',
-              backgroundColor: subtle,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: onCloseClick ? 'pointer' : 'default',
-            }}
-          >
-            <IconClose />
-          </button>
-          <button
-            type="button"
+            data-name="top-header-trailing-action"
             onClick={onEditClick}
             style={{
               display: 'flex',
@@ -233,9 +238,12 @@ export function TopHeader({
               backgroundColor: errBg,
               cursor: onEditClick ? 'pointer' : 'default',
               color: errFg,
+              boxSizing: 'border-box',
             }}
           >
-            <IconPencil size={14} />
+            <span data-name="top-header-icon">
+              <IconPencil size={14} />
+            </span>
             <span
               style={{
                 ...typographyBodySmallStyle(),
@@ -256,13 +264,14 @@ export function TopHeader({
       <header
         className={className}
         style={{
-          ...shell(bg, minH, style),
+          ...shell(bg, style),
           paddingTop: space('Spacing/40'),
           gap: space('Spacing/8'),
         }}
         aria-label="Header"
       >
         <div
+          data-name="top-header-content"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -272,24 +281,29 @@ export function TopHeader({
             paddingTop: 0,
           }}
         >
-          <button
-            type="button"
-            aria-label="Back"
-            onClick={onBackClick}
-            style={{
-              border: 'none',
-              background: 'none',
-              padding: 0,
-              color: primary,
-              cursor: onBackClick ? 'pointer' : 'default',
-              display: 'flex',
-            }}
-          >
-            <IconBack />
-          </button>
+          <div data-name="top-header-leading-action">
+            <button
+              type="button"
+              aria-label="Back"
+              onClick={onBackClick}
+              style={{
+                border: 'none',
+                background: 'none',
+                padding: 0,
+                color: primary,
+                cursor: onBackClick ? 'pointer' : 'default',
+                display: 'flex',
+              }}
+            >
+              <span data-name="top-header-icon">
+                <IconBack />
+              </span>
+            </button>
+          </div>
           {titleBlock}
         </div>
         <div
+          data-name="top-header-subtitle"
           style={{
             display: 'flex',
             justifyContent: 'center',
@@ -316,12 +330,13 @@ export function TopHeader({
       <header
         className={className}
         style={{
-          ...shell(bg, minH, style),
+          ...shell(bg, style),
           paddingTop: space('Spacing/40'),
         }}
         aria-label="Header"
       >
         <div
+          data-name="top-header-content"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -332,21 +347,25 @@ export function TopHeader({
             paddingTop: 0,
           }}
         >
-          <button
-            type="button"
-            aria-label="Back"
-            onClick={onBackClick}
-            style={{
-              border: 'none',
-              background: 'none',
-              padding: 0,
-              color: primary,
-              cursor: onBackClick ? 'pointer' : 'default',
-              display: 'flex',
-            }}
-          >
-            <IconBack />
-          </button>
+          <div data-name="top-header-leading-action">
+            <button
+              type="button"
+              aria-label="Back"
+              onClick={onBackClick}
+              style={{
+                border: 'none',
+                background: 'none',
+                padding: 0,
+                color: primary,
+                cursor: onBackClick ? 'pointer' : 'default',
+                display: 'flex',
+              }}
+            >
+              <span data-name="top-header-icon">
+                <IconBack />
+              </span>
+            </button>
+          </div>
           {titleBlock}
         </div>
       </header>
@@ -354,17 +373,20 @@ export function TopHeader({
   }
 
   // Accent variants: Profile | Only | Inbox
+  const titleOnly = variant === 'Title Only';
+
   return (
     <header
       className={className}
       style={{
-        ...shell(bg, minH, style),
+        ...shell(bg, style),
         gap: showAccent ? space('Spacing/40') : 0,
       }}
       aria-label="Header"
     >
       {showAccent && (
         <div
+          data-name="top-header-accent-strip"
           style={{
             height: 6,
             width: '100%',
@@ -374,6 +396,7 @@ export function TopHeader({
         />
       )}
       <div
+        data-name="top-header-content"
         style={{
           display: 'flex',
           flexDirection: 'row',
@@ -382,64 +405,89 @@ export function TopHeader({
           width: '100%',
           ...rowPad,
           paddingTop: 0,
-          minHeight: 40,
+          minHeight: titleOnly ? 48 : 40,
         }}
       >
-        <div style={{ minWidth: 0, flex: '1 1 auto' }}>{titleBlock}</div>
-
-        {variant === 'Title + Profile' && (
-          <button
-            type="button"
-            aria-label="Profile"
-            onClick={onProfileClick}
+        {titleOnly ? (
+          <div
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 9999,
-              border: 'none',
-              flexShrink: 0,
               display: 'flex',
+              flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
-              color: primary,
-              backgroundColor: 'transparent',
-              cursor: onProfileClick ? 'pointer' : 'default',
+              alignSelf: 'stretch',
+              flex: '1 1 0',
+              minHeight: 0,
+              minWidth: 0,
             }}
           >
-            <IconProfile />
-          </button>
-        )}
+            <TitleText style={{ flex: '1 1 0' }}>
+              {displayTitle ?? ''}
+            </TitleText>
+          </div>
+        ) : (
+          <>
+            <TitleText style={{ flex: '1 1 auto' }}>
+              {displayTitle ?? ''}
+            </TitleText>
 
-        {variant === 'Title + Inbox' && (
-          <button
-            type="button"
-            data-name="top-header-trailing-action"
-            aria-label="Inbox"
-            onClick={onInboxClick}
-            style={{
-              width: 40,
-              height: 40,
-              border: 'none',
-              flexShrink: 0,
-              backgroundColor: 'transparent',
-              color: primary,
-              cursor: onInboxClick ? 'pointer' : 'default',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-            }}
-          >
-            <InboxIcon
-              property1={
-                inboxBadgeCount != null && inboxBadgeCount > 0
-                  ? 'Default'
-                  : 'No Notifications'
-              }
-              badgeCount={inboxBadgeCount ?? 0}
-              size={40}
-            />
-          </button>
+            {variant === 'Title + Profile' && (
+              <button
+                type="button"
+                data-name="top-header-trailing-action"
+                aria-label="Profile"
+                onClick={onProfileClick}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 9999,
+                  border: 'none',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: primary,
+                  backgroundColor: 'transparent',
+                  cursor: onProfileClick ? 'pointer' : 'default',
+                }}
+              >
+                <span data-name="top-header-icon">
+                  <IconProfile />
+                </span>
+              </button>
+            )}
+
+            {variant === 'Title + Inbox' && (
+              <button
+                type="button"
+                data-name="top-header-trailing-action"
+                aria-label="Inbox"
+                onClick={onInboxClick}
+                style={{
+                  width: 40,
+                  height: 40,
+                  border: 'none',
+                  flexShrink: 0,
+                  backgroundColor: 'transparent',
+                  color: primary,
+                  cursor: onInboxClick ? 'pointer' : 'default',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                }}
+              >
+                <InboxIcon
+                  property1={
+                    inboxBadgeCount != null && inboxBadgeCount > 0
+                      ? 'Default'
+                      : 'No Notifications'
+                  }
+                  badgeCount={inboxBadgeCount ?? 0}
+                  size={40}
+                />
+              </button>
+            )}
+          </>
         )}
       </div>
     </header>

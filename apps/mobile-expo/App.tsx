@@ -1,20 +1,24 @@
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { JobDetailScreen } from './src/screens/JobDetailScreen';
+import { color } from '@fieldbook/design-system/lib/tokens';
 
 export default function App() {
   return (
-    <SafeAreaView style={styles.safe}>
-      <JobDetailScreen />
-      <StatusBar style="dark" />
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <View style={styles.root}>
+        <JobDetailScreen />
+        <StatusBar style="dark" />
+      </View>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  root: {
     flex: 1,
-    backgroundColor: '#faf6f0',
+    backgroundColor: color('Foundation/Background/Default'),
   },
 });

@@ -5,19 +5,20 @@
     "kind": "componentSet",
     "description": "Primary list/detail surface for a single job: left accent rail, title + customer/date row, optional category chip, **Status pill** (`622:143`) in the header, and a four-column metrics footer (TIME, REV, MAT, NET). Auto layout end-to-end. Copy and metrics are instance/code-driven.",
     "dimensions": {
-      "width": 351,
-      "height": "auto by variant: ~227.5px Default (`661:2`), ~189px No job category (`622:162`), ~167px Empty State (`622:199`), shorter **No Metrics** (`1286:816`) — header + category only, no metrics row"
+      "width": "391 for Default, No job category, Empty State; **351** for **No Metrics** (`1286:816`) and **Header without card** (`1836:2829`).",
+      "height": "hugs content; **1px** top border on `job-card-metrics` when the metrics row follows the category chip (**Default**) or when there is no chip (**No job category**, **Empty State**)."
     },
     "figmaVariants": {
       "Property 1=Default": "Node `661:2`. Category chip visible; example job + category + metrics. Header status is a **`Status pill`** instance (**Paid** / `622:142`) inside `job-card-status-pill`, not a duplicated frame.",
       "Property 1=No job category": "Node `622:162`. Same as Default but **no** category chip (row removed; shorter height).",
-      "Property 1=Empty State": "Node `622:199`. No category chip; placeholder **Untitled Job**, **No customer**, **Last updated Mar 13**. Status is a **`Status pill`** component instance (**Not started** / `622:144`), not inline text. Metrics **0.0h** / **$0** / **-$0** / **$0**.",
-      "Property 1=No Metrics": "Node `1286:816`. Same as Default for title, metadata, status pill, and **category chip**; **no** TIME/REV/MAT/NET row or divider. Status uses **`Status pill`** instance **Paid** (`622:142`) under `job-card-status-pill`."
+      "Property 1=Empty State": "Node `622:199`. No category chip; placeholder **Untitled Job**, meta **No Customer** only by default. Status is a **`Status pill`** component instance (**Not started** / `622:144`), not inline text. Metrics **0.0h** / **$0** / **-$0** / **$0**.",
+      "Property 1=No Metrics": "Node `1286:816`. Same as Default for title, metadata, status pill, and **category chip**; **no** TIME/REV/MAT/NET row or divider. Status uses **`Status pill`** instance **Paid** (`622:142`) under `job-card-status-pill`.",
+      "Property 1=Header without card": "Node `1836:2829`. **351** wide; **no** left accent rail; **transparent** shell (no white fill / stroke) with card shadow; title **Typography/Heading-H2** (24); optional category chip like **No Metrics**; **no** metrics row."
     }
   },
   "layoutSemantics": {
-    "base": "Figma **component set** `622:161` with property **Property 1** (`Default` | `No job category` | `Empty State` | `No Metrics`). Code: `variant` **`withCategory`** | **`noCategory`** | **`emptyState`** | **`noMetrics`**.",
-    "categoryVariant": "`withCategory` and `noMetrics`: show category chip when `categoryLabel` is set. `noCategory` and `emptyState`: omit chip. `emptyState` applies default copy when props are omitted (see `codeProps`).",
+    "base": "Figma **component set** `622:161` with property **Property 1** (`Default` | `No job category` | `Empty State` | `No Metrics` | `Header without card`). Code: `variant` **`withCategory`** | **`noCategory`** | **`emptyState`** | **`noMetrics`** | **`headerWithoutCard`**.",
+    "categoryVariant": "`withCategory`, `noMetrics`, and `headerWithoutCard`: show category chip when `categoryLabel` is set. `noCategory` and `emptyState`: omit chip. `emptyState` applies default copy when props are omitted (see `codeProps`).",
     "statusPill": "Header uses the **`Status pill`** component (`622:143`) via `StatusPill` in code. Map `statusVariant` to pill kind (`success` → paid, `neutral` → not started) or pass `statusPillKind` for full lifecycle control."
   },
   "regions": {
@@ -25,7 +26,7 @@
     "accentRail": "2px-wide vertical strip; **Brand/Primary** at **15%** paint opacity (matches reference frame `622:90`; `#D4572A`).",
     "header": "Title: Typography/Title-H3. Metadata: Typography/Body. Status: **Status pill** (`Typography/LABEL`) — see `Status pill` spec and `tokens.colors`.",
     "category": "Chip fill **Foundation/Text/Primary**; label **Typography/LABEL** + **Foundation/Background/Default** (warm off-white), not pure white—matches reference `622:90`.",
-    "metrics": "Typography/**Body-Bold** (14 SemiBold) for values. Labels: Typography/LABEL + **Foundation/Text/Muted**. Colors: **Foundation/Text/Primary** (TIME/REV), **Brand/Accent** (MAT value — matches Figma binding), **Semantic/Status/Success/Text** or **Brand/Primary** (NET) per `netSentiment`.",
+    "metrics": "Typography/**Body-Bold** (14 SemiBold) for values. Labels: Typography/LABEL + **Foundation/Text/Muted**. Colors: **Foundation/Text/Primary** (TIME/REV), **Semantic/Status/Error/Text** (MAT — Figma binding), **Semantic/Status/Success/Text** or **Brand/Primary** (NET) per `netSentiment`.",
     "autoLayout": "Root horizontal (accent + content stack); header row horizontal; status pill and category chip horizontal hug; metrics row horizontal with equal-grow columns; each metric column vertical; accent strip vertical fill on the cross axis.",
     "spacing": "Root padding **Spacing/24** horizontal, **0** vertical. Inner **Container**: **Spacing/24** top + bottom, **Spacing/16** between header / category / metrics. Nested spacing uses **Spacing** tokens—see `spacingLayout`."
   },
@@ -38,7 +39,9 @@
     "titleBlockGap": "Spacing/4",
     "titleHeadingGap": "0 on **Heading** frame (Spacing token; multi-line title still uses Title-H3 line wrapping)",
     "headingFramePaddingY": "Spacing/4 top + bottom on **Heading**",
+    "headingFrameMinHeight": "**49px** min-height on **Heading** when `variant` is not `emptyState` or `headerWithoutCard` (single-line title alignment in Figma)",
     "metaRowGap": "Spacing/4",
+    "metaRowWidth": "**170px** wide (`max-width` **200** for Default / No Metrics); **170px** fixed for No job category / Empty State; **100%** for Header without card (`622:161` export).",
     "metaRowPaddingY": "0 top + bottom on **Meta row**",
     "statusPillPaddingX": "Spacing/12 (from `Status pill` component)",
     "statusPillPaddingY": "Spacing/4",
@@ -92,10 +95,10 @@
     "radius": ["Radius/12", "Radius/16", "Radius/24"]
   },
   "codeProps": {
-    "variant": "`withCategory` | `noCategory` | `emptyState` | `noMetrics` — align with Figma **Property 1** (Default / No job category / Empty State / No Metrics).",
-    "title": "Required when `variant` is not `emptyState`. For `emptyState`, defaults to **Untitled Job**.",
-    "customerName": "optional; for `emptyState` defaults to **No customer**.",
-    "lastWorkedLabel": "optional; for `emptyState` defaults to **Last updated Mar 13**.",
+    "variant": "`withCategory` | `noCategory` | `emptyState` | `noMetrics` | `headerWithoutCard` — align with Figma **Property 1**.",
+    "title": "Required when `variant` is not `emptyState`. For `emptyState`, defaults to **Untitled Job**. Use **Typography/Heading-H2** when `headerWithoutCard`.",
+    "customerName": "optional; for `emptyState` defaults to **No Customer**.",
+    "lastWorkedLabel": "optional; for `emptyState` defaults to **empty** (meta line is only the customer default when no `lastWorkedLabel`).",
     "categoryLabel": "optional; chip when `variant` is `withCategory` or `noMetrics` and label is non-empty.",
     "status": "Required when `variant` is not `emptyState`. For `emptyState`, defaults to **NOT STARTED**.",
     "statusVariant": "`success` | `neutral` — maps to `StatusPill` kind when `statusPillKind` omitted. `emptyState` defaults to **neutral**.",
@@ -140,7 +143,10 @@
       "Metric values use **Typography/Body-Bold**; category chip **Typography/LABEL** + **Foundation/Background/Default**.",
       "Bind fills and strokes to variables via the file’s Color Styles collection; avoid raw hex on production components.",
       "Paused/on-hold styling for **Status pill** uses **Semantic/Status/Paused/BG** + **Semantic/Status/Paused/Text** in `colors.json`.",
-      "2026-04-08: **Default** (`661:2`) and **No Metrics** (`1286:816`) — replaced hand-built `Status pill` frames + `Status label` text with **`Status pill`** component instances (`622:142` Paid) under `job-card-status-pill`. **No job category** (`622:162`) and **Empty State** (`622:199`) were already instances (`622:153`, `622:144`). Component set `622:161` verified vertical stack 16px; `clipsContent` false on `job-card-*` frames."
+      "2026-04-08: **Default** (`661:2`) and **No Metrics** (`1286:816`) — replaced hand-built `Status pill` frames + `Status label` text with **`Status pill`** component instances (`622:142` Paid) under `job-card-status-pill`. **No job category** (`622:162`) and **Empty State** (`622:199`) were already instances (`622:153`, `622:144`). Component set `622:161` verified vertical stack 16px; `clipsContent` false on `job-card-*` frames.",
+      "2026-04-11: Figma sync — `maxWidth` **391** vs **351** (`noMetrics`); `job-card-metrics` **border-top** when category chip present (**Default**).",
+      "2026-04-11 (later): New **Header without card** (`variant` `headerWithoutCard`): no accent rail, transparent shell + shadow, **351** max width, **Heading-H2** title; MAT value **Semantic/Status/Error/Text**; metrics **border-top** also for **noCategory** / **emptyState**; empty-state meta **No Customer** only by default.",
+      "2026-04-11 (sync): Figma — `job-card-heading` **minHeight 49** (except empty + header-without-card); `job-card-meta-row` width **170** / **maxWidth 200** (Default + No Metrics) vs **170** (No category + Empty) vs **100%** (Header without card); **nowrap** on empty-state meta."
     ]
   }
 }

@@ -4,7 +4,7 @@
     "figmaNodeId": "371:2179",
     "kind": "componentSet",
     "description": "Section title row with optional leading icon, optional ADD/EDIT action, or stacked subtitle. Consolidated to three structural layouts; content (copy, icons, tones) is driven by instance overrides / code props—not separate Figma variants.",
-    "maxWidth": 353
+    "maxWidth": 393
   },
   "variantProperties": {
     "Layout": ["Row", "Stack", "Title only"]
@@ -23,6 +23,7 @@
       "Semantic/Status/Error/BG",
       "Semantic/Status/Error/Text",
       "Semantic/Status/Info/Text",
+      "Semantic/Status/Neutral/Text",
       "Semantic/Status/Warning/Text"
     ],
     "spacing": ["Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20", "Spacing/36"],
@@ -35,7 +36,8 @@
     "subtitle": "optional string; Stack layout",
     "action": "none, add, or edit; Row layout only",
     "leading": "optional React node; Row and Stack",
-    "titleTone": "accent, secondary, warning, info, or primary",
+    "leadingDataName": "section-header-leading-icon (default, e.g. SESSIONS row) or section-header-leading-icon2 (Figma **Icon Title** / NEEDS ATTENTION)",
+    "titleTone": "accent, secondary, warning, info, primary, or neutral (e.g. UNPAID)",
     "subtitleTone": "warning, info, secondary, or primary",
     "onActionClick": "optional callback when action pill is pressed"
   },
@@ -43,7 +45,8 @@
     "figmaLayerNames": {
       "componentSet": "Section Header (vertical stack of variant masters, 16px gap)",
       "headingRow": "section-header-heading",
-      "leadingIcon": "section-header-leading-icon",
+      "leadingIcon": "section-header-leading-icon (clock, status dots, etc.)",
+      "leadingIcon2": "section-header-leading-icon2 — **Icon Title** / NEEDS ATTENTION alert slot (distinct name from +Button row in Figma `371:2179`)",
       "titleText": "section-header-title",
       "subtitleBlock": "section-header-subtitle",
       "subtitleText": "section-header-subtitle-text",
@@ -58,7 +61,9 @@
       "Previous one-off Figma variants (Variant9–14, etc.) were removed; use instances + overrides for section-specific copy and icons.",
       "2026-03-28: Plugin pass bound remaining unbound solid fills inside this set to local color variables where RGBA matched a token; strokes were included—one component-set stroke color did not match any file color variable (review in Figma if it should become a token).",
       "Text still uses assigned text styles; swap to variable-bound text styles in Figma if you add them later.",
-      "2026-04-08: `COMPONENT_SET` uses vertical auto layout (16px gap). Structural layers use `section-header-*` kebab-case (`section-header-heading`, `section-header-leading-icon`, `section-header-title`, `section-header-subtitle` / `section-header-subtitle-text`, `section-header-action` + `section-header-action-icon` / `section-header-action-label`). `clipsContent` cleared on heading/action/subtitle frames. Vector artwork left un-flattened in automation."
+      "2026-04-08: `COMPONENT_SET` uses vertical auto layout (16px gap). Structural layers use `section-header-*` kebab-case (`section-header-heading`, `section-header-leading-icon`, `section-header-title`, `section-header-subtitle` / `section-header-subtitle-text`, `section-header-action` + `section-header-action-icon` / `section-header-action-label`). `clipsContent` cleared on heading/action/subtitle frames. Vector artwork left un-flattened in automation.",
+      "2026-04-11: Sync with Figma `371:2179` — content max width **393** (symbol width); `data-name` on heading, leading, title, subtitle, action; ADD **12px** + icon, EDIT **14px** pencil; action pill **24px** height; **Title only** centered; Stack subtitle `py` 1px to match Figma `py-px`.",
+      "2026-04-11: Figma update — **Icon Title** uses `section-header-leading-icon2` for the alert icon; **Icon Title + Button** keeps `section-header-leading-icon`; exposed as `leadingDataName`. Title tone **neutral** maps to **Semantic/Status/Neutral/Text** (UNPAID)."
     ]
   }
 }

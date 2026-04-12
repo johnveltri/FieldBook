@@ -16,6 +16,7 @@ const rowDivider = color('Foundation/Border/Subtle');
 
 export const VIEW_MATERIALS_VARIANTS = [
   'materialsMultiSession',
+  'materialsSameSession',
   'materialsSingleSession',
 ] as const;
 
@@ -32,8 +33,9 @@ export type ViewMaterialsSessionBlock = {
   items: ViewMaterialsLineItem[];
 };
 
+const labelCaps = typographyLabelStyle();
+
 function SessionGroupHeader({ sessionDateLabel }: { sessionDateLabel: string }) {
-  const label = typographyLabelStyle();
   const secondary = color('Foundation/Text/Secondary');
 
   return (
@@ -49,9 +51,20 @@ function SessionGroupHeader({ sessionDateLabel }: { sessionDateLabel: string }) 
         alignItems: 'center',
       }}
     >
-      <span data-name="view-materials-session-header-text" style={{ ...label, color: secondary }}>
-        {`${sessionDateLabel.trim()} SESSION`}
-      </span>
+      <p
+        data-name="view-materials-session-header-text"
+        style={{
+          margin: 0,
+          ...labelCaps,
+          color: secondary,
+          textTransform: 'none',
+          fontSize: 10,
+          letterSpacing: '1px',
+        }}
+      >
+        <span>{`${sessionDateLabel.trim()} `}</span>
+        <span style={{ textTransform: 'uppercase' }}>Session</span>
+      </p>
     </div>
   );
 }
@@ -143,6 +156,26 @@ function MaterialItemList({ items }: { items: ViewMaterialsLineItem[] }) {
   );
 }
 
+function bucketHeader(bucketLabel: string) {
+  const secondary = color('Foundation/Text/Secondary');
+  return (
+    <div
+      data-name="view-materials-bucket-header"
+      style={{
+        backgroundColor: color('Foundation/Background/Default'),
+        paddingLeft: space('Spacing/16'),
+        paddingRight: space('Spacing/16'),
+        paddingTop: space('Spacing/8'),
+        paddingBottom: space('Spacing/8'),
+      }}
+    >
+      <span data-name="view-materials-bucket-label" style={{ ...labelCaps, color: secondary }}>
+        {bucketLabel}
+      </span>
+    </div>
+  );
+}
+
 export type ViewMaterialsCardProps = {
   variant: ViewMaterialsVariant;
   bucketLabel?: string;
@@ -153,7 +186,7 @@ export type ViewMaterialsCardProps = {
 };
 
 /**
- * Materials list card — unassigned bucket + optional **SESSION** block
+ * Materials list card — unassigned bucket + optional **Session** block
  * (Figma **View Materials** `1287:618`).
  */
 export function ViewMaterialsCard({
@@ -166,80 +199,87 @@ export function ViewMaterialsCard({
 }: ViewMaterialsCardProps) {
   const borderSubtle = color('Foundation/Border/Subtle');
   const surfaceWhite = color('Foundation/Surface/White');
-  const label = typographyLabelStyle();
-  const secondary = color('Foundation/Text/Secondary');
+
+  const isMulti = variant === 'materialsMultiSession';
 
   const showSession =
-    variant === 'materialsMultiSession' &&
+    isMulti &&
     sessionBlock !== undefined &&
     sessionBlock.items.length > 0;
+
+  const outerPad: CSSProperties = {
+    width: '100%',
+    maxWidth: 353,
+    boxSizing: 'border-box',
+    paddingTop: 9,
+    paddingBottom: 9,
+  };
+
+  const borderedSurface: CSSProperties = {
+    width: '100%',
+    borderRadius: 16,
+    border: `1px solid ${borderSubtle}`,
+    backgroundColor: surfaceWhite,
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+    ...cardShadow,
+  };
+
+  const innerStack: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  };
+
+  const unassignedBody = (
+    <>
+      {bucketHeader(bucketLabel)}
+      <MaterialItemList items={unassignedItems} />
+    </>
+  );
+
+  const sessionSection =
+    showSession && sessionBlock ? (
+      <div
+        data-name="view-materials-session-section"
+        style={{
+          borderTop: `1px solid ${rowDivider}`,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'stretch',
+        }}
+      >
+        <SessionGroupHeader sessionDateLabel={sessionBlock.sessionDateLabel} />
+        <MaterialItemList items={sessionBlock.items} />
+      </div>
+    ) : null;
+
+  if (isMulti) {
+    return (
+      <section
+        className={className}
+        data-name="view-materials-root"
+        style={{ ...outerPad, ...style }}
+      >
+        <div data-name="view-materials-card-surface" style={borderedSurface}>
+          <div data-name="view-materials-unassigned-block" style={innerStack}>
+            {unassignedBody}
+          </div>
+          {sessionSection}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
       className={className}
-      data-name="view-materials-card"
-      style={{
-        width: '100%',
-        maxWidth: 353,
-        boxSizing: 'border-box',
-        paddingTop: 9,
-        paddingBottom: 9,
-        ...style,
-      }}
+      data-name="view-materials-root"
+      style={{ ...outerPad, ...style }}
     >
-      <div
-        data-name="view-materials-card-surface"
-        style={{
-          width: '100%',
-          borderRadius: 16,
-          border: `1px solid ${borderSubtle}`,
-          backgroundColor: surfaceWhite,
-          boxSizing: 'border-box',
-          overflow: 'hidden',
-          ...cardShadow,
-        }}
-      >
-        <div
-          data-name="view-materials-body"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-          }}
-        >
-          <div
-            data-name="view-materials-bucket-header"
-            style={{
-              backgroundColor: color('Foundation/Background/Default'),
-              paddingLeft: space('Spacing/16'),
-              paddingRight: space('Spacing/16'),
-              paddingTop: space('Spacing/8'),
-              paddingBottom: space('Spacing/8'),
-            }}
-          >
-            <span data-name="view-materials-bucket-label" style={{ ...label, color: secondary }}>
-              {bucketLabel}
-            </span>
-          </div>
-
-          <MaterialItemList items={unassignedItems} />
-
-          {showSession ? (
-            <div
-              data-name="view-materials-session-section"
-              style={{
-                borderTop: `1px solid ${rowDivider}`,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-              }}
-            >
-              <SessionGroupHeader
-                sessionDateLabel={sessionBlock!.sessionDateLabel}
-              />
-              <MaterialItemList items={sessionBlock!.items} />
-            </div>
-          ) : null}
+      <div data-name="view-materials-card" style={borderedSurface}>
+        <div data-name="view-materials-card-surface" style={innerStack}>
+          {unassignedBody}
         </div>
       </div>
     </section>

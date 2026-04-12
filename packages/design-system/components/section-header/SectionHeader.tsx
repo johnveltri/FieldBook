@@ -7,6 +7,9 @@ import {
   typographyMetricSStyle,
 } from '../../lib/tokens';
 
+/** Matches Figma `Section Header` (`371:2179`) frame width. */
+export const SECTION_HEADER_MAX_WIDTH = 393;
+
 export const SECTION_HEADER_LAYOUTS = ['Row', 'Stack', 'Title only'] as const;
 export type SectionHeaderLayout = (typeof SECTION_HEADER_LAYOUTS)[number];
 
@@ -17,7 +20,8 @@ export type SectionHeaderTitleTone =
   | 'secondary'
   | 'warning'
   | 'info'
-  | 'primary';
+  | 'primary'
+  | 'neutral';
 
 export type SectionHeaderSubtitleTone =
   | 'warning'
@@ -31,6 +35,7 @@ const TITLE_TONE: Record<SectionHeaderTitleTone, string> = {
   warning: 'Semantic/Status/Warning/Text',
   info: 'Semantic/Status/Info/Text',
   primary: 'Foundation/Text/Primary',
+  neutral: 'Semantic/Status/Neutral/Text',
 };
 
 const SUBTITLE_TONE: Record<SectionHeaderSubtitleTone, string> = {
@@ -39,6 +44,10 @@ const SUBTITLE_TONE: Record<SectionHeaderSubtitleTone, string> = {
   secondary: 'Foundation/Text/Secondary',
   primary: 'Foundation/Text/Primary',
 };
+
+export type SectionHeaderLeadingDataName =
+  | 'section-header-leading-icon'
+  | 'section-header-leading-icon2';
 
 export type SectionHeaderProps = {
   layout: SectionHeaderLayout;
@@ -49,6 +58,11 @@ export type SectionHeaderProps = {
   action?: SectionHeaderAction;
   /** Leading icon or marker; not used for `Title only`. */
   leading?: ReactNode;
+  /**
+   * Figma **Icon Title** uses `section-header-leading-icon2`; **Icon Title + Button** uses
+   * `section-header-leading-icon` (e.g. clock). Default matches the +Button row.
+   */
+  leadingDataName?: SectionHeaderLeadingDataName;
   titleTone?: SectionHeaderTitleTone;
   subtitleTone?: SectionHeaderSubtitleTone;
   className?: string;
@@ -59,7 +73,7 @@ export type SectionHeaderProps = {
 const titleText = typographyMetricSStyle();
 const smallText = typographyBodySmallStyle();
 
-function IconPencil({ size = 12 }: { size?: number }) {
+function IconPencil({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
@@ -85,6 +99,7 @@ function ActionPill({
   return (
     <button
       type="button"
+      data-name="section-header-action"
       onClick={onClick}
       style={{
         display: 'inline-flex',
@@ -92,7 +107,7 @@ function ActionPill({
         alignItems: 'center',
         justifyContent: 'center',
         gap: space('Spacing/8'),
-        minHeight: 24,
+        height: 24,
         paddingLeft: space('Spacing/12'),
         paddingRight: space('Spacing/12'),
         paddingTop: 4,
@@ -105,25 +120,24 @@ function ActionPill({
         ...smallText,
         color: errFg,
         textTransform: 'uppercase',
+        boxSizing: 'border-box',
       }}
     >
-      {mode === 'add' ? (
-        <>
-          <PlusIcon size={12} />
-          <span>ADD</span>
-        </>
-      ) : (
-        <>
-          <IconPencil size={12} />
-          <span>EDIT</span>
-        </>
-      )}
+      <span
+        data-name="section-header-action-icon"
+        style={{ display: 'flex', flexShrink: 0, alignItems: 'center' }}
+      >
+        {mode === 'add' ? <PlusIcon size={12} /> : <IconPencil size={14} />}
+      </span>
+      <span data-name="section-header-action-label">
+        {mode === 'add' ? 'ADD' : 'EDIT'}
+      </span>
     </button>
   );
 }
 
 /**
- * Section header (Figma: `Section Header`, node `371:2179`).
+ * Section header (Figma: **Section Header** `371:2179`).
  * Variants: `Row` | `Stack` | `Title only` — see `./spec.json`.
  */
 export function SectionHeader({
@@ -132,6 +146,7 @@ export function SectionHeader({
   subtitle,
   action = 'none',
   leading,
+  leadingDataName = 'section-header-leading-icon',
   titleTone = 'accent',
   subtitleTone = 'warning',
   className,
@@ -150,10 +165,14 @@ export function SectionHeader({
 
   const titleEl = (
     <span
+      data-name="section-header-title"
       style={{
         ...titleText,
         color: titleColor,
         margin: 0,
+        ...(layout === 'Title only'
+          ? { textAlign: 'center' as const, width: '100%' }
+          : {}),
       }}
     >
       {title}
@@ -164,7 +183,16 @@ export function SectionHeader({
     return (
       <header
         className={className}
-        style={{ ...pad, boxSizing: 'border-box', width: '100%', maxWidth: 353, ...style }}
+        style={{
+          ...pad,
+          boxSizing: 'border-box',
+          width: '100%',
+          maxWidth: SECTION_HEADER_MAX_WIDTH,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          ...style,
+        }}
         aria-label={title}
       >
         {titleEl}
@@ -180,7 +208,7 @@ export function SectionHeader({
           ...pad,
           boxSizing: 'border-box',
           width: '100%',
-          maxWidth: 353,
+          maxWidth: SECTION_HEADER_MAX_WIDTH,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
@@ -190,6 +218,7 @@ export function SectionHeader({
         aria-label={title}
       >
         <div
+          data-name="section-header-heading"
           style={{
             display: 'flex',
             flexDirection: 'row',
@@ -199,13 +228,22 @@ export function SectionHeader({
           }}
         >
           {leading != null ? (
-            <span style={{ display: 'flex', flexShrink: 0 }}>{leading}</span>
+            <span
+              data-name={leadingDataName}
+              style={{ display: 'flex', flexShrink: 0 }}
+            >
+              {leading}
+            </span>
           ) : null}
           {titleEl}
         </div>
         {subtitle ? (
-          <div style={{ paddingLeft: 22, paddingRight: 22 }}>
+          <div
+            data-name="section-header-subtitle"
+            style={{ paddingLeft: 22, paddingRight: 22, paddingTop: 1, paddingBottom: 1 }}
+          >
             <span
+              data-name="section-header-subtitle-text"
               style={{
                 ...smallText,
                 color: subColor,
@@ -230,7 +268,7 @@ export function SectionHeader({
         ...pad,
         boxSizing: 'border-box',
         width: '100%',
-        maxWidth: 353,
+        maxWidth: SECTION_HEADER_MAX_WIDTH,
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
@@ -241,6 +279,7 @@ export function SectionHeader({
       aria-label={title}
     >
       <div
+        data-name="section-header-heading"
         style={{
           display: 'flex',
           flexDirection: 'row',
@@ -251,7 +290,12 @@ export function SectionHeader({
         }}
       >
         {leading != null ? (
-          <span style={{ display: 'flex', flexShrink: 0 }}>{leading}</span>
+          <span
+            data-name={leadingDataName}
+            style={{ display: 'flex', flexShrink: 0 }}
+          >
+            {leading}
+          </span>
         ) : null}
         {titleEl}
       </div>

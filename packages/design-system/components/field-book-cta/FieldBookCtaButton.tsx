@@ -13,6 +13,7 @@ const surfaceWhite = color('Foundation/Surface/Default');
 export const FIELD_BOOK_CTA_VARIANTS = [
   'notePrimary',
   'notePrimaryWithDelete',
+  'notePrimaryWithMore',
   'materialPrimary',
   'materialPrimaryWithDelete',
   'jobSessionPrimaryWithDelete',
@@ -42,6 +43,24 @@ function TrashGlyph({ strokeColor }: { strokeColor: string }) {
   );
 }
 
+/** Vertical “more” (⋮) — Figma asset frame ~14×30 (`Button Primary+MORE`). */
+function MoreGlyph({ fill }: { fill: string }) {
+  return (
+    <svg
+      width={14}
+      height={30}
+      viewBox="0 0 14 30"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <circle cx="7" cy="7" r="2" fill={fill} />
+      <circle cx="7" cy="15" r="2" fill={fill} />
+      <circle cx="7" cy="23" r="2" fill={fill} />
+    </svg>
+  );
+}
+
 const labelNotePrimary: CSSProperties = {
   ...typographyBodyBoldStyle(),
   color: surfaceWhite,
@@ -57,7 +76,7 @@ const labelBrandXl: CSSProperties = {
 };
 
 function primaryFillAndShadowForVariant(
-  variant: Exclude<FieldBookCtaVariant, 'brandPrimaryXl'>,
+  variant: Exclude<FieldBookCtaVariant, 'brandPrimaryXl' | 'notePrimaryWithMore'>,
 ): { bg: string; shadow: CSSProperties } {
   const note = color('Semantic/Activity/Note');
   const material = color('Semantic/Activity/Material');
@@ -83,31 +102,40 @@ function primaryFillAndShadowForVariant(
   }
 }
 
+function notePrimaryFillAndShadow(): { bg: string; shadow: CSSProperties } {
+  const note = color('Semantic/Activity/Note');
+  return { bg: note, shadow: { boxShadow: shadowFromColor(note) } };
+}
+
 export type FieldBookCtaButtonProps = {
   variant: FieldBookCtaVariant;
-  /** Default: `SAVE TO JOB` / `SAVE CHANGES` / `END SESSION` per variant. */
+  /** Default: `SAVE TO JOB` / `SAVE CHANGES` / `END SESSION` / `MARK COMPLETED` per variant. */
   primaryLabel?: string;
   onPrimaryClick?: () => void;
   /** Primary + delete row variants only. */
   onDeleteClick?: () => void;
+  /** `notePrimaryWithMore` only — secondary column (⋮). */
+  onMoreClick?: () => void;
   className?: string;
   style?: CSSProperties;
 };
 
 /**
  * High-emphasis CTAs from Field Book (Figma **Button** `1287:1563`):
- * note / material / job-session tint fills + self-shadow, brand XL, optional delete column.
+ * note / material / job-session tint fills + self-shadow, brand XL, optional delete or more column.
  */
 export function FieldBookCtaButton({
   variant,
   primaryLabel,
   onPrimaryClick,
   onDeleteClick,
+  onMoreClick,
   className,
   style,
 }: FieldBookCtaButtonProps) {
   const brand = color('Brand/Primary');
   const deleteIcon = color('Semantic/Status/Error/Text');
+  const moreIcon = color('Foundation/Text/Primary');
   const xlShadow: CSSProperties = {
     boxShadow: shadowFromColor(color('Semantic/Activity/Note')),
   };
@@ -118,7 +146,9 @@ export function FieldBookCtaButton({
       ? 'END SESSION'
       : variant === 'notePrimary' || variant === 'materialPrimary'
         ? 'SAVE TO JOB'
-        : 'SAVE CHANGES');
+        : variant === 'notePrimaryWithMore'
+          ? 'MARK COMPLETED'
+          : 'SAVE CHANGES');
 
   const primaryButtonBase: CSSProperties = {
     margin: 0,
@@ -159,13 +189,85 @@ export function FieldBookCtaButton({
     );
   }
 
+  if (variant === 'notePrimaryWithMore') {
+    const { bg: primaryBg, shadow: primaryShadow } = notePrimaryFillAndShadow();
+    return (
+      <div
+        data-name="field-book-cta-with-more"
+        className={className}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'stretch',
+          gap: 18,
+          width: '100%',
+          maxWidth: 343,
+          boxSizing: 'border-box',
+          paddingLeft: 1,
+          paddingRight: 1,
+          overflow: 'hidden',
+          ...style,
+        }}
+      >
+        <button
+          data-name="field-book-cta-primary"
+          type="button"
+          onClick={onPrimaryClick}
+          style={{
+            flex: '1 1 0',
+            minWidth: 0,
+            margin: 0,
+            border: 'none',
+            borderRadius: 12,
+            backgroundColor: primaryBg,
+            cursor: onPrimaryClick ? 'pointer' : 'default',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingLeft: 100,
+            paddingRight: 100,
+            paddingTop: 17,
+            paddingBottom: 17,
+            ...primaryShadow,
+          }}
+        >
+          <span data-name="field-book-cta-label" style={labelNotePrimary}>
+            {resolvedPrimaryLabel}
+          </span>
+        </button>
+        <button
+          data-name="field-book-cta-more"
+          type="button"
+          onClick={onMoreClick}
+          aria-label="More options"
+          style={{
+            flexShrink: 0,
+            alignSelf: 'stretch',
+            margin: 0,
+            paddingLeft: 14,
+            paddingRight: 14,
+            borderRadius: 8,
+            border: `1px solid ${colorWithAlpha('Brand/Primary', 0.2)}`,
+            backgroundColor: surfaceWhite,
+            cursor: onMoreClick ? 'pointer' : 'default',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <span data-name="field-book-cta-more-icon">
+            <MoreGlyph fill={moreIcon} />
+          </span>
+        </button>
+      </div>
+    );
+  }
+
   const { bg: primaryBg, shadow: primaryShadow } =
     primaryFillAndShadowForVariant(variant);
 
-  if (
-    variant === 'notePrimary' ||
-    variant === 'materialPrimary'
-  ) {
+  if (variant === 'notePrimary' || variant === 'materialPrimary') {
     return (
       <button
         data-name="field-book-cta-primary"
@@ -199,7 +301,6 @@ export function FieldBookCtaButton({
         gap: 18,
         width: '100%',
         maxWidth: 343,
-        minHeight: 71,
         boxSizing: 'border-box',
         overflow: 'hidden',
         ...style,
@@ -239,6 +340,7 @@ export function FieldBookCtaButton({
         aria-label="Delete"
         style={{
           flexShrink: 0,
+          alignSelf: 'stretch',
           margin: 0,
           paddingLeft: 14,
           paddingRight: 14,

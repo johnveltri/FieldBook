@@ -3,8 +3,8 @@
     "name": "Top Header",
     "figmaNodeId": "231:817",
     "kind": "componentSet",
-    "description": "App top bar: brand / section titles, actions (profile, inbox, back, close, edit), optional subtitle.",
-    "maxWidth": 391
+    "description": "App top bar: brand / section titles, actions (profile, inbox, back, close, edit), optional subtitle. Frame width **393**; vertical size hugs content (no fixed header min-heights).",
+    "maxWidth": 393
   },
   "variantProperties": {
     "Property 1": [
@@ -145,6 +145,11 @@
         "severity": "info",
         "type": "structure",
         "detail": "2026-04-08: `Title + Inbox` (`236:879`) — replaced separate `top-header-icon` + `top-header-badge` vector frames with an instance of the shared `Inbox icon` component (`786:15` Default) named `top-header-inbox-icon` under `top-header-trailing-action` (`236:872`). TSX uses `InboxIcon` from `inbox-icon/` for parity."
+      },
+      {
+        "severity": "info",
+        "type": "structure",
+        "detail": "2026-04-11: Figma `231:817` — frame **393** wide; header height **hugs** content (removed fixed `minHeight` table). `data-name` on `top-header-content`, `top-header-accent-strip`, `top-header-leading-action`, `top-header-trailing-action`, `top-header-icon`, `top-header-title`, `top-header-subtitle`; **Title Only** row matches EARNINGS flex layout; **X (Close & Edit)** EDIT control uses **14px** pencil + `boxSizing`."
       }
     ],
     "resolved": [

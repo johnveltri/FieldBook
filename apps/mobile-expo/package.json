@@ -9,12 +9,17 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/pt-serif": "^0.4.1",
+    "@expo-google-fonts/ubuntu-sans-mono": "^0.4.1",
     "@fieldbook/api-client": "*",
+    "@fieldbook/design-system": "^0.0.0",
     "@fieldbook/shared-types": "*",
     "expo": "~55.0.0",
+    "expo-font": "^55.0.6",
     "expo-status-bar": "~55.0.5",
     "react": "19.2.0",
-    "react-native": "0.83.4"
+    "react-native": "0.83.4",
+    "react-native-safe-area-context": "^5.7.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.10",

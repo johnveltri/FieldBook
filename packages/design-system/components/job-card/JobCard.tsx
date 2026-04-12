@@ -5,6 +5,7 @@ import {
   space,
   typographyBodyBoldStyle,
   typographyBodyStyle,
+  typographyHeadingH2Style,
   typographyLabelStyle,
   typographyTitleH3Style,
 } from '../../lib/tokens';
@@ -28,8 +29,8 @@ const textMuted = color('Foundation/Text/Muted');
 const textOnDark = color('Foundation/Background/Default');
 const chipBg = color('Foundation/Text/Primary');
 const brandPrimary = color('Brand/Primary');
-/** MAT column value — matches Figma Job Card (`622:161`): **Brand/Accent** `#C44B2B`, not `Semantic/Activity/Material`. */
-const metricMatValue = color('Brand/Accent');
+/** MAT column value — Figma binds to **Semantic/Status/Error/Text** (same rust as brand accent in palette). */
+const metricMatValue = color('Semantic/Status/Error/Text');
 const successText = color('Semantic/Status/Success/Text');
 
 const cardShadow: CSSProperties = {
@@ -41,18 +42,19 @@ export type JobCardStatusVariant = 'success' | 'neutral';
 /**
  * Matches Figma **Job Card** component set `622:161` — `Property 1`:
  * **Default** (`withCategory`), **No job category** (`noCategory`),
- * **Empty State** (`emptyState`), **No Metrics** (`noMetrics`).
+ * **Empty State** (`emptyState`), **No Metrics** (`noMetrics`), **Header without card** (`headerWithoutCard`).
  */
 export type JobCardVariant =
   | 'withCategory'
   | 'noCategory'
   | 'emptyState'
-  | 'noMetrics';
+  | 'noMetrics'
+  | 'headerWithoutCard';
 
 /** @deprecated Use `JobCardVariant`. */
 export type JobCardCategoryVariant = Extract<
   JobCardVariant,
-  'withCategory' | 'noCategory' | 'noMetrics'
+  'withCategory' | 'noCategory' | 'noMetrics' | 'headerWithoutCard'
 >;
 
 export type JobCardProps = {
@@ -60,7 +62,7 @@ export type JobCardProps = {
   customerName?: string;
   lastWorkedLabel?: string;
   categoryLabel?: string | null;
-  /** Figma `Property 1`: `withCategory` / `noMetrics` show category chip when `categoryLabel` is set; `noCategory` / `emptyState` omit it. `noMetrics` hides the metrics row. */
+  /** Figma `Property 1`: `withCategory` / `noMetrics` / `headerWithoutCard` show category chip when `categoryLabel` is set; `noCategory` / `emptyState` omit it. `noMetrics` / `headerWithoutCard` hide the metrics row. */
   variant?: JobCardVariant;
   status?: string;
   /** Maps to `StatusPill` `kind` when `statusPillKind` is omitted: `success` → paid, `neutral` → not started. */
@@ -88,7 +90,7 @@ function netValueColor(sentiment: 'positive' | 'negative'): string {
 /**
  * Job list/detail card with accent rail, header, optional category chip, status pill, and metrics.
  * Figma: **Job Card** component set `622:161` (Default `661:2`, No job category `622:162`,
- * Empty State `622:199`, No Metrics `1286:816`). Header status uses **`Status pill`** (`622:143`) instances
+ * Empty State `622:199`, No Metrics `1286:816`, Header without card `1836:2829`). Header status uses **`Status pill`** (`622:143`) instances
  * in the file (e.g. Paid `622:142` on Default / No Metrics). `data-name` matches `structure.figmaLayerNames` in `spec.json`.
  */
 export function JobCard({
@@ -110,7 +112,11 @@ export function JobCard({
   style,
 }: JobCardProps) {
   const isEmpty = variant === 'emptyState';
-  const showMetrics = variant !== 'noMetrics';
+  const isHeaderWithoutCard = variant === 'headerWithoutCard';
+  const showAccentRail = variant !== 'headerWithoutCard';
+  const showMetrics =
+    variant !== 'noMetrics' && variant !== 'headerWithoutCard';
+  const isCardChrome = variant !== 'headerWithoutCard';
 
   if (!isEmpty) {
     if (title === undefined || title === '') {
@@ -126,9 +132,9 @@ export function JobCard({
   }
 
   const resolvedTitle = isEmpty ? (title ?? 'Untitled Job') : title!;
-  const resolvedCustomer = isEmpty ? (customerName ?? 'No customer') : customerName;
+  const resolvedCustomer = isEmpty ? (customerName ?? 'No Customer') : customerName;
   const resolvedLastWorked = isEmpty
-    ? (lastWorkedLabel ?? 'Last updated Mar 13')
+    ? (lastWorkedLabel ?? '')
     : lastWorkedLabel;
   const resolvedStatus = isEmpty ? (status ?? 'NOT STARTED') : status!;
   const resolvedStatusVariant = isEmpty
@@ -144,27 +150,67 @@ export function JobCard({
     (resolvedCustomer && resolvedCustomer.length > 0) ||
     (resolvedLastWorked && resolvedLastWorked.length > 0);
   const showCategory =
-    (variant === 'withCategory' || variant === 'noMetrics') &&
+    (variant === 'withCategory' ||
+      variant === 'noMetrics' ||
+      variant === 'headerWithoutCard') &&
     categoryLabel !== null &&
     categoryLabel !== undefined &&
     categoryLabel.length > 0;
+
+  const metricsTopBorder =
+    showMetrics &&
+    ((variant === 'withCategory' && showCategory) ||
+      variant === 'noCategory' ||
+      variant === 'emptyState');
+
+  const titleStyle =
+    isHeaderWithoutCard ? typographyHeadingH2Style() : typographyTitleH3Style();
+
+  /** Figma `job-card-heading` / `job-card-meta-row`: fixed heading height + meta widths per variant (`622:161`). */
+  const headingFrameStyle: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 0,
+    paddingTop: space('Spacing/4'),
+    paddingBottom: space('Spacing/4'),
+    ...(isEmpty || isHeaderWithoutCard ? {} : { minHeight: 49 }),
+  };
+
+  const metaRowStyle: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: space('Spacing/4'),
+    ...body,
+    color: textSecondary,
+    ...(isHeaderWithoutCard
+      ? { width: '100%' }
+      : isEmpty || variant === 'noCategory'
+        ? { width: 170, maxWidth: 170 }
+        : { width: 170, maxWidth: 200 }),
+    ...(isEmpty ? { whiteSpace: 'nowrap' as const } : {}),
+  };
 
   const pillKind =
     statusPillKind ?? pillKindFromStatusVariant(resolvedStatusVariant);
 
   const inner = (
     <>
-      <div
-        data-name="job-card-accent-rail"
-        style={{
-          width: 2,
-          alignSelf: 'stretch',
-          flexShrink: 0,
-          backgroundColor: brandPrimary,
-          opacity: 0.15,
-        }}
-        aria-hidden
-      />
+      {showAccentRail ? (
+        <div
+          data-name="job-card-accent-rail"
+          style={{
+            width: 2,
+            alignSelf: 'stretch',
+            flexShrink: 0,
+            backgroundColor: brandPrimary,
+            opacity: 0.15,
+          }}
+          aria-hidden
+        />
+      ) : null}
       <div
         data-name="job-card-content"
         style={{
@@ -200,21 +246,11 @@ export function JobCard({
               minWidth: 0,
             }}
           >
-            <div
-              data-name="job-card-heading"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                gap: 0,
-                paddingTop: space('Spacing/4'),
-                paddingBottom: space('Spacing/4'),
-              }}
-            >
+            <div data-name="job-card-heading" style={headingFrameStyle}>
               <h2
                 style={{
                   margin: 0,
-                  ...typographyTitleH3Style(),
+                  ...titleStyle,
                   color: textPrimary,
                 }}
               >
@@ -222,18 +258,7 @@ export function JobCard({
               </h2>
             </div>
             {showMeta ? (
-              <div
-                data-name="job-card-meta-row"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  gap: space('Spacing/4'),
-                  ...body,
-                  color: textSecondary,
-                }}
-              >
+              <div data-name="job-card-meta-row" style={metaRowStyle}>
                 {resolvedCustomer ? <span>{resolvedCustomer}</span> : null}
                 {resolvedCustomer && resolvedLastWorked ? (
                   <span aria-hidden>•</span>
@@ -287,6 +312,9 @@ export function JobCard({
               gap: space('Spacing/32'),
               paddingTop: space('Spacing/16'),
               width: '100%',
+              borderTop: metricsTopBorder
+                ? `1px solid ${borderSubtle}`
+                : undefined,
             }}
           >
             <MetricColumn
@@ -322,7 +350,8 @@ export function JobCard({
 
   const shellStyle: CSSProperties = {
     width: '100%',
-    maxWidth: 351,
+    maxWidth:
+      variant === 'noMetrics' || variant === 'headerWithoutCard' ? 351 : 391,
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'row',
@@ -332,8 +361,8 @@ export function JobCard({
     paddingTop: 0,
     paddingBottom: 0,
     borderRadius: 16,
-    border: `1px solid ${borderSubtle}`,
-    backgroundColor: surfaceWhite,
+    border: isCardChrome ? `1px solid ${borderSubtle}` : 'none',
+    backgroundColor: isCardChrome ? surfaceWhite : 'transparent',
     ...cardShadow,
     ...style,
   };
