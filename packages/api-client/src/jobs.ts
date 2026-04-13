@@ -1,21 +1,45 @@
-import type { Job, JobId } from '@fieldbook/shared-types';
+import type { Job, JobId, JobPaymentState } from '@fieldbook/shared-types';
 
 import type { FieldbookSupabaseClient } from './client';
 
 type JobsRow = {
   id: string;
-  title: string;
+  short_description: string;
   customer_name: string | null;
   updated_at: string;
+  revenue_cents: number | null;
+  job_payment_state: JobPaymentState | null;
+  collected_cents: number | null;
 };
 
 function rowToJob(row: JobsRow): Job {
   return {
     id: row.id,
-    title: row.title,
+    shortDescription: row.short_description,
     customerName: row.customer_name,
     updatedAt: row.updated_at,
+    revenueCents: row.revenue_cents,
+    jobPaymentState: row.job_payment_state,
+    collectedCents: row.collected_cents,
   };
+}
+
+/**
+ * Returns the most recently updated job id visible to the current session (RLS).
+ * Use with an authenticated Supabase client so only that user's rows are returned.
+ */
+export async function fetchFirstJobIdForCurrentUser(
+  client: FieldbookSupabaseClient,
+): Promise<string | null> {
+  const { data, error } = await client
+    .from('jobs')
+    .select('id')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as { id: string } | null)?.id ?? null;
 }
 
 /** Loads a single row from `public.jobs` (see `backend/supabase/migrations`). */
@@ -25,7 +49,9 @@ export async function fetchJobById(
 ): Promise<Job | null> {
   const { data, error } = await client
     .from('jobs')
-    .select('id, title, customer_name, updated_at')
+    .select(
+      'id, short_description, customer_name, updated_at, revenue_cents, job_payment_state, collected_cents',
+    )
     .eq('id', id)
     .maybeSingle();
 

@@ -6,6 +6,7 @@ export type FieldbookSupabaseClient = SupabaseClient;
 export function createFieldbookClient(
   supabaseUrl: string,
   supabaseAnonKey: string,
+  options?: Parameters<typeof createClient>[2],
 ): FieldbookSupabaseClient {
-  return createClient(supabaseUrl, supabaseAnonKey);
+  return createClient(supabaseUrl, supabaseAnonKey, options);
 }

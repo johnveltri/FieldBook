@@ -19,8 +19,8 @@ const ROW_HEIGHT = 28;
 export function CanvasTiledBackground() {
   const { width, height } = useWindowDimensions();
   const rows = Math.ceil(height / ROW_HEIGHT) + 2;
-  /** Visually ~Figma’s lined texture at 20% over canvas (avoid stacking opacity × opacity). */
-  const lineColor = colorWithAlpha('Foundation/Text/Primary', 0.2);
+  /** Lined texture — 15% primary (was 20%; −0.05 opacity vs prior). */
+  const lineColor = colorWithAlpha('Foundation/Text/Primary', 0.15);
 
   return (
     <View
@@ -28,7 +28,7 @@ export function CanvasTiledBackground() {
       pointerEvents="none"
       importantForAccessibility="no-hide-descendants"
     >
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: bg.canvas }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: bg.canvasWarm }]} />
       {Array.from({ length: rows }, (_, i) => (
         <View
           key={i}

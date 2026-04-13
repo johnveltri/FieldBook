@@ -1,5 +1,11 @@
 import type { TextStyle, ViewStyle } from 'react-native';
-import { color, radius, space } from '@fieldbook/design-system/lib/tokens';
+import {
+  color,
+  radius,
+  space,
+  typographyJson,
+  type TypographyTokenName,
+} from '@fieldbook/design-system/lib/tokens';
 
 /** Matches design-system `TopHeader` max width (`231:817`). */
 export const TOP_HEADER_MAX_WIDTH = 393;
@@ -9,6 +15,7 @@ export const CONTENT_MAX_WIDTH = 353;
 
 export const bg = {
   canvas: color('Foundation/Background/Default'),
+  canvasWarm: color('Foundation/Background/CanvasWarm'),
   surface: color('Foundation/Surface/Default'),
   surfaceWhite: color('Foundation/Surface/White'),
   subtle: color('Foundation/Surface/Subtle'),
@@ -25,13 +32,18 @@ export const border = {
   default: color('Foundation/Border/Default'),
 } as const;
 
-/** RN shadow approximating `Shadow/Card/Default` (web `box-shadow`). */
+/** Maps `Shadow/Card/Default` — RN elevation; color from `Foundation/Shadow/Ambient`. */
 export const cardShadowRn: ViewStyle = {
-  shadowColor: '#000',
+  shadowColor: color('Foundation/Shadow/Ambient'),
   shadowOffset: { width: 0, height: 1 },
   shadowOpacity: 0.05,
   shadowRadius: 2,
   elevation: 2,
+};
+
+export const shadowNoneRn: ViewStyle = {
+  shadowOpacity: 0,
+  elevation: 0,
 };
 
 export function padScreenHorizontal(): number {
@@ -47,111 +59,79 @@ export type LoadedFonts = {
   monoBold: string;
 };
 
-/** Typography mapped to loaded Expo Google Font family names. */
-export function createTextStyles(f: LoadedFonts) {
-  /** Weight comes from the font file — omit `fontWeight` to avoid Android double-bold. */
-  const displayH1: TextStyle = {
-    fontFamily: f.serifBold,
-    fontSize: 28,
-    color: fg.primary,
-  };
+type TypographyDef = (typeof typographyJson)[TypographyTokenName];
 
-  const titleH3: TextStyle = {
-    fontFamily: f.serifBold,
-    fontSize: 20,
-    color: fg.primary,
-  };
+function monoFamilyForToken(t: TypographyDef, f: LoadedFonts): string {
+  if (t.weight >= 700) return f.monoBold;
+  if (t.weight >= 600) return f.monoSemi;
+  return f.mono;
+}
 
-  /** `Typography/Heading-H2` — Job Card header without card (`1836:2829`). */
-  const headingH2: TextStyle = {
-    fontFamily: f.serifBold,
-    fontSize: 24,
-    lineHeight: 28,
-    color: fg.primary,
-  };
+function fontFamilyForToken(t: TypographyDef, f: LoadedFonts): string {
+  return t.family === 'PT Serif' ? f.serifBold : monoFamilyForToken(t, f);
+}
 
-  /** `Typography/Body` — 14 Regular. */
-  const body: TextStyle = {
-    fontFamily: f.mono,
-    fontSize: 14,
-    color: fg.primary,
-  };
+/** Line height in px: token `100` = auto → ~1.25× font size; else percent of font size. */
+function lineHeightPx(t: TypographyDef): number {
+  if (t.lineHeight === 100) {
+    return Math.round(t.size * 1.25);
+  }
+  return Math.round((t.size * t.lineHeight) / 100);
+}
 
-  const bodySecondary: TextStyle = {
-    ...body,
-    color: fg.secondary,
-  };
+/** Letter-spacing in px (approximates CSS `letterSpacing/100 em`). */
+function letterSpacingPx(t: TypographyDef): number {
+  if (t.letterSpacing === 0) return 0;
+  return Math.round((t.letterSpacing / 100) * t.size * 10) / 10;
+}
 
-  /** `Typography/Body-Bold` — 14 SemiBold. */
-  const bodyBold: TextStyle = {
-    fontFamily: f.monoSemi,
-    fontSize: 14,
-    color: fg.primary,
-  };
-
-  /** `Typography/Body-Small` — 10 Regular. */
-  const bodySmall: TextStyle = {
-    fontFamily: f.mono,
-    fontSize: 10,
-    color: fg.secondary,
-  };
-
-  /** `Typography/LABEL` — 10 Bold, +0.1em letter-spacing when uppercase. */
-  const labelCaps: TextStyle = {
-    fontFamily: f.monoBold,
-    fontSize: 10,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: fg.muted,
-  };
-
-  /** Uppercase mono label — **Foundation/Text/Secondary** (optional card section titles). */
-  const labelHeadingSecondary: TextStyle = {
-    fontFamily: f.monoBold,
-    fontSize: 10,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: fg.secondary,
-  };
-
-  /** `Typography/Metric` — 18 Bold. */
-  const metric: TextStyle = {
-    fontFamily: f.monoBold,
-    fontSize: 18,
-    color: fg.primary,
-  };
-
-  /** `Typography/Metric-S` — section titles (`371:2179`). */
-  const metricS: TextStyle = {
-    fontFamily: f.monoSemi,
-    fontSize: 14,
-    letterSpacing: 0,
-    textTransform: 'uppercase',
-    color: color('Brand/Accent'),
-  };
-
-  /** Session time range — `ViewSessionCard` secondary line (~20px line box). */
-  const sessionTimeRange: TextStyle = {
-    fontFamily: f.mono,
-    fontSize: 14,
-    lineHeight: 20,
-    color: fg.secondary,
-  };
+/**
+ * Builds React Native `TextStyle` from design-system `typography.json` + loaded Expo font names.
+ */
+export function typographyRn(
+  token: TypographyTokenName,
+  f: LoadedFonts,
+  colorOverride?: string,
+): TextStyle {
+  const t = typographyJson[token];
+  const textTransform =
+    'textTransform' in t && t.textTransform === 'uppercase' ? 'uppercase' : 'none';
 
   return {
-    displayH1,
-    titleH3,
-    headingH2,
-    body,
-    bodySecondary,
-    bodyBold,
-    bodySmall,
-    labelCaps,
-    labelHeadingSecondary,
-    metric,
-    metricS,
-    sessionTimeRange,
+    fontFamily: fontFamilyForToken(t, f),
+    fontSize: t.size,
+    lineHeight: lineHeightPx(t),
+    letterSpacing: letterSpacingPx(t),
+    textTransform,
+    color: colorOverride ?? fg.primary,
   };
 }
 
 export type TextStyles = ReturnType<typeof createTextStyles>;
+
+/** Typography mapped to loaded Expo Google Font family names — all sizes/weights from `typography.json`. */
+export function createTextStyles(f: LoadedFonts) {
+  const t = (name: TypographyTokenName, colorOverride?: string): TextStyle =>
+    typographyRn(name, f, colorOverride);
+
+  return {
+    displayH1: t('Typography/Display-H1'),
+    titleH3: t('Typography/Title-H3'),
+    headingH2: t('Typography/JobDetail/Title'),
+    body: t('Typography/Body'),
+    bodySecondary: { ...t('Typography/Body'), color: fg.secondary },
+    bodyBold: t('Typography/Body-Bold'),
+    bodySmall: t('Typography/Body-Small'),
+    labelCaps: t('Typography/LABEL', fg.muted),
+    labelHeadingSecondary: t('Typography/LABEL', fg.secondary),
+    metric: t('Typography/Metric'),
+    metricS: t('Typography/Section/MetricS-Dense', color('Brand/Accent')),
+    sessionTimeRange: t('Typography/Session/TimeRange', fg.secondary),
+    jobDetailSubtitle: t('Typography/JobDetail/Subtitle', fg.secondary),
+    jobDetailCategoryLabel: t('Typography/JobDetail/CategoryLabel', bg.canvasWarm),
+    jobDetailMetricColumnLabel: t('Typography/JobDetail/MetricColumnLabel', fg.secondary),
+    jobDetailNetAmount: t('Typography/JobDetail/NetAmount'),
+    ctaPrimaryLabel: t('Typography/CTA/PrimaryLabel'),
+    pillCompact: t('Typography/Pill/Compact'),
+  };
+}

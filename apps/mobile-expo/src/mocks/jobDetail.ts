@@ -1,82 +1,21 @@
 /**
- * Static mock for Job Detail (`1836:1875`) — TODO: replace with Supabase-backed selectors.
+ * Demo mock for Job Detail — optional fallback; primary path is `fetchJobDetail` + Supabase.
  */
 
-/** Mirrors design-system `StatusPill` kinds for the job header pill. */
-export type JobDetailWorkStatus =
-  | 'paid'
-  | 'notStarted'
-  | 'inProgress'
-  | 'completed'
-  | 'onHold'
-  | 'cancelled';
+import type { JobDetailViewModel } from '@fieldbook/shared-types';
 
-export type JobDetailSession = {
-  id: string;
-  dateLabel: string;
-  timeRangeLabel: string;
-  durationLabel: string;
-};
+export type {
+  JobDetailMaterialBucket,
+  JobDetailMaterialLine,
+  JobDetailMock,
+  JobDetailNote,
+  JobDetailNoteBucket,
+  JobDetailSession,
+  JobDetailViewModel,
+  JobDetailWorkStatus,
+} from '@fieldbook/shared-types';
 
-export type JobDetailMaterialLine = {
-  name: string;
-  quantityLabel: string;
-  priceLabel: string;
-};
-
-/** Bucket: `Unassigned` or `Mar 25, 2026` + Session row. */
-export type JobDetailMaterialBucket = {
-  id: string;
-  /** `unassigned` → uppercase “Unassigned” header; else “Mar 25, 2026 Session”. */
-  kind: 'unassigned' | 'session';
-  sessionDateLabel?: string;
-  items: JobDetailMaterialLine[];
-};
-
-export type JobDetailNote = {
-  excerpt: string;
-  dateLabel: string;
-};
-
-export type JobDetailNoteBucket = {
-  id: string;
-  kind: 'unassigned' | 'session';
-  sessionDateLabel?: string;
-  notes: JobDetailNote[];
-};
-
-export type JobDetailMock = {
-  id: string;
-  shortDescription: string;
-  customerName: string;
-  /** Shown after bullet in meta row, e.g. `Last worked Mar 13`. */
-  lastWorkedLabel: string;
-  categoryLabel: string;
-  workStatus: JobDetailWorkStatus;
-  /** Mirrors `JobSummaryCard`: Revenue, Materials, Fees, Net Earnings. */
-  earnings: {
-    revenueCents: number;
-    materialsCents: number;
-    feesCents: number;
-    netEarningsCents: number;
-  };
-  /** Mirrors `MetricCard` tertiary-only (job): Time | NET/HR | Sessions. */
-  metrics: {
-    timeLabel: string;
-    netPerHrDisplay: string;
-    sessionCount: number;
-  };
-  sessions: JobDetailSession[];
-  materialBuckets: JobDetailMaterialBucket[];
-  noteBuckets: JobDetailNoteBucket[];
-  /** Mirrors `RowCard` activity line under Timeline. */
-  timeline: {
-    title: string;
-    timeLabel: string;
-  };
-};
-
-export const mockJobDetail: JobDetailMock = {
+export const mockJobDetail: JobDetailViewModel = {
   id: '00000000-0000-0000-0000-000000000001',
   shortDescription: 'Bathroom Remodel Phase 1',
   customerName: 'Andrew G',

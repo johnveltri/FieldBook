@@ -1,2 +1,3 @@
 export { createFieldbookClient, type FieldbookSupabaseClient } from './client';
-export { fetchJobById } from './jobs';
+export { fetchJobDetail } from './jobDetail';
+export { fetchFirstJobIdForCurrentUser, fetchJobById } from './jobs';

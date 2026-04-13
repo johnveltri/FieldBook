@@ -149,6 +149,9 @@ max_indexes = 5
 
 [auth]
 enabled = true
+# Email + password only for Fieldbook: keep SMS and all [auth.external.*] providers disabled.
+# Hosted projects: Dashboard → Authentication → Providers — turn off Phone, Apple, Google, etc.;
+# leave Email enabled. The mobile app uses signInWithPassword / signUp (no OAuth redirect flow).
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
 site_url = "http://127.0.0.1:3000"

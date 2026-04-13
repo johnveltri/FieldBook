@@ -1,6 +1,8 @@
 {
   "Radius/12": 12,
+  "Radius/14": 14,
   "Radius/16": 16,
+  "Radius/Full": 9999,
   "Radius/24": 24,
   "Radius/32": 32,
   "Radius/PhoneShellPreview/44": 44

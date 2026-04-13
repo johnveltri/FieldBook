@@ -5,6 +5,10 @@ import shadowsJson from '../tokens/shadows.json';
 import spacingJson from '../tokens/spacing.json';
 import typographyJson from '../tokens/typography.json';
 
+/** Raw typography tokens (JSON) — use for React Native `TextStyle` mapping alongside loaded font families. */
+export { typographyJson };
+export type TypographyTokenName = keyof typeof typographyJson;
+
 export type ColorToken = keyof typeof colorsJson;
 
 const colors = colorsJson as Record<string, string>;
