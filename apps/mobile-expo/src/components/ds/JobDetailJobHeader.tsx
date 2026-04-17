@@ -10,6 +10,7 @@ import { JobDetailStatusPill } from './JobDetailStatusPill';
 export function JobDetailJobHeader({
   title,
   customerName,
+  serviceAddress,
   lastWorkedLabel,
   jobTypeLabelUppercase,
   workStatus,
@@ -17,11 +18,16 @@ export function JobDetailJobHeader({
 }: {
   title: string;
   customerName: string;
+  serviceAddress: string;
   lastWorkedLabel: string;
   jobTypeLabelUppercase: string;
   workStatus: JobDetailWorkStatus;
   typography: TextStyles;
 }) {
+  const customerLabel = customerName.trim().length > 0 ? customerName.trim() : 'No Customer';
+  const serviceAddressLabel = serviceAddress.trim();
+  const showJobTypeChip = jobTypeLabelUppercase.trim().length > 0;
+
   return (
     <View style={styles.jobCardShell}>
       <View style={styles.jobCardContent}>
@@ -34,14 +40,19 @@ export function JobDetailJobHeader({
           </View>
         </View>
         <Text style={typography.jobDetailSubtitle}>
-          <Text>{customerName}</Text>
+          <Text>{customerLabel}</Text>
           <Text>{` • `}</Text>
           <Text>{lastWorkedLabel}</Text>
         </Text>
-        <JobDetailCategoryChip
-          labelUppercase={jobTypeLabelUppercase}
-          typography={typography}
-        />
+        {serviceAddressLabel.length > 0 ? (
+          <Text style={typography.jobDetailSubtitle}>{serviceAddressLabel}</Text>
+        ) : null}
+        {showJobTypeChip ? (
+          <JobDetailCategoryChip
+            labelUppercase={jobTypeLabelUppercase}
+            typography={typography}
+          />
+        ) : null}
       </View>
     </View>
   );

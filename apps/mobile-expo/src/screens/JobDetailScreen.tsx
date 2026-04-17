@@ -21,9 +21,9 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Alert,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -58,6 +58,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/tokens';
 import {
+  deleteJobById,
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
@@ -95,6 +96,8 @@ export type JobDetailScreenProps = {
   /** Signed-in user (refetch job list when this changes). */
   sessionUserId?: string | null;
   sessionEmail?: string | null;
+  /** Optional explicit job id to load (used by Jobs screen card taps / new job). */
+  jobId?: string | null;
   /** Parent increments when navigating to this screen (e.g. "View job") to force reload. */
   loadKey?: number;
 };
@@ -103,10 +106,12 @@ export function JobDetailScreen({
   onRequestClose,
   sessionUserId,
   sessionEmail,
+  jobId,
   loadKey = 0,
 }: JobDetailScreenProps = {}) {
   /** Top safe area (status bar); bottom inset used for scroll padding + nav. */
   const insets = useSafeAreaInsets();
+  const scrollY = useMemo(() => new Animated.Value(0), []);
 
   /** Load DS fonts before rendering text (avoids flash of system font / layout jump). */
   const [fontsLoaded] = useFonts({
@@ -152,15 +157,15 @@ export function JobDetailScreen({
       setJobLoading(true);
       setJobLoadError(null);
       try {
-        const jobId = await fetchFirstJobIdForCurrentUser(supabase);
+        const resolvedJobId = jobId ?? (await fetchFirstJobIdForCurrentUser(supabase));
         if (cancelled) return;
-        if (!jobId) {
+        if (!resolvedJobId) {
           setJob(null);
           setJobLoadError('No jobs yet.');
           return;
         }
 
-        const j = await fetchJobDetail(supabase, jobId);
+        const j = await fetchJobDetail(supabase, resolvedJobId);
         if (cancelled) return;
         if (j) {
           setJob(j);
@@ -183,7 +188,7 @@ export function JobDetailScreen({
     return () => {
       cancelled = true;
     };
-  }, [supabaseReady, sessionUserId, loadKey]);
+  }, [supabaseReady, sessionUserId, loadKey, jobId]);
 
   const onClose = useCallback(() => {
     onRequestClose?.();
@@ -280,11 +285,34 @@ export function JobDetailScreen({
     [job, onCloseEditSheet, parseRevenueCents],
   );
 
+  const onDeleteJobSheet = useCallback(async () => {
+    if (!job) return;
+    setJobSaving(true);
+    try {
+      await deleteJobById(supabase, job.id);
+      onCloseEditSheet();
+      onRequestClose?.();
+    } catch (e) {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : typeof e === 'object' &&
+              e !== null &&
+              'message' in e &&
+              typeof (e as { message: unknown }).message === 'string'
+            ? (e as { message: string }).message
+            : String(e);
+      Alert.alert('Delete failed', msg || 'Could not delete this job.');
+    } finally {
+      setJobSaving(false);
+    }
+  }, [job, onCloseEditSheet, onRequestClose]);
+
   /** Spinner state: same canvas background as main screen so the transition does not flash a flat color. */
   if (!fontsLoaded || (supabaseReady && jobLoading)) {
     return (
       <View style={styles.loading}>
-        <CanvasTiledBackground />
+        <CanvasTiledBackground scrollY={scrollY} />
         <ActivityIndicator
           accessibilityLabel={!fontsLoaded ? 'Loading fonts' : 'Loading job'}
         />
@@ -295,7 +323,7 @@ export function JobDetailScreen({
   if (supabaseReady && !job) {
     return (
       <View style={styles.loading}>
-        <CanvasTiledBackground />
+        <CanvasTiledBackground scrollY={scrollY} />
         {__DEV__ ? (
           <Text
             style={[
@@ -338,9 +366,14 @@ export function JobDetailScreen({
   return (
     <View style={styles.root}>
       {/* Lined canvas + cream fill — behind all scroll content. */}
-      <CanvasTiledBackground />
-      <ScrollView
+      <CanvasTiledBackground scrollY={scrollY} />
+      <Animated.ScrollView
         style={[styles.scroll, styles.scrollTransparent]}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           width: '100%',
           paddingTop: Math.max(
@@ -398,6 +431,7 @@ export function JobDetailScreen({
           <JobDetailJobHeader
             title={job.shortDescription}
             customerName={job.customerName}
+            serviceAddress={job.serviceAddress}
             lastWorkedLabel={job.lastWorkedLabel}
             jobTypeLabelUppercase={job.jobType.toUpperCase()}
             workStatus={job.workStatus}
@@ -472,7 +506,7 @@ export function JobDetailScreen({
             <Text style={[typography.bodySmall, { color: fg.secondary }]}>{job.timeline.timeLabel}</Text>
           </View>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Tab bar stays fixed while list scrolls; `bottomInset` clears home indicator. */}
       <BottomNavJobs typography={typography} bottomInset={insets.bottom} />
@@ -484,7 +518,9 @@ export function JobDetailScreen({
           onClose={onCloseEditSheet}
           onClosed={() => setEditSheetMounted(false)}
           onSavePress={onSaveJobSheet}
-          onDeletePress={onCloseEditSheet}
+          onDeletePress={() => {
+            void onDeleteJobSheet();
+          }}
         />
       ) : null}
     </View>
@@ -551,6 +587,10 @@ function ViewMaterialsBuckets({
   buckets: import('../mocks/jobDetail').JobDetailMaterialBucket[];
   typography: TextStyles;
 }) {
+  if (buckets.length === 0) {
+    return null;
+  }
+
   return (
     <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
       <View style={styles.viewCardBorder}>
@@ -602,6 +642,10 @@ function ViewNotesBuckets({
   buckets: import('../mocks/jobDetail').JobDetailNoteBucket[];
   typography: TextStyles;
 }) {
+  if (buckets.length === 0) {
+    return null;
+  }
+
   const noteIcon = color('Semantic/Activity/Note');
   return (
     <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>

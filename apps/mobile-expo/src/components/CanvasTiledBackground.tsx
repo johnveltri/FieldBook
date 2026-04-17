@@ -1,4 +1,4 @@
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { colorWithAlpha } from '@fieldbook/design-system/lib/tokens';
 
@@ -16,15 +16,27 @@ import { bg } from '../theme/nativeTokens';
  */
 const ROW_HEIGHT = 28;
 
-export function CanvasTiledBackground() {
+type CanvasTiledBackgroundProps = {
+  /**
+   * Scroll offset for pages using scroll views.
+   * Pass Animated scroll Y to make ruled lines move with content.
+   */
+  scrollY?: Animated.Value;
+};
+
+export function CanvasTiledBackground({ scrollY }: CanvasTiledBackgroundProps = {}) {
   const { width, height } = useWindowDimensions();
   const rows = Math.ceil(height / ROW_HEIGHT) + 2;
   /** Lined texture — 15% primary (was 20%; −0.05 opacity vs prior). */
   const lineColor = colorWithAlpha('Foundation/Text/Primary', 0.15);
 
   return (
-    <View
-      style={[styles.layer, { width, height }]}
+    <Animated.View
+      style={[
+        styles.layer,
+        { width, height },
+        scrollY ? { transform: [{ translateY: Animated.multiply(scrollY, -1) }] } : null,
+      ]}
       pointerEvents="none"
       importantForAccessibility="no-hide-descendants"
     >
@@ -43,7 +55,7 @@ export function CanvasTiledBackground() {
           }}
         />
       ))}
-    </View>
+    </Animated.View>
   );
 }
 
