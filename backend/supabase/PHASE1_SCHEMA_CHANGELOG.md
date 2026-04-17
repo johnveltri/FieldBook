@@ -16,6 +16,10 @@ Migration file: [`migrations/20260413120000_phase1_job_economic_session_worklog.
 
 Applied by Supabase CLI as the next migration after `20260412200412_init_field_book_phase1.sql`. See the linked file.
 
+Additional hardening migrations:
+- `20260417120002_remove_anon_table_policies.sql` removes shared anon-table CRUD/read defaults.
+- `20260417120003_enforce_parent_ownership_on_child_rows.sql` enforces child-row parent ownership for authenticated CRUD.
+
 ## C. Data migration / backfill
 
 - **Dropped columns:** Any data in `materials_cents`, `fees_cents`, `net_earnings_cents`, or session-level money fields is **not** migrated. Export first if you need it in non-dev environments.
