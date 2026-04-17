@@ -57,7 +57,11 @@ where email = 'your@email.com';
 
 ### Jobs + RLS
 
-The app loads jobs with the **anon key + your session** (RLS on). Rows usually need **`public.jobs.user_id = auth.uid()`**. Studio’s **Table Editor** often uses role **`postgres`**, which bypasses RLS—so you can see rows the app cannot, until `user_id` is set.
+The app loads jobs with the **anon key + your session** (RLS on). The publishable anon key is still
+used for Supabase Auth, but shared schema migrations no longer grant direct table access to the
+`anon` role. Rows usually need **`public.jobs.user_id = auth.uid()`**. Studio’s **Table Editor**
+often uses role **`postgres`**, which bypasses RLS—so you can see rows the app cannot, until
+`user_id` is set.
 
 To attach seeded demo jobs to your local user after you confirm `auth.users` (replace email):
 
@@ -67,6 +71,25 @@ set user_id = u.id
 from auth.users u
 where u.email = 'your@email.com'
   and j.user_id is null;
+```
+
+### Optional: temporarily restore open anon table access locally
+
+If you need the old debugging behavior where unauthenticated table reads/writes are open in your
+local stack, run:
+
+```sql
+\i backend/supabase/snippets/enable_local_anon_table_access.sql
+```
+
+Or paste the contents of
+[`backend/supabase/snippets/enable_local_anon_table_access.sql`](./supabase/snippets/enable_local_anon_table_access.sql)
+into Studio SQL.
+
+To revert to the secure default, reset the local database:
+
+```bash
+npx supabase db reset --workdir backend
 ```
 
 **Service role** and **storage S3 keys** are for server-side or advanced tooling—do not embed in client apps.

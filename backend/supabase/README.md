@@ -38,9 +38,25 @@ Use the project **Project URL** and **anon public** key as:
 
 Local defaults after `supabase start` are shown in the CLI output (`API URL` and `anon key`).
 
+The Expo app still uses the publishable anon key for Supabase Auth and session refresh. Shared
+schema migrations no longer grant direct public-table access to the `anon` role.
+
 ## Jobs in the app
 
 Job Detail loads **`fetchFirstJobIdForCurrentUser`** → **`fetchJobDetail`**: only rows the **authenticated user** can see under RLS (typically **`jobs.user_id = auth.uid()`**). If none exist, the UI shows **no jobs**. `seed.sql` is for local data only; it does not auto-attach to users from the client.
+
+## Local-only open table access
+
+Shared migrations are secure by default. If you need the old local debugging behavior where the
+`anon` role can read/write public tables directly, apply
+[`snippets/enable_local_anon_table_access.sql`](./snippets/enable_local_anon_table_access.sql)
+manually in local Studio SQL or `psql`.
+
+To revert to the secure default, reset the local database:
+
+```bash
+npx supabase db reset --workdir backend
+```
 
 ## Authentication (email / password only)
 
