@@ -303,7 +303,7 @@ export async function deleteJobById(
 ): Promise<void> {
   const { data, error } = await client
     .from('jobs')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
     .is('deleted_at', null)
     .select('id')

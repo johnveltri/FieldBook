@@ -249,18 +249,33 @@ export function JobsScreen({ onOpenJobDetail }: JobsScreenProps) {
 
   const [jobs, setJobs] = useState<ListJobsForCurrentUserItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [creatingJob, setCreatingJob] = useState(false);
 
   const loadJobs = useCallback(async () => {
     if (!isSupabaseConfigured()) {
       setLoading(false);
       setJobs([]);
+      setLoadError('Supabase is not configured.');
       return;
     }
     setLoading(true);
+    setLoadError(null);
     try {
       const rows = await listJobsForCurrentUser(supabase);
       setJobs(rows);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' &&
+              error !== null &&
+              'message' in error &&
+              typeof (error as { message: unknown }).message === 'string'
+            ? (error as { message: string }).message
+            : 'Failed to load jobs.';
+      setJobs([]);
+      setLoadError(message);
     } finally {
       setLoading(false);
     }
@@ -272,10 +287,26 @@ export function JobsScreen({ onOpenJobDetail }: JobsScreenProps) {
 
   const onCreateJob = useCallback(async () => {
     if (creatingJob) return;
+    if (!isSupabaseConfigured()) {
+      setLoadError('Supabase is not configured.');
+      return;
+    }
     setCreatingJob(true);
+    setLoadError(null);
     try {
       const jobId = await createBlankJobForCurrentUser(supabase);
       onOpenJobDetail(jobId);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' &&
+              error !== null &&
+              'message' in error &&
+              typeof (error as { message: unknown }).message === 'string'
+            ? (error as { message: string }).message
+            : 'Failed to create job.';
+      setLoadError(message);
     } finally {
       setCreatingJob(false);
     }
@@ -351,6 +382,12 @@ export function JobsScreen({ onOpenJobDetail }: JobsScreenProps) {
           {loading ? (
             <View style={styles.centerState}>
               <ActivityIndicator />
+            </View>
+          ) : loadError ? (
+            <View style={styles.centerState}>
+              <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+                {loadError}
+              </Text>
             </View>
           ) : jobs.length === 0 ? (
             <View style={styles.centerState}>

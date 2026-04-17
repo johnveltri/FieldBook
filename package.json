@@ -7,6 +7,8 @@
     "apps/*"
   ],
   "scripts": {
+    "test": "npm run test:api-client",
+    "test:api-client": "vitest run packages/api-client/src/jobs.test.ts",
     "typecheck": "tsc -p packages/shared-types/tsconfig.json --noEmit && tsc -p packages/api-client/tsconfig.json --noEmit && tsc -p packages/design-system/tsconfig.json --noEmit && tsc -p apps/mobile-expo/tsconfig.json --noEmit",
     "mobile": "npm run start -w mobile-expo",
     "db:start": "npx supabase start --workdir backend",
@@ -14,7 +16,9 @@
     "db:reset": "npx supabase db reset --workdir backend"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.4",
     "supabase": "^2.89.1",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
   }
 }
