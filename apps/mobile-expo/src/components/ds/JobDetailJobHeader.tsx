@@ -11,14 +11,14 @@ export function JobDetailJobHeader({
   title,
   customerName,
   lastWorkedLabel,
-  categoryLabelUppercase,
+  jobTypeLabelUppercase,
   workStatus,
   typography,
 }: {
   title: string;
   customerName: string;
   lastWorkedLabel: string;
-  categoryLabelUppercase: string;
+  jobTypeLabelUppercase: string;
   workStatus: JobDetailWorkStatus;
   typography: TextStyles;
 }) {
@@ -39,7 +39,7 @@ export function JobDetailJobHeader({
           <Text>{lastWorkedLabel}</Text>
         </Text>
         <JobDetailCategoryChip
-          labelUppercase={categoryLabelUppercase}
+          labelUppercase={jobTypeLabelUppercase}
           typography={typography}
         />
       </View>

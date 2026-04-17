@@ -59,3 +59,39 @@ export async function fetchJobById(
   if (!data) return null;
   return rowToJob(data as JobsRow);
 }
+
+export type UpdateJobInput = {
+  shortDescription: string;
+  customerName: string;
+  serviceAddress: string;
+  revenueCents: number | null;
+  jobType: string;
+};
+
+export async function updateJobById(
+  client: FieldbookSupabaseClient,
+  id: JobId,
+  input: UpdateJobInput,
+): Promise<void> {
+  const patch = {
+    short_description: input.shortDescription,
+    customer_name: input.customerName,
+    service_address: input.serviceAddress,
+    revenue_cents: input.revenueCents,
+    job_type: input.jobType,
+  };
+
+  const { data, error } = await client
+    .from('jobs')
+    .update(patch)
+    .eq('id', id)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error(
+      'Update affected no rows (check RLS: job must be owned by you or be the demo job).',
+    );
+  }
+}

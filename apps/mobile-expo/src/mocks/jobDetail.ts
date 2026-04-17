@@ -19,8 +19,9 @@ export const mockJobDetail: JobDetailViewModel = {
   id: '00000000-0000-0000-0000-000000000001',
   shortDescription: 'Bathroom Remodel Phase 1',
   customerName: 'Andrew G',
+  serviceAddress: '123 Main Street\nPerrysburg, OH 43551',
+  jobType: 'plumbing',
   lastWorkedLabel: 'Last worked Mar 13',
-  categoryLabel: 'Handyman / General Home Services',
   workStatus: 'inProgress',
   earnings: {
     revenueCents: 2_220_000,

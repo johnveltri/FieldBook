@@ -82,6 +82,8 @@ export function SignInScreen() {
       if (err) {
         setError(err.message);
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Network request failed');
     } finally {
       setBusy(false);
     }

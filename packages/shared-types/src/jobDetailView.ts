@@ -49,8 +49,9 @@ export type JobDetailViewModel = {
   id: string;
   shortDescription: string;
   customerName: string;
+  serviceAddress: string;
+  jobType: string;
   lastWorkedLabel: string;
-  categoryLabel: string;
   workStatus: JobDetailWorkStatus;
   earnings: {
     revenueCents: number;

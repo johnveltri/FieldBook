@@ -25,10 +25,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    void supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setLoading(false);
-    });
+    void supabase.auth
+      .getSession()
+      .then(({ data: { session: s } }) => {
+        setSession(s);
+      })
+      .catch(() => {
+        // Offline/unreachable API should not hard-fail local UI development.
+        setSession(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     const {
       data: { subscription },

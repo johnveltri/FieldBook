@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthSignOutButton } from './src/components/AuthSignOutButton';
@@ -57,15 +57,21 @@ function AuthenticatedShell() {
 }
 
 export default function App() {
+  const configured = isSupabaseConfigured();
   return (
     <SafeAreaProvider>
       <View style={styles.root}>
-        {isSupabaseConfigured() ? (
+        {configured ? (
           <AuthProvider>
             <AuthenticatedShell />
           </AuthProvider>
         ) : (
-          <JobDetailScreen />
+          <View style={[styles.root, styles.centered]}>
+            <Text style={styles.configText}>
+              Missing Supabase env vars. Set `EXPO_PUBLIC_SUPABASE_URL` and
+              `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+            </Text>
+          </View>
         )}
         <StatusBar style="dark" />
       </View>
@@ -81,5 +87,10 @@ const styles = StyleSheet.create({
   centered: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  configText: {
+    color: color('Foundation/Text/Primary'),
+    paddingHorizontal: 24,
+    textAlign: 'center',
   },
 });

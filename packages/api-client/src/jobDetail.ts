@@ -23,7 +23,8 @@ type JobRow = {
   id: string;
   short_description: string;
   customer_name: string | null;
-  category_label: string | null;
+  service_address: string | null;
+  job_type: string | null;
   job_work_status: JobWorkStatusDb;
   job_payment_state: JobPaymentState | null;
   revenue_cents: number | null;
@@ -158,7 +159,7 @@ export async function fetchJobDetail(
   const { data: job, error: jobErr } = await client
     .from('jobs')
     .select(
-      'id, short_description, customer_name, category_label, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at',
+      'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at',
     )
     .eq('id', jobId)
     .maybeSingle();
@@ -326,8 +327,9 @@ export async function fetchJobDetail(
     id: j.id,
     shortDescription: j.short_description,
     customerName: j.customer_name ?? '',
+    serviceAddress: j.service_address ?? '',
+    jobType: j.job_type ?? '',
     lastWorkedLabel,
-    categoryLabel: j.category_label ?? '',
     workStatus: mapWorkStatus(j),
     earnings: {
       revenueCents,

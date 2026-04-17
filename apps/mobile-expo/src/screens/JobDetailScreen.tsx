@@ -21,6 +21,7 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -29,6 +30,7 @@ import {
 } from 'react-native';
 
 import {
+  EditJobBottomSheet,
   JobDetailCtaRow,
   JobDetailJobHeader,
   JobDetailMetricTertiary,
@@ -55,10 +57,13 @@ import {
 } from '../components/figma-icons/JobDetailScreenIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/tokens';
-import { fetchFirstJobIdForCurrentUser, fetchJobDetail } from '@fieldbook/api-client';
+import {
+  fetchFirstJobIdForCurrentUser,
+  fetchJobDetail,
+  updateJobById,
+} from '@fieldbook/api-client';
 import type { JobDetailViewModel } from '@fieldbook/shared-types';
 
-import { mockJobDetail } from '../mocks/jobDetail';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   CONTENT_MAX_WIDTH,
@@ -70,6 +75,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import type { TextStyles } from '../theme/nativeTokens';
+import type { EditJobBottomSheetValues } from '../components/ds/EditJobBottomSheet';
 
 /** Vertical gap between stacked blocks in the main column (`Spacing/20` = 16 + 4). */
 const SLOT_GAP = space('Spacing/20');
@@ -123,15 +129,23 @@ export function JobDetailScreen({
   );
 
   const supabaseReady = isSupabaseConfigured();
-  const [job, setJob] = useState<JobDetailViewModel | null>(() =>
-    supabaseReady ? null : mockJobDetail,
-  );
+  const [job, setJob] = useState<JobDetailViewModel | null>(null);
   const [jobLoading, setJobLoading] = useState(supabaseReady);
+  const [jobSaving, setJobSaving] = useState(false);
+  const [editSheetMounted, setEditSheetMounted] = useState(false);
+  const [editSheetVisible, setEditSheetVisible] = useState(false);
   /** Set when Supabase is configured but fetch returns null or throws (no silent mock). */
   const [jobLoadError, setJobLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!supabaseReady) return;
+    if (!supabaseReady) {
+      setJobLoading(false);
+      setJob(null);
+      setJobLoadError(
+        'Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.',
+      );
+      return;
+    }
     let cancelled = false;
 
     const load = async () => {
@@ -174,7 +188,67 @@ export function JobDetailScreen({
   const onClose = useCallback(() => {
     onRequestClose?.();
   }, [onRequestClose]);
-  const onEdit = useCallback(() => {}, []);
+  const onEdit = useCallback(() => {
+    setEditSheetMounted(true);
+    setEditSheetVisible(true);
+  }, []);
+  const onCloseEditSheet = useCallback(() => {
+    setEditSheetVisible(false);
+  }, []);
+  const parseRevenueCents = useCallback((value: string): number | null => {
+    const normalized = value.replace(/[^0-9.]/g, '');
+    if (!normalized) return null;
+    const parsed = Number.parseFloat(normalized);
+    if (!Number.isFinite(parsed) || parsed < 0) return null;
+    return Math.round(parsed * 100);
+  }, []);
+
+  const toEditValues = useCallback((j: JobDetailViewModel): EditJobBottomSheetValues => {
+    const revenue = (j.earnings.revenueCents / 100).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return {
+      jobTitle: j.shortDescription,
+      customerName: j.customerName,
+      serviceAddress: j.serviceAddress,
+      revenue,
+      jobType: j.jobType,
+    };
+  }, []);
+
+  const onSaveJobSheet = useCallback(
+    async (values: EditJobBottomSheetValues) => {
+      if (!job) return;
+      setJobSaving(true);
+      try {
+        await updateJobById(supabase, job.id, {
+          shortDescription: values.jobTitle.trim(),
+          customerName: values.customerName.trim(),
+          serviceAddress: values.serviceAddress.trim(),
+          revenueCents: parseRevenueCents(values.revenue),
+          jobType: values.jobType,
+        });
+        const refreshed = await fetchJobDetail(supabase, job.id);
+        if (refreshed) setJob(refreshed);
+        onCloseEditSheet();
+      } catch (e) {
+        const msg =
+          e instanceof Error
+            ? e.message
+            : typeof e === 'object' &&
+                e !== null &&
+                'message' in e &&
+                typeof (e as { message: unknown }).message === 'string'
+              ? (e as { message: string }).message
+              : String(e);
+        Alert.alert('Save failed', msg || 'Could not save job changes.');
+      } finally {
+        setJobSaving(false);
+      }
+    },
+    [job, onCloseEditSheet, parseRevenueCents],
+  );
 
   /** Spinner state: same canvas background as main screen so the transition does not flash a flat color. */
   if (!fontsLoaded || (supabaseReady && jobLoading)) {
@@ -295,7 +369,7 @@ export function JobDetailScreen({
             title={job.shortDescription}
             customerName={job.customerName}
             lastWorkedLabel={job.lastWorkedLabel}
-            categoryLabelUppercase={job.categoryLabel.toUpperCase()}
+            jobTypeLabelUppercase={job.jobType.toUpperCase()}
             workStatus={job.workStatus}
             typography={typography}
           />
@@ -372,6 +446,17 @@ export function JobDetailScreen({
 
       {/* Tab bar stays fixed while list scrolls; `bottomInset` clears home indicator. */}
       <BottomNavJobs typography={typography} bottomInset={insets.bottom} />
+      {editSheetMounted ? (
+        <EditJobBottomSheet
+          typography={typography}
+          values={job ? toEditValues(job) : undefined}
+          visible={editSheetVisible}
+          onClose={onCloseEditSheet}
+          onClosed={() => setEditSheetMounted(false)}
+          onSavePress={onSaveJobSheet}
+          onDeletePress={onCloseEditSheet}
+        />
+      ) : null}
     </View>
   );
 }
