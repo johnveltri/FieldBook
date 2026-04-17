@@ -98,7 +98,8 @@ function sessionDurationHours(startedAt: string, endedAt: string | null): number
 }
 
 function mapWorkStatus(row: JobRow): JobDetailWorkStatus {
-  if (row.job_payment_state === 'paid') return 'paid';
+  // Keep "paid" as a derived UI status only when work is complete and payment is paid.
+  if (row.job_work_status === 'completed' && row.job_payment_state === 'paid') return 'paid';
   switch (row.job_work_status) {
     case 'not_started':
       return 'notStarted';
@@ -162,6 +163,7 @@ export async function fetchJobDetail(
       'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at',
     )
     .eq('id', jobId)
+    .is('deleted_at', null)
     .maybeSingle();
 
   if (jobErr) throw jobErr;
@@ -189,20 +191,29 @@ export async function fetchJobDetail(
       ? notesBase.or(`job_id.eq.${jobId},session_id.in.(${sessionIds.join(',')})`)
       : notesBase.eq('job_id', jobId);
 
-  const [{ data: notesRaw }, { data: matsJob }, { data: matsSess }, { data: actRaw }] =
-    await Promise.all([
-      notesQ,
-      client.from('materials').select('*').eq('job_id', jobId),
-      sessionIds.length
-        ? client.from('materials').select('*').in('session_id', sessionIds)
-        : Promise.resolve({ data: [] as MaterialRow[] }),
-      client
-        .from('job_activity_events')
-        .select('id, event_type, created_at, payload')
-        .eq('job_id', jobId)
-        .order('created_at', { ascending: false })
-        .limit(8),
-    ]);
+  const [notesRes, matsJobRes, matsSessRes, actRes] = await Promise.all([
+    notesQ,
+    client.from('materials').select('*').eq('job_id', jobId),
+    sessionIds.length
+      ? client.from('materials').select('*').in('session_id', sessionIds)
+      : Promise.resolve({ data: [] as MaterialRow[], error: null }),
+    client
+      .from('job_activity_events')
+      .select('id, event_type, created_at, payload')
+      .eq('job_id', jobId)
+      .order('created_at', { ascending: false })
+      .limit(8),
+  ]);
+
+  if (notesRes.error) throw notesRes.error;
+  if (matsJobRes.error) throw matsJobRes.error;
+  if (matsSessRes.error) throw matsSessRes.error;
+  if (actRes.error) throw actRes.error;
+
+  const notesRaw = notesRes.data;
+  const matsJob = matsJobRes.data;
+  const matsSess = matsSessRes.data;
+  const actRaw = actRes.data;
 
   const matById = new Map<string, MaterialRow>();
   for (const m of (matsJob ?? []) as MaterialRow[]) matById.set(m.id, m);

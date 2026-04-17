@@ -67,18 +67,8 @@ Child-table writes (`sessions`, `notes`, `materials`, `attachments`, `job_activi
 also require parent ownership checks. A signed-in user cannot write child rows that reference
 another user’s `job_id`/`session_id`, even if `user_id` on the child row matches the caller.
 
-Seed demo read access remains available to authenticated users, but child writes against unclaimed
-demo parents are blocked until the demo rows are attached to your user.
-
-To attach seeded demo jobs to your local user after you confirm `auth.users` (replace email):
-
-```sql
-update public.jobs j
-set user_id = u.id
-from auth.users u
-where u.email = 'your@email.com'
-  and j.user_id is null;
-```
+Shared schema migrations no longer include seed-demo bypass policies. Local resets start without
+seeded jobs by default; create real jobs under your authenticated user.
 
 ### Optional: temporarily restore open anon table access locally
 

@@ -34,6 +34,7 @@ export async function fetchFirstJobIdForCurrentUser(
   const { data, error } = await client
     .from('jobs')
     .select('id')
+    .is('deleted_at', null)
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -53,6 +54,7 @@ export async function fetchJobById(
       'id, short_description, customer_name, updated_at, revenue_cents, job_payment_state, collected_cents',
     )
     .eq('id', id)
+    .is('deleted_at', null)
     .maybeSingle();
 
   if (error) throw error;
@@ -68,30 +70,52 @@ export type UpdateJobInput = {
   jobType: string;
 };
 
+function normalizeEditableJobInput(input: UpdateJobInput): UpdateJobInput {
+  const shortDescription = input.shortDescription.trim();
+  if (!shortDescription) {
+    throw new Error('Job title is required.');
+  }
+
+  if (
+    input.revenueCents != null &&
+    (!Number.isInteger(input.revenueCents) || input.revenueCents < 0)
+  ) {
+    throw new Error('Revenue must be a non-negative dollar amount.');
+  }
+
+  return {
+    shortDescription,
+    customerName: input.customerName.trim(),
+    serviceAddress: input.serviceAddress.trim(),
+    revenueCents: input.revenueCents,
+    jobType: input.jobType.trim(),
+  };
+}
+
 export async function updateJobById(
   client: FieldbookSupabaseClient,
   id: JobId,
   input: UpdateJobInput,
 ): Promise<void> {
+  const normalized = normalizeEditableJobInput(input);
   const patch = {
-    short_description: input.shortDescription,
-    customer_name: input.customerName,
-    service_address: input.serviceAddress,
-    revenue_cents: input.revenueCents,
-    job_type: input.jobType,
+    short_description: normalized.shortDescription,
+    customer_name: normalized.customerName,
+    service_address: normalized.serviceAddress,
+    revenue_cents: normalized.revenueCents,
+    job_type: normalized.jobType,
   };
 
   const { data, error } = await client
     .from('jobs')
     .update(patch)
     .eq('id', id)
+    .is('deleted_at', null)
     .select('id')
     .maybeSingle();
 
   if (error) throw error;
   if (!data) {
-    throw new Error(
-      'Update affected no rows (check RLS: job must be owned by you or be the demo job).',
-    );
+    throw new Error('Update affected no rows (check RLS: job must be owned by you).');
   }
 }

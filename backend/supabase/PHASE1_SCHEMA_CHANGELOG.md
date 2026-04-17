@@ -19,6 +19,9 @@ Applied by Supabase CLI as the next migration after `20260412200412_init_field_b
 Additional hardening migrations:
 - `20260417120002_remove_anon_table_policies.sql` removes shared anon-table CRUD/read defaults.
 - `20260417120003_enforce_parent_ownership_on_child_rows.sql` enforces child-row parent ownership for authenticated CRUD.
+- `20260417120004_remove_seed_demo_bypass.sql` removes seed-demo read/update bypass policies and `claim_demo_job()`.
+- `20260417120005_unassign_children_on_session_discard.sql` moves notes/materials from discarded sessions to job-level unassigned (`session_id = null`).
+- `20260417120006_jobs_collected_cents_full_or_zero.sql` restricts `jobs.collected_cents` to `0` or full `revenue_cents` (no partial collections yet).
 
 ## C. Data migration / backfill
 

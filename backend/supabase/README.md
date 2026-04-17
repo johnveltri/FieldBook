@@ -43,15 +43,14 @@ schema migrations no longer grant direct public-table access to the `anon` role.
 
 ## Jobs in the app
 
-Job Detail loads **`fetchFirstJobIdForCurrentUser`** → **`fetchJobDetail`**: only rows the **authenticated user** can see under RLS (typically **`jobs.user_id = auth.uid()`**). If none exist, the UI shows **no jobs**. `seed.sql` is for local data only; it does not auto-attach to users from the client.
+Job Detail loads **`fetchFirstJobIdForCurrentUser`** → **`fetchJobDetail`**: only rows the **authenticated user** can see under RLS (typically **`jobs.user_id = auth.uid()`**). If none exist, the UI shows **no jobs**. `seed.sql` is intentionally empty by default; create real user-owned jobs in local dev.
 
 For child tables (`sessions`, `notes`, `materials`, `attachments`, `job_activity_events`), authenticated
 CRUD now requires both:
 - row ownership (`user_id = auth.uid()`)
 - parent ownership (referenced `job_id` / `session_id` resolves to rows owned by `auth.uid()`)
 
-Seed demo read policies are unchanged, but child writes against unclaimed demo parents are blocked
-until rows are attached to the user (for example via `claim_demo_job()`).
+There is no seed-demo bypass policy or demo-claim RPC in the shared schema.
 
 ## Local-only open table access
 
