@@ -63,6 +63,13 @@ used for Supabase Auth, but shared schema migrations no longer grant direct tabl
 often uses role **`postgres`**, which bypasses RLS—so you can see rows the app cannot, until
 `user_id` is set.
 
+Child-table writes (`sessions`, `notes`, `materials`, `attachments`, `job_activity_events`) now
+also require parent ownership checks. A signed-in user cannot write child rows that reference
+another user’s `job_id`/`session_id`, even if `user_id` on the child row matches the caller.
+
+Seed demo read access remains available to authenticated users, but child writes against unclaimed
+demo parents are blocked until the demo rows are attached to your user.
+
 To attach seeded demo jobs to your local user after you confirm `auth.users` (replace email):
 
 ```sql
