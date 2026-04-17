@@ -9,6 +9,7 @@ const anon = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 export const supabase = createFieldbookClient(url, anon, {
   auth: {
     storage: authStorage,
+    storageKey: 'fieldbook.auth.token',
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,

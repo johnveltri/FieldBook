@@ -22,11 +22,11 @@ export function JobDetailSummaryCard({
     earnings.netEarningsCents >= 0
     ? color('Semantic/Financial/Positive')
     : color('Semantic/Financial/Negative');
-  const matTone =
-    earnings.materialsCents < 0 ? color('Semantic/Financial/Negative') : fg.primary;
+  const matTone = color('Semantic/Financial/Negative');
   const feesTone =
     earnings.feesCents < 0 ? color('Semantic/Financial/Negative') : fg.primary;
   const showFees = earnings.feesCents !== 0;
+  const materialsDisplay = `-${formatUsdCombined(Math.abs(earnings.materialsCents))}`;
 
   return (
     <View style={styles.cardOuter}>
@@ -40,7 +40,7 @@ export function JobDetailSummaryCard({
       <View style={styles.summaryRow}>
         <Text style={[typography.body, { color: fg.secondary, flex: 1 }]}>Materials</Text>
         <Text style={[typography.bodyBold, styles.summaryMoney, { color: matTone }]}>
-          {formatUsdCombined(earnings.materialsCents)}
+          {materialsDisplay}
         </Text>
       </View>
       {showFees ? (

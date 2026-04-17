@@ -6,7 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthSignOutButton } from './src/components/AuthSignOutButton';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { isSupabaseConfigured } from './src/lib/supabase';
-import { AuthenticatedHomeScreen } from './src/screens/AuthenticatedHomeScreen';
+import { JobsScreen } from './src/screens/JobsScreen';
 import { JobDetailScreen } from './src/screens/JobDetailScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { color } from '@fieldbook/design-system/lib/tokens';
@@ -14,7 +14,8 @@ import { color } from '@fieldbook/design-system/lib/tokens';
 function AuthenticatedShell() {
   const { session, loading } = useAuth();
   /** When true, job detail is shown without the shell sign-out control; X returns here. */
-  const [jobDetailOpen, setJobDetailOpen] = useState(true);
+  const [jobDetailOpen, setJobDetailOpen] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   /** Bump on each "View job" so Job Detail refetches (same user, fresh data). */
   const [jobDetailLoadKey, setJobDetailLoadKey] = useState(0);
 
@@ -33,8 +34,9 @@ function AuthenticatedShell() {
   if (!jobDetailOpen) {
     return (
       <View style={styles.root}>
-        <AuthenticatedHomeScreen
-          onOpenJobDetail={() => {
+        <JobsScreen
+          onOpenJobDetail={(jobId?: string) => {
+            setSelectedJobId(jobId ?? null);
             setJobDetailLoadKey((k) => k + 1);
             setJobDetailOpen(true);
           }}
@@ -48,6 +50,7 @@ function AuthenticatedShell() {
     <View style={styles.root}>
       <JobDetailScreen
         loadKey={jobDetailLoadKey}
+        jobId={selectedJobId}
         sessionUserId={session.user.id}
         sessionEmail={session.user.email ?? null}
         onRequestClose={() => setJobDetailOpen(false)}

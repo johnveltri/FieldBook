@@ -8,10 +8,10 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -31,6 +31,7 @@ import {
 
 export function SignInScreen() {
   const insets = useSafeAreaInsets();
+  const scrollY = useMemo(() => new Animated.Value(0), []);
   const { signIn, signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,12 +76,26 @@ export function SignInScreen() {
     }
     setBusy(true);
     try {
-      const { error: err } =
-        mode === 'signIn'
-          ? await signIn(trimmed, password)
-          : await signUp(trimmed, password);
-      if (err) {
-        setError(err.message);
+      if (mode === 'signIn') {
+        const { error: err } = await signIn(trimmed, password);
+        if (err) setError(err.message);
+      } else {
+        const { error: signUpErr } = await signUp(trimmed, password);
+        if (signUpErr) {
+          setError(signUpErr.message);
+          return;
+        }
+        // In local/dev projects email confirmation may vary; attempt sign-in immediately.
+        const { error: signInErr } = await signIn(trimmed, password);
+        if (signInErr) {
+          setError(
+            `Account created. ${
+              signInErr.message || 'Sign in next to continue.'
+            }`,
+          );
+          setMode('signIn');
+          return;
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Network request failed');
@@ -92,6 +107,7 @@ export function SignInScreen() {
   if (!fontsLoaded) {
     return (
       <View style={[styles.center, { paddingTop: insets.top }]}>
+        <CanvasTiledBackground scrollY={scrollY} />
         <ActivityIndicator />
       </View>
     );
@@ -102,12 +118,17 @@ export function SignInScreen() {
 
   return (
     <View style={styles.root}>
-      <CanvasTiledBackground />
+      <CanvasTiledBackground scrollY={scrollY} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
       >
-        <ScrollView
+        <Animated.ScrollView
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true },
+          )}
+          scrollEventThrottle={16}
           contentContainerStyle={[
             styles.scrollContent,
             {
@@ -191,7 +212,7 @@ export function SignInScreen() {
               </Text>
             </Pressable>
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
