@@ -195,12 +195,30 @@ export function JobDetailScreen({
   const onCloseEditSheet = useCallback(() => {
     setEditSheetVisible(false);
   }, []);
-  const parseRevenueCents = useCallback((value: string): number | null => {
-    const normalized = value.replace(/[^0-9.]/g, '');
-    if (!normalized) return null;
+
+  const parseRevenueCents = useCallback((value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return { ok: true as const, value: null };
+    }
+
+    const normalized = trimmed.replace(/[$,\s]/g, '');
+    if (!/^\d+(\.\d{0,2})?$/.test(normalized)) {
+      return {
+        ok: false as const,
+        error: 'Revenue must be a non-negative dollar amount (up to 2 decimals).',
+      };
+    }
+
     const parsed = Number.parseFloat(normalized);
-    if (!Number.isFinite(parsed) || parsed < 0) return null;
-    return Math.round(parsed * 100);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return {
+        ok: false as const,
+        error: 'Revenue must be a non-negative dollar amount.',
+      };
+    }
+
+    return { ok: true as const, value: Math.round(parsed * 100) };
   }, []);
 
   const toEditValues = useCallback((j: JobDetailViewModel): EditJobBottomSheetValues => {
@@ -220,14 +238,26 @@ export function JobDetailScreen({
   const onSaveJobSheet = useCallback(
     async (values: EditJobBottomSheetValues) => {
       if (!job) return;
+      const shortDescription = values.jobTitle.trim();
+      if (!shortDescription) {
+        Alert.alert('Validation error', 'Job title is required.');
+        return;
+      }
+
+      const revenueParsed = parseRevenueCents(values.revenue);
+      if (!revenueParsed.ok) {
+        Alert.alert('Validation error', revenueParsed.error);
+        return;
+      }
+
       setJobSaving(true);
       try {
         await updateJobById(supabase, job.id, {
-          shortDescription: values.jobTitle.trim(),
+          shortDescription,
           customerName: values.customerName.trim(),
           serviceAddress: values.serviceAddress.trim(),
-          revenueCents: parseRevenueCents(values.revenue),
-          jobType: values.jobType,
+          revenueCents: revenueParsed.value,
+          jobType: values.jobType.trim(),
         });
         const refreshed = await fetchJobDetail(supabase, job.id);
         if (refreshed) setJob(refreshed);
