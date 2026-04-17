@@ -9,7 +9,7 @@ Migration file: [`migrations/20260413120000_phase1_job_economic_session_worklog.
 | **`jobs`** | **Keeps** `revenue_cents`, `job_payment_state`. **Adds** `collected_cents`. **Removes** `materials_cents`, `fees_cents`, `net_earnings_cents` (no stored derived totals for MVP). |
 | **`sessions`** | **Removes** `revenue_cents`, `collected_cents`, `payment_state`, `payment_details`. Session remains time/status/log only. |
 | **`notes` / `materials`** (renamed from `material_entries`) | Drops XOR parent rule. **Requires** at least one of `job_id`, `session_id`. Session-scoped rows may set **both** `job_id` and `session_id`; trigger enforces `job_id` = that session’s job when both are set. |
-| **`attachments`** | **New** table: same parent pattern + `storage_bucket` / `storage_object_key` (+ optional metadata). Same RLS/anon dev pattern as notes/materials. |
+| **`attachments`** | **New** table: same parent pattern + `storage_bucket` / `storage_object_key` (+ optional metadata). Initial migrations mirrored the same RLS/anon dev pattern as notes/materials; later migrations remove shared anon table access by default. |
 | **Enums** | `job_work_status_enum` unchanged — **no** `paid` value; “Paid” in UI is derived from `job_payment_state` + work status. |
 
 ## B. SQL migration
