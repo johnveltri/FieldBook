@@ -48,7 +48,7 @@ import {
 } from '../theme/nativeTokens';
 
 type JobsScreenProps = {
-  onOpenJobDetail: (jobId?: string) => void;
+  onOpenJobDetail: (jobId?: string, options?: { initialEditOpen?: boolean }) => void;
 };
 
 type Typography = ReturnType<typeof createTextStyles>;
@@ -295,7 +295,7 @@ export function JobsScreen({ onOpenJobDetail }: JobsScreenProps) {
     setLoadError(null);
     try {
       const jobId = await createBlankJobForCurrentUser(supabase);
-      onOpenJobDetail(jobId);
+      onOpenJobDetail(jobId, { initialEditOpen: true });
     } catch (error) {
       const message =
         error instanceof Error

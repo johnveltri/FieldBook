@@ -81,7 +81,7 @@ describe('JobsScreen', () => {
     await waitFor(() => {
       expect(apiClient.createBlankJobForCurrentUser).toHaveBeenCalledTimes(1);
     });
-    expect(onOpenJobDetail).toHaveBeenCalledWith('job-new-7');
+    expect(onOpenJobDetail).toHaveBeenCalledWith('job-new-7', { initialEditOpen: true });
   });
 
   it('shows load errors from list API failures', async () => {
