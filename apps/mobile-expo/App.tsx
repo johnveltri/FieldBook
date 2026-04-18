@@ -16,6 +16,8 @@ function AuthenticatedShell() {
   /** When true, job detail is shown without the shell sign-out control; X returns here. */
   const [jobDetailOpen, setJobDetailOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  /** True when opening detail from "New job" FAB — JobDetailScreen auto-opens the edit sheet. */
+  const [jobDetailInitialEditOpen, setJobDetailInitialEditOpen] = useState(false);
   /** Bump on each "View job" so Job Detail refetches (same user, fresh data). */
   const [jobDetailLoadKey, setJobDetailLoadKey] = useState(0);
 
@@ -35,8 +37,9 @@ function AuthenticatedShell() {
     return (
       <View style={styles.root}>
         <JobsScreen
-          onOpenJobDetail={(jobId?: string) => {
+          onOpenJobDetail={(jobId?: string, options?: { initialEditOpen?: boolean }) => {
             setSelectedJobId(jobId ?? null);
+            setJobDetailInitialEditOpen(options?.initialEditOpen ?? false);
             setJobDetailLoadKey((k) => k + 1);
             setJobDetailOpen(true);
           }}
@@ -51,9 +54,13 @@ function AuthenticatedShell() {
       <JobDetailScreen
         loadKey={jobDetailLoadKey}
         jobId={selectedJobId}
+        initialEditOpen={jobDetailInitialEditOpen}
         sessionUserId={session.user.id}
         sessionEmail={session.user.email ?? null}
-        onRequestClose={() => setJobDetailOpen(false)}
+        onRequestClose={() => {
+          setJobDetailOpen(false);
+          setJobDetailInitialEditOpen(false);
+        }}
       />
     </View>
   );

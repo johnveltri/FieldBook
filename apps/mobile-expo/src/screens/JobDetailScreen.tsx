@@ -18,7 +18,7 @@ import {
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -100,6 +100,8 @@ export type JobDetailScreenProps = {
   jobId?: string | null;
   /** Parent increments when navigating to this screen (e.g. "View job") to force reload. */
   loadKey?: number;
+  /** When true, open the edit job sheet once after the job finishes loading (e.g. new job FAB). */
+  initialEditOpen?: boolean;
 };
 
 export function JobDetailScreen({
@@ -108,6 +110,7 @@ export function JobDetailScreen({
   sessionEmail,
   jobId,
   loadKey = 0,
+  initialEditOpen = false,
 }: JobDetailScreenProps = {}) {
   /** Top safe area (status bar); bottom inset used for scroll padding + nav. */
   const insets = useSafeAreaInsets();
@@ -141,6 +144,19 @@ export function JobDetailScreen({
   const [editSheetVisible, setEditSheetVisible] = useState(false);
   /** Set when Supabase is configured but fetch returns null or throws (no silent mock). */
   const [jobLoadError, setJobLoadError] = useState<string | null>(null);
+  /** Ensures we only auto-open the edit sheet once per navigation (see `initialEditOpen`). */
+  const autoEditOpenedRef = useRef(false);
+
+  useEffect(() => {
+    autoEditOpenedRef.current = false;
+  }, [loadKey, jobId]);
+
+  useEffect(() => {
+    if (!initialEditOpen || jobLoading || !job || autoEditOpenedRef.current) return;
+    autoEditOpenedRef.current = true;
+    setEditSheetMounted(true);
+    setEditSheetVisible(true);
+  }, [initialEditOpen, jobLoading, job]);
 
   useEffect(() => {
     if (!supabaseReady) {
