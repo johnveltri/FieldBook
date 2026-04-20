@@ -128,6 +128,8 @@ function mapSession(row: SessionRow): JobDetailSession {
   const hours = sessionDurationHours(row.started_at, row.ended_at);
   return {
     id: row.id,
+    startedAt: row.started_at,
+    endedAt: row.ended_at,
     dateLabel: formatDateLabel(row.started_at),
     timeRangeLabel: `${startStr} – ${endStr}`,
     durationLabel: `${hours.toFixed(1)}h`,

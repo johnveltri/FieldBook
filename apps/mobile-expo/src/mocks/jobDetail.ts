@@ -37,6 +37,8 @@ export const mockJobDetail: JobDetailViewModel = {
   sessions: [
     {
       id: 'sess-1',
+      startedAt: '2026-03-25T09:00:00.000Z',
+      endedAt: '2026-03-25T10:00:00.000Z',
       dateLabel: 'Mar 25, 2026',
       timeRangeLabel: '9:00 AM – 10:00 AM',
       durationLabel: '1.0h',

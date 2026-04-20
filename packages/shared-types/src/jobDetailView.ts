@@ -14,6 +14,10 @@ export type JobDetailWorkStatus =
 
 export type JobDetailSession = {
   id: string;
+  /** ISO 8601 timestamp (UTC with offset). Raw session start for prefilling edit UI. */
+  startedAt: string;
+  /** ISO 8601 timestamp or null while a session is still in progress. */
+  endedAt: string | null;
   dateLabel: string;
   timeRangeLabel: string;
   durationLabel: string;
