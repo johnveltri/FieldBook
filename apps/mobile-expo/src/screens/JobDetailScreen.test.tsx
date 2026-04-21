@@ -57,12 +57,12 @@ jest.mock('../components/ds', () => ({
     visible,
     title,
     onSavePress,
-    onDiscardPress,
+    onDeletePress,
   }: {
     visible: boolean;
     title: string;
     onSavePress?: (values: { startedAt: string; endedAt: string }) => void;
-    onDiscardPress?: () => void;
+    onDeletePress?: () => void;
   }) => {
     const { Text, View } = require('react-native');
     return visible ? (
@@ -78,7 +78,7 @@ jest.mock('../components/ds', () => ({
         >
           Save Session
         </Text>
-        <Text onPress={() => onDiscardPress?.()}>Discard Session</Text>
+        <Text onPress={() => onDeletePress?.()}>Delete Session</Text>
       </View>
     ) : null;
   },
@@ -87,14 +87,14 @@ jest.mock('../components/ds', () => ({
     title,
     assignedSession,
     onSavePress,
-    onDiscardPress,
+    onDeletePress,
     onSessionPillPress,
   }: {
     visible: boolean;
     title: string;
     assignedSession: { id: string } | null;
     onSavePress?: (values: { body: string }) => void;
-    onDiscardPress?: () => void;
+    onDeletePress?: () => void;
     onSessionPillPress?: () => void;
   }) => {
     const { Text, View } = require('react-native');
@@ -104,7 +104,7 @@ jest.mock('../components/ds', () => ({
         <Text>{assignedSession ? `Assigned ${assignedSession.id}` : 'Unassigned'}</Text>
         <Text onPress={() => onSessionPillPress?.()}>Open Session Picker</Text>
         <Text onPress={() => onSavePress?.({ body: 'Saved note body' })}>Save Note</Text>
-        <Text onPress={() => onDiscardPress?.()}>Delete Note</Text>
+        <Text onPress={() => onDeletePress?.()}>Delete Note</Text>
       </View>
     ) : null;
   },
@@ -149,11 +149,11 @@ jest.mock('../components/ds', () => ({
 jest.mock('@fieldbook/api-client', () => ({
   createManualSession: jest.fn(),
   createNote: jest.fn(),
+  deleteNote: jest.fn(),
+  deleteSession: jest.fn(),
   deleteJobById: jest.fn(),
-  discardSession: jest.fn(),
   fetchFirstJobIdForCurrentUser: jest.fn(),
   fetchJobDetail: jest.fn(),
-  softDeleteNote: jest.fn(),
   updateJobById: jest.fn(),
   updateNote: jest.fn(),
   updateSessionTimes: jest.fn(),
@@ -186,7 +186,7 @@ describe('JobDetailScreen manual session and note flows', () => {
       netPerHrDisplay: '$47.50/hr',
       sessionCount: 1,
     },
-    sessions: [
+    displaySessions: [
       {
         id: 'sess-1',
         startedAt: '2026-04-17T14:00:00.000Z',
@@ -196,6 +196,17 @@ describe('JobDetailScreen manual session and note flows', () => {
         durationLabel: '1.0h',
       },
     ],
+    allSessions: [
+      {
+        id: 'sess-1',
+        startedAt: '2026-04-17T14:00:00.000Z',
+        endedAt: '2026-04-17T15:00:00.000Z',
+        dateLabel: 'Apr 17, 2026',
+        timeRangeLabel: '9:00 AM – 10:00 AM',
+        durationLabel: '1.0h',
+      },
+    ],
+    inProgressSession: null,
     materialBuckets: [],
     noteBuckets: [
       {
@@ -223,10 +234,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     apiClient.fetchJobDetail.mockResolvedValue(baseJob);
     apiClient.createManualSession.mockResolvedValue('sess-new-1');
     apiClient.updateSessionTimes.mockResolvedValue(undefined);
-    apiClient.discardSession.mockResolvedValue(undefined);
+    apiClient.deleteSession.mockResolvedValue(undefined);
     apiClient.createNote.mockResolvedValue('note-new-1');
     apiClient.updateNote.mockResolvedValue(undefined);
-    apiClient.softDeleteNote.mockResolvedValue(undefined);
+    apiClient.deleteNote.mockResolvedValue(undefined);
   });
 
   it('creates a manual session from add flow', async () => {
@@ -267,7 +278,7 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
   });
 
-  it('discards a session from edit flow', async () => {
+  it('deletes a session from edit flow', async () => {
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
     await waitFor(() => {
@@ -275,10 +286,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
 
     fireEvent.press(screen.getByText('Edit session sess-1'));
-    fireEvent.press(screen.getByText('Discard Session'));
+    fireEvent.press(screen.getByText('Delete Session'));
 
     await waitFor(() => {
-      expect(apiClient.discardSession).toHaveBeenCalledWith({}, 'sess-1');
+      expect(apiClient.deleteSession).toHaveBeenCalledWith({}, 'sess-1');
     });
   });
 
@@ -336,6 +347,7 @@ describe('JobDetailScreen manual session and note flows', () => {
       expect(apiClient.updateNote).toHaveBeenCalledWith({}, 'note-1', {
         body: 'Saved note body',
         sessionId: null,
+        jobId: 'job-1',
       });
     });
   });
@@ -351,15 +363,18 @@ describe('JobDetailScreen manual session and note flows', () => {
     fireEvent.press(screen.getByText('Delete Note'));
 
     await waitFor(() => {
-      expect(apiClient.softDeleteNote).toHaveBeenCalledWith({}, 'note-1');
+      expect(apiClient.deleteNote).toHaveBeenCalledWith({}, 'note-1');
     });
   });
 
   it('hides in-progress sessions from cards and note session chooser', async () => {
     apiClient.fetchJobDetail.mockResolvedValueOnce({
       ...baseJob,
-      sessions: [
-        ...baseJob.sessions,
+      displaySessions: [
+        ...baseJob.displaySessions,
+      ],
+      allSessions: [
+        ...baseJob.allSessions,
         {
           id: 'sess-progress',
           startedAt: '2026-04-18T09:00:00.000Z',
@@ -369,6 +384,14 @@ describe('JobDetailScreen manual session and note flows', () => {
           durationLabel: '0.2h',
         },
       ],
+      inProgressSession: {
+        id: 'sess-progress',
+        startedAt: '2026-04-18T09:00:00.000Z',
+        endedAt: null,
+        dateLabel: 'Apr 18, 2026',
+        timeRangeLabel: '9:00 AM – …',
+        durationLabel: '0.2h',
+      },
     });
 
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);

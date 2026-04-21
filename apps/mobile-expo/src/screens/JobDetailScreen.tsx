@@ -67,11 +67,11 @@ import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/toke
 import {
   createManualSession,
   createNote,
+  deleteNote,
+  deleteSession,
   deleteJobById,
-  discardSession,
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
-  softDeleteNote,
   updateJobById,
   updateNote,
   updateSessionTimes,
@@ -258,31 +258,6 @@ export function JobDetailScreen({
     setEditSheetVisible(false);
   }, []);
 
-  const parseRevenueCents = useCallback((value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return { ok: true as const, value: null };
-    }
-
-    const normalized = trimmed.replace(/[$,\s]/g, '');
-    if (!/^\d+(\.\d{0,2})?$/.test(normalized)) {
-      return {
-        ok: false as const,
-        error: 'Revenue must be a non-negative dollar amount (up to 2 decimals).',
-      };
-    }
-
-    const parsed = Number.parseFloat(normalized);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      return {
-        ok: false as const,
-        error: 'Revenue must be a non-negative dollar amount.',
-      };
-    }
-
-    return { ok: true as const, value: Math.round(parsed * 100) };
-  }, []);
-
   const toEditValues = useCallback((j: JobDetailViewModel): EditJobBottomSheetValues => {
     const revenue = (j.earnings.revenueCents / 100).toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -300,25 +275,17 @@ export function JobDetailScreen({
   const onSaveJobSheet = useCallback(
     async (values: EditJobBottomSheetValues) => {
       if (!job) return;
-      const shortDescription = values.jobTitle.trim();
-      if (!shortDescription) {
-        Alert.alert('Validation error', 'Job title is required.');
-        return;
-      }
-
-      const revenueParsed = parseRevenueCents(values.revenue);
-      if (!revenueParsed.ok) {
-        Alert.alert('Validation error', revenueParsed.error);
-        return;
-      }
+      const trimmedRevenue = values.revenue.trim().replace(/[$,\s]/g, '');
+      const revenueCents =
+        trimmedRevenue.length === 0 ? null : Math.round(Number(trimmedRevenue) * 100);
 
       setJobSaving(true);
       try {
         await updateJobById(supabase, job.id, {
-          shortDescription,
+          shortDescription: values.jobTitle,
           customerName: values.customerName.trim(),
           serviceAddress: values.serviceAddress.trim(),
-          revenueCents: revenueParsed.value,
+          revenueCents,
           jobType: values.jobType.trim(),
         });
         const refreshed = await fetchJobDetail(supabase, job.id);
@@ -339,7 +306,7 @@ export function JobDetailScreen({
         setJobSaving(false);
       }
     },
-    [job, onCloseEditSheet, parseRevenueCents],
+    [job, onCloseEditSheet],
   );
 
   // --- Session add/edit flow ---
@@ -366,7 +333,7 @@ export function JobDetailScreen({
 
   const editingSession = useMemo<JobDetailSession | null>(() => {
     if (!editingSessionId || !job) return null;
-    return job.sessions.find((s) => s.id === editingSessionId) ?? null;
+    return job.displaySessions.find((s) => s.id === editingSessionId) ?? null;
   }, [editingSessionId, job]);
 
   const refetchJob = useCallback(async () => {
@@ -429,15 +396,15 @@ export function JobDetailScreen({
     [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob],
   );
 
-  const onDiscardEditingSession = useCallback(async () => {
+  const onDeleteEditingSession = useCallback(async () => {
     if (!editingSessionId) return;
     setSessionSaving(true);
     try {
-      await discardSession(supabase, editingSessionId);
+      await deleteSession(supabase, editingSessionId);
       await refetchJob();
       closeSessionFlow();
     } catch (e) {
-      Alert.alert('Discard failed', formatErrorMessage(e) || 'Could not discard session.');
+      Alert.alert('Delete failed', formatErrorMessage(e) || 'Could not delete session.');
     } finally {
       setSessionSaving(false);
     }
@@ -529,7 +496,7 @@ export function JobDetailScreen({
 
   const onSaveNoteChanges = useCallback(
     async ({ body }: EditNoteBottomSheetValues) => {
-      if (!editingNoteId) return;
+      if (!editingNoteId || !job) return;
       setNoteSaving(true);
       try {
         // Pass sessionId unconditionally so the api-client re-parents to the
@@ -537,6 +504,7 @@ export function JobDetailScreen({
         await updateNote(supabase, editingNoteId, {
           body,
           sessionId: draftSessionId,
+          jobId: draftSessionId === null ? job.id : undefined,
         });
         await refetchJob();
         closeNoteFlow();
@@ -546,10 +514,10 @@ export function JobDetailScreen({
         setNoteSaving(false);
       }
     },
-    [closeNoteFlow, draftSessionId, editingNoteId, formatErrorMessage, refetchJob],
+    [closeNoteFlow, draftSessionId, editingNoteId, formatErrorMessage, job, refetchJob],
   );
 
-  const onDiscardOrDeleteEditingNote = useCallback(async () => {
+  const onDeleteEditingNote = useCallback(async () => {
     if (!editingNoteId) {
       // Add flow — trash simply abandons the draft.
       closeNoteFlow();
@@ -557,7 +525,7 @@ export function JobDetailScreen({
     }
     setNoteSaving(true);
     try {
-      await softDeleteNote(supabase, editingNoteId);
+      await deleteNote(supabase, editingNoteId);
       await refetchJob();
       closeNoteFlow();
     } catch (e) {
@@ -567,9 +535,9 @@ export function JobDetailScreen({
     }
   }, [closeNoteFlow, editingNoteId, formatErrorMessage, refetchJob]);
 
-  /** Non-discarded sessions, mapped for the generic `ChooseSessionBottomSheet`. */
+  /** Sessions visible in current Job Detail UI (completed only). */
   const visibleSessions = useMemo(
-    () => job?.sessions.filter((s) => s.endedAt !== null) ?? [],
+    () => job?.displaySessions ?? [],
     [job],
   );
 
@@ -858,9 +826,9 @@ export function JobDetailScreen({
                 void onSaveNewNote(values);
               }
             }}
-            onDiscardPress={() => {
+            onDeletePress={() => {
               if (noteSaving) return;
-              void onDiscardOrDeleteEditingNote();
+              void onDeleteEditingNote();
             }}
             onSessionPillPress={openSessionPickerFromNoteSheet}
           />
@@ -927,10 +895,10 @@ export function JobDetailScreen({
                 void onSaveNewSession(values);
               }
             }}
-            onDiscardPress={() => {
+            onDeletePress={() => {
               if (sessionSaving) return;
               if (sessionFlow === 'editForm') {
-                void onDiscardEditingSession();
+                void onDeleteEditingSession();
               } else {
                 closeSessionFlow();
               }

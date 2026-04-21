@@ -162,7 +162,7 @@ describe('jobs api client', () => {
     ).rejects.toThrow('Revenue must be a non-negative dollar amount.');
   });
 
-  it('listJobsForCurrentUser computes metrics from non-discarded sessions and material dedupe', async () => {
+  it('listJobsForCurrentUser computes metrics from non-deleted sessions and material dedupe', async () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
@@ -198,9 +198,9 @@ describe('jobs api client', () => {
                   ended_at: '2026-04-16T12:00:00.000Z',
                 },
                 {
-                  id: 'sess-discarded',
+                  id: 'sess-deleted',
                   job_id: 'job-1',
-                  session_status: 'discarded',
+                  session_status: 'deleted',
                   started_at: '2026-04-17T10:00:00.000Z',
                   ended_at: null,
                 },
@@ -491,7 +491,7 @@ describe('jobs api client', () => {
     const detail = await fetchJobDetail(client as never, 'job-2');
 
     expect(detail).not.toBeNull();
-    expect(detail?.sessions.map((s) => s.id)).toEqual(['sess-ended']);
+    expect(detail?.displaySessions.map((s) => s.id)).toEqual(['sess-ended']);
   });
 
   it('fetchJobDetail maps note id/body/sessionId and filters soft-deleted notes', async () => {

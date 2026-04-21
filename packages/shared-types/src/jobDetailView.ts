@@ -74,7 +74,12 @@ export type JobDetailViewModel = {
     netPerHrDisplay: string;
     sessionCount: number;
   };
-  sessions: JobDetailSession[];
+  /** Sessions shown in current Job Detail UI (completed only). */
+  displaySessions: JobDetailSession[];
+  /** All non-deleted sessions (completed + in-progress) for future UI/flows. */
+  allSessions: JobDetailSession[];
+  /** Current in-progress session when present. */
+  inProgressSession: JobDetailSession | null;
   materialBuckets: JobDetailMaterialBucket[];
   noteBuckets: JobDetailNoteBucket[];
   timeline: {

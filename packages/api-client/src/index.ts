@@ -12,7 +12,7 @@ export {
 } from './jobs';
 export {
   createManualSession,
-  discardSession,
+  deleteSession,
   updateSessionTimes,
   type CreateManualSessionInput,
   type SessionId,
@@ -20,7 +20,7 @@ export {
 } from './sessions';
 export {
   createNote,
-  softDeleteNote,
+  deleteNote,
   updateNote,
   type CreateNoteInput,
   type NoteId,

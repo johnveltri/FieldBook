@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createNote, softDeleteNote, updateNote } from './notes';
+import { createNote, deleteNote, updateNote } from './notes';
 import { makeBuilder, makeClient } from './testUtils';
 
 describe('notes api client', () => {
@@ -174,6 +174,30 @@ describe('notes api client', () => {
     expect(patch).toEqual({ job_id: 'job-9', session_id: null });
   });
 
+  it('updateNote moves a note back to unassigned using provided jobId without extra reads', async () => {
+    let patch: unknown;
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        notes: [
+          makeBuilder({
+            onUpdate: (value) => {
+              patch = value;
+            },
+            maybeSingleResult: { data: { id: 'note-1' }, error: null },
+          }),
+        ],
+      },
+    });
+
+    await updateNote(client as never, 'note-1', { sessionId: null, jobId: 'job-77' });
+
+    expect(patch).toEqual({ job_id: 'job-77', session_id: null });
+    expect((client.from as unknown as { mock: { calls: unknown[][] } }).mock.calls).toEqual([
+      ['notes'],
+    ]);
+  });
+
   it('updateNote combines body edit and session reassignment in one UPDATE', async () => {
     let patch: unknown;
     const client = makeClient({
@@ -234,9 +258,9 @@ describe('notes api client', () => {
     expect(notesBuilder.is.mock.calls).toContainEqual(['deleted_at', null]);
   });
 
-  // --- softDeleteNote -------------------------------------------------------
+  // --- deleteNote -----------------------------------------------------------
 
-  it('softDeleteNote stamps deleted_at with an ISO timestamp', async () => {
+  it('deleteNote stamps deleted_at with an ISO timestamp', async () => {
     let patch: unknown;
     const client = makeClient({
       authUserId: 'user-1',
@@ -252,14 +276,18 @@ describe('notes api client', () => {
       },
     });
 
-    await softDeleteNote(client as never, 'note-1');
+    await deleteNote(client as never, 'note-1');
 
     const row = patch as { deleted_at: string };
     expect(typeof row.deleted_at).toBe('string');
     expect(Date.parse(row.deleted_at)).not.toBeNaN();
+
+    const notesBuilder = (client.from as unknown as { mock: { results: Array<{ value: unknown }> } })
+      .mock.results[0]?.value as { is: { mock: { calls: unknown[][] } } };
+    expect(notesBuilder.is.mock.calls).toContainEqual(['deleted_at', null]);
   });
 
-  it('softDeleteNote throws when no rows are affected', async () => {
+  it('deleteNote throws when no rows are affected', async () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
@@ -271,7 +299,7 @@ describe('notes api client', () => {
       },
     });
 
-    await expect(softDeleteNote(client as never, 'note-1')).rejects.toThrow(
+    await expect(deleteNote(client as never, 'note-1')).rejects.toThrow(
       'Delete affected no rows (check RLS: note must be owned by you).',
     );
   });

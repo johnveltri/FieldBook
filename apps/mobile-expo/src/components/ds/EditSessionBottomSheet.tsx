@@ -41,8 +41,8 @@ type EditSessionBottomSheetProps = {
   onClosed?: () => void;
   onBack?: () => void;
   onSavePress?: (values: EditSessionBottomSheetValues) => void;
-  /** Trash icon — for add flow this discards unsaved; for edit flow this soft-deletes. */
-  onDiscardPress?: () => void;
+  /** Trash icon — for add flow this deletes unsaved draft; for edit flow this soft-deletes. */
+  onDeletePress?: () => void;
 };
 
 type PickerKind = 'date' | 'startTime' | 'endTime';
@@ -88,7 +88,7 @@ function formatTimeLabel(d: Date): string {
 /**
  * Edit/Add Session sheet (Figma `1284:726` — "Edit Session" variant).
  * Tapping the date or time fields opens native date/time pickers; trash icon
- * discards, primary button saves.
+ * deletes, primary button saves.
  */
 export function EditSessionBottomSheet({
   typography,
@@ -100,7 +100,7 @@ export function EditSessionBottomSheet({
   onClosed,
   onBack,
   onSavePress,
-  onDiscardPress,
+  onDeletePress,
 }: EditSessionBottomSheetProps) {
   const initialDate = useMemo(
     () => (values ? startOfDay(new Date(values.startedAt)) : startOfDay(now())),
@@ -264,7 +264,7 @@ export function EditSessionBottomSheet({
           typography={typography}
           primaryLabel={primaryLabel}
           onPrimaryPress={handleSave}
-          onDeletePress={onDiscardPress}
+          onDeletePress={onDeletePress}
         />
       </View>
     </BottomSheetShell>

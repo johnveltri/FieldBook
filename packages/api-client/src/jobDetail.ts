@@ -35,7 +35,7 @@ type JobRow = {
 type SessionRow = {
   id: string;
   job_id: string;
-  session_status: 'in_progress' | 'ended' | 'discarded';
+  session_status: 'in_progress' | 'ended' | 'deleted';
   started_at: string;
   ended_at: string | null;
 };
@@ -182,8 +182,10 @@ export async function fetchJobDetail(
 
   if (sErr) throw sErr;
   const sessions = (sessionsRaw ?? []) as SessionRow[];
-  const activeSessions = sessions.filter((s) => s.session_status !== 'discarded');
+  const activeSessions = sessions.filter((s) => s.session_status !== 'deleted');
   const endedSessions = activeSessions.filter((s) => s.session_status === 'ended');
+  const inProgressSession =
+    activeSessions.find((s) => s.session_status === 'in_progress') ?? null;
   const sessionIds = activeSessions.map((s) => s.id);
 
   const notesBase = client
@@ -359,9 +361,11 @@ export async function fetchJobDetail(
       netPerHrDisplay,
       sessionCount,
     },
-    // Session list drives SessionCard + pickers in the current UI. Keep this
-    // to completed sessions only; in-progress will get dedicated UI later.
-    sessions: endedSessions.map(mapSession),
+    // Current UI shows completed sessions only.
+    displaySessions: endedSessions.map(mapSession),
+    // Keep full non-deleted set for future dedicated in-progress UI.
+    allSessions: activeSessions.map(mapSession),
+    inProgressSession: inProgressSession ? mapSession(inProgressSession) : null,
     materialBuckets,
     noteBuckets,
     timeline,

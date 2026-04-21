@@ -22,13 +22,15 @@ export type CreateNoteInput = {
  * - `body` — replaces the note text.
  * - `sessionId` — when provided (including `null`) reassigns the parent. Pass a
  *   session id to move the note into that session; pass `null` to move the note
- *   back to the unassigned (job-scoped) bucket. `jobId` is set in the same
- *   UPDATE so the `notes_exactly_one_parent` check constraint is always
- *   satisfied mid-statement.
+ *   back to the unassigned (job-scoped) bucket.
+ * - `jobId` — optional optimization for the `sessionId: null` path. When
+ *   provided, reassignment can skip parent-resolution reads and still update
+ *   both parent columns in one statement.
  */
 export type UpdateNoteInput = {
   body?: string;
   sessionId?: SessionId | null;
+  jobId?: JobId | null;
 };
 
 function assertBodyNotBlank(body: string): void {
@@ -91,34 +93,39 @@ export async function updateNote(
 
   if (input.sessionId !== undefined) {
     if (input.sessionId === null) {
-      // Reassign back to the job bucket. Fetch the parent job id from whichever
-      // side is currently set, so the row ends up with exactly one parent.
-      const { data: current, error: readErr } = await client
-        .from('notes')
-        .select('job_id, session_id')
-        .eq('id', noteId)
-        .is('deleted_at', null)
-        .maybeSingle();
-      if (readErr) throw readErr;
-      if (!current) {
-        throw new Error('Note not found (check RLS: note must be owned by you).');
-      }
-      const row = current as { job_id: string | null; session_id: string | null };
-      let jobId = row.job_id;
-      if (!jobId && row.session_id) {
-        const { data: sess, error: sessErr } = await client
-          .from('sessions')
-          .select('job_id')
-          .eq('id', row.session_id)
+      if (input.jobId !== undefined && input.jobId !== null) {
+        patch.job_id = input.jobId;
+        patch.session_id = null;
+      } else {
+        // Reassign back to the job bucket. Fetch the parent job id from whichever
+        // side is currently set, so the row ends up with exactly one parent.
+        const { data: current, error: readErr } = await client
+          .from('notes')
+          .select('job_id, session_id')
+          .eq('id', noteId)
+          .is('deleted_at', null)
           .maybeSingle();
-        if (sessErr) throw sessErr;
-        jobId = (sess as { job_id: string } | null)?.job_id ?? null;
+        if (readErr) throw readErr;
+        if (!current) {
+          throw new Error('Note not found (check RLS: note must be owned by you).');
+        }
+        const row = current as { job_id: string | null; session_id: string | null };
+        let jobId = row.job_id;
+        if (!jobId && row.session_id) {
+          const { data: sess, error: sessErr } = await client
+            .from('sessions')
+            .select('job_id')
+            .eq('id', row.session_id)
+            .maybeSingle();
+          if (sessErr) throw sessErr;
+          jobId = (sess as { job_id: string } | null)?.job_id ?? null;
+        }
+        if (!jobId) {
+          throw new Error('Could not resolve parent job for note reassignment.');
+        }
+        patch.job_id = jobId;
+        patch.session_id = null;
       }
-      if (!jobId) {
-        throw new Error('Could not resolve parent job for note reassignment.');
-      }
-      patch.job_id = jobId;
-      patch.session_id = null;
     } else {
       patch.job_id = null;
       patch.session_id = input.sessionId;
@@ -141,8 +148,8 @@ export async function updateNote(
   }
 }
 
-/** Soft-deletes a note by stamping `deleted_at`. */
-export async function softDeleteNote(
+/** Deletes a note by soft-deleting it (stamping `deleted_at`). */
+export async function deleteNote(
   client: FieldbookSupabaseClient,
   noteId: NoteId,
 ): Promise<void> {
@@ -150,6 +157,7 @@ export async function softDeleteNote(
     .from('notes')
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', noteId)
+    .is('deleted_at', null)
     .select('id')
     .maybeSingle();
 

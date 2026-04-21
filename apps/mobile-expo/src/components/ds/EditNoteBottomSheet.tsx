@@ -40,14 +40,14 @@ type EditNoteBottomSheetProps = {
   values?: EditNoteBottomSheetValues;
   /** When non-null, header renders the pencil SESSION pill + session subtitle. */
   assignedSession: EditNoteBottomSheetAssignedSession | null;
-  /** Hides the `+SESSION` pill entirely when the job has no non-discarded sessions. */
+  /** Hides the `+SESSION` pill entirely when the job has no completed sessions. */
   canAttachSession: boolean;
   onClose?: () => void;
   onClosed?: () => void;
   onBack?: () => void;
   onSavePress?: (values: EditNoteBottomSheetValues) => void;
-  /** Trash icon — for Add this discards the draft; for Edit this soft-deletes. */
-  onDiscardPress?: () => void;
+  /** Trash icon — for Add this deletes the draft; for Edit this soft-deletes. */
+  onDeletePress?: () => void;
   /** Opens the `ChooseSessionBottomSheet` in either `attach` or `edit` mode. */
   onSessionPillPress?: () => void;
 };
@@ -72,7 +72,7 @@ export function EditNoteBottomSheet({
   onClosed,
   onBack,
   onSavePress,
-  onDiscardPress,
+  onDeletePress,
   onSessionPillPress,
 }: EditNoteBottomSheetProps) {
   const [body, setBody] = useState<string>(values?.body ?? '');
@@ -158,7 +158,7 @@ export function EditNoteBottomSheet({
           primaryDisabled={!canSave}
           primaryColor={noteOrange}
           onPrimaryPress={() => onSavePress?.({ body: body.trim() })}
-          onDeletePress={onDiscardPress}
+          onDeletePress={onDeletePress}
         />
       </View>
     </BottomSheetShell>
