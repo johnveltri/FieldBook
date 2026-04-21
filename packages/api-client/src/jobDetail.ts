@@ -188,6 +188,7 @@ export async function fetchJobDetail(
   const notesBase = client
     .from('notes')
     .select('id, job_id, session_id, body, created_at')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
   const notesQ =
     sessionIds.length > 0
@@ -299,15 +300,20 @@ export async function fetchJobDetail(
     }
   }
 
+  const mapNote = (n: NoteRow) => ({
+    id: n.id,
+    body: n.body,
+    sessionId: n.session_id,
+    excerpt: excerptNote(n.body),
+    dateLabel: formatDateLabel(n.created_at),
+  });
+
   const noteBuckets: JobDetailNoteBucket[] = [];
   if (notesUnassigned.length) {
     noteBuckets.push({
       id: 'note-unassigned',
       kind: 'unassigned',
-      notes: notesUnassigned.map((n) => ({
-        excerpt: excerptNote(n.body),
-        dateLabel: formatDateLabel(n.created_at),
-      })),
+      notes: notesUnassigned.map(mapNote),
     });
   }
   for (const s of activeSessions) {
@@ -317,10 +323,7 @@ export async function fetchJobDetail(
         id: `note-${s.id}`,
         kind: 'session',
         sessionDateLabel: formatDateLabel(s.started_at),
-        notes: ns.map((n) => ({
-          excerpt: excerptNote(n.body),
-          dateLabel: formatDateLabel(n.created_at),
-        })),
+        notes: ns.map(mapNote),
       });
     }
   }
@@ -336,8 +339,6 @@ export async function fetchJobDetail(
         title: activeSessions.length ? 'Session activity' : 'No activity yet',
         timeLabel: formatTimeLabel(j.updated_at),
       };
-  const completedSessions = activeSessions.filter((s) => s.session_status === 'ended');
-
   return {
     id: j.id,
     shortDescription: j.short_description,
@@ -357,7 +358,10 @@ export async function fetchJobDetail(
       netPerHrDisplay,
       sessionCount,
     },
-    sessions: completedSessions.map(mapSession),
+    // All non-discarded sessions (in-progress + ended) so the Session pickers
+    // have the full list to choose from. SessionCard renders in-progress rows
+    // correctly — `timeRangeLabel` uses `…` for the open end.
+    sessions: activeSessions.map(mapSession),
     materialBuckets,
     noteBuckets,
     timeline,

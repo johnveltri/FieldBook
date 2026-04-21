@@ -37,6 +37,12 @@ export type JobDetailMaterialBucket = {
 };
 
 export type JobDetailNote = {
+  id: string;
+  /** Full body — used as prefill when opening the Edit Note sheet. */
+  body: string;
+  /** Set when the note is attached to a session; null for job-scoped notes. */
+  sessionId: string | null;
+  /** Truncated preview for list rendering. */
   excerpt: string;
   dateLabel: string;
 };

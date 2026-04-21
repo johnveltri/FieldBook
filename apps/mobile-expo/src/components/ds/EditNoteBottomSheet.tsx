@@ -1,0 +1,230 @@
+import { useEffect, useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { color, radius, space } from '@fieldbook/design-system/lib/tokens';
+
+import { bg, border, fg } from '../../theme/nativeTokens';
+import type { TextStyles } from '../../theme/nativeTokens';
+import {
+  JobDetailIconSectionAdd,
+  JobDetailIconViewNote,
+  SessionCardEditPencilIcon,
+  SessionSheetBackIcon,
+} from '../figma-icons/JobDetailScreenIcons';
+import { BottomSheetShell } from './BottomSheetShell';
+import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
+
+export type EditNoteBottomSheetValues = {
+  body: string;
+};
+
+export type EditNoteBottomSheetAssignedSession = {
+  id: string;
+  dateLabel: string;
+  timeRangeLabel: string;
+};
+
+type EditNoteBottomSheetProps = {
+  typography: TextStyles;
+  visible: boolean;
+  /** "Add Note" | "Edit Note" */
+  title: string;
+  /** "SAVE NEW NOTE" | "SAVE CHANGES" */
+  primaryLabel: string;
+  /** Prefill for the textarea; undefined defaults to empty. */
+  values?: EditNoteBottomSheetValues;
+  /** When non-null, header renders the pencil SESSION pill + session subtitle. */
+  assignedSession: EditNoteBottomSheetAssignedSession | null;
+  /** Hides the `+SESSION` pill entirely when the job has no non-discarded sessions. */
+  canAttachSession: boolean;
+  onClose?: () => void;
+  onClosed?: () => void;
+  onBack?: () => void;
+  onSavePress?: (values: EditNoteBottomSheetValues) => void;
+  /** Trash icon — for Add this discards the draft; for Edit this soft-deletes. */
+  onDiscardPress?: () => void;
+  /** Opens the `ChooseSessionBottomSheet` in either `attach` or `edit` mode. */
+  onSessionPillPress?: () => void;
+};
+
+/**
+ * Add / Edit Note sheet (Figma `1874:1677` Add Note / `1279:379` Edit Note).
+ *
+ * Mirrors the contract of `EditSessionBottomSheet`: parent-supplied `title` and
+ * `primaryLabel` so they remain stable during the slide-down close animation
+ * (derive from `editingNoteId` on the parent, not from the transient flow
+ * state). Local field state is reset on the `visible` edge.
+ */
+export function EditNoteBottomSheet({
+  typography,
+  visible,
+  title,
+  primaryLabel,
+  values,
+  assignedSession,
+  canAttachSession,
+  onClose,
+  onClosed,
+  onBack,
+  onSavePress,
+  onDiscardPress,
+  onSessionPillPress,
+}: EditNoteBottomSheetProps) {
+  const [body, setBody] = useState<string>(values?.body ?? '');
+
+  useEffect(() => {
+    if (!visible) return;
+    setBody(values?.body ?? '');
+  }, [values?.body, visible]);
+
+  const canSave = body.trim().length > 0;
+  const noteOrange = color('Semantic/Activity/Note');
+  const errorText = color('Semantic/Status/Error/Text');
+  const errorBg = color('Semantic/Status/Error/BG');
+  const showSessionPill = canAttachSession || assignedSession !== null;
+
+  return (
+    <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
+      <View style={styles.body}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={onBack ?? onClose}
+          style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+        >
+          <SessionSheetBackIcon color={fg.secondary} />
+          <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
+        </Pressable>
+
+        <View style={styles.header}>
+          <View style={styles.headerIcon}>
+            <JobDetailIconViewNote color={noteOrange} />
+          </View>
+          <Text
+            style={[typography.titleH3, styles.headerTitle, { color: fg.primary }]}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+          {showSessionPill ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={assignedSession ? 'Edit session' : 'Attach to session'}
+              onPress={onSessionPillPress}
+              disabled={!onSessionPillPress}
+              style={({ pressed }) => [
+                styles.sessionPill,
+                { backgroundColor: errorBg },
+                pressed && styles.pressed,
+              ]}
+            >
+              {assignedSession ? (
+                <SessionCardEditPencilIcon color={errorText} size={12} />
+              ) : (
+                <JobDetailIconSectionAdd color={errorText} />
+              )}
+              <Text style={[typography.bodySmall, { color: errorText }]}>SESSION</Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        <Text style={[typography.bodySmall, styles.subtitle]}>
+          {assignedSession
+            ? `Session: ${assignedSession.dateLabel} ${assignedSession.timeRangeLabel}`
+            : 'Unassigned job note'}
+        </Text>
+
+        <View style={styles.textareaShell}>
+          <TextInput
+            value={body}
+            onChangeText={setBody}
+            placeholder="What happened on site? Measurements, observations, next steps..."
+            placeholderTextColor={fg.secondary}
+            multiline
+            textAlignVertical="top"
+            scrollEnabled
+            style={[typography.body, styles.textareaInput]}
+          />
+        </View>
+
+        <SheetPrimaryDeleteActions
+          typography={typography}
+          primaryLabel={primaryLabel}
+          primaryDisabled={!canSave}
+          primaryColor={noteOrange}
+          onPrimaryPress={() => onSavePress?.({ body: body.trim() })}
+          onDeletePress={onDiscardPress}
+        />
+      </View>
+    </BottomSheetShell>
+  );
+}
+
+const styles = StyleSheet.create({
+  body: {
+    gap: space('Spacing/12'),
+    width: '100%',
+  },
+  back: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space('Spacing/4'),
+    alignSelf: 'flex-start',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space('Spacing/12'),
+  },
+  headerIcon: {
+    width: space('Spacing/16'),
+    height: space('Spacing/16'),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sessionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space('Spacing/8'),
+    height: space('Spacing/24'),
+    paddingHorizontal: space('Spacing/12'),
+    paddingVertical: space('Spacing/4'),
+    borderRadius: radius('Radius/Full'),
+  },
+  subtitle: {
+    color: fg.secondary,
+  },
+  textareaShell: {
+    minHeight: 245,
+    borderWidth: 1,
+    borderColor: border.subtle,
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.surfaceWhite,
+    paddingHorizontal: 17,
+    paddingVertical: 13,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  textareaInput: {
+    flex: 1,
+    color: fg.primary,
+    padding: 0,
+    minHeight: 219,
+  },
+  pressed: {
+    opacity: 0.75,
+  },
+});

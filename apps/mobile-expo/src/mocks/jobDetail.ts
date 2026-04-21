@@ -67,6 +67,9 @@ export const mockJobDetail: JobDetailViewModel = {
       kind: 'unassigned',
       notes: [
         {
+          id: 'note-mock-u1',
+          body: 'Client requested brushed nickel finish. Old valve was slightly corroded but salvageable. Will monitor for leaks after install.',
+          sessionId: null,
           excerpt:
             'Client requested brushed nickel finish. Old valve was slightly corroded but salvageable. Will... ',
           dateLabel: 'Mar 25, 2026',
@@ -77,7 +80,15 @@ export const mockJobDetail: JobDetailViewModel = {
       id: 'note-s1',
       kind: 'session',
       sessionDateLabel: 'Mar 25, 2026',
-      notes: [{ excerpt: 'dsfsdf', dateLabel: 'Mar 25, 2026' }],
+      notes: [
+        {
+          id: 'note-mock-s1',
+          body: 'dsfsdf',
+          sessionId: 's-mock-1',
+          excerpt: 'dsfsdf',
+          dateLabel: 'Mar 25, 2026',
+        },
+      ],
     },
   ],
   timeline: {

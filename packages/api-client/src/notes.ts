@@ -1,0 +1,158 @@
+import type { JobId } from '@fieldbook/shared-types';
+
+import type { FieldbookSupabaseClient } from './client';
+import type { SessionId } from './sessions';
+
+export type NoteId = string;
+
+/**
+ * Input for creating a new note. Exactly one of `jobId` / `sessionId` must be
+ * non-null to satisfy `notes_exactly_one_parent`. When `sessionId` is set the
+ * note is session-scoped; otherwise it is an unassigned (job-scoped) note.
+ */
+export type CreateNoteInput = {
+  jobId: JobId;
+  sessionId: SessionId | null;
+  body: string;
+};
+
+/**
+ * Partial update for an existing note.
+ *
+ * - `body` — replaces the note text.
+ * - `sessionId` — when provided (including `null`) reassigns the parent. Pass a
+ *   session id to move the note into that session; pass `null` to move the note
+ *   back to the unassigned (job-scoped) bucket. `jobId` is set in the same
+ *   UPDATE so the `notes_exactly_one_parent` check constraint is always
+ *   satisfied mid-statement.
+ */
+export type UpdateNoteInput = {
+  body?: string;
+  sessionId?: SessionId | null;
+};
+
+function assertBodyNotBlank(body: string): void {
+  if (!body || !body.trim()) {
+    throw new Error('Note body must not be blank.');
+  }
+}
+
+/** Inserts a new note scoped to either a job or a session (exactly one). */
+export async function createNote(
+  client: FieldbookSupabaseClient,
+  input: CreateNoteInput,
+): Promise<NoteId> {
+  assertBodyNotBlank(input.body);
+
+  const { data: authData, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  const userId = authData.user?.id;
+  if (!userId) {
+    throw new Error('No authenticated user available to create a note.');
+  }
+
+  const row = {
+    user_id: userId,
+    body: input.body.trim(),
+    // Exactly one parent: when a session is chosen we null out job_id, and vice
+    // versa. This matches how fetchJobDetail buckets notes.
+    job_id: input.sessionId ? null : input.jobId,
+    session_id: input.sessionId ?? null,
+  };
+
+  const { data, error } = await client
+    .from('notes')
+    .insert(row)
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return (data as { id: string }).id;
+}
+
+/**
+ * Updates a note's body and/or reassigns its parent session.
+ *
+ * When `sessionId` is provided we always write both `job_id` and `session_id`
+ * in a single UPDATE so the `notes_exactly_one_parent` check never sees a
+ * transient state with zero or two non-null parents.
+ */
+export async function updateNote(
+  client: FieldbookSupabaseClient,
+  noteId: NoteId,
+  input: UpdateNoteInput,
+): Promise<void> {
+  const patch: Record<string, unknown> = {};
+
+  if (input.body !== undefined) {
+    assertBodyNotBlank(input.body);
+    patch.body = input.body.trim();
+  }
+
+  if (input.sessionId !== undefined) {
+    if (input.sessionId === null) {
+      // Reassign back to the job bucket. Fetch the parent job id from whichever
+      // side is currently set, so the row ends up with exactly one parent.
+      const { data: current, error: readErr } = await client
+        .from('notes')
+        .select('job_id, session_id')
+        .eq('id', noteId)
+        .maybeSingle();
+      if (readErr) throw readErr;
+      if (!current) {
+        throw new Error('Note not found (check RLS: note must be owned by you).');
+      }
+      const row = current as { job_id: string | null; session_id: string | null };
+      let jobId = row.job_id;
+      if (!jobId && row.session_id) {
+        const { data: sess, error: sessErr } = await client
+          .from('sessions')
+          .select('job_id')
+          .eq('id', row.session_id)
+          .maybeSingle();
+        if (sessErr) throw sessErr;
+        jobId = (sess as { job_id: string } | null)?.job_id ?? null;
+      }
+      if (!jobId) {
+        throw new Error('Could not resolve parent job for note reassignment.');
+      }
+      patch.job_id = jobId;
+      patch.session_id = null;
+    } else {
+      patch.job_id = null;
+      patch.session_id = input.sessionId;
+    }
+  }
+
+  if (Object.keys(patch).length === 0) return;
+
+  const { data, error } = await client
+    .from('notes')
+    .update(patch)
+    .eq('id', noteId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error('Update affected no rows (check RLS: note must be owned by you).');
+  }
+}
+
+/** Soft-deletes a note by stamping `deleted_at`. */
+export async function softDeleteNote(
+  client: FieldbookSupabaseClient,
+  noteId: NoteId,
+): Promise<void> {
+  const { data, error } = await client
+    .from('notes')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', noteId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error('Delete affected no rows (check RLS: note must be owned by you).');
+  }
+}

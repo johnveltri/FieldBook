@@ -1,6 +1,15 @@
 export { JobDetailCategoryChip } from './JobDetailCategoryChip';
 export { JobDetailCtaRow } from './JobDetailCtaRow';
+export {
+  ChooseSessionBottomSheet,
+  type ChooseSessionBottomSheetSession,
+} from './ChooseSessionBottomSheet';
 export { EditJobBottomSheet } from './EditJobBottomSheet';
+export {
+  EditNoteBottomSheet,
+  type EditNoteBottomSheetAssignedSession,
+  type EditNoteBottomSheetValues,
+} from './EditNoteBottomSheet';
 export {
   EditSessionBottomSheet,
   type EditSessionBottomSheetValues,

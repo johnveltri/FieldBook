@@ -18,3 +18,11 @@ export {
   type SessionId,
   type UpdateSessionTimesInput,
 } from './sessions';
+export {
+  createNote,
+  softDeleteNote,
+  updateNote,
+  type CreateNoteInput,
+  type NoteId,
+  type UpdateNoteInput,
+} from './notes';

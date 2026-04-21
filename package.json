@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "test": "npm run test:api-client",
-    "test:api-client": "vitest run packages/api-client/src/jobs.test.ts packages/api-client/src/sessions.test.ts",
+    "test:api-client": "vitest run packages/api-client/src/jobs.test.ts packages/api-client/src/sessions.test.ts packages/api-client/src/notes.test.ts",
     "test:mobile": "npm run test -w mobile-expo",
     "typecheck": "tsc -p packages/shared-types/tsconfig.json --noEmit && tsc -p packages/api-client/tsconfig.json --noEmit && tsc -p packages/design-system/tsconfig.json --noEmit && tsc -p apps/mobile-expo/tsconfig.json --noEmit",
     "mobile": "npm run start -w mobile-expo",
