@@ -97,6 +97,7 @@ export async function updateNote(
         .from('notes')
         .select('job_id, session_id')
         .eq('id', noteId)
+        .is('deleted_at', null)
         .maybeSingle();
       if (readErr) throw readErr;
       if (!current) {
@@ -130,6 +131,7 @@ export async function updateNote(
     .from('notes')
     .update(patch)
     .eq('id', noteId)
+    .is('deleted_at', null)
     .select('id')
     .maybeSingle();
 

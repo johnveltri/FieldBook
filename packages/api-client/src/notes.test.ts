@@ -213,7 +213,7 @@ describe('notes api client', () => {
     ).rejects.toThrow('Note body must not be blank.');
   });
 
-  it('updateNote throws when the target row is not affected (e.g. RLS)', async () => {
+  it('updateNote throws when the target row is not affected (e.g. RLS or soft-deleted)', async () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
@@ -228,6 +228,10 @@ describe('notes api client', () => {
     await expect(
       updateNote(client as never, 'note-1', { body: 'new body' }),
     ).rejects.toThrow('Update affected no rows (check RLS: note must be owned by you).');
+
+    const notesBuilder = (client.from as unknown as { mock: { results: Array<{ value: unknown }> } })
+      .mock.results[0]?.value as { is: { mock: { calls: unknown[][] } } };
+    expect(notesBuilder.is.mock.calls).toContainEqual(['deleted_at', null]);
   });
 
   // --- softDeleteNote -------------------------------------------------------

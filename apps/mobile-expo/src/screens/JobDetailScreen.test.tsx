@@ -82,6 +82,53 @@ jest.mock('../components/ds', () => ({
       </View>
     ) : null;
   },
+  EditNoteBottomSheet: ({
+    visible,
+    title,
+    assignedSession,
+    onSavePress,
+    onDiscardPress,
+    onSessionPillPress,
+  }: {
+    visible: boolean;
+    title: string;
+    assignedSession: { id: string } | null;
+    onSavePress?: (values: { body: string }) => void;
+    onDiscardPress?: () => void;
+    onSessionPillPress?: () => void;
+  }) => {
+    const { Text, View } = require('react-native');
+    return visible ? (
+      <View>
+        <Text>{title}</Text>
+        <Text>{assignedSession ? `Assigned ${assignedSession.id}` : 'Unassigned'}</Text>
+        <Text onPress={() => onSessionPillPress?.()}>Open Session Picker</Text>
+        <Text onPress={() => onSavePress?.({ body: 'Saved note body' })}>Save Note</Text>
+        <Text onPress={() => onDiscardPress?.()}>Delete Note</Text>
+      </View>
+    ) : null;
+  },
+  ChooseSessionBottomSheet: ({
+    visible,
+    sessions,
+    onSelect,
+    onRemove,
+  }: {
+    visible: boolean;
+    sessions: Array<{ id: string }>;
+    onSelect: (sessionId: string) => void;
+    onRemove?: () => void;
+  }) => {
+    const { Text, View } = require('react-native');
+    return visible ? (
+      <View>
+        {sessions.map((s) => (
+          <Text key={s.id} onPress={() => onSelect(s.id)}>{`Pick ${s.id}`}</Text>
+        ))}
+        <Text onPress={() => onRemove?.()}>Remove Session</Text>
+      </View>
+    ) : null;
+  },
   SessionCard: ({
     session,
     onEditPress,
@@ -101,11 +148,14 @@ jest.mock('../components/ds', () => ({
 
 jest.mock('@fieldbook/api-client', () => ({
   createManualSession: jest.fn(),
+  createNote: jest.fn(),
   deleteJobById: jest.fn(),
   discardSession: jest.fn(),
   fetchFirstJobIdForCurrentUser: jest.fn(),
   fetchJobDetail: jest.fn(),
+  softDeleteNote: jest.fn(),
   updateJobById: jest.fn(),
+  updateNote: jest.fn(),
   updateSessionTimes: jest.fn(),
 }));
 
@@ -114,7 +164,7 @@ jest.mock('../lib/supabase', () => ({
   supabase: {},
 }));
 
-describe('JobDetailScreen manual session flow', () => {
+describe('JobDetailScreen manual session and note flows', () => {
   const apiClient = jest.requireMock('@fieldbook/api-client') as any;
 
   const baseJob: JobDetailViewModel = {
@@ -147,7 +197,21 @@ describe('JobDetailScreen manual session flow', () => {
       },
     ],
     materialBuckets: [],
-    noteBuckets: [],
+    noteBuckets: [
+      {
+        id: 'note-unassigned',
+        kind: 'unassigned',
+        notes: [
+          {
+            id: 'note-1',
+            body: 'Existing note body',
+            sessionId: null,
+            excerpt: 'Existing note excerpt',
+            dateLabel: 'Apr 18, 2026',
+          },
+        ],
+      },
+    ],
     timeline: {
       title: 'Session started',
       timeLabel: '10:00 AM',
@@ -160,6 +224,9 @@ describe('JobDetailScreen manual session flow', () => {
     apiClient.createManualSession.mockResolvedValue('sess-new-1');
     apiClient.updateSessionTimes.mockResolvedValue(undefined);
     apiClient.discardSession.mockResolvedValue(undefined);
+    apiClient.createNote.mockResolvedValue('note-new-1');
+    apiClient.updateNote.mockResolvedValue(undefined);
+    apiClient.softDeleteNote.mockResolvedValue(undefined);
   });
 
   it('creates a manual session from add flow', async () => {
@@ -213,5 +280,107 @@ describe('JobDetailScreen manual session flow', () => {
     await waitFor(() => {
       expect(apiClient.discardSession).toHaveBeenCalledWith({}, 'sess-1');
     });
+  });
+
+  it('creates a note without session assignment', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Add NOTES')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByLabelText('Add NOTES'));
+    fireEvent.press(screen.getByText('Save Note'));
+
+    await waitFor(() => {
+      expect(apiClient.createNote).toHaveBeenCalledWith({}, {
+        jobId: 'job-1',
+        sessionId: null,
+        body: 'Saved note body',
+      });
+    });
+  });
+
+  it('creates a note assigned to a selected session', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Add NOTES')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByLabelText('Add NOTES'));
+    fireEvent.press(screen.getByText('Open Session Picker'));
+    fireEvent.press(screen.getByText('Pick sess-1'));
+    fireEvent.press(screen.getByText('Save Note'));
+
+    await waitFor(() => {
+      expect(apiClient.createNote).toHaveBeenCalledWith({}, {
+        jobId: 'job-1',
+        sessionId: 'sess-1',
+        body: 'Saved note body',
+      });
+    });
+  });
+
+  it('updates an existing note from edit flow', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Existing note excerpt')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Existing note excerpt'));
+    fireEvent.press(screen.getByText('Save Note'));
+
+    await waitFor(() => {
+      expect(apiClient.updateNote).toHaveBeenCalledWith({}, 'note-1', {
+        body: 'Saved note body',
+        sessionId: null,
+      });
+    });
+  });
+
+  it('soft-deletes an existing note from edit flow', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Existing note excerpt')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Existing note excerpt'));
+    fireEvent.press(screen.getByText('Delete Note'));
+
+    await waitFor(() => {
+      expect(apiClient.softDeleteNote).toHaveBeenCalledWith({}, 'note-1');
+    });
+  });
+
+  it('hides in-progress sessions from cards and note session chooser', async () => {
+    apiClient.fetchJobDetail.mockResolvedValueOnce({
+      ...baseJob,
+      sessions: [
+        ...baseJob.sessions,
+        {
+          id: 'sess-progress',
+          startedAt: '2026-04-18T09:00:00.000Z',
+          endedAt: null,
+          dateLabel: 'Apr 18, 2026',
+          timeRangeLabel: '9:00 AM – …',
+          durationLabel: '0.2h',
+        },
+      ],
+    });
+
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit session sess-1')).toBeTruthy();
+    });
+    expect(screen.queryByText('Edit session sess-progress')).toBeNull();
+
+    fireEvent.press(screen.getByLabelText('Add NOTES'));
+    fireEvent.press(screen.getByText('Open Session Picker'));
+    expect(screen.getByText('Pick sess-1')).toBeTruthy();
+    expect(screen.queryByText('Pick sess-progress')).toBeNull();
   });
 });

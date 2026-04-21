@@ -183,6 +183,7 @@ export async function fetchJobDetail(
   if (sErr) throw sErr;
   const sessions = (sessionsRaw ?? []) as SessionRow[];
   const activeSessions = sessions.filter((s) => s.session_status !== 'discarded');
+  const endedSessions = activeSessions.filter((s) => s.session_status === 'ended');
   const sessionIds = activeSessions.map((s) => s.id);
 
   const notesBase = client
@@ -358,10 +359,9 @@ export async function fetchJobDetail(
       netPerHrDisplay,
       sessionCount,
     },
-    // All non-discarded sessions (in-progress + ended) so the Session pickers
-    // have the full list to choose from. SessionCard renders in-progress rows
-    // correctly — `timeRangeLabel` uses `…` for the open end.
-    sessions: activeSessions.map(mapSession),
+    // Session list drives SessionCard + pickers in the current UI. Keep this
+    // to completed sessions only; in-progress will get dedicated UI later.
+    sessions: endedSessions.map(mapSession),
     materialBuckets,
     noteBuckets,
     timeline,

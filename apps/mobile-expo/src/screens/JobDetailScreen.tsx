@@ -568,23 +568,29 @@ export function JobDetailScreen({
   }, [closeNoteFlow, editingNoteId, formatErrorMessage, refetchJob]);
 
   /** Non-discarded sessions, mapped for the generic `ChooseSessionBottomSheet`. */
+  const visibleSessions = useMemo(
+    () => job?.sessions.filter((s) => s.endedAt !== null) ?? [],
+    [job],
+  );
+
+  /** Completed sessions only, mapped for the generic `ChooseSessionBottomSheet`. */
   const chooserSessions = useMemo<ChooseSessionBottomSheetSession[]>(
     () =>
-      job?.sessions.map((s) => ({
+      visibleSessions.map((s) => ({
         id: s.id,
         dateLabel: s.dateLabel,
         timeRangeLabel: s.timeRangeLabel,
-      })) ?? [],
-    [job],
+      })),
+    [visibleSessions],
   );
 
   /** Hydrated version of `draftSessionId` used by the note sheet subtitle + pill icon. */
   const draftAssignedSession = useMemo(() => {
     if (!draftSessionId) return null;
-    const s = job?.sessions.find((x) => x.id === draftSessionId);
+    const s = visibleSessions.find((x) => x.id === draftSessionId);
     if (!s) return null;
     return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
-  }, [draftSessionId, job]);
+  }, [draftSessionId, visibleSessions]);
 
   const onDeleteJobSheet = useCallback(async () => {
     if (!job) return;
@@ -758,7 +764,7 @@ export function JobDetailScreen({
           onAddPress={openSessionChooser}
         />
         <View style={[styles.sessionList, { maxWidth: CONTENT_MAX_WIDTH }]}>
-          {job.sessions.map((s) => (
+          {visibleSessions.map((s) => (
             <SessionCard
               key={s.id}
               session={s}

@@ -433,7 +433,7 @@ describe('jobs api client', () => {
     expect(listRow.timeLabel).toBe(jobDetail.metrics.timeLabel);
   });
 
-  it('fetchJobDetail includes all non-discarded sessions in the sessions list', async () => {
+  it('fetchJobDetail includes only ended sessions in the sessions list', async () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
@@ -491,10 +491,7 @@ describe('jobs api client', () => {
     const detail = await fetchJobDetail(client as never, 'job-2');
 
     expect(detail).not.toBeNull();
-    // Both non-discarded sessions are returned so session pickers (e.g. the
-    // note `ChooseSessionBottomSheet`) have the full list. Discarded sessions
-    // are still filtered out upstream.
-    expect(detail?.sessions.map((s) => s.id)).toEqual(['sess-ended', 'sess-progress']);
+    expect(detail?.sessions.map((s) => s.id)).toEqual(['sess-ended']);
   });
 
   it('fetchJobDetail maps note id/body/sessionId and filters soft-deleted notes', async () => {
