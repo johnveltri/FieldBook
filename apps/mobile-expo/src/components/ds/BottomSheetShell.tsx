@@ -116,13 +116,21 @@ export function BottomSheetShell({
     };
   }, [insets.bottom, keyboardOffset]);
 
+  // When the sheet is hidden we still keep the view tree mounted so the slide-down
+  // animation can play, but taps must pass through to whatever is behind us —
+  // otherwise stacking two sheets (e.g. chooser + edit) swallows the active sheet's
+  // taps via the inactive sheet's scrim Pressable.
   return (
-    <View style={styles.overlay} pointerEvents="box-none">
+    <View
+      style={styles.overlay}
+      pointerEvents={visible ? 'box-none' : 'none'}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Close bottom sheet"
         onPress={onClose}
         style={StyleSheet.absoluteFillObject}
+        pointerEvents={visible ? 'auto' : 'none'}
       >
         <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]} />
       </Pressable>
@@ -141,6 +149,7 @@ export function BottomSheetShell({
             ],
           },
         ]}
+        pointerEvents={visible ? 'auto' : 'none'}
       >
         <View style={styles.handle} />
         <View style={styles.content}>{children}</View>

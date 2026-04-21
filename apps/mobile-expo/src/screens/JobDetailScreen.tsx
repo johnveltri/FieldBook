@@ -31,10 +31,14 @@ import {
 
 import {
   EditJobBottomSheet,
+  EditSessionBottomSheet,
   JobDetailCtaRow,
   JobDetailJobHeader,
   JobDetailMetricTertiary,
   JobDetailSummaryCard,
+  NewSessionBottomSheet,
+  SessionCard,
+  type EditSessionBottomSheetValues,
 } from '../components/ds';
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import {
@@ -53,17 +57,19 @@ import {
   JobDetailIconTopClose,
   JobDetailIconTopEdit,
   JobDetailIconViewNote,
-  JobDetailIconViewSessionChevron,
 } from '../components/figma-icons/JobDetailScreenIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/tokens';
 import {
+  createManualSession,
   deleteJobById,
+  discardSession,
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
+  updateSessionTimes,
 } from '@fieldbook/api-client';
-import type { JobDetailViewModel } from '@fieldbook/shared-types';
+import type { JobDetailSession, JobDetailViewModel } from '@fieldbook/shared-types';
 
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
@@ -142,6 +148,16 @@ export function JobDetailScreen({
   const [jobSaving, setJobSaving] = useState(false);
   const [editSheetMounted, setEditSheetMounted] = useState(false);
   const [editSheetVisible, setEditSheetVisible] = useState(false);
+
+  /** State machine for the session add/edit flow. */
+  type SessionFlow = 'closed' | 'chooser' | 'addForm' | 'editForm';
+  const [sessionFlow, setSessionFlow] = useState<SessionFlow>('closed');
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  /** Which session card (by id) is expanded; only one at a time. */
+  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
+  /** Mount flag lets BottomSheetShell play its exit animation before unmounting. */
+  const [sessionSheetMounted, setSessionSheetMounted] = useState(false);
+  const [sessionSaving, setSessionSaving] = useState(false);
   /** Set when Supabase is configured but fetch returns null or throws (no silent mock). */
   const [jobLoadError, setJobLoadError] = useState<string | null>(null);
   /** Ensures we only auto-open the edit sheet once per navigation (see `initialEditOpen`). */
@@ -300,6 +316,107 @@ export function JobDetailScreen({
     },
     [job, onCloseEditSheet, parseRevenueCents],
   );
+
+  // --- Session add/edit flow ---
+
+  const openSessionChooser = useCallback(() => {
+    setSessionSheetMounted(true);
+    setSessionFlow('chooser');
+    setEditingSessionId(null);
+  }, []);
+
+  const closeSessionFlow = useCallback(() => {
+    setSessionFlow('closed');
+  }, []);
+
+  const openAddSession = useCallback(() => {
+    setSessionFlow('addForm');
+  }, []);
+
+  const openEditSession = useCallback((sessionId: string) => {
+    setEditingSessionId(sessionId);
+    setSessionSheetMounted(true);
+    setSessionFlow('editForm');
+  }, []);
+
+  const editingSession = useMemo<JobDetailSession | null>(() => {
+    if (!editingSessionId || !job) return null;
+    return job.sessions.find((s) => s.id === editingSessionId) ?? null;
+  }, [editingSessionId, job]);
+
+  const refetchJob = useCallback(async () => {
+    if (!job) return;
+    const refreshed = await fetchJobDetail(supabase, job.id);
+    if (refreshed) setJob(refreshed);
+  }, [job]);
+
+  const formatErrorMessage = useCallback((e: unknown): string => {
+    if (e instanceof Error) return e.message;
+    if (
+      typeof e === 'object' &&
+      e !== null &&
+      'message' in e &&
+      typeof (e as { message: unknown }).message === 'string'
+    ) {
+      return (e as { message: string }).message;
+    }
+    return String(e);
+  }, []);
+
+  const onSaveNewSession = useCallback(
+    async (values: EditSessionBottomSheetValues) => {
+      if (!job) return;
+      setSessionSaving(true);
+      try {
+        await createManualSession(supabase, {
+          jobId: job.id,
+          startedAt: values.startedAt,
+          endedAt: values.endedAt,
+        });
+        await refetchJob();
+        closeSessionFlow();
+      } catch (e) {
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save session.');
+      } finally {
+        setSessionSaving(false);
+      }
+    },
+    [closeSessionFlow, formatErrorMessage, job, refetchJob],
+  );
+
+  const onSaveSessionChanges = useCallback(
+    async (values: EditSessionBottomSheetValues) => {
+      if (!editingSessionId) return;
+      setSessionSaving(true);
+      try {
+        await updateSessionTimes(supabase, editingSessionId, {
+          startedAt: values.startedAt,
+          endedAt: values.endedAt,
+        });
+        await refetchJob();
+        closeSessionFlow();
+      } catch (e) {
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save session.');
+      } finally {
+        setSessionSaving(false);
+      }
+    },
+    [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob],
+  );
+
+  const onDiscardEditingSession = useCallback(async () => {
+    if (!editingSessionId) return;
+    setSessionSaving(true);
+    try {
+      await discardSession(supabase, editingSessionId);
+      await refetchJob();
+      closeSessionFlow();
+    } catch (e) {
+      Alert.alert('Discard failed', formatErrorMessage(e) || 'Could not discard session.');
+    } finally {
+      setSessionSaving(false);
+    }
+  }, [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob]);
 
   const onDeleteJobSheet = useCallback(async () => {
     if (!job) return;
@@ -470,24 +587,22 @@ export function JobDetailScreen({
           icon={<JobDetailIconSectionSessions color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
+          onAddPress={openSessionChooser}
         />
-        {job.sessions.map((s) => (
-          // One row per session — collapsed “view session” card (chevron for future expand).
-          <View key={s.id} style={[styles.viewSessionCard, { maxWidth: CONTENT_MAX_WIDTH }]}>
-            <View style={styles.viewSessionInner}>
-              <View style={styles.viewSessionLeading}>
-                <View style={styles.viewSessionDatePad}>
-                  <Text style={[typography.bodyBold, { color: fg.primary }]}>{s.dateLabel}</Text>
-                </View>
-                <Text style={typography.sessionTimeRange}>{s.timeRangeLabel}</Text>
-              </View>
-              <View style={styles.viewSessionTrailing}>
-                <Text style={[typography.metric, { textTransform: 'none' }]}>{s.durationLabel}</Text>
-                <JobDetailIconViewSessionChevron color={fg.secondary} />
-              </View>
-            </View>
-          </View>
-        ))}
+        <View style={[styles.sessionList, { maxWidth: CONTENT_MAX_WIDTH }]}>
+          {job.sessions.map((s) => (
+            <SessionCard
+              key={s.id}
+              session={s}
+              typography={typography}
+              expanded={expandedSessionId === s.id}
+              onToggle={() =>
+                setExpandedSessionId((prev) => (prev === s.id ? null : s.id))
+              }
+              onEditPress={() => openEditSession(s.id)}
+            />
+          ))}
+        </View>
 
         <SectionHeaderFigma
           title="MATERIALS"
@@ -539,6 +654,64 @@ export function JobDetailScreen({
           }}
         />
       ) : null}
+      {sessionSheetMounted ? (
+        <>
+          <NewSessionBottomSheet
+            typography={typography}
+            visible={sessionFlow === 'chooser'}
+            onClose={closeSessionFlow}
+            onClosed={() => {
+              if (sessionFlow === 'closed') setSessionSheetMounted(false);
+            }}
+            onLogPastPress={openAddSession}
+          />
+          <EditSessionBottomSheet
+            typography={typography}
+            visible={sessionFlow === 'addForm' || sessionFlow === 'editForm'}
+            // Derive mode from editingSessionId (not sessionFlow) so the title /
+            // primary label stay stable during the slide-down close animation,
+            // where sessionFlow has already flipped to 'closed'.
+            title={editingSessionId ? 'Edit Session' : 'Add Session'}
+            primaryLabel={editingSessionId ? 'SAVE CHANGES' : 'SAVE NEW SESSION'}
+            values={
+              editingSessionId && editingSession
+                ? {
+                    startedAt: editingSession.startedAt,
+                    endedAt:
+                      editingSession.endedAt ?? editingSession.startedAt,
+                  }
+                : undefined
+            }
+            onClose={closeSessionFlow}
+            onClosed={() => {
+              if (sessionFlow === 'closed') setSessionSheetMounted(false);
+            }}
+            onBack={() => {
+              if (sessionFlow === 'addForm') {
+                setSessionFlow('chooser');
+              } else {
+                closeSessionFlow();
+              }
+            }}
+            onSavePress={(values) => {
+              if (sessionSaving) return;
+              if (sessionFlow === 'editForm') {
+                void onSaveSessionChanges(values);
+              } else {
+                void onSaveNewSession(values);
+              }
+            }}
+            onDiscardPress={() => {
+              if (sessionSaving) return;
+              if (sessionFlow === 'editForm') {
+                void onDiscardEditingSession();
+              } else {
+                closeSessionFlow();
+              }
+            }}
+          />
+        </>
+      ) : null}
     </View>
   );
 }
@@ -551,11 +724,13 @@ function SectionHeaderFigma({
   icon,
   typography,
   showAdd,
+  onAddPress,
 }: {
   title: string;
   icon: ReactNode;
   typography: TextStyles;
   showAdd: boolean;
+  onAddPress?: () => void;
 }) {
   return (
     <View style={[styles.sectionHeader, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
@@ -571,7 +746,8 @@ function SectionHeaderFigma({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Add ${title}`}
-          onPress={() => {}}
+          onPress={onAddPress}
+          disabled={!onAddPress}
           style={({ pressed }) => [styles.addPill, pressed && styles.pressed]}
         >
           <JobDetailIconSectionAdd color={color('Semantic/Status/Error/Text')} />
@@ -884,26 +1060,10 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
   },
 
-  /** Session list row — white card, optional bottom margin between multiple sessions. */
-  viewSessionCard: {
+  /** Column wrapper for the Sessions list — caps to DS content width. */
+  sessionList: {
     width: '100%',
-    minHeight: space('Spacing/80'),
-    backgroundColor: bg.surfaceWhite,
-    borderRadius: radius('Radius/16'),
-    borderWidth: 1,
-    borderColor: border.subtle,
-    marginBottom: space('Spacing/8'),
   },
-  viewSessionInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space('Spacing/16'),
-    paddingVertical: space('Spacing/16'),
-  },
-  viewSessionLeading: { flex: 1, minWidth: 0 },
-  viewSessionDatePad: { paddingVertical: space('Spacing/4') },
-  viewSessionTrailing: { flexDirection: 'row', alignItems: 'center', gap: space('Spacing/12') },
 
   /** Vertical breathing room around materials/notes cards (Figma `py-[9px]`). */
   viewCardOuter: {
