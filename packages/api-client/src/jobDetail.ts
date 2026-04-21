@@ -126,6 +126,7 @@ function mapSession(row: SessionRow): JobDetailSession {
   const startStr = timeFmt.format(start);
   const endStr = end ? timeFmt.format(end) : '…';
   const hours = sessionDurationHours(row.started_at, row.ended_at);
+
   return {
     id: row.id,
     startedAt: row.started_at,
@@ -335,6 +336,7 @@ export async function fetchJobDetail(
         title: activeSessions.length ? 'Session activity' : 'No activity yet',
         timeLabel: formatTimeLabel(j.updated_at),
       };
+  const completedSessions = activeSessions.filter((s) => s.session_status === 'ended');
 
   return {
     id: j.id,
@@ -355,7 +357,7 @@ export async function fetchJobDetail(
       netPerHrDisplay,
       sessionCount,
     },
-    sessions: activeSessions.map(mapSession),
+    sessions: completedSessions.map(mapSession),
     materialBuckets,
     noteBuckets,
     timeline,

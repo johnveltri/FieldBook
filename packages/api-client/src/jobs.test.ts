@@ -432,4 +432,65 @@ describe('jobs api client', () => {
     expect(listRow.netEarningsCents).toBe(jobDetail.earnings.netEarningsCents);
     expect(listRow.timeLabel).toBe(jobDetail.metrics.timeLabel);
   });
+
+  it('fetchJobDetail includes only ended sessions in the sessions list', async () => {
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            maybeSingleResult: {
+              data: {
+                id: 'job-2',
+                short_description: 'Panel upgrade',
+                customer_name: 'Casey',
+                service_address: '44 North Ave',
+                job_type: 'electrical',
+                job_work_status: 'in_progress',
+                job_payment_state: 'pending',
+                revenue_cents: 150000,
+                collected_cents: 0,
+                updated_at: '2026-04-17T10:00:00.000Z',
+              },
+              error: null,
+            },
+          }),
+        ],
+        sessions: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'sess-ended',
+                  job_id: 'job-2',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T09:00:00.000Z',
+                  ended_at: '2026-04-16T10:00:00.000Z',
+                },
+                {
+                  id: 'sess-progress',
+                  job_id: 'job-2',
+                  session_status: 'in_progress',
+                  started_at: '2026-04-17T09:00:00.000Z',
+                  ended_at: null,
+                },
+              ],
+              error: null,
+            },
+          }),
+        ],
+        notes: [makeBuilder({ awaitResult: { data: [], error: null } })],
+        materials: [
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+        ],
+        job_activity_events: [makeBuilder({ awaitResult: { data: [], error: null } })],
+      },
+    });
+
+    const detail = await fetchJobDetail(client as never, 'job-2');
+
+    expect(detail).not.toBeNull();
+    expect(detail?.sessions.map((s) => s.id)).toEqual(['sess-ended']);
+  });
 });
