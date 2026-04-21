@@ -8,6 +8,10 @@ import type { TextStyles } from '../../theme/nativeTokens';
 type SheetPrimaryDeleteActionsProps = {
   typography: TextStyles;
   primaryLabel: string;
+  /** When true, primary button is dimmed and onPrimaryPress is not called. */
+  primaryDisabled?: boolean;
+  /** Background + shadow color for the primary button. Defaults to `Brand/Primary`. */
+  primaryColor?: string;
   onPrimaryPress?: () => void;
   onDeletePress?: () => void;
 };
@@ -29,16 +33,26 @@ function DeleteIcon() {
 export function SheetPrimaryDeleteActions({
   typography,
   primaryLabel,
+  primaryDisabled = false,
+  primaryColor,
   onPrimaryPress,
   onDeletePress,
 }: SheetPrimaryDeleteActionsProps) {
+  const tint = primaryColor ?? color('Brand/Primary');
   return (
     <View style={styles.row}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={primaryLabel}
-        onPress={onPrimaryPress}
-        style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
+        accessibilityState={{ disabled: primaryDisabled }}
+        onPress={primaryDisabled ? undefined : onPrimaryPress}
+        disabled={primaryDisabled}
+        style={({ pressed }) => [
+          styles.primary,
+          { backgroundColor: tint, shadowColor: tint },
+          primaryDisabled && styles.primaryDisabled,
+          pressed && !primaryDisabled && styles.pressed,
+        ]}
       >
         <Text style={[typography.ctaPrimaryLabel, styles.primaryLabel]}>{primaryLabel}</Text>
       </Pressable>
@@ -66,12 +80,13 @@ const styles = StyleSheet.create({
     borderRadius: radius('Radius/12'),
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color('Brand/Primary'),
-    shadowColor: color('Brand/Primary'),
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 1,
+  },
+  primaryDisabled: {
+    opacity: 0.45,
   },
   primaryLabel: {
     color: color('Foundation/Surface/White'),

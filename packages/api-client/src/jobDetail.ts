@@ -35,7 +35,7 @@ type JobRow = {
 type SessionRow = {
   id: string;
   job_id: string;
-  session_status: 'in_progress' | 'ended' | 'discarded';
+  session_status: 'in_progress' | 'ended' | 'deleted';
   started_at: string;
   ended_at: string | null;
 };
@@ -182,12 +182,16 @@ export async function fetchJobDetail(
 
   if (sErr) throw sErr;
   const sessions = (sessionsRaw ?? []) as SessionRow[];
-  const activeSessions = sessions.filter((s) => s.session_status !== 'discarded');
+  const activeSessions = sessions.filter((s) => s.session_status !== 'deleted');
+  const endedSessions = activeSessions.filter((s) => s.session_status === 'ended');
+  const inProgressSession =
+    activeSessions.find((s) => s.session_status === 'in_progress') ?? null;
   const sessionIds = activeSessions.map((s) => s.id);
 
   const notesBase = client
     .from('notes')
     .select('id, job_id, session_id, body, created_at')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
   const notesQ =
     sessionIds.length > 0
@@ -299,15 +303,20 @@ export async function fetchJobDetail(
     }
   }
 
+  const mapNote = (n: NoteRow) => ({
+    id: n.id,
+    body: n.body,
+    sessionId: n.session_id,
+    excerpt: excerptNote(n.body),
+    dateLabel: formatDateLabel(n.created_at),
+  });
+
   const noteBuckets: JobDetailNoteBucket[] = [];
   if (notesUnassigned.length) {
     noteBuckets.push({
       id: 'note-unassigned',
       kind: 'unassigned',
-      notes: notesUnassigned.map((n) => ({
-        excerpt: excerptNote(n.body),
-        dateLabel: formatDateLabel(n.created_at),
-      })),
+      notes: notesUnassigned.map(mapNote),
     });
   }
   for (const s of activeSessions) {
@@ -317,10 +326,7 @@ export async function fetchJobDetail(
         id: `note-${s.id}`,
         kind: 'session',
         sessionDateLabel: formatDateLabel(s.started_at),
-        notes: ns.map((n) => ({
-          excerpt: excerptNote(n.body),
-          dateLabel: formatDateLabel(n.created_at),
-        })),
+        notes: ns.map(mapNote),
       });
     }
   }
@@ -336,8 +342,6 @@ export async function fetchJobDetail(
         title: activeSessions.length ? 'Session activity' : 'No activity yet',
         timeLabel: formatTimeLabel(j.updated_at),
       };
-  const completedSessions = activeSessions.filter((s) => s.session_status === 'ended');
-
   return {
     id: j.id,
     shortDescription: j.short_description,
@@ -357,7 +361,11 @@ export async function fetchJobDetail(
       netPerHrDisplay,
       sessionCount,
     },
-    sessions: completedSessions.map(mapSession),
+    // Current UI shows completed sessions only.
+    displaySessions: endedSessions.map(mapSession),
+    // Keep full non-deleted set for future dedicated in-progress UI.
+    allSessions: activeSessions.map(mapSession),
+    inProgressSession: inProgressSession ? mapSession(inProgressSession) : null,
     materialBuckets,
     noteBuckets,
     timeline,

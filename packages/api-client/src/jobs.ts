@@ -115,7 +115,7 @@ type ListJobsRow = {
 type ListJobSessionRow = {
   id: string;
   job_id: string;
-  session_status: 'in_progress' | 'ended' | 'discarded';
+  session_status: 'in_progress' | 'ended' | 'deleted';
   started_at: string;
   ended_at: string | null;
 };
@@ -182,7 +182,7 @@ export async function listJobsForCurrentUser(
   if (sessionsError) throw sessionsError;
 
   const sessions = ((sessionsData ?? []) as ListJobSessionRow[]).filter(
-    (s) => s.session_status !== 'discarded',
+    (s) => s.session_status !== 'deleted',
   );
   const sessionJobIdBySessionId = new Map<string, string>();
   const totalHoursByJobId = new Map<string, number>();

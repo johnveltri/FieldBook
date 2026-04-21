@@ -77,37 +77,41 @@ export async function updateSessionTimes(
       ended_at: input.endedAt,
     })
     .eq('id', sessionId)
+    .in('session_status', ['ended', 'in_progress'])
     .select('id')
     .maybeSingle();
 
   if (error) throw error;
   if (!data) {
-    throw new Error('Update affected no rows (check RLS: session must be owned by you).');
+    throw new Error('Update affected no active rows (session may be deleted or not owned by you).');
   }
 }
 
 /**
- * Marks a session `discarded`. Matches the `sessions_status_timestamps_check` constraint
- * (discarded_at required, ended_at cleared) and triggers the child-unassignment migration
- * `20260417120005_unassign_children_on_session_discard.sql`.
+ * Soft-deletes a session via status transition. Matches the
+ * `sessions_status_timestamps_check` constraint (`deleted_at` required, `ended_at` cleared)
+ * and triggers the child-unassignment migration.
  */
-export async function discardSession(
+export async function deleteSession(
   client: FieldbookSupabaseClient,
   sessionId: SessionId,
 ): Promise<void> {
   const { data, error } = await client
     .from('sessions')
     .update({
-      session_status: 'discarded',
-      discarded_at: new Date().toISOString(),
+      session_status: 'deleted',
+      deleted_at: new Date().toISOString(),
       ended_at: null,
     })
     .eq('id', sessionId)
+    .in('session_status', ['ended', 'in_progress'])
     .select('id')
     .maybeSingle();
 
   if (error) throw error;
   if (!data) {
-    throw new Error('Discard affected no rows (check RLS: session must be owned by you).');
+    throw new Error(
+      'Delete affected no active rows (session may already be deleted or not owned by you).',
+    );
   }
 }

@@ -12,9 +12,17 @@ export {
 } from './jobs';
 export {
   createManualSession,
-  discardSession,
+  deleteSession,
   updateSessionTimes,
   type CreateManualSessionInput,
   type SessionId,
   type UpdateSessionTimesInput,
 } from './sessions';
+export {
+  createNote,
+  deleteNote,
+  updateNote,
+  type CreateNoteInput,
+  type NoteId,
+  type UpdateNoteInput,
+} from './notes';

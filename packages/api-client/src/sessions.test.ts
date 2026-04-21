@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { createManualSession, discardSession, updateSessionTimes } from './sessions';
+import { createManualSession, deleteSession, updateSessionTimes } from './sessions';
 import { makeBuilder, makeClient } from './testUtils';
 
 describe('sessions api client', () => {
@@ -54,17 +54,16 @@ describe('sessions api client', () => {
 
   it('updateSessionTimes updates start and end timestamps', async () => {
     let patch: unknown;
+    const builder = makeBuilder({
+      onUpdate: (value) => {
+        patch = value;
+      },
+      maybeSingleResult: { data: { id: 'sess-1' }, error: null },
+    });
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        sessions: [
-          makeBuilder({
-            onUpdate: (value) => {
-              patch = value;
-            },
-            maybeSingleResult: { data: { id: 'sess-1' }, error: null },
-          }),
-        ],
+        sessions: [builder],
       },
     });
 
@@ -77,6 +76,10 @@ describe('sessions api client', () => {
       started_at: '2026-04-17T09:00:00.000Z',
       ended_at: '2026-04-17T10:00:00.000Z',
     });
+    expect((builder.in as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('session_status', [
+      'ended',
+      'in_progress',
+    ]);
   });
 
   it('updateSessionTimes rejects invalid ranges', async () => {
@@ -95,27 +98,43 @@ describe('sessions api client', () => {
     ).rejects.toThrow('Session end time must be on or after start time.');
   });
 
-  it('discardSession marks discarded_at and clears ended_at', async () => {
+  it('deleteSession soft-deletes by marking deleted_at and clearing ended_at', async () => {
     let patch: unknown;
+    const builder = makeBuilder({
+      onUpdate: (value) => {
+        patch = value;
+      },
+      maybeSingleResult: { data: { id: 'sess-2' }, error: null },
+    });
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        sessions: [
-          makeBuilder({
-            onUpdate: (value) => {
-              patch = value;
-            },
-            maybeSingleResult: { data: { id: 'sess-2' }, error: null },
-          }),
-        ],
+        sessions: [builder],
       },
     });
 
-    await discardSession(client as never, 'sess-2');
+    await deleteSession(client as never, 'sess-2');
 
-    expect((patch as { session_status: string }).session_status).toBe('discarded');
+    expect((patch as { session_status: string }).session_status).toBe('deleted');
     expect((patch as { ended_at: null }).ended_at).toBeNull();
-    expect(typeof (patch as { discarded_at: string }).discarded_at).toBe('string');
-    expect(Date.parse((patch as { discarded_at: string }).discarded_at)).not.toBeNaN();
+    expect(typeof (patch as { deleted_at: string }).deleted_at).toBe('string');
+    expect(Date.parse((patch as { deleted_at: string }).deleted_at)).not.toBeNaN();
+    expect((builder.in as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('session_status', [
+      'ended',
+      'in_progress',
+    ]);
+  });
+
+  it('deleteSession rejects already-deleted sessions', async () => {
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        sessions: [makeBuilder({ maybeSingleResult: { data: null, error: null } })],
+      },
+    });
+
+    await expect(deleteSession(client as never, 'sess-2')).rejects.toThrow(
+      'Delete affected no active rows (session may already be deleted or not owned by you).',
+    );
   });
 });

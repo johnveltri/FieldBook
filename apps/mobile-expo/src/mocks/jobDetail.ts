@@ -34,7 +34,7 @@ export const mockJobDetail: JobDetailViewModel = {
     netPerHrDisplay: '6,337/hr',
     sessionCount: 239,
   },
-  sessions: [
+  displaySessions: [
     {
       id: 'sess-1',
       startedAt: '2026-03-25T09:00:00.000Z',
@@ -44,6 +44,17 @@ export const mockJobDetail: JobDetailViewModel = {
       durationLabel: '1.0h',
     },
   ],
+  allSessions: [
+    {
+      id: 'sess-1',
+      startedAt: '2026-03-25T09:00:00.000Z',
+      endedAt: '2026-03-25T10:00:00.000Z',
+      dateLabel: 'Mar 25, 2026',
+      timeRangeLabel: '9:00 AM – 10:00 AM',
+      durationLabel: '1.0h',
+    },
+  ],
+  inProgressSession: null,
   materialBuckets: [
     {
       id: 'mat-unassigned',
@@ -67,6 +78,9 @@ export const mockJobDetail: JobDetailViewModel = {
       kind: 'unassigned',
       notes: [
         {
+          id: 'note-mock-u1',
+          body: 'Client requested brushed nickel finish. Old valve was slightly corroded but salvageable. Will monitor for leaks after install.',
+          sessionId: null,
           excerpt:
             'Client requested brushed nickel finish. Old valve was slightly corroded but salvageable. Will... ',
           dateLabel: 'Mar 25, 2026',
@@ -77,7 +91,15 @@ export const mockJobDetail: JobDetailViewModel = {
       id: 'note-s1',
       kind: 'session',
       sessionDateLabel: 'Mar 25, 2026',
-      notes: [{ excerpt: 'dsfsdf', dateLabel: 'Mar 25, 2026' }],
+      notes: [
+        {
+          id: 'note-mock-s1',
+          body: 'dsfsdf',
+          sessionId: 's-mock-1',
+          excerpt: 'dsfsdf',
+          dateLabel: 'Mar 25, 2026',
+        },
+      ],
     },
   ],
   timeline: {

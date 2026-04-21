@@ -162,7 +162,7 @@ describe('jobs api client', () => {
     ).rejects.toThrow('Revenue must be a non-negative dollar amount.');
   });
 
-  it('listJobsForCurrentUser computes metrics from non-discarded sessions and material dedupe', async () => {
+  it('listJobsForCurrentUser computes metrics from non-deleted sessions and material dedupe', async () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
@@ -198,9 +198,9 @@ describe('jobs api client', () => {
                   ended_at: '2026-04-16T12:00:00.000Z',
                 },
                 {
-                  id: 'sess-discarded',
+                  id: 'sess-deleted',
                   job_id: 'job-1',
-                  session_status: 'discarded',
+                  session_status: 'deleted',
                   started_at: '2026-04-17T10:00:00.000Z',
                   ended_at: null,
                 },
@@ -491,6 +491,105 @@ describe('jobs api client', () => {
     const detail = await fetchJobDetail(client as never, 'job-2');
 
     expect(detail).not.toBeNull();
-    expect(detail?.sessions.map((s) => s.id)).toEqual(['sess-ended']);
+    expect(detail?.displaySessions.map((s) => s.id)).toEqual(['sess-ended']);
+  });
+
+  it('fetchJobDetail maps note id/body/sessionId and filters soft-deleted notes', async () => {
+    const notesBuilder = makeBuilder({
+      awaitResult: {
+        data: [
+          {
+            id: 'note-unassigned',
+            job_id: 'job-3',
+            session_id: null,
+            body: 'Long enough body that will be truncated for the excerpt preview...',
+            created_at: '2026-04-17T11:00:00.000Z',
+          },
+          {
+            id: 'note-session',
+            job_id: null,
+            session_id: 'sess-a',
+            body: 'Short',
+            created_at: '2026-04-17T10:30:00.000Z',
+          },
+        ],
+        error: null,
+      },
+    });
+
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            maybeSingleResult: {
+              data: {
+                id: 'job-3',
+                short_description: 'HVAC tune-up',
+                customer_name: 'Dana',
+                service_address: '12 Oak Dr',
+                job_type: 'hvac',
+                job_work_status: 'in_progress',
+                job_payment_state: 'pending',
+                revenue_cents: 90000,
+                collected_cents: 0,
+                updated_at: '2026-04-17T10:00:00.000Z',
+              },
+              error: null,
+            },
+          }),
+        ],
+        sessions: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'sess-a',
+                  job_id: 'job-3',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T09:00:00.000Z',
+                  ended_at: '2026-04-16T10:00:00.000Z',
+                },
+              ],
+              error: null,
+            },
+          }),
+        ],
+        notes: [notesBuilder],
+        materials: [
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+        ],
+        job_activity_events: [makeBuilder({ awaitResult: { data: [], error: null } })],
+      },
+    });
+
+    const detail = await fetchJobDetail(client as never, 'job-3');
+
+    expect(detail).not.toBeNull();
+    // Soft-deleted notes are excluded by the api-client query filter.
+    const isSpy = notesBuilder.is as unknown as { mock: { calls: unknown[][] } };
+    expect(isSpy.mock.calls).toContainEqual(['deleted_at', null]);
+
+    // Unassigned note: id + full body + sessionId=null + truncated excerpt preserved.
+    const unassignedBucket = detail!.noteBuckets.find((b) => b.kind === 'unassigned');
+    expect(unassignedBucket).toBeDefined();
+    expect(unassignedBucket!.notes).toHaveLength(1);
+    const unassigned = unassignedBucket!.notes[0];
+    expect(unassigned).toMatchObject({
+      id: 'note-unassigned',
+      sessionId: null,
+      body: 'Long enough body that will be truncated for the excerpt preview...',
+    });
+    // Short bodies are not truncated — excerpt equals the (trimmed) body.
+    const sessionBucket = detail!.noteBuckets.find((b) => b.kind === 'session');
+    expect(sessionBucket).toBeDefined();
+    expect(sessionBucket!.notes).toHaveLength(1);
+    expect(sessionBucket!.notes[0]).toMatchObject({
+      id: 'note-session',
+      sessionId: 'sess-a',
+      body: 'Short',
+      excerpt: 'Short',
+    });
   });
 });

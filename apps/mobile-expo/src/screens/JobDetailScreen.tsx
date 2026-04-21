@@ -30,7 +30,9 @@ import {
 } from 'react-native';
 
 import {
+  ChooseSessionBottomSheet,
   EditJobBottomSheet,
+  EditNoteBottomSheet,
   EditSessionBottomSheet,
   JobDetailCtaRow,
   JobDetailJobHeader,
@@ -38,6 +40,8 @@ import {
   JobDetailSummaryCard,
   NewSessionBottomSheet,
   SessionCard,
+  type ChooseSessionBottomSheetSession,
+  type EditNoteBottomSheetValues,
   type EditSessionBottomSheetValues,
 } from '../components/ds';
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
@@ -62,14 +66,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/tokens';
 import {
   createManualSession,
+  createNote,
+  deleteNote,
+  deleteSession,
   deleteJobById,
-  discardSession,
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
+  updateNote,
   updateSessionTimes,
 } from '@fieldbook/api-client';
-import type { JobDetailSession, JobDetailViewModel } from '@fieldbook/shared-types';
+import type {
+  JobDetailNote,
+  JobDetailSession,
+  JobDetailViewModel,
+} from '@fieldbook/shared-types';
 
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
@@ -158,6 +169,20 @@ export function JobDetailScreen({
   /** Mount flag lets BottomSheetShell play its exit animation before unmounting. */
   const [sessionSheetMounted, setSessionSheetMounted] = useState(false);
   const [sessionSaving, setSessionSaving] = useState(false);
+
+  /**
+   * State machine for the note add/edit flow. Mirrors the session flow:
+   * - `addNote` / `editNote` — the EditNoteBottomSheet.
+   * - `attachSession` / `editSession` — the ChooseSessionBottomSheet,
+   *   reachable from the note sheet via the `+SESSION` / pencil pill.
+   */
+  type NoteFlow = 'closed' | 'addNote' | 'editNote' | 'attachSession' | 'editSession';
+  const [noteFlow, setNoteFlow] = useState<NoteFlow>('closed');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [draftBody, setDraftBody] = useState('');
+  const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
+  const [noteSheetMounted, setNoteSheetMounted] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
   /** Set when Supabase is configured but fetch returns null or throws (no silent mock). */
   const [jobLoadError, setJobLoadError] = useState<string | null>(null);
   /** Ensures we only auto-open the edit sheet once per navigation (see `initialEditOpen`). */
@@ -233,31 +258,6 @@ export function JobDetailScreen({
     setEditSheetVisible(false);
   }, []);
 
-  const parseRevenueCents = useCallback((value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return { ok: true as const, value: null };
-    }
-
-    const normalized = trimmed.replace(/[$,\s]/g, '');
-    if (!/^\d+(\.\d{0,2})?$/.test(normalized)) {
-      return {
-        ok: false as const,
-        error: 'Revenue must be a non-negative dollar amount (up to 2 decimals).',
-      };
-    }
-
-    const parsed = Number.parseFloat(normalized);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      return {
-        ok: false as const,
-        error: 'Revenue must be a non-negative dollar amount.',
-      };
-    }
-
-    return { ok: true as const, value: Math.round(parsed * 100) };
-  }, []);
-
   const toEditValues = useCallback((j: JobDetailViewModel): EditJobBottomSheetValues => {
     const revenue = (j.earnings.revenueCents / 100).toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -275,25 +275,17 @@ export function JobDetailScreen({
   const onSaveJobSheet = useCallback(
     async (values: EditJobBottomSheetValues) => {
       if (!job) return;
-      const shortDescription = values.jobTitle.trim();
-      if (!shortDescription) {
-        Alert.alert('Validation error', 'Job title is required.');
-        return;
-      }
-
-      const revenueParsed = parseRevenueCents(values.revenue);
-      if (!revenueParsed.ok) {
-        Alert.alert('Validation error', revenueParsed.error);
-        return;
-      }
+      const trimmedRevenue = values.revenue.trim().replace(/[$,\s]/g, '');
+      const revenueCents =
+        trimmedRevenue.length === 0 ? null : Math.round(Number(trimmedRevenue) * 100);
 
       setJobSaving(true);
       try {
         await updateJobById(supabase, job.id, {
-          shortDescription,
+          shortDescription: values.jobTitle,
           customerName: values.customerName.trim(),
           serviceAddress: values.serviceAddress.trim(),
-          revenueCents: revenueParsed.value,
+          revenueCents,
           jobType: values.jobType.trim(),
         });
         const refreshed = await fetchJobDetail(supabase, job.id);
@@ -314,7 +306,7 @@ export function JobDetailScreen({
         setJobSaving(false);
       }
     },
-    [job, onCloseEditSheet, parseRevenueCents],
+    [job, onCloseEditSheet],
   );
 
   // --- Session add/edit flow ---
@@ -341,7 +333,7 @@ export function JobDetailScreen({
 
   const editingSession = useMemo<JobDetailSession | null>(() => {
     if (!editingSessionId || !job) return null;
-    return job.sessions.find((s) => s.id === editingSessionId) ?? null;
+    return job.displaySessions.find((s) => s.id === editingSessionId) ?? null;
   }, [editingSessionId, job]);
 
   const refetchJob = useCallback(async () => {
@@ -404,19 +396,169 @@ export function JobDetailScreen({
     [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob],
   );
 
-  const onDiscardEditingSession = useCallback(async () => {
+  const onDeleteEditingSession = useCallback(async () => {
     if (!editingSessionId) return;
     setSessionSaving(true);
     try {
-      await discardSession(supabase, editingSessionId);
+      await deleteSession(supabase, editingSessionId);
       await refetchJob();
       closeSessionFlow();
     } catch (e) {
-      Alert.alert('Discard failed', formatErrorMessage(e) || 'Could not discard session.');
+      Alert.alert('Delete failed', formatErrorMessage(e) || 'Could not delete session.');
     } finally {
       setSessionSaving(false);
     }
   }, [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob]);
+
+  // --- Note add/edit flow ---
+
+  /** Find a note across all buckets by id (used when opening Edit Note from a tap). */
+  const findNote = useCallback(
+    (noteId: string): JobDetailNote | null => {
+      if (!job) return null;
+      for (const bucket of job.noteBuckets) {
+        const hit = bucket.notes.find((n) => n.id === noteId);
+        if (hit) return hit;
+      }
+      return null;
+    },
+    [job],
+  );
+
+  const closeNoteFlow = useCallback(() => {
+    setNoteFlow('closed');
+  }, []);
+
+  const openAddNote = useCallback(() => {
+    setEditingNoteId(null);
+    setDraftBody('');
+    setDraftSessionId(null);
+    setNoteSheetMounted(true);
+    setNoteFlow('addNote');
+  }, []);
+
+  const openEditNote = useCallback(
+    (noteId: string) => {
+      const n = findNote(noteId);
+      if (!n) return;
+      setEditingNoteId(noteId);
+      setDraftBody(n.body);
+      setDraftSessionId(n.sessionId);
+      setNoteSheetMounted(true);
+      setNoteFlow('editNote');
+    },
+    [findNote],
+  );
+
+  const openSessionPickerFromNoteSheet = useCallback(() => {
+    // Edit mode when the note already has a session, attach mode otherwise.
+    setNoteFlow(draftSessionId ? 'editSession' : 'attachSession');
+  }, [draftSessionId]);
+
+  const returnToNoteSheet = useCallback(() => {
+    setNoteFlow(editingNoteId ? 'editNote' : 'addNote');
+  }, [editingNoteId]);
+
+  const onSelectDraftSession = useCallback(
+    (sessionId: string) => {
+      setDraftSessionId(sessionId);
+      returnToNoteSheet();
+    },
+    [returnToNoteSheet],
+  );
+
+  const onRemoveDraftSession = useCallback(() => {
+    setDraftSessionId(null);
+    returnToNoteSheet();
+  }, [returnToNoteSheet]);
+
+  const onSaveNewNote = useCallback(
+    async ({ body }: EditNoteBottomSheetValues) => {
+      if (!job) return;
+      setNoteSaving(true);
+      try {
+        // Exactly one of jobId / sessionId is set (notes_exactly_one_parent).
+        await createNote(supabase, {
+          jobId: job.id,
+          sessionId: draftSessionId,
+          body,
+        });
+        await refetchJob();
+        closeNoteFlow();
+      } catch (e) {
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save note.');
+      } finally {
+        setNoteSaving(false);
+      }
+    },
+    [closeNoteFlow, draftSessionId, formatErrorMessage, job, refetchJob],
+  );
+
+  const onSaveNoteChanges = useCallback(
+    async ({ body }: EditNoteBottomSheetValues) => {
+      if (!editingNoteId || !job) return;
+      setNoteSaving(true);
+      try {
+        // Pass sessionId unconditionally so the api-client re-parents to the
+        // current draft assignment (including `null` → back to unassigned).
+        await updateNote(supabase, editingNoteId, {
+          body,
+          sessionId: draftSessionId,
+          jobId: draftSessionId === null ? job.id : undefined,
+        });
+        await refetchJob();
+        closeNoteFlow();
+      } catch (e) {
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save note.');
+      } finally {
+        setNoteSaving(false);
+      }
+    },
+    [closeNoteFlow, draftSessionId, editingNoteId, formatErrorMessage, job, refetchJob],
+  );
+
+  const onDeleteEditingNote = useCallback(async () => {
+    if (!editingNoteId) {
+      // Add flow — trash simply abandons the draft.
+      closeNoteFlow();
+      return;
+    }
+    setNoteSaving(true);
+    try {
+      await deleteNote(supabase, editingNoteId);
+      await refetchJob();
+      closeNoteFlow();
+    } catch (e) {
+      Alert.alert('Delete failed', formatErrorMessage(e) || 'Could not delete note.');
+    } finally {
+      setNoteSaving(false);
+    }
+  }, [closeNoteFlow, editingNoteId, formatErrorMessage, refetchJob]);
+
+  /** Sessions visible in current Job Detail UI (completed only). */
+  const visibleSessions = useMemo(
+    () => job?.displaySessions ?? [],
+    [job],
+  );
+
+  /** Completed sessions only, mapped for the generic `ChooseSessionBottomSheet`. */
+  const chooserSessions = useMemo<ChooseSessionBottomSheetSession[]>(
+    () =>
+      visibleSessions.map((s) => ({
+        id: s.id,
+        dateLabel: s.dateLabel,
+        timeRangeLabel: s.timeRangeLabel,
+      })),
+    [visibleSessions],
+  );
+
+  /** Hydrated version of `draftSessionId` used by the note sheet subtitle + pill icon. */
+  const draftAssignedSession = useMemo(() => {
+    if (!draftSessionId) return null;
+    const s = visibleSessions.find((x) => x.id === draftSessionId);
+    if (!s) return null;
+    return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
+  }, [draftSessionId, visibleSessions]);
 
   const onDeleteJobSheet = useCallback(async () => {
     if (!job) return;
@@ -590,7 +732,7 @@ export function JobDetailScreen({
           onAddPress={openSessionChooser}
         />
         <View style={[styles.sessionList, { maxWidth: CONTENT_MAX_WIDTH }]}>
-          {job.sessions.map((s) => (
+          {visibleSessions.map((s) => (
             <SessionCard
               key={s.id}
               session={s}
@@ -617,8 +759,13 @@ export function JobDetailScreen({
           icon={<JobDetailIconSectionNotes color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
+          onAddPress={openAddNote}
         />
-        <ViewNotesBuckets buckets={job.noteBuckets} typography={typography} />
+        <ViewNotesBuckets
+          buckets={job.noteBuckets}
+          typography={typography}
+          onNotePress={openEditNote}
+        />
 
         <SectionHeaderFigma
           title="TIMELINE"
@@ -653,6 +800,53 @@ export function JobDetailScreen({
             void onDeleteJobSheet();
           }}
         />
+      ) : null}
+      {noteSheetMounted ? (
+        <>
+          <EditNoteBottomSheet
+            typography={typography}
+            visible={noteFlow === 'addNote' || noteFlow === 'editNote'}
+            // Derive stable title/primaryLabel from editingNoteId (not noteFlow)
+            // so they do not flicker during the slide-down close animation.
+            title={editingNoteId ? 'Edit Note' : 'Add Note'}
+            primaryLabel={editingNoteId ? 'SAVE CHANGES' : 'SAVE NEW NOTE'}
+            values={{ body: draftBody }}
+            assignedSession={draftAssignedSession}
+            canAttachSession={chooserSessions.length > 0}
+            onClose={closeNoteFlow}
+            onClosed={() => {
+              if (noteFlow === 'closed') setNoteSheetMounted(false);
+            }}
+            onBack={closeNoteFlow}
+            onSavePress={(values) => {
+              if (noteSaving) return;
+              if (editingNoteId) {
+                void onSaveNoteChanges(values);
+              } else {
+                void onSaveNewNote(values);
+              }
+            }}
+            onDeletePress={() => {
+              if (noteSaving) return;
+              void onDeleteEditingNote();
+            }}
+            onSessionPillPress={openSessionPickerFromNoteSheet}
+          />
+          <ChooseSessionBottomSheet
+            typography={typography}
+            visible={noteFlow === 'attachSession' || noteFlow === 'editSession'}
+            mode={noteFlow === 'editSession' ? 'edit' : 'attach'}
+            sessions={chooserSessions}
+            currentSessionId={draftSessionId}
+            onClose={closeNoteFlow}
+            onClosed={() => {
+              if (noteFlow === 'closed') setNoteSheetMounted(false);
+            }}
+            onBack={returnToNoteSheet}
+            onSelect={onSelectDraftSession}
+            onRemove={onRemoveDraftSession}
+          />
+        </>
       ) : null}
       {sessionSheetMounted ? (
         <>
@@ -701,10 +895,10 @@ export function JobDetailScreen({
                 void onSaveNewSession(values);
               }
             }}
-            onDiscardPress={() => {
+            onDeletePress={() => {
               if (sessionSaving) return;
               if (sessionFlow === 'editForm') {
-                void onDiscardEditingSession();
+                void onDeleteEditingSession();
               } else {
                 closeSessionFlow();
               }
@@ -830,9 +1024,12 @@ function ViewMaterialsBuckets({
 function ViewNotesBuckets({
   buckets,
   typography,
+  onNotePress,
 }: {
   buckets: import('../mocks/jobDetail').JobDetailNoteBucket[];
   typography: TextStyles;
+  /** Tap a row → open the Edit Note sheet prefilled with this note's body + session. */
+  onNotePress?: (noteId: string) => void;
 }) {
   if (buckets.length === 0) {
     return null;
@@ -857,11 +1054,15 @@ function ViewNotesBuckets({
               )}
             </View>
             {bucket.notes.map((n, ni) => (
-              <View
-                key={`${bucket.id}-n-${ni}`}
-                style={[
+              <Pressable
+                key={`${bucket.id}-n-${n.id}`}
+                accessibilityRole="button"
+                accessibilityLabel="Edit note"
+                onPress={onNotePress ? () => onNotePress(n.id) : undefined}
+                style={({ pressed }) => [
                   styles.noteRow,
                   ni > 0 && { borderTopWidth: 1, borderTopColor: color('Foundation/Border/Subtle') },
+                  pressed && onNotePress ? styles.pressed : null,
                 ]}
               >
                 <View style={{ marginTop: space('Spacing/2') }}>
@@ -873,7 +1074,7 @@ function ViewNotesBuckets({
                     {n.dateLabel}
                   </Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </View>
         ))}
