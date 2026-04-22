@@ -4,7 +4,16 @@ export {
   ChooseSessionBottomSheet,
   type ChooseSessionBottomSheetSession,
 } from './ChooseSessionBottomSheet';
+export {
+  DropdownBottomSheet,
+  type DropdownBottomSheetOption,
+} from './DropdownBottomSheet';
 export { EditJobBottomSheet } from './EditJobBottomSheet';
+export {
+  EditMaterialBottomSheet,
+  type EditMaterialBottomSheetAssignedSession,
+  type EditMaterialBottomSheetValues,
+} from './EditMaterialBottomSheet';
 export {
   EditNoteBottomSheet,
   type EditNoteBottomSheetAssignedSession,

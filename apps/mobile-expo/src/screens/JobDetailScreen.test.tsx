@@ -38,6 +38,99 @@ jest.mock('../components/ds', () => ({
   JobDetailJobHeader: () => null,
   JobDetailMetricTertiary: () => null,
   JobDetailSummaryCard: () => null,
+  EditMaterialBottomSheet: ({
+    visible,
+    title,
+    values,
+    assignedSession,
+    onSavePress,
+    onDeletePress,
+    onSessionPillPress,
+    onUnitPress,
+  }: {
+    visible: boolean;
+    title: string;
+    values: {
+      description: string;
+      quantity: number;
+      unit: string;
+      unitCostCents: number;
+    };
+    assignedSession: { id: string } | null;
+    onSavePress?: (values: {
+      description: string;
+      unitCostCents: number;
+      quantity: number;
+      unit: string;
+    }) => void;
+    onDeletePress?: () => void;
+    onSessionPillPress?: (values: {
+      description: string;
+      unitCostCents: number;
+      quantity: number;
+      unit: string;
+    }) => void;
+    onUnitPress?: (values: {
+      description: string;
+      unitCostCents: number;
+      quantity: number;
+      unit: string;
+    }) => void;
+  }) => {
+    const { Text, View } = require('react-native');
+    // The real sheet holds description / price / qty in LOCAL state and must
+    // lift them to the parent when the user taps the unit / session pill —
+    // otherwise they reset when the sheet becomes hidden and is reopened.
+    // The mock below forwards the `values` prop as-is for the baseline calls,
+    // and exposes an explicit "Type Draft and Open Unit Picker" action the
+    // tests can use to simulate a user who typed overrides before tapping
+    // the unit cell.
+    const typedDraft = {
+      description: 'Copper wire',
+      unitCostCents: 250,
+      quantity: 3,
+      unit: values.unit,
+    };
+    return visible ? (
+      <View>
+        <Text>{title}</Text>
+        <Text>{`Description ${values.description}`}</Text>
+        <Text>{`Unit Cost Cents ${values.unitCostCents}`}</Text>
+        <Text>{`Quantity ${values.quantity}`}</Text>
+        <Text>{`Unit ${values.unit}`}</Text>
+        <Text>
+          {assignedSession
+            ? `Material assigned ${assignedSession.id}`
+            : 'Material unassigned'}
+        </Text>
+        <Text onPress={() => onSessionPillPress?.(values)}>Open Material Session Picker</Text>
+        <Text onPress={() => onUnitPress?.(values)}>Open Unit Picker</Text>
+        <Text onPress={() => onUnitPress?.(typedDraft)}>
+          Type Draft and Open Unit Picker
+        </Text>
+        <Text onPress={() => onSavePress?.(typedDraft)}>Save Material</Text>
+        <Text onPress={() => onDeletePress?.()}>Delete Material</Text>
+      </View>
+    ) : null;
+  },
+  DropdownBottomSheet: ({
+    visible,
+    options,
+    onSelect,
+  }: {
+    visible: boolean;
+    options: Array<{ id: string; label: string; value: string }>;
+    onSelect: (value: string) => void;
+  }) => {
+    const { Text, View } = require('react-native');
+    return visible ? (
+      <View>
+        {options.map((o) => (
+          <Text key={o.id} onPress={() => onSelect(o.value)}>{`Pick unit ${o.value}`}</Text>
+        ))}
+      </View>
+    ) : null;
+  },
   NewSessionBottomSheet: ({
     visible,
     onLogPastPress,
@@ -82,6 +175,8 @@ jest.mock('../components/ds', () => ({
       </View>
     ) : null;
   },
+  // Keep this mock's signature in sync with the real EditNoteBottomSheet
+  // contract: `onSessionPillPress` lifts the current body up to the parent.
   EditNoteBottomSheet: ({
     visible,
     title,
@@ -95,14 +190,16 @@ jest.mock('../components/ds', () => ({
     assignedSession: { id: string } | null;
     onSavePress?: (values: { body: string }) => void;
     onDeletePress?: () => void;
-    onSessionPillPress?: () => void;
+    onSessionPillPress?: (values: { body: string }) => void;
   }) => {
     const { Text, View } = require('react-native');
     return visible ? (
       <View>
         <Text>{title}</Text>
         <Text>{assignedSession ? `Assigned ${assignedSession.id}` : 'Unassigned'}</Text>
-        <Text onPress={() => onSessionPillPress?.()}>Open Session Picker</Text>
+        <Text onPress={() => onSessionPillPress?.({ body: 'Saved note body' })}>
+          Open Session Picker
+        </Text>
         <Text onPress={() => onSavePress?.({ body: 'Saved note body' })}>Save Note</Text>
         <Text onPress={() => onDeletePress?.()}>Delete Note</Text>
       </View>
@@ -148,13 +245,16 @@ jest.mock('../components/ds', () => ({
 
 jest.mock('@fieldbook/api-client', () => ({
   createManualSession: jest.fn(),
+  createMaterial: jest.fn(),
   createNote: jest.fn(),
+  deleteMaterial: jest.fn(),
   deleteNote: jest.fn(),
   deleteSession: jest.fn(),
   deleteJobById: jest.fn(),
   fetchFirstJobIdForCurrentUser: jest.fn(),
   fetchJobDetail: jest.fn(),
   updateJobById: jest.fn(),
+  updateMaterial: jest.fn(),
   updateNote: jest.fn(),
   updateSessionTimes: jest.fn(),
 }));
@@ -238,6 +338,9 @@ describe('JobDetailScreen manual session and note flows', () => {
     apiClient.createNote.mockResolvedValue('note-new-1');
     apiClient.updateNote.mockResolvedValue(undefined);
     apiClient.deleteNote.mockResolvedValue(undefined);
+    apiClient.createMaterial.mockResolvedValue('mat-new-1');
+    apiClient.updateMaterial.mockResolvedValue(undefined);
+    apiClient.deleteMaterial.mockResolvedValue(undefined);
   });
 
   it('creates a manual session from add flow', async () => {
@@ -405,5 +508,178 @@ describe('JobDetailScreen manual session and note flows', () => {
     fireEvent.press(screen.getByText('Open Session Picker'));
     expect(screen.getByText('Pick sess-1')).toBeTruthy();
     expect(screen.queryByText('Pick sess-progress')).toBeNull();
+  });
+
+  // --- Materials ---
+
+  const jobWithMaterial: JobDetailViewModel = {
+    ...baseJob,
+    materialBuckets: [
+      {
+        id: 'mat-unassigned',
+        kind: 'unassigned',
+        items: [
+          {
+            id: 'mat-1',
+            sessionId: null,
+            name: 'Existing material',
+            quantity: 2,
+            unit: 'ea',
+            unitCostCents: 500,
+            quantityLabel: '2 ea @ $5.00',
+            priceLabel: '$10.00',
+          },
+        ],
+      },
+    ],
+  };
+
+  it('creates a material without session assignment', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Add MATERIALS')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByLabelText('Add MATERIALS'));
+    fireEvent.press(screen.getByText('Save Material'));
+
+    await waitFor(() => {
+      expect(apiClient.createMaterial).toHaveBeenCalledWith({}, {
+        jobId: 'job-1',
+        sessionId: null,
+        description: 'Copper wire',
+        quantity: 3,
+        unit: 'ea',
+        unitCostCents: 250,
+      });
+    });
+  });
+
+  it('creates a material assigned to a selected session', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Add MATERIALS')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByLabelText('Add MATERIALS'));
+    fireEvent.press(screen.getByText('Open Material Session Picker'));
+    fireEvent.press(screen.getByText('Pick sess-1'));
+    fireEvent.press(screen.getByText('Save Material'));
+
+    await waitFor(() => {
+      expect(apiClient.createMaterial).toHaveBeenCalledWith({}, {
+        jobId: 'job-1',
+        sessionId: 'sess-1',
+        description: 'Copper wire',
+        quantity: 3,
+        unit: 'ea',
+        unitCostCents: 250,
+      });
+    });
+  });
+
+  it('opens the unit dropdown and applies the selected unit on save', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Add MATERIALS')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByLabelText('Add MATERIALS'));
+    // Default unit prefill.
+    expect(screen.getByText('Unit ea')).toBeTruthy();
+    fireEvent.press(screen.getByText('Open Unit Picker'));
+    fireEvent.press(screen.getByText('Pick unit ft'));
+    // Back on the material sheet — unit label refreshed.
+    expect(screen.getByText('Unit ft')).toBeTruthy();
+    fireEvent.press(screen.getByText('Save Material'));
+
+    await waitFor(() => {
+      expect(apiClient.createMaterial).toHaveBeenCalledWith({}, {
+        jobId: 'job-1',
+        sessionId: null,
+        description: 'Copper wire',
+        quantity: 3,
+        unit: 'ft',
+        unitCostCents: 250,
+      });
+    });
+  });
+
+  // Regression: tapping the unit cell (or the session pill) while the user
+  // has typed values must lift those values up into parent draft state,
+  // otherwise the sheet resets to its pre-edit values on return. See
+  // https://… (bug: "cleared everything I had previously entered" after
+  // selecting a unit in the dropdown).
+  it('preserves typed draft values across the unit-picker round-trip', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Add MATERIALS')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByLabelText('Add MATERIALS'));
+    // Initial blanks from openAddMaterial.
+    expect(screen.getByText('Description ')).toBeTruthy();
+    expect(screen.getByText('Unit Cost Cents 0')).toBeTruthy();
+    expect(screen.getByText('Quantity 1')).toBeTruthy();
+
+    // Simulate: user typed description / price / qty, then tapped the unit
+    // cell — the mock emits those values via `onUnitPress(currentDraft)`.
+    fireEvent.press(screen.getByText('Type Draft and Open Unit Picker'));
+    fireEvent.press(screen.getByText('Pick unit ft'));
+
+    // On return the sheet must be reseeded from the cached draft, not from
+    // the pristine openAddMaterial defaults.
+    expect(screen.getByText('Description Copper wire')).toBeTruthy();
+    expect(screen.getByText('Unit Cost Cents 250')).toBeTruthy();
+    expect(screen.getByText('Quantity 3')).toBeTruthy();
+    expect(screen.getByText('Unit ft')).toBeTruthy();
+  });
+
+  it('updates an existing material from edit flow', async () => {
+    apiClient.fetchJobDetail.mockResolvedValue(jobWithMaterial);
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Existing material')).toBeTruthy();
+    });
+
+    // View-only row shows qty + unit + per-unit cost inline ("2 ea @ $5.00"),
+    // while the right column continues to render the total (`priceLabel`).
+    expect(screen.getByText('2 ea @ $5.00')).toBeTruthy();
+    expect(screen.getByText('$10.00')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Existing material'));
+    fireEvent.press(screen.getByText('Save Material'));
+
+    await waitFor(() => {
+      expect(apiClient.updateMaterial).toHaveBeenCalledWith({}, 'mat-1', {
+        description: 'Copper wire',
+        quantity: 3,
+        unit: 'ea',
+        unitCostCents: 250,
+        sessionId: null,
+        jobId: 'job-1',
+      });
+    });
+  });
+
+  it('soft-deletes an existing material from edit flow', async () => {
+    apiClient.fetchJobDetail.mockResolvedValue(jobWithMaterial);
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Existing material')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Existing material'));
+    fireEvent.press(screen.getByText('Delete Material'));
+
+    await waitFor(() => {
+      expect(apiClient.deleteMaterial).toHaveBeenCalledWith({}, 'mat-1');
+    });
   });
 });

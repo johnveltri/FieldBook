@@ -260,6 +260,95 @@ describe('jobs api client', () => {
     expect(rows[0].lastWorkedLabel).toContain('Last worked');
   });
 
+  it('listJobsForCurrentUser filters out soft-deleted materials from per-job rollups', async () => {
+    // Regression guard: before the fix, the two materials queries in
+    // `listJobsForCurrentUser` did not apply `.is('deleted_at', null)`,
+    // so soft-deleted materials kept counting against the MAT / NET
+    // metrics on the jobs list even though JobDetailScreen (which uses
+    // fetchJobDetail) correctly excluded them. This test asserts the
+    // filter is applied to both materials builders so the two screens
+    // stay in sync.
+    const materialsByJobBuilder = makeBuilder({
+      awaitResult: {
+        data: [
+          {
+            id: 'mat-active',
+            job_id: 'job-1',
+            session_id: null,
+            total_cost_cents: 2500,
+          },
+        ],
+        error: null,
+      },
+    });
+    const materialsBySessionBuilder = makeBuilder({
+      awaitResult: { data: [], error: null },
+    });
+
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'job-1',
+                  short_description: 'Panel install',
+                  customer_name: 'Alex',
+                  updated_at: '2026-04-17T10:00:00.000Z',
+                  job_type: 'electrical',
+                  job_work_status: 'in_progress',
+                  job_payment_state: 'pending',
+                  revenue_cents: 80000,
+                  collected_cents: 0,
+                },
+              ],
+              error: null,
+            },
+          }),
+        ],
+        sessions: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'sess-1',
+                  job_id: 'job-1',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T11:00:00.000Z',
+                },
+              ],
+              error: null,
+            },
+          }),
+        ],
+        materials: [materialsByJobBuilder, materialsBySessionBuilder],
+      },
+    });
+
+    await listJobsForCurrentUser(client as never);
+
+    const filterCallsForBuilder = (
+      builder: ReturnType<typeof makeBuilder>,
+    ): unknown[][] => {
+      const isSpy = builder.is as unknown as {
+        mock: { calls: unknown[][] };
+      };
+      return isSpy.mock.calls;
+    };
+
+    expect(filterCallsForBuilder(materialsByJobBuilder)).toContainEqual([
+      'deleted_at',
+      null,
+    ]);
+    expect(filterCallsForBuilder(materialsBySessionBuilder)).toContainEqual([
+      'deleted_at',
+      null,
+    ]);
+  });
+
   it('list and detail stay aligned for shared job fields and earnings', async () => {
     const jobsBuilder = makeBuilder({
       awaitResult: {

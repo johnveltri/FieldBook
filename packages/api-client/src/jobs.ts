@@ -204,16 +204,23 @@ export async function listJobsForCurrentUser(
   }
 
   const sessionIds = sessions.map((s) => s.id);
+  // Match `fetchJobDetail`: exclude soft-deleted materials from the
+  // per-job rollup so the MAT / NET metrics on the jobs list stay in
+  // sync with what the user sees on JobDetailScreen after deleting a
+  // material. Without this filter the rollup keeps counting deleted
+  // rows and the list card's materials + net never drop back down.
   const [materialsByJobRes, materialsBySessionRes] = await Promise.all([
     client
       .from('materials')
       .select('id, job_id, session_id, total_cost_cents')
-      .in('job_id', jobIds),
+      .in('job_id', jobIds)
+      .is('deleted_at', null),
     sessionIds.length > 0
       ? client
           .from('materials')
           .select('id, job_id, session_id, total_cost_cents')
           .in('session_id', sessionIds)
+          .is('deleted_at', null)
       : Promise.resolve({ data: [] as ListJobMaterialRow[], error: null }),
   ]);
   if (materialsByJobRes.error) throw materialsByJobRes.error;

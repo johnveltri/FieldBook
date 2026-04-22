@@ -22,11 +22,27 @@ type CanvasTiledBackgroundProps = {
    * Pass Animated scroll Y to make ruled lines move with content.
    */
   scrollY?: Animated.Value;
+  /**
+   * Total scrollable content height (typically reported via the scroll
+   * view's `onContentSizeChange`). When provided, the lined layer is
+   * sized to cover the entire scrollable area so the ruled lines never
+   * "run out" at the bottom of long screens. Falls back to the viewport
+   * height when omitted (legacy non-scrolling usage).
+   */
+  contentHeight?: number;
 };
 
-export function CanvasTiledBackground({ scrollY }: CanvasTiledBackgroundProps = {}) {
-  const { width, height } = useWindowDimensions();
-  const rows = Math.ceil(height / ROW_HEIGHT) + 2;
+export function CanvasTiledBackground({
+  scrollY,
+  contentHeight,
+}: CanvasTiledBackgroundProps = {}) {
+  const { width, height: windowHeight } = useWindowDimensions();
+  // Extend the tiled layer to whichever is taller: the viewport or the
+  // scrollable content. Without this the layer translates up with
+  // `scrollY` and exposes its bottom edge on long screens, leaving a
+  // flat (and slightly off-color) band at the bottom.
+  const layerHeight = Math.max(windowHeight, contentHeight ?? 0);
+  const rows = Math.ceil(layerHeight / ROW_HEIGHT) + 2;
   /** Lined texture — 15% primary (was 20%; −0.05 opacity vs prior). */
   const lineColor = colorWithAlpha('Foundation/Text/Primary', 0.15);
 
@@ -34,7 +50,7 @@ export function CanvasTiledBackground({ scrollY }: CanvasTiledBackgroundProps = 
     <Animated.View
       style={[
         styles.layer,
-        { width, height },
+        { width, height: layerHeight },
         scrollY ? { transform: [{ translateY: Animated.multiply(scrollY, -1) }] } : null,
       ]}
       pointerEvents="none"

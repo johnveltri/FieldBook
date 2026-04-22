@@ -31,7 +31,9 @@ import {
 
 import {
   ChooseSessionBottomSheet,
+  DropdownBottomSheet,
   EditJobBottomSheet,
+  EditMaterialBottomSheet,
   EditNoteBottomSheet,
   EditSessionBottomSheet,
   JobDetailCtaRow,
@@ -41,6 +43,8 @@ import {
   NewSessionBottomSheet,
   SessionCard,
   type ChooseSessionBottomSheetSession,
+  type DropdownBottomSheetOption,
+  type EditMaterialBottomSheetValues,
   type EditNoteBottomSheetValues,
   type EditSessionBottomSheetValues,
 } from '../components/ds';
@@ -66,17 +70,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/tokens';
 import {
   createManualSession,
+  createMaterial,
   createNote,
+  deleteMaterial,
   deleteNote,
   deleteSession,
   deleteJobById,
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
+  updateMaterial,
   updateNote,
   updateSessionTimes,
 } from '@fieldbook/api-client';
 import type {
+  JobDetailMaterialLine,
   JobDetailNote,
   JobDetailSession,
   JobDetailViewModel,
@@ -132,6 +140,13 @@ export function JobDetailScreen({
   /** Top safe area (status bar); bottom inset used for scroll padding + nav. */
   const insets = useSafeAreaInsets();
   const scrollY = useMemo(() => new Animated.Value(0), []);
+  /**
+   * Height of the scrollable content, reported via the scrollview's
+   * `onContentSizeChange`. Passed to `CanvasTiledBackground` so the ruled
+   * layer covers the entire scroll height — otherwise the lines + cream
+   * fill run out below one viewport and expose the root bg.
+   */
+  const [scrollContentHeight, setScrollContentHeight] = useState(0);
 
   /** Load DS fonts before rendering text (avoids flash of system font / layout jump). */
   const [fontsLoaded] = useFonts({
@@ -183,6 +198,30 @@ export function JobDetailScreen({
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
   const [noteSheetMounted, setNoteSheetMounted] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
+
+  /**
+   * State machine for the material add/edit flow. Mirrors the note flow with
+   * an extra `chooseUnit` state for the unit-of-measure dropdown:
+   * - `addMaterial` / `editMaterial` — the EditMaterialBottomSheet.
+   * - `attachSession` / `editSession` — the ChooseSessionBottomSheet.
+   * - `chooseUnit` — the DropdownBottomSheet.
+   */
+  type MaterialFlow =
+    | 'closed'
+    | 'addMaterial'
+    | 'editMaterial'
+    | 'attachSession'
+    | 'editSession'
+    | 'chooseUnit';
+  const [materialFlow, setMaterialFlow] = useState<MaterialFlow>('closed');
+  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
+  const [matDraftDescription, setMatDraftDescription] = useState('');
+  const [matDraftUnitCostCents, setMatDraftUnitCostCents] = useState(0);
+  const [matDraftQuantity, setMatDraftQuantity] = useState(1);
+  const [matDraftUnit, setMatDraftUnit] = useState('ea');
+  const [matDraftSessionId, setMatDraftSessionId] = useState<string | null>(null);
+  const [materialSheetMounted, setMaterialSheetMounted] = useState(false);
+  const [materialSaving, setMaterialSaving] = useState(false);
   /** Set when Supabase is configured but fetch returns null or throws (no silent mock). */
   const [jobLoadError, setJobLoadError] = useState<string | null>(null);
   /** Ensures we only auto-open the edit sheet once per navigation (see `initialEditOpen`). */
@@ -535,6 +574,168 @@ export function JobDetailScreen({
     }
   }, [closeNoteFlow, editingNoteId, formatErrorMessage, refetchJob]);
 
+  // --- Material add/edit flow ---
+
+  const findMaterial = useCallback(
+    (materialId: string): JobDetailMaterialLine | null => {
+      if (!job) return null;
+      for (const bucket of job.materialBuckets) {
+        const hit = bucket.items.find((m) => m.id === materialId);
+        if (hit) return hit;
+      }
+      return null;
+    },
+    [job],
+  );
+
+  const closeMaterialFlow = useCallback(() => {
+    setMaterialFlow('closed');
+  }, []);
+
+  const openAddMaterial = useCallback(() => {
+    setEditingMaterialId(null);
+    setMatDraftDescription('');
+    setMatDraftUnitCostCents(0);
+    setMatDraftQuantity(1);
+    setMatDraftUnit('ea');
+    setMatDraftSessionId(null);
+    setMaterialSheetMounted(true);
+    setMaterialFlow('addMaterial');
+  }, []);
+
+  const openEditMaterial = useCallback(
+    (materialId: string) => {
+      const m = findMaterial(materialId);
+      if (!m) return;
+      setEditingMaterialId(materialId);
+      setMatDraftDescription(m.name);
+      setMatDraftUnitCostCents(m.unitCostCents);
+      setMatDraftQuantity(m.quantity);
+      setMatDraftUnit(m.unit || 'ea');
+      setMatDraftSessionId(m.sessionId);
+      setMaterialSheetMounted(true);
+      setMaterialFlow('editMaterial');
+    },
+    [findMaterial],
+  );
+
+  const returnToMaterialSheet = useCallback(() => {
+    setMaterialFlow(editingMaterialId ? 'editMaterial' : 'addMaterial');
+  }, [editingMaterialId]);
+
+  const openSessionPickerFromMaterialSheet = useCallback(() => {
+    setMaterialFlow(matDraftSessionId ? 'editSession' : 'attachSession');
+  }, [matDraftSessionId]);
+
+  const openUnitPickerFromMaterialSheet = useCallback(() => {
+    setMaterialFlow('chooseUnit');
+  }, []);
+
+  const onSelectMaterialSession = useCallback(
+    (sessionId: string) => {
+      setMatDraftSessionId(sessionId);
+      returnToMaterialSheet();
+    },
+    [returnToMaterialSheet],
+  );
+
+  const onRemoveMaterialSession = useCallback(() => {
+    setMatDraftSessionId(null);
+    returnToMaterialSheet();
+  }, [returnToMaterialSheet]);
+
+  const onSelectMaterialUnit = useCallback(
+    (unit: string) => {
+      setMatDraftUnit(unit || 'ea');
+      returnToMaterialSheet();
+    },
+    [returnToMaterialSheet],
+  );
+
+  const onSaveNewMaterial = useCallback(
+    async (values: EditMaterialBottomSheetValues) => {
+      if (!job) return;
+      setMaterialSaving(true);
+      try {
+        await createMaterial(supabase, {
+          jobId: job.id,
+          sessionId: matDraftSessionId,
+          description: values.description,
+          quantity: values.quantity,
+          unit: values.unit,
+          unitCostCents: values.unitCostCents,
+        });
+        await refetchJob();
+        closeMaterialFlow();
+      } catch (e) {
+        Alert.alert(
+          'Save failed',
+          formatErrorMessage(e) || 'Could not save material.',
+        );
+      } finally {
+        setMaterialSaving(false);
+      }
+    },
+    [closeMaterialFlow, formatErrorMessage, job, matDraftSessionId, refetchJob],
+  );
+
+  const onSaveMaterialChanges = useCallback(
+    async (values: EditMaterialBottomSheetValues) => {
+      if (!editingMaterialId || !job) return;
+      setMaterialSaving(true);
+      try {
+        // Pass sessionId unconditionally so the api-client re-parents the row
+        // (including `null` → back to unassigned under the current job).
+        await updateMaterial(supabase, editingMaterialId, {
+          description: values.description,
+          quantity: values.quantity,
+          unit: values.unit,
+          unitCostCents: values.unitCostCents,
+          sessionId: matDraftSessionId,
+          jobId: matDraftSessionId === null ? job.id : undefined,
+        });
+        await refetchJob();
+        closeMaterialFlow();
+      } catch (e) {
+        Alert.alert(
+          'Save failed',
+          formatErrorMessage(e) || 'Could not save material.',
+        );
+      } finally {
+        setMaterialSaving(false);
+      }
+    },
+    [
+      closeMaterialFlow,
+      editingMaterialId,
+      formatErrorMessage,
+      job,
+      matDraftSessionId,
+      refetchJob,
+    ],
+  );
+
+  const onDeleteEditingMaterial = useCallback(async () => {
+    if (!editingMaterialId) {
+      // Add flow — trash simply abandons the draft.
+      closeMaterialFlow();
+      return;
+    }
+    setMaterialSaving(true);
+    try {
+      await deleteMaterial(supabase, editingMaterialId);
+      await refetchJob();
+      closeMaterialFlow();
+    } catch (e) {
+      Alert.alert(
+        'Delete failed',
+        formatErrorMessage(e) || 'Could not delete material.',
+      );
+    } finally {
+      setMaterialSaving(false);
+    }
+  }, [closeMaterialFlow, editingMaterialId, formatErrorMessage, refetchJob]);
+
   /** Sessions visible in current Job Detail UI (completed only). */
   const visibleSessions = useMemo(
     () => job?.displaySessions ?? [],
@@ -559,6 +760,25 @@ export function JobDetailScreen({
     if (!s) return null;
     return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
   }, [draftSessionId, visibleSessions]);
+
+  /** Hydrated version of `matDraftSessionId` used by the material sheet subtitle + pill. */
+  const matDraftAssignedSession = useMemo(() => {
+    if (!matDraftSessionId) return null;
+    const s = visibleSessions.find((x) => x.id === matDraftSessionId);
+    if (!s) return null;
+    return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
+  }, [matDraftSessionId, visibleSessions]);
+
+  /** Preset UOM options for the unit-of-measure dropdown (Figma `1882:1781`). */
+  const unitOptions = useMemo<DropdownBottomSheetOption[]>(
+    () =>
+      (['ea', 'ft', 'pcs', 'kit', 'lb', 'gal', 'lot'] as const).map((u) => ({
+        id: u,
+        label: u,
+        value: u,
+      })),
+    [],
+  );
 
   const onDeleteJobSheet = useCallback(async () => {
     if (!job) return;
@@ -640,14 +860,20 @@ export function JobDetailScreen({
 
   return (
     <View style={styles.root}>
-      {/* Lined canvas + cream fill — behind all scroll content. */}
-      <CanvasTiledBackground scrollY={scrollY} />
+      {/* Lined canvas + cream fill — behind all scroll content. Sized to
+          the scrollable content height so the ruled texture doesn't cut
+          off on long screens. */}
+      <CanvasTiledBackground
+        scrollY={scrollY}
+        contentHeight={scrollContentHeight}
+      />
       <Animated.ScrollView
         style={[styles.scroll, styles.scrollTransparent]}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true },
         )}
+        onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
         scrollEventThrottle={16}
         contentContainerStyle={{
           width: '100%',
@@ -751,8 +977,13 @@ export function JobDetailScreen({
           icon={<JobDetailIconSectionMaterials color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
+          onAddPress={openAddMaterial}
         />
-        <ViewMaterialsBuckets buckets={job.materialBuckets} typography={typography} />
+        <ViewMaterialsBuckets
+          buckets={job.materialBuckets}
+          typography={typography}
+          onMaterialPress={openEditMaterial}
+        />
 
         <SectionHeaderFigma
           title="NOTES"
@@ -830,7 +1061,14 @@ export function JobDetailScreen({
               if (noteSaving) return;
               void onDeleteEditingNote();
             }}
-            onSessionPillPress={openSessionPickerFromNoteSheet}
+            onSessionPillPress={(values) => {
+              // Lift the typed body into parent draft state before swapping
+              // to the session picker — the note sheet is hidden (and its
+              // local state reseeded from `values.body`) on return, so
+              // without this cache the typed body would reset.
+              setDraftBody(values.body);
+              openSessionPickerFromNoteSheet();
+            }}
           />
           <ChooseSessionBottomSheet
             typography={typography}
@@ -845,6 +1083,100 @@ export function JobDetailScreen({
             onBack={returnToNoteSheet}
             onSelect={onSelectDraftSession}
             onRemove={onRemoveDraftSession}
+          />
+        </>
+      ) : null}
+      {materialSheetMounted ? (
+        <>
+          <EditMaterialBottomSheet
+            typography={typography}
+            visible={materialFlow === 'addMaterial' || materialFlow === 'editMaterial'}
+            // Derive stable title/primaryLabel from editingMaterialId (not
+            // materialFlow) so they do not flicker during the slide-down.
+            title={editingMaterialId ? 'Edit Material' : 'Add Material'}
+            primaryLabel={editingMaterialId ? 'SAVE CHANGES' : 'SAVE NEW MATERIAL'}
+            values={{
+              description: matDraftDescription,
+              unitCostCents: matDraftUnitCostCents,
+              quantity: matDraftQuantity,
+              unit: matDraftUnit,
+            }}
+            assignedSession={matDraftAssignedSession}
+            canAttachSession={chooserSessions.length > 0}
+            onClose={closeMaterialFlow}
+            onClosed={() => {
+              if (materialFlow === 'closed') setMaterialSheetMounted(false);
+            }}
+            onBack={closeMaterialFlow}
+            onSavePress={(values) => {
+              if (materialSaving) return;
+              // Capture the latest draft values so a subsequent open of the
+              // same sheet (e.g. after re-picking session) shows them.
+              setMatDraftDescription(values.description);
+              setMatDraftUnitCostCents(values.unitCostCents);
+              setMatDraftQuantity(values.quantity);
+              setMatDraftUnit(values.unit);
+              if (editingMaterialId) {
+                void onSaveMaterialChanges(values);
+              } else {
+                void onSaveNewMaterial(values);
+              }
+            }}
+            onDeletePress={() => {
+              if (materialSaving) return;
+              void onDeleteEditingMaterial();
+            }}
+            onSessionPillPress={(values) => {
+              // Lift the in-sheet text edits into parent draft state before
+              // swapping to the session picker — the material sheet is
+              // hidden (and its local state reseeded from `values`) on
+              // return, so without this cache the inputs would reset.
+              setMatDraftDescription(values.description);
+              setMatDraftUnitCostCents(values.unitCostCents);
+              setMatDraftQuantity(values.quantity);
+              setMatDraftUnit(values.unit);
+              openSessionPickerFromMaterialSheet();
+            }}
+            onUnitPress={(values) => {
+              // Same lift pattern as the session pill — without this the
+              // description / price / qty reset when returning from the
+              // unit picker.
+              setMatDraftDescription(values.description);
+              setMatDraftUnitCostCents(values.unitCostCents);
+              setMatDraftQuantity(values.quantity);
+              setMatDraftUnit(values.unit);
+              openUnitPickerFromMaterialSheet();
+            }}
+          />
+          <ChooseSessionBottomSheet
+            typography={typography}
+            visible={
+              materialFlow === 'attachSession' || materialFlow === 'editSession'
+            }
+            mode={materialFlow === 'editSession' ? 'edit' : 'attach'}
+            sessions={chooserSessions}
+            currentSessionId={matDraftSessionId}
+            onClose={closeMaterialFlow}
+            onClosed={() => {
+              if (materialFlow === 'closed') setMaterialSheetMounted(false);
+            }}
+            onBack={returnToMaterialSheet}
+            onSelect={onSelectMaterialSession}
+            onRemove={onRemoveMaterialSession}
+          />
+          <DropdownBottomSheet
+            typography={typography}
+            visible={materialFlow === 'chooseUnit'}
+            options={unitOptions}
+            currentValue={matDraftUnit}
+            allowCustom
+            customPlaceholder="Custom"
+            onClose={closeMaterialFlow}
+            onClosed={() => {
+              if (materialFlow === 'closed') setMaterialSheetMounted(false);
+            }}
+            onBack={returnToMaterialSheet}
+            onSelect={onSelectMaterialUnit}
           />
         </>
       ) : null}
@@ -969,9 +1301,12 @@ function bucketSessionHeaderTitle(sessionDateLabel: string | undefined): string 
 function ViewMaterialsBuckets({
   buckets,
   typography,
+  onMaterialPress,
 }: {
   buckets: import('../mocks/jobDetail').JobDetailMaterialBucket[];
   typography: TextStyles;
+  /** Tap a row → open the Edit Material sheet prefilled with this material's fields. */
+  onMaterialPress?: (materialId: string) => void;
 }) {
   if (buckets.length === 0) {
     return null;
@@ -995,11 +1330,15 @@ function ViewMaterialsBuckets({
               )}
             </View>
             {bucket.items.map((item, ii) => (
-              <View
-                key={`${bucket.id}-${item.name}-${ii}`}
-                style={[
+              <Pressable
+                key={`${bucket.id}-${item.id}`}
+                accessibilityRole="button"
+                accessibilityLabel="Edit material"
+                onPress={onMaterialPress ? () => onMaterialPress(item.id) : undefined}
+                style={({ pressed }) => [
                   styles.materialRow,
                   ii > 0 && { borderTopWidth: 1, borderTopColor: color('Foundation/Border/Subtle') },
+                  pressed && onMaterialPress ? styles.pressed : null,
                 ]}
               >
                 <View style={{ flex: 1, minWidth: 0 }}>
@@ -1009,7 +1348,7 @@ function ViewMaterialsBuckets({
                   </Text>
                 </View>
                 <Text style={[typography.bodyBold, { color: fg.primary }]}>{item.priceLabel}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         ))}
@@ -1174,8 +1513,15 @@ function BottomNavJobs({
 // -----------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-  /** Screen root: one column; background comes from `CanvasTiledBackground` under the scroll. */
-  root: { flex: 1 },
+  /**
+   * Screen root: one column. The ruled-line texture is painted by
+   * `CanvasTiledBackground` layered above this root, but we also set
+   * the cream fill here as a safety net — if the tiled layer ever lags
+   * behind a layout change (e.g. content grew but `onContentSizeChange`
+   * hasn't fired yet), users see the same cream colour instead of iOS's
+   * default system background bleeding through.
+   */
+  root: { flex: 1, backgroundColor: bg.canvasWarm },
   /** Centered spinner over the same lined background as the loaded screen. */
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   /** Scroll fills root; flex lets the fixed bottom nav sit in the same column without overlapping scroll height math incorrectly. */
