@@ -48,8 +48,14 @@ type EditNoteBottomSheetProps = {
   onSavePress?: (values: EditNoteBottomSheetValues) => void;
   /** Trash icon — for Add this deletes the draft; for Edit this soft-deletes. */
   onDeletePress?: () => void;
-  /** Opens the `ChooseSessionBottomSheet` in either `attach` or `edit` mode. */
-  onSessionPillPress?: () => void;
+  /**
+   * Opens the `ChooseSessionBottomSheet` in either `attach` or `edit` mode.
+   * Receives the current in-sheet body so the parent can cache it before
+   * switching flows — the sheet is hidden (and its local state reseeded
+   * from `values`) on return, so without this lift the typed body would
+   * reset.
+   */
+  onSessionPillPress?: (currentValues: EditNoteBottomSheetValues) => void;
 };
 
 /**
@@ -115,7 +121,7 @@ export function EditNoteBottomSheet({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={assignedSession ? 'Edit session' : 'Attach to session'}
-              onPress={onSessionPillPress}
+              onPress={() => onSessionPillPress?.({ body })}
               disabled={!onSessionPillPress}
               style={({ pressed }) => [
                 styles.sessionPill,

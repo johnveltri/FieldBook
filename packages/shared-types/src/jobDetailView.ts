@@ -24,8 +24,25 @@ export type JobDetailSession = {
 };
 
 export type JobDetailMaterialLine = {
+  id: string;
+  /** Set when the material is attached to a session; null for job-scoped materials. */
+  sessionId: string | null;
+  /** Description text — used as prefill when opening the Edit Material sheet. */
   name: string;
+  /** Raw numeric quantity (matches `materials.quantity numeric(12,3)`). */
+  quantity: number;
+  /** Unit of measure (e.g. "ea", "ft"). Stored verbatim, may be custom. */
+  unit: string;
+  /** Per-unit cost in cents (raw value for the Edit sheet's unit price input). */
+  unitCostCents: number;
+  /**
+   * Precomputed display label for the view-only material row, combining
+   * quantity, unit, and per-unit cost (e.g. `"2 ea @ $37.50"`). When
+   * `unitCostCents` is 0 or quantity is missing the `@ $…` suffix is
+   * dropped and the label falls back to `"2 ea"` / `"—"`.
+   */
   quantityLabel: string;
+  /** Precomputed USD display label for `total_cost_cents`. */
   priceLabel: string;
 };
 

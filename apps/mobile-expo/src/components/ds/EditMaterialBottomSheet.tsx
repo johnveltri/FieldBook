@@ -1,0 +1,403 @@
+import { useEffect, useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { color, radius, space } from '@fieldbook/design-system/lib/tokens';
+// radius() still used for pill (Radius/Full).
+
+import { bg, border, fg } from '../../theme/nativeTokens';
+import type { TextStyles } from '../../theme/nativeTokens';
+import {
+  JobDetailIconSectionAdd,
+  JobDetailIconSectionMaterials,
+  SessionCardEditPencilIcon,
+  SessionSheetBackIcon,
+} from '../figma-icons/JobDetailScreenIcons';
+import { BottomSheetShell } from './BottomSheetShell';
+import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
+
+export type EditMaterialBottomSheetValues = {
+  description: string;
+  /** Per-unit cost in cents. Zero is allowed (e.g. unknown). */
+  unitCostCents: number;
+  /** Raw numeric quantity. Must be > 0 for the primary action to enable. */
+  quantity: number;
+  unit: string;
+};
+
+export type EditMaterialBottomSheetAssignedSession = {
+  id: string;
+  dateLabel: string;
+  timeRangeLabel: string;
+};
+
+type EditMaterialBottomSheetProps = {
+  typography: TextStyles;
+  visible: boolean;
+  /** "Add Material" | "Edit Material" */
+  title: string;
+  /** "SAVE NEW MATERIAL" | "SAVE CHANGES" */
+  primaryLabel: string;
+  /** Prefill values; undefined defaults to blank add-form state. */
+  values?: EditMaterialBottomSheetValues;
+  /** When non-null, header renders the pencil SESSION pill + session subtitle. */
+  assignedSession: EditMaterialBottomSheetAssignedSession | null;
+  /** Hides the `+SESSION` pill entirely when the job has no completed sessions. */
+  canAttachSession: boolean;
+  onClose?: () => void;
+  onClosed?: () => void;
+  onBack?: () => void;
+  onSavePress?: (values: EditMaterialBottomSheetValues) => void;
+  /** Trash icon — for Add this discards the draft; for Edit this soft-deletes. */
+  onDeletePress?: () => void;
+  /**
+   * Opens the `ChooseSessionBottomSheet` in either `attach` or `edit` mode.
+   * Receives the current in-sheet field values so the parent can cache them
+   * before switching flows — the sheet unmounts its keyboard and is hidden
+   * on return, so without this lift the local state would be lost.
+   */
+  onSessionPillPress?: (currentValues: EditMaterialBottomSheetValues) => void;
+  /**
+   * Opens the `DropdownBottomSheet` prefilled with the current unit. Receives
+   * the current in-sheet field values so the parent can cache them (see the
+   * note on `onSessionPillPress`).
+   */
+  onUnitPress?: (currentValues: EditMaterialBottomSheetValues) => void;
+};
+
+function toCurrencyString(cents: number): string {
+  if (!Number.isFinite(cents) || cents <= 0) return '';
+  return (cents / 100).toFixed(2);
+}
+
+/**
+ * Parses a currency text field into a `cents` integer. Accepts digits and a
+ * single decimal point; returns NaN for unparseable input so callers can
+ * disable the save button.
+ */
+function parseCentsFromText(text: string): number {
+  const cleaned = text.replace(/[^0-9.]/g, '');
+  if (cleaned === '' || cleaned === '.') return 0;
+  const dollars = Number(cleaned);
+  if (!Number.isFinite(dollars)) return NaN;
+  return Math.round(dollars * 100);
+}
+
+function toQuantityString(qty: number): string {
+  if (!Number.isFinite(qty) || qty <= 0) return '';
+  // Trim trailing ".000" so 1.000 → "1" but 1.5 is preserved.
+  return String(qty);
+}
+
+function parseQuantityFromText(text: string): number {
+  const cleaned = text.replace(/[^0-9.]/g, '');
+  if (cleaned === '' || cleaned === '.') return 0;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function DropdownCaret() {
+  return (
+    <Svg width={10} height={10} viewBox="0 0 10 10" fill="none">
+      <Path
+        d="M2 3.5L5 6.5L8 3.5"
+        stroke={fg.secondary}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/**
+ * Add / Edit Material sheet (Figma `1283:426` Add Material / `1882:1709`
+ * Edit Material).
+ *
+ * Mirrors the contract of `EditNoteBottomSheet`: parent-supplied `title` and
+ * `primaryLabel` stay stable during the slide-down close animation. Local
+ * field state resets on the `visible` edge.
+ *
+ * Layout (top → bottom):
+ *   Back
+ *   [wrench]  Title                         [+ SESSION] pill
+ *   "Unassigned job material" | "Session: …"
+ *   Description (full width)
+ *   [ Unit Price ]  [ Qty ]  [ Unit ▾ ]
+ *   [ SAVE …                 ]  [ 🗑 ]
+ *
+ * Keyboard handling is inherited from `BottomSheetShell` (sheet slides up
+ * when the keyboard opens). The price + quantity inputs use a numeric
+ * soft keyboard. The unit input is a Pressable that delegates to
+ * `onUnitPress` — typing is not allowed here; custom units are entered
+ * via the generic `DropdownBottomSheet`.
+ */
+export function EditMaterialBottomSheet({
+  typography,
+  visible,
+  title,
+  primaryLabel,
+  values,
+  assignedSession,
+  canAttachSession,
+  onClose,
+  onClosed,
+  onBack,
+  onSavePress,
+  onDeletePress,
+  onSessionPillPress,
+  onUnitPress,
+}: EditMaterialBottomSheetProps) {
+  const [description, setDescription] = useState<string>(
+    values?.description ?? '',
+  );
+  const [priceText, setPriceText] = useState<string>(
+    toCurrencyString(values?.unitCostCents ?? 0),
+  );
+  const [qtyText, setQtyText] = useState<string>(
+    toQuantityString(values?.quantity ?? 0),
+  );
+
+  useEffect(() => {
+    if (!visible) return;
+    setDescription(values?.description ?? '');
+    setPriceText(toCurrencyString(values?.unitCostCents ?? 0));
+    setQtyText(toQuantityString(values?.quantity ?? 0));
+  }, [
+    values?.description,
+    values?.unitCostCents,
+    values?.quantity,
+    visible,
+  ]);
+
+  const materialGreen = color('Semantic/Activity/Material');
+  const errorText = color('Semantic/Status/Error/Text');
+  const errorBg = color('Semantic/Status/Error/BG');
+
+  const cents = parseCentsFromText(priceText);
+  const qty = parseQuantityFromText(qtyText);
+  const hasDescription = description.trim().length > 0;
+  const hasQty = Number.isFinite(qty) && qty > 0;
+  const hasValidCost = Number.isFinite(cents) && cents >= 0;
+  const canSave = hasDescription && hasQty && hasValidCost;
+
+  const showSessionPill = canAttachSession || assignedSession !== null;
+  const currentUnit = values?.unit?.trim() ?? '';
+
+  /**
+   * Snapshot the current in-sheet state for lift-up to the parent. Used by
+   * the session pill and unit pressables so the parent can cache these
+   * before swapping to another sub-sheet.
+   */
+  const currentDraft = (): EditMaterialBottomSheetValues => ({
+    description: description.trim(),
+    unitCostCents: Number.isFinite(cents) ? cents : 0,
+    quantity: Number.isFinite(qty) ? qty : 0,
+    unit: currentUnit || 'ea',
+  });
+
+  return (
+    <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
+      <View style={styles.body}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={onBack ?? onClose}
+          style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+        >
+          <SessionSheetBackIcon color={fg.secondary} />
+          <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
+        </Pressable>
+
+        <View style={styles.header}>
+          <View style={styles.headerIcon}>
+            <JobDetailIconSectionMaterials color={materialGreen} />
+          </View>
+          <Text
+            style={[typography.titleH3, styles.headerTitle, { color: fg.primary }]}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+          {showSessionPill ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={assignedSession ? 'Edit session' : 'Attach to session'}
+              onPress={() => onSessionPillPress?.(currentDraft())}
+              disabled={!onSessionPillPress}
+              style={({ pressed }) => [
+                styles.sessionPill,
+                { backgroundColor: errorBg },
+                pressed && styles.pressed,
+              ]}
+            >
+              {assignedSession ? (
+                <SessionCardEditPencilIcon color={errorText} size={12} />
+              ) : (
+                <JobDetailIconSectionAdd color={errorText} />
+              )}
+              <Text style={[typography.bodySmall, { color: errorText }]}>SESSION</Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        <Text style={[typography.bodySmall, styles.subtitle]}>
+          {assignedSession
+            ? `Session: ${assignedSession.dateLabel} ${assignedSession.timeRangeLabel}`
+            : 'Unassigned job material'}
+        </Text>
+
+        <View style={styles.inputShell}>
+          <TextInput
+            value={description}
+            onChangeText={setDescription}
+            placeholder={'e.g. Copper Pipe 1/2"'}
+            placeholderTextColor={fg.secondary}
+            style={[typography.body, styles.inputText]}
+          />
+        </View>
+
+        <View style={styles.row}>
+          <View style={[styles.inputShell, styles.priceShell]}>
+            <TextInput
+              value={priceText}
+              onChangeText={setPriceText}
+              placeholder="Unit Price"
+              placeholderTextColor={fg.secondary}
+              keyboardType="decimal-pad"
+              style={[typography.body, styles.inputText]}
+            />
+          </View>
+          <View style={[styles.inputShell, styles.qtyShell]}>
+            <TextInput
+              value={qtyText}
+              onChangeText={setQtyText}
+              placeholder="1"
+              placeholderTextColor={fg.secondary}
+              keyboardType="decimal-pad"
+              style={[typography.body, styles.inputText, styles.qtyInput]}
+            />
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Choose unit"
+            onPress={() => onUnitPress?.(currentDraft())}
+            disabled={!onUnitPress}
+            style={({ pressed }) => [
+              styles.inputShell,
+              styles.unitShell,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text
+              style={[typography.body, { color: fg.primary }]}
+              numberOfLines={1}
+            >
+              {currentUnit || 'ea'}
+            </Text>
+            <DropdownCaret />
+          </Pressable>
+        </View>
+
+        <SheetPrimaryDeleteActions
+          typography={typography}
+          primaryLabel={primaryLabel}
+          primaryDisabled={!canSave}
+          primaryColor={materialGreen}
+          onPrimaryPress={() => onSavePress?.(currentDraft())}
+          onDeletePress={onDeletePress}
+        />
+      </View>
+    </BottomSheetShell>
+  );
+}
+
+const styles = StyleSheet.create({
+  body: {
+    gap: space('Spacing/12'),
+    width: '100%',
+  },
+  back: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space('Spacing/4'),
+    alignSelf: 'flex-start',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space('Spacing/12'),
+  },
+  headerIcon: {
+    width: space('Spacing/16'),
+    height: space('Spacing/16'),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sessionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space('Spacing/8'),
+    height: space('Spacing/24'),
+    paddingHorizontal: space('Spacing/12'),
+    paddingVertical: space('Spacing/4'),
+    borderRadius: radius('Radius/Full'),
+  },
+  subtitle: {
+    color: fg.secondary,
+  },
+  inputShell: {
+    minHeight: 38,
+    borderWidth: 1,
+    borderColor: border.subtle,
+    borderRadius: 8,
+    backgroundColor: bg.surfaceWhite,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  inputText: {
+    color: fg.primary,
+    padding: 0,
+    width: '100%',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: space('Spacing/8'),
+  },
+  priceShell: {
+    flex: 1,
+  },
+  qtyShell: {
+    width: space('Spacing/64') + space('Spacing/8'),
+  },
+  qtyInput: {
+    textAlign: 'left',
+  },
+  unitShell: {
+    width: space('Spacing/64') + space('Spacing/8'),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space('Spacing/8'),
+  },
+  pressed: {
+    opacity: 0.75,
+  },
+});

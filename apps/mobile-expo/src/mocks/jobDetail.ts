@@ -60,7 +60,16 @@ export const mockJobDetail: JobDetailViewModel = {
       id: 'mat-unassigned',
       kind: 'unassigned',
       items: [
-        { name: 'Moen Faucet', quantityLabel: '1 ea', priceLabel: '$75.00' },
+        {
+          id: 'mat-mock-u1',
+          sessionId: null,
+          name: 'Moen Faucet',
+          quantity: 1,
+          unit: 'ea',
+          unitCostCents: 7500,
+          quantityLabel: '1 ea @ $75.00',
+          priceLabel: '$75.00',
+        },
       ],
     },
     {
@@ -68,7 +77,16 @@ export const mockJobDetail: JobDetailViewModel = {
       kind: 'session',
       sessionDateLabel: 'Mar 25, 2026',
       items: [
-        { name: 'Moen Faucet', quantityLabel: '1 ea', priceLabel: '$75.00' },
+        {
+          id: 'mat-mock-s1',
+          sessionId: 'sess-1',
+          name: 'Moen Faucet',
+          quantity: 1,
+          unit: 'ea',
+          unitCostCents: 7500,
+          quantityLabel: '1 ea @ $75.00',
+          priceLabel: '$75.00',
+        },
       ],
     },
   ],

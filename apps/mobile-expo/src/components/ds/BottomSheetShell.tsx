@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
   Animated,
+  Dimensions,
   Easing,
   Keyboard,
   Platform,
@@ -34,7 +35,14 @@ export function BottomSheetShell({
   onClosed,
 }: BottomSheetShellProps) {
   const insets = useSafeAreaInsets();
-  const translateY = useRef(new Animated.Value(420)).current;
+  // Use the window height as the hidden translate-Y. A hard-coded value
+  // (previously 420) is unsafe because some sheets (e.g. DropdownBottomSheet
+  // with 7+ preset rows + custom input) are taller than that — the hidden
+  // sheet would still poke up above the bottom edge and visually cover the
+  // footer / safe-area primary button of any sheet rendered below it in the
+  // sibling stack.
+  const hiddenOffset = Dimensions.get('window').height;
+  const translateY = useRef(new Animated.Value(hiddenOffset)).current;
   const scrimOpacity = useRef(new Animated.Value(0)).current;
   const keyboardOffset = useRef(new Animated.Value(0)).current;
   const forcedOffset = useRef(new Animated.Value(0)).current;
@@ -60,7 +68,7 @@ export function BottomSheetShell({
 
     Animated.parallel([
       Animated.timing(translateY, {
-        toValue: 420,
+        toValue: hiddenOffset,
         duration: 210,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
@@ -74,7 +82,7 @@ export function BottomSheetShell({
     ]).start(({ finished }) => {
       if (finished) onClosed?.();
     });
-  }, [onClosed, scrimOpacity, translateY, visible]);
+  }, [hiddenOffset, onClosed, scrimOpacity, translateY, visible]);
 
   useEffect(() => {
     Animated.timing(forcedOffset, {

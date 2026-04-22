@@ -1,0 +1,272 @@
+import type { JobId } from '@fieldbook/shared-types';
+
+import type { FieldbookSupabaseClient } from './client';
+import type { SessionId } from './sessions';
+
+export type MaterialId = string;
+
+/**
+ * Input for creating a new material entry. At least one of `jobId` /
+ * `sessionId` must be non-null to satisfy `materials_at_least_one_parent`;
+ * however the `createMaterial` helper mirrors the Notes pattern by always
+ * writing **exactly one** parent (job_id OR session_id) so the UI stays
+ * symmetric with Notes.
+ *
+ * `unitCostCents` is the per-unit cost; `total_cost_cents` is computed as
+ * `Math.round(unitCostCents * quantity)` on every write so that the
+ * per-job materials rollup in `fetchJobDetail` stays consistent.
+ */
+export type CreateMaterialInput = {
+  jobId: JobId;
+  sessionId: SessionId | null;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitCostCents: number;
+};
+
+/**
+ * Partial update for an existing material entry.
+ *
+ * - `description` / `quantity` / `unit` / `unitCostCents` — field edits.
+ *   Whenever `quantity` or `unitCostCents` is written the total is
+ *   recomputed; if only one side is provided we read the current row to
+ *   resolve the other factor before persisting.
+ * - `sessionId` — when provided (including `null`) reassigns the parent.
+ *   Pass a session id to attach to that session; pass `null` to move the
+ *   material back to the unassigned (job-scoped) bucket.
+ * - `jobId` — optional optimization for the `sessionId: null` path. When
+ *   provided, reassignment can skip parent-resolution reads and still
+ *   update both parent columns in one statement.
+ */
+export type UpdateMaterialInput = {
+  description?: string;
+  quantity?: number;
+  unit?: string;
+  unitCostCents?: number;
+  sessionId?: SessionId | null;
+  jobId?: JobId | null;
+};
+
+function assertDescriptionNotBlank(description: string): void {
+  if (!description || !description.trim()) {
+    throw new Error('Material description must not be blank.');
+  }
+}
+
+function assertQuantityPositive(quantity: number): void {
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    throw new Error('Material quantity must be a positive number.');
+  }
+}
+
+function assertUnitCostNonNegative(unitCostCents: number): void {
+  if (!Number.isFinite(unitCostCents) || unitCostCents < 0) {
+    throw new Error('Material unit cost must be a non-negative number of cents.');
+  }
+}
+
+function computeTotalCostCents(unitCostCents: number, quantity: number): number {
+  return Math.round(unitCostCents * quantity);
+}
+
+/** Inserts a new material scoped to either a job or a session (exactly one). */
+export async function createMaterial(
+  client: FieldbookSupabaseClient,
+  input: CreateMaterialInput,
+): Promise<MaterialId> {
+  assertDescriptionNotBlank(input.description);
+  assertQuantityPositive(input.quantity);
+  assertUnitCostNonNegative(input.unitCostCents);
+
+  const { data: authData, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  const userId = authData.user?.id;
+  if (!userId) {
+    throw new Error('No authenticated user available to create a material.');
+  }
+
+  const row = {
+    user_id: userId,
+    description: input.description.trim(),
+    quantity: input.quantity,
+    unit: input.unit.trim(),
+    unit_cost_cents: input.unitCostCents,
+    total_cost_cents: computeTotalCostCents(input.unitCostCents, input.quantity),
+    // Exactly one parent: when a session is chosen we null out job_id, and
+    // vice versa. Matches how fetchJobDetail buckets materials.
+    job_id: input.sessionId ? null : input.jobId,
+    session_id: input.sessionId ?? null,
+  };
+
+  const { data, error } = await client
+    .from('materials')
+    .insert(row)
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return (data as { id: string }).id;
+}
+
+/**
+ * Updates a material's fields and/or reassigns its parent session.
+ *
+ * When `sessionId` is provided we always write both `job_id` and
+ * `session_id` in a single UPDATE so the `materials_at_least_one_parent`
+ * check never sees a transient state with both parents null.
+ *
+ * When `quantity` or `unitCostCents` is provided, `total_cost_cents` is
+ * recomputed using the provided field plus the current value of the
+ * unspecified field read back from the row.
+ */
+export async function updateMaterial(
+  client: FieldbookSupabaseClient,
+  materialId: MaterialId,
+  input: UpdateMaterialInput,
+): Promise<void> {
+  const patch: Record<string, unknown> = {};
+
+  if (input.description !== undefined) {
+    assertDescriptionNotBlank(input.description);
+    patch.description = input.description.trim();
+  }
+  if (input.unit !== undefined) {
+    patch.unit = input.unit.trim();
+  }
+  if (input.quantity !== undefined) {
+    assertQuantityPositive(input.quantity);
+    patch.quantity = input.quantity;
+  }
+  if (input.unitCostCents !== undefined) {
+    assertUnitCostNonNegative(input.unitCostCents);
+    patch.unit_cost_cents = input.unitCostCents;
+  }
+
+  // If either side of the cost changed, recompute total_cost_cents. When
+  // only one side is provided we read the current row so the total stays
+  // accurate against the persisted value on the other side.
+  const willTouchCost =
+    input.quantity !== undefined || input.unitCostCents !== undefined;
+
+  if (willTouchCost) {
+    let effectiveQty = input.quantity;
+    let effectiveUnitCost = input.unitCostCents;
+
+    if (effectiveQty === undefined || effectiveUnitCost === undefined) {
+      const { data: current, error: readErr } = await client
+        .from('materials')
+        .select('quantity, unit_cost_cents')
+        .eq('id', materialId)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (readErr) throw readErr;
+      if (!current) {
+        throw new Error(
+          'Material not found (check RLS: material must be owned by you).',
+        );
+      }
+      const row = current as {
+        quantity: string | number | null;
+        unit_cost_cents: number | null;
+      };
+      if (effectiveQty === undefined) {
+        const q = row.quantity;
+        effectiveQty = typeof q === 'string' ? Number(q) : (q ?? 0);
+      }
+      if (effectiveUnitCost === undefined) {
+        effectiveUnitCost = row.unit_cost_cents ?? 0;
+      }
+    }
+
+    patch.total_cost_cents = computeTotalCostCents(
+      effectiveUnitCost,
+      effectiveQty,
+    );
+  }
+
+  if (input.sessionId !== undefined) {
+    if (input.sessionId === null) {
+      if (input.jobId !== undefined && input.jobId !== null) {
+        patch.job_id = input.jobId;
+        patch.session_id = null;
+      } else {
+        // Reassign back to the job bucket. Fetch the parent job id from
+        // whichever side is currently set, so the row ends up with at
+        // least one parent.
+        const { data: current, error: readErr } = await client
+          .from('materials')
+          .select('job_id, session_id')
+          .eq('id', materialId)
+          .is('deleted_at', null)
+          .maybeSingle();
+        if (readErr) throw readErr;
+        if (!current) {
+          throw new Error(
+            'Material not found (check RLS: material must be owned by you).',
+          );
+        }
+        const row = current as {
+          job_id: string | null;
+          session_id: string | null;
+        };
+        let jobId = row.job_id;
+        if (!jobId && row.session_id) {
+          const { data: sess, error: sessErr } = await client
+            .from('sessions')
+            .select('job_id')
+            .eq('id', row.session_id)
+            .maybeSingle();
+          if (sessErr) throw sessErr;
+          jobId = (sess as { job_id: string } | null)?.job_id ?? null;
+        }
+        if (!jobId) {
+          throw new Error('Could not resolve parent job for material reassignment.');
+        }
+        patch.job_id = jobId;
+        patch.session_id = null;
+      }
+    } else {
+      patch.job_id = null;
+      patch.session_id = input.sessionId;
+    }
+  }
+
+  if (Object.keys(patch).length === 0) return;
+
+  const { data, error } = await client
+    .from('materials')
+    .update(patch)
+    .eq('id', materialId)
+    .is('deleted_at', null)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error(
+      'Update affected no rows (check RLS: material must be owned by you).',
+    );
+  }
+}
+
+/** Soft-deletes a material by stamping `deleted_at`. */
+export async function deleteMaterial(
+  client: FieldbookSupabaseClient,
+  materialId: MaterialId,
+): Promise<void> {
+  const { data, error } = await client
+    .from('materials')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', materialId)
+    .is('deleted_at', null)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error(
+      'Delete affected no rows (check RLS: material must be owned by you).',
+    );
+  }
+}

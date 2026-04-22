@@ -26,3 +26,11 @@ export {
   type NoteId,
   type UpdateNoteInput,
 } from './notes';
+export {
+  createMaterial,
+  deleteMaterial,
+  updateMaterial,
+  type CreateMaterialInput,
+  type MaterialId,
+  type UpdateMaterialInput,
+} from './materials';

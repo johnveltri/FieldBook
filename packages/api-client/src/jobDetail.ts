@@ -56,6 +56,7 @@ type MaterialRow = {
   /** Postgres `numeric` may deserialize as string. */
   quantity: string | number | null;
   unit: string | null;
+  unit_cost_cents: number | null;
   total_cost_cents: number;
   created_at: string;
 };
@@ -144,13 +145,35 @@ function excerptNote(body: string, max = 120): string {
 }
 
 function materialLine(row: MaterialRow): JobDetailMaterialLine {
-  const qty =
+  // Normalize `numeric` (which may come back as string) to a JS number so
+  // downstream UI forms don't need to re-parse it.
+  const quantityNum =
+    typeof row.quantity === 'string'
+      ? Number(row.quantity)
+      : (row.quantity ?? 0);
+  const unit = row.unit?.trim() ?? '';
+  const unitCostCents = row.unit_cost_cents ?? 0;
+  const baseQtyLabel =
     row.quantity != null && row.quantity !== ''
-      ? `${row.quantity}${row.unit ? ` ${row.unit}` : ''}`
+      ? `${row.quantity}${unit ? ` ${unit}` : ''}`
       : '—';
+  // Append the per-unit cost to the display label (e.g. "2 ea @ $37.50") so
+  // the view-only material row shows both the quantity and the unit cost;
+  // the total cost stays on the right-hand column via `priceLabel`. Suppress
+  // the suffix when we have no quantity (`—`) or a zero unit cost (nothing
+  // meaningful to show).
+  const qtyLabel =
+    baseQtyLabel !== '—' && unitCostCents > 0
+      ? `${baseQtyLabel} @ ${formatUsd(unitCostCents)}`
+      : baseQtyLabel;
   return {
+    id: row.id,
+    sessionId: row.session_id,
     name: row.description?.trim() || 'Material',
-    quantityLabel: qty,
+    quantity: Number.isFinite(quantityNum) ? quantityNum : 0,
+    unit,
+    unitCostCents,
+    quantityLabel: qtyLabel,
     priceLabel: formatUsd(row.total_cost_cents),
   };
 }
@@ -200,9 +223,17 @@ export async function fetchJobDetail(
 
   const [notesRes, matsJobRes, matsSessRes, actRes] = await Promise.all([
     notesQ,
-    client.from('materials').select('*').eq('job_id', jobId),
+    client
+      .from('materials')
+      .select('*')
+      .eq('job_id', jobId)
+      .is('deleted_at', null),
     sessionIds.length
-      ? client.from('materials').select('*').in('session_id', sessionIds)
+      ? client
+          .from('materials')
+          .select('*')
+          .in('session_id', sessionIds)
+          .is('deleted_at', null)
       : Promise.resolve({ data: [] as MaterialRow[], error: null }),
     client
       .from('job_activity_events')
