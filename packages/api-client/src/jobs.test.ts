@@ -4,8 +4,10 @@ import { fetchJobDetail } from './jobDetail';
 import {
   createBlankJobForCurrentUser,
   deleteJobById,
+  jobDetailWorkStatusToDbColumns,
   listJobsForCurrentUser,
   updateJobById,
+  updateJobStatusById,
 } from './jobs';
 import { makeBuilder, makeClient } from './testUtils';
 
@@ -121,6 +123,62 @@ describe('jobs api client', () => {
       revenue_cents: 125000,
       job_type: 'Electrical',
     });
+  });
+
+  it('jobDetailWorkStatusToDbColumns maps UI status to DB columns', () => {
+    expect(jobDetailWorkStatusToDbColumns('notStarted')).toEqual({
+      job_work_status: 'not_started',
+      job_payment_state: null,
+    });
+    expect(jobDetailWorkStatusToDbColumns('completed')).toEqual({
+      job_work_status: 'completed',
+      job_payment_state: 'pending',
+    });
+    expect(jobDetailWorkStatusToDbColumns('paid')).toEqual({
+      job_work_status: 'completed',
+      job_payment_state: 'paid',
+    });
+    expect(jobDetailWorkStatusToDbColumns('cancelled')).toEqual({
+      job_work_status: 'canceled',
+      job_payment_state: null,
+    });
+  });
+
+  it('updateJobStatusById patches work + payment columns', async () => {
+    let patch: unknown;
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            onUpdate: (value) => {
+              patch = value;
+            },
+            maybeSingleResult: { data: { id: 'job-1' }, error: null },
+          }),
+        ],
+      },
+    });
+
+    await updateJobStatusById(client as never, 'job-1', 'inProgress');
+
+    expect(patch).toEqual({
+      job_work_status: 'in_progress',
+      job_payment_state: null,
+    });
+  });
+
+  it('updateJobStatusById throws when no rows are affected', async () => {
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [makeBuilder({ maybeSingleResult: { data: null, error: null } })],
+      },
+    });
+
+    await expect(updateJobStatusById(client as never, 'job-1', 'paid')).rejects.toThrow(
+      'Update affected no rows',
+    );
   });
 
   it('updateJobById rejects blank titles and invalid revenue', async () => {
@@ -482,10 +540,6 @@ describe('jobs api client', () => {
         error: null,
       },
     });
-    const activityBuilder = makeBuilder({
-      awaitResult: { data: [], error: null },
-    });
-
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
@@ -498,7 +552,6 @@ describe('jobs api client', () => {
           matsDetailBySessionBuilder,
         ],
         notes: [notesBuilder],
-        job_activity_events: [activityBuilder],
       },
     });
 
@@ -573,7 +626,6 @@ describe('jobs api client', () => {
           makeBuilder({ awaitResult: { data: [], error: null } }),
           makeBuilder({ awaitResult: { data: [], error: null } }),
         ],
-        job_activity_events: [makeBuilder({ awaitResult: { data: [], error: null } })],
       },
     });
 
@@ -651,7 +703,6 @@ describe('jobs api client', () => {
           makeBuilder({ awaitResult: { data: [], error: null } }),
           makeBuilder({ awaitResult: { data: [], error: null } }),
         ],
-        job_activity_events: [makeBuilder({ awaitResult: { data: [], error: null } })],
       },
     });
 
@@ -761,7 +812,6 @@ describe('jobs api client', () => {
         ],
         notes: [notesBuilder],
         materials: [matsBuilder, makeBuilder({ awaitResult: { data: [], error: null } })],
-        job_activity_events: [makeBuilder({ awaitResult: { data: [], error: null } })],
       },
     });
 

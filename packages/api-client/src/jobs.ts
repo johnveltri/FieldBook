@@ -371,3 +371,47 @@ export async function updateJobById(
     throw new Error('Update affected no rows (check RLS: job must be owned by you).');
   }
 }
+
+/**
+ * Maps UI job status to `jobs` row columns. `paid` in the view model is
+ * `completed` + `job_payment_state: paid` in the database.
+ */
+export function jobDetailWorkStatusToDbColumns(status: JobDetailWorkStatus): {
+  job_work_status: JobWorkStatusDb;
+  job_payment_state: JobPaymentState | null;
+} {
+  switch (status) {
+    case 'notStarted':
+      return { job_work_status: 'not_started', job_payment_state: null };
+    case 'inProgress':
+      return { job_work_status: 'in_progress', job_payment_state: null };
+    case 'onHold':
+      return { job_work_status: 'on_hold', job_payment_state: null };
+    case 'completed':
+      return { job_work_status: 'completed', job_payment_state: 'pending' };
+    case 'paid':
+      return { job_work_status: 'completed', job_payment_state: 'paid' };
+    case 'cancelled':
+      return { job_work_status: 'canceled', job_payment_state: null };
+  }
+}
+
+export async function updateJobStatusById(
+  client: FieldbookSupabaseClient,
+  id: JobId,
+  status: JobDetailWorkStatus,
+): Promise<void> {
+  const patch = jobDetailWorkStatusToDbColumns(status);
+  const { data, error } = await client
+    .from('jobs')
+    .update(patch)
+    .eq('id', id)
+    .is('deleted_at', null)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error('Update affected no rows (check RLS: job must be owned by you).');
+  }
+}

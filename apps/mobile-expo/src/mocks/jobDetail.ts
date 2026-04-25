@@ -122,8 +122,4 @@ export const mockJobDetail: JobDetailViewModel = {
       ],
     },
   ],
-  timeline: {
-    title: 'Session Started',
-    timeLabel: '10:06 PM',
-  },
 };

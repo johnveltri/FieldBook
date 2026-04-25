@@ -95,21 +95,6 @@ export function JobDetailIconSectionNotes({ color }: StrokeProps) {
   );
 }
 
-/** TIMELINE — `810:614` — 16×16 */
-export function JobDetailIconSectionTimeline({ color }: StrokeProps) {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
-      <Path
-        d="M14.3333 8.16667H12.68C12.3886 8.16604 12.1051 8.26087 11.8727 8.43664C11.6404 8.61242 11.472 8.85947 11.3933 9.14L9.82667 14.7133C9.81657 14.748 9.79552 14.7784 9.76667 14.8C9.73782 14.8216 9.70273 14.8333 9.66667 14.8333C9.6306 14.8333 9.59552 14.8216 9.56667 14.8C9.53782 14.7784 9.51676 14.748 9.50667 14.7133L5.82667 1.62C5.81657 1.58538 5.79552 1.55497 5.76667 1.53333C5.73782 1.5117 5.70273 1.5 5.66667 1.5C5.6306 1.5 5.59552 1.5117 5.56667 1.53333C5.53782 1.55497 5.51676 1.58538 5.50667 1.62L3.94 7.19333C3.86164 7.47277 3.69425 7.71901 3.46324 7.89468C3.23223 8.07034 2.95021 8.16584 2.66 8.16667H1"
-        stroke={color}
-        strokeWidth={S}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 /** `443:2206` section ADD — 12×12 */
 export function JobDetailIconSectionAdd({ color }: StrokeProps) {
   return (
@@ -135,36 +120,6 @@ export function JobDetailIconViewSessionChevron({ color }: StrokeProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </Svg>
-  );
-}
-
-/** `787:69` row-card timeline / activity — 14×14 */
-export function JobDetailIconRowCardLeading({ color }: StrokeProps) {
-  const clipId = 'jobDetailRowClip';
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Defs>
-        <ClipPath id={clipId}>
-          <Rect width={14} height={14} fill="white" />
-        </ClipPath>
-      </Defs>
-      <G clipPath={`url(#${clipId})`}>
-        <Path
-          d="M7 12.8333C10.2217 12.8333 12.8333 10.2217 12.8333 7C12.8333 3.77834 10.2217 1.16667 7 1.16667C3.77834 1.16667 1.16667 3.77834 1.16667 7C1.16667 10.2217 3.77834 12.8333 7 12.8333Z"
-          stroke={color}
-          strokeWidth={S}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M7 3.5V7L9.33333 8.16667"
-          stroke={color}
-          strokeWidth={S}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </G>
     </Svg>
   );
 }

@@ -133,5 +133,7 @@ export function createTextStyles(f: LoadedFonts) {
     jobDetailNetAmount: t('Typography/JobDetail/NetAmount'),
     ctaPrimaryLabel: t('Typography/CTA/PrimaryLabel'),
     pillCompact: t('Typography/Pill/Compact'),
+    /** `Typography/LABEL` — status pills; pair with `color` from semantic status tokens (all-caps in UI). */
+    statusPillLabel: t('Typography/LABEL'),
   };
 }

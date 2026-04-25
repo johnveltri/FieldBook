@@ -400,7 +400,12 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
             </View>
           ) : (
             jobs.map((job) => (
-              <JobsCard key={job.id} job={job} onPress={() => onOpenJobDetail(job.id)} typography={typography} />
+              <JobsCard
+                key={job.id}
+                job={job}
+                onPress={() => onOpenJobDetail(job.id)}
+                typography={typography}
+              />
             ))
           )}
         </View>
@@ -432,8 +437,13 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center' },
-  scroll: { flex: 1, width: '100%' },
+  /**
+   * Match lined canvas fill (`CanvasTiledBackground`) so overscroll (rubber-band)
+   * does not flash the window default. Lines still do not draw in the bounce
+   * inset — only this solid `canvasWarm` shows there.
+   */
+  root: { flex: 1, alignItems: 'center', backgroundColor: bg.canvasWarm },
+  scroll: { flex: 1, width: '100%', backgroundColor: 'transparent' },
   safeAreaTopAccentWrap: {
     position: 'absolute',
     width: '100%',

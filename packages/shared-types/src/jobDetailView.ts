@@ -128,10 +128,6 @@ export type JobDetailViewModel = {
   inProgressSession: JobDetailSession | null;
   materialBuckets: JobDetailMaterialBucket[];
   noteBuckets: JobDetailNoteBucket[];
-  timeline: {
-    title: string;
-    timeLabel: string;
-  };
 };
 
 /** @deprecated Use JobDetailViewModel */
