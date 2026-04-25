@@ -9,6 +9,33 @@ jest.mock('expo-font', () => ({
   useFonts: () => [true],
 }));
 
+// JobDetailScreen consumes the global LiveSessionContext to wire the
+// "Live Session" tile on the New Session chooser and to refetch when the
+// in-progress live session for the current job ends. The full provider
+// requires Supabase env + AuthContext + AppState wiring that's out of
+// scope for these tests, so we stub it here with a no-op shape that
+// reports "no live session in progress".
+jest.mock('../context/LiveSessionContext', () => ({
+  useLiveSession: () => ({
+    liveSession: null,
+    hydrating: false,
+    hasLiveSession: false,
+    mode: 'hidden' as const,
+    startLiveSession: jest.fn(),
+    openSheet: jest.fn(),
+    minimize: jest.fn(),
+    openEditSheet: jest.fn(),
+    closeEditSheet: jest.fn(),
+    minimizeFromEdit: jest.fn(),
+    endLiveSessionNow: jest.fn(),
+    updateLiveSessionStartedAt: jest.fn(),
+    deleteLiveSessionNow: jest.fn(),
+    updateLiveSessionJobShortDescription: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  useHasLiveSession: () => false,
+}));
+
 jest.mock('../components/CanvasTiledBackground', () => ({
   CanvasTiledBackground: () => null,
 }));

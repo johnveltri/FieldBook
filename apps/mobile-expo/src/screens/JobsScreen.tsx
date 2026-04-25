@@ -49,6 +49,11 @@ import {
 
 type JobsScreenProps = {
   onOpenJobDetail: (jobId?: string, options?: { initialEditOpen?: boolean }) => void;
+  /**
+   * Hide the "New Job" floating action button. Used while a Live Session is
+   * in progress — the floating MinimizedLiveSessionBar takes its slot.
+   */
+  suppressFab?: boolean;
 };
 
 type Typography = ReturnType<typeof createTextStyles>;
@@ -226,7 +231,7 @@ function JobsCard({
   );
 }
 
-export function JobsScreen({ onOpenJobDetail }: JobsScreenProps) {
+export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenProps) {
   const insets = useSafeAreaInsets();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [fontsLoaded] = useFonts({
@@ -401,23 +406,25 @@ export function JobsScreen({ onOpenJobDetail }: JobsScreenProps) {
         </View>
       </Animated.ScrollView>
 
-      <View
-        style={[
-          styles.fabWrap,
-          { bottom: space('Spacing/8') + insets.bottom + 64 + space('Spacing/12') },
-        ]}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Create new job"
-          disabled={creatingJob}
-          onPress={onCreateJob}
-          style={({ pressed }) => [styles.fabContent, (pressed || creatingJob) && styles.pressed]}
+      {suppressFab ? null : (
+        <View
+          style={[
+            styles.fabWrap,
+            { bottom: space('Spacing/8') + insets.bottom + 64 + space('Spacing/12') },
+          ]}
         >
-          <JobsFabPlusIcon color={bg.canvasWarm} />
-          <Text style={[typography.bodyBold, { color: bg.canvasWarm }]}>New Job</Text>
-        </Pressable>
-      </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Create new job"
+            disabled={creatingJob}
+            onPress={onCreateJob}
+            style={({ pressed }) => [styles.fabContent, (pressed || creatingJob) && styles.pressed]}
+          >
+            <JobsFabPlusIcon color={bg.canvasWarm} />
+            <Text style={[typography.bodyBold, { color: bg.canvasWarm }]}>New Job</Text>
+          </Pressable>
+        </View>
+      )}
 
       <BottomNavJobs typography={typography} bottomInset={insets.bottom} />
     </View>

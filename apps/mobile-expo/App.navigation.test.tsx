@@ -26,6 +26,37 @@ jest.mock('./src/components/AuthSignOutButton', () => ({
   },
 }));
 
+// Stub out the global Live Session UI so tests don't hit Supabase / fonts
+// / AppState while exercising the JobsScreen ↔ JobDetailScreen pipe.
+jest.mock('./src/context/LiveSessionContext', () => {
+  const React = require('react');
+  return {
+    LiveSessionProvider: ({ children }: { children: React.ReactNode }) => children,
+    useLiveSession: () => ({
+      liveSession: null,
+      hydrating: false,
+      hasLiveSession: false,
+      mode: 'hidden' as const,
+      startLiveSession: jest.fn(),
+      openSheet: jest.fn(),
+      minimize: jest.fn(),
+      openEditSheet: jest.fn(),
+      closeEditSheet: jest.fn(),
+      minimizeFromEdit: jest.fn(),
+      endLiveSessionNow: jest.fn(),
+      updateLiveSessionStartedAt: jest.fn(),
+      deleteLiveSessionNow: jest.fn(),
+      updateLiveSessionJobShortDescription: jest.fn(),
+      refresh: jest.fn(),
+    }),
+    useHasLiveSession: () => false,
+  };
+});
+
+jest.mock('./src/components/LiveSessionOverlay', () => ({
+  LiveSessionOverlay: () => null,
+}));
+
 jest.mock('./src/screens/SignInScreen', () => ({
   SignInScreen: () => {
     const { Text } = require('react-native');

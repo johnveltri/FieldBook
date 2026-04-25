@@ -20,9 +20,16 @@ export {
   type EditNoteBottomSheetValues,
 } from './EditNoteBottomSheet';
 export {
+  EditLiveSessionBottomSheet,
+  type EditLiveSessionSavePayload,
+} from './EditLiveSessionBottomSheet';
+export {
   EditSessionBottomSheet,
   type EditSessionBottomSheetValues,
 } from './EditSessionBottomSheet';
+export { LiveSessionBottomSheet } from './LiveSessionBottomSheet';
+export { LiveSessionCaptureCard } from './LiveSessionCaptureCard';
+export { MinimizedLiveSessionBar } from './MinimizedLiveSessionBar';
 export { JobDetailJobHeader } from './JobDetailJobHeader';
 export { JobDetailMetricTertiary } from './JobDetailMetricTertiary';
 export { JobDetailStatusPill } from './JobDetailStatusPill';
