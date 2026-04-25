@@ -9,6 +9,24 @@ export type {
   JobDetailWorkStatus,
 } from './jobDetailView';
 
+/**
+ * Active in-progress (live) session payload — used by the floating live-session
+ * bar / open bottom sheet that lives outside the JobDetail screen.
+ *
+ * Returned by `fetchActiveLiveSessionForCurrentUser` and produced by
+ * `createLiveSession` in `@fieldbook/api-client`.
+ */
+export type ActiveLiveSession = {
+  id: string;
+  jobId: string;
+  /** ISO 8601 timestamp the session started — drives the live counter. */
+  startedAt: string;
+  /** IANA timezone of the device at start (used for local-midnight auto-end). */
+  startedTz: string;
+  /** Job description shown above the timer / on the minimized bar. */
+  jobShortDescription: string;
+};
+
 /** Stable identifier for a job across DB, API, and clients. */
 export type JobId = string;
 

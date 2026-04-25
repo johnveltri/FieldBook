@@ -358,6 +358,30 @@ export function SessionCaptureTilePhotoIcon({ color, size = 16 }: SizedStrokePro
   );
 }
 
+/** Chevron up — Figma `1287:798` (Live Session minimized expand toggle) — 20×20 */
+export function LiveSessionMinimizedExpandIcon({ color, size = 20 }: SizedStrokeProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <Path
+        d="M15 12L10 7L5 12"
+        stroke={color}
+        strokeWidth={S}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/** Solid filled circle — Figma `1287:779` / `1897:3096` (Live Session active dot). */
+export function LiveSessionActiveDotIcon({ color, size = 12 }: SizedStrokeProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 12 12" fill="none">
+      <Circle cx={6} cy={6} r={6} fill={color} />
+    </Svg>
+  );
+}
+
 /** Voice capture tile (microphone) — Figma `1284:901` — 16×16 */
 export function SessionCaptureTileVoiceIcon({ color, size = 16 }: SizedStrokeProps) {
   return (

@@ -90,6 +90,7 @@ import type {
   JobDetailViewModel,
 } from '@fieldbook/shared-types';
 
+import { isStaleJwtError, useLiveSession } from '../context/LiveSessionContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   CONTENT_MAX_WIDTH,
@@ -363,6 +364,139 @@ export function JobDetailScreen({
   const openAddSession = useCallback(() => {
     setSessionFlow('addForm');
   }, []);
+
+  // --- Live session integration ---
+
+  const liveSessionCtx = useLiveSession();
+  const liveSessionForThisJob =
+    liveSessionCtx.liveSession?.jobId === job?.id ? liveSessionCtx.liveSession : null;
+
+  // Push job-rename updates into the live-session context so the floating
+  // bar / live-session sheet re-render with the new title without waiting
+  // for an app reload. Fires when:
+  //   - There is a live session AND it's for THIS job.
+  //   - The job's shortDescription differs from the cached title in the
+  //     live session payload.
+  // The context method itself is a no-op in any of those cases too, so
+  // this effect is safe to fire on every job update.
+  // Pull the function reference out so this effect doesn't re-run every
+  // time the context value re-mints (mode flips, timer ticks, etc.).
+  const updateLiveJobName = liveSessionCtx.updateLiveSessionJobShortDescription;
+  useEffect(() => {
+    if (!job) return;
+    updateLiveJobName({
+      jobId: job.id,
+      jobShortDescription: job.shortDescription,
+    });
+  }, [job?.id, job?.shortDescription, updateLiveJobName]);
+
+  /**
+   * "Live Session" tile on the New Session chooser (Figma `1286:602`):
+   * starts a brand new in-progress session for THIS job and immediately
+   * opens the global LiveSessionBottomSheet via `LiveSessionContext`.
+   *
+   * Fails (without opening anything) when the user already has an
+   * in-progress session — we surface a brief alert and refresh the
+   * context so the existing session's floating bar reappears if it
+   * was missed.
+   */
+  const onStartLiveSession = useCallback(async () => {
+    if (!job) return;
+    closeSessionFlow();
+    // eslint-disable-next-line no-console
+    console.log('[LiveSession] startLiveSession requested', {
+      jobId: job.id,
+      jobShortDescription: job.shortDescription,
+    });
+    try {
+      const created = await liveSessionCtx.startLiveSession({
+        jobId: job.id,
+        jobShortDescription: job.shortDescription,
+      });
+      // eslint-disable-next-line no-console
+      console.log('[LiveSession] startLiveSession success', created);
+    } catch (err) {
+      // Inspect the underlying Supabase error shape (PG code lives on
+      // `.code`, with `.message` / `.details` usually carrying the raw
+      // SQLSTATE text). Fall back to `.message` for plain Errors.
+      const errorObj = (err ?? {}) as {
+        code?: string;
+        message?: string;
+        details?: string;
+        hint?: string;
+      };
+      const code = typeof errorObj.code === 'string' ? errorObj.code : '';
+      const message =
+        typeof errorObj.message === 'string'
+          ? errorObj.message
+          : err instanceof Error
+            ? err.message
+            : 'Could not start live session.';
+
+      // Stale JWT (typically after a `supabase db reset` wiped auth.users
+      // while the device still holds the old token): the LiveSessionContext
+      // will sign the user out on the next refresh — just skip the
+      // misleading "Could not start live session" alert and don't pollute
+      // dev logs.
+      if (isStaleJwtError(err)) {
+        void liveSessionCtx.refresh();
+        return;
+      }
+
+      // eslint-disable-next-line no-console
+      console.error('[LiveSession] startLiveSession failed', { code, message, err });
+
+      // PG 23505 = unique_violation. Could be either:
+      //   - sessions_one_active_per_user_idx (the new per-user index) — in
+      //     this case the user already has an active session, so we just
+      //     refresh and surface IT.
+      //   - sessions_one_active_per_job_idx (pre-existing per-job index)
+      //     hit by a stale row that doesn't belong to this user — in this
+      //     case refresh comes up empty and we MUST tell the user instead
+      //     of going silent.
+      if (code === '23505' || message.includes('23505')) {
+        const recovered = await liveSessionCtx.refresh();
+        if (recovered) return; // bar / sheet will appear via context update
+        Alert.alert(
+          'Could not start live session',
+          'A previous in-progress session for this job is still open in the database (likely a stale row). Open it and end it before starting a new one, or contact support.',
+        );
+        return;
+      }
+
+      const detail = [message, errorObj.details, errorObj.hint]
+        .filter((s): s is string => typeof s === 'string' && s.length > 0)
+        .join('\n');
+      Alert.alert(
+        'Could not start live session',
+        detail.length > 0 ? detail : 'Unknown error.',
+      );
+    }
+  }, [closeSessionFlow, job, liveSessionCtx]);
+
+  /**
+   * Re-fetch the job detail whenever the live session for THIS job ends
+   * (transitions from non-null → null). The newly-ended session needs to
+   * appear as a past session card; the API filters out in-progress rows
+   * so this is a clean "render the new past session" trigger.
+   */
+  const previousLiveIdForThisJob = useRef<string | null>(null);
+  useEffect(() => {
+    if (!job) return;
+    const currentId = liveSessionForThisJob?.id ?? null;
+    const previousId = previousLiveIdForThisJob.current;
+    previousLiveIdForThisJob.current = currentId;
+    if (previousId && !currentId) {
+      void (async () => {
+        try {
+          const refreshed = await fetchJobDetail(supabase, job.id);
+          if (refreshed) setJob(refreshed);
+        } catch {
+          // best-effort refresh; user can pull-to-refresh / re-open
+        }
+      })();
+    }
+  }, [job, liveSessionForThisJob]);
 
   const openEditSession = useCallback((sessionId: string) => {
     setEditingSessionId(sessionId);
@@ -1189,6 +1323,7 @@ export function JobDetailScreen({
             onClosed={() => {
               if (sessionFlow === 'closed') setSessionSheetMounted(false);
             }}
+            onLiveSessionPress={() => void onStartLiveSession()}
             onLogPastPress={openAddSession}
           />
           <EditSessionBottomSheet
