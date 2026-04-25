@@ -12,6 +12,30 @@ export type JobDetailWorkStatus =
   | 'onHold'
   | 'cancelled';
 
+/**
+ * Merged note + material rows for a single session, sorted by `updatedAt` desc
+ * in `fetchJobDetail` (used for the expanded session attachment list).
+ */
+export type JobDetailSessionAttachment =
+  | {
+      kind: 'note';
+      id: string;
+      /** ISO 8601 — from `notes.updated_at` (fallback: `created_at`). */
+      updatedAt: string;
+      /** List title — same excerpt rules as `JobDetailNote.excerpt`. */
+      title: string;
+    }
+  | {
+      kind: 'material';
+      id: string;
+      /** ISO 8601 — from `materials.updated_at` (fallback: `created_at`). */
+      updatedAt: string;
+      /** Primary line, e.g. `Copper wire (2 ea @ $2.00)`. */
+      title: string;
+      /** Right column — `total_cost` as USD. */
+      priceLabel: string;
+    };
+
 export type JobDetailSession = {
   id: string;
   /** ISO 8601 timestamp (UTC with offset). Raw session start for prefilling edit UI. */
@@ -21,6 +45,11 @@ export type JobDetailSession = {
   dateLabel: string;
   timeRangeLabel: string;
   durationLabel: string;
+  /**
+   * Notes and materials linked to this session, newest-updated first.
+   * UI may show a preview of the first 3 and expand to the full list.
+   */
+  attachments: JobDetailSessionAttachment[];
 };
 
 export type JobDetailMaterialLine = {

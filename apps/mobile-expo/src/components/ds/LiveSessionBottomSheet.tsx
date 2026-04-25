@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, radius, space } from '@fieldbook/design-system/lib/tokens';
+import type { JobDetailSessionAttachment } from '@fieldbook/shared-types';
 
 import type { TextStyles } from '../../theme/nativeTokens';
 import {
@@ -17,6 +18,11 @@ type LiveSessionBottomSheetProps = {
   jobShortDescription: string;
   /** ISO 8601 timestamp the live session started at. Drives the timer. */
   startedAt: string;
+  /** Merged note + material rows for this live session (from `fetchJobDetail`). */
+  attachments: JobDetailSessionAttachment[];
+  onAddNote: () => void;
+  onAddMaterial: () => void;
+  onPressAttachment: (item: { kind: 'note' | 'material'; id: string }) => void;
   /**
    * Minimize handler — fired by the back button, swipe-down, and scrim tap.
    * Per spec, the sheet does NOT fully close; it dismisses to the floating
@@ -44,6 +50,10 @@ export function LiveSessionBottomSheet({
   visible,
   jobShortDescription,
   startedAt,
+  attachments,
+  onAddNote,
+  onAddMaterial,
+  onPressAttachment,
   onMinimize,
   onClosed,
   onEditPress,
@@ -81,10 +91,10 @@ export function LiveSessionBottomSheet({
       onClose={onMinimize}
       onClosed={onClosed}
       variant="fullbleedDark"
-      // Cap at ~95% of the screen — sheet expands with content but never
-      // covers the system status bar / notch. Inner content scrolls past
-      // this point per spec.
-      autoSizeUpToFraction={0.95}
+      // Cap at ~98% of the window — sheet grows with content up to this
+      // height; inner `ScrollView` scrolls if needed. Slightly under 100% so
+      // the sheet does not read as a full edge-to-edge cover over the status area.
+      autoSizeUpToFraction={0.98}
       // Opt out of the global sheet-stack registry: the floating
       // MinimizedLiveSessionBar is owned by the *same* feature as this
       // sheet, so we don't want it trying to position itself above its
@@ -132,6 +142,10 @@ export function LiveSessionBottomSheet({
           expanded={expanded}
           onToggle={() => setExpanded((p) => !p)}
           onEditPress={onEditPress}
+          attachments={attachments}
+          onAddNote={onAddNote}
+          onAddMaterial={onAddMaterial}
+          onPressAttachment={onPressAttachment}
         />
 
         <Pressable

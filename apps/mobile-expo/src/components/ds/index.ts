@@ -35,5 +35,7 @@ export { JobDetailMetricTertiary } from './JobDetailMetricTertiary';
 export { JobDetailStatusPill } from './JobDetailStatusPill';
 export { JobDetailSummaryCard } from './JobDetailSummaryCard';
 export { NewSessionBottomSheet } from './NewSessionBottomSheet';
+export { SessionAddToSessionTiles } from './SessionAddToSessionTiles';
+export { SessionAttachmentList } from './SessionAttachmentList';
 export { SessionCard } from './SessionCard';
 export { jobDetailCtaConfig } from './jobDetailCtaConfig';

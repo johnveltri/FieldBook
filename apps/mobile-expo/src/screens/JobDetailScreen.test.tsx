@@ -256,15 +256,35 @@ jest.mock('../components/ds', () => ({
   SessionCard: ({
     session,
     onEditPress,
+    onAddNote,
+    onAddMaterial,
+    onPressAttachment,
   }: {
-    session: { id: string; dateLabel: string };
+    session: {
+      id: string;
+      dateLabel: string;
+      attachments?: Array<{ kind: 'note' | 'material'; id: string; title: string }>;
+    };
     onEditPress: () => void;
+    onAddNote: () => void;
+    onAddMaterial: () => void;
+    onPressAttachment: (item: { kind: 'note' | 'material'; id: string }) => void;
   }) => {
     const { Text, View } = require('react-native');
     return (
       <View>
         <Text>{session.dateLabel}</Text>
         <Text onPress={onEditPress}>{`Edit session ${session.id}`}</Text>
+        <Text onPress={onAddNote}>{`Add note to session ${session.id}`}</Text>
+        <Text onPress={onAddMaterial}>{`Add material to session ${session.id}`}</Text>
+        {session.attachments?.map((item) => (
+          <Text
+            key={`${item.kind}-${item.id}`}
+            onPress={() => onPressAttachment({ kind: item.kind, id: item.id })}
+          >
+            {`Open ${item.kind} attachment ${item.id}`}
+          </Text>
+        ))}
       </View>
     );
   },
@@ -321,6 +341,7 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 17, 2026',
         timeRangeLabel: '9:00 AM – 10:00 AM',
         durationLabel: '1.0h',
+        attachments: [],
       },
     ],
     allSessions: [
@@ -331,6 +352,7 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 17, 2026',
         timeRangeLabel: '9:00 AM – 10:00 AM',
         durationLabel: '1.0h',
+        attachments: [],
       },
     ],
     inProgressSession: null,
@@ -463,6 +485,26 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
   });
 
+  it('creates a note from a session card add action', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Add note to session sess-1')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Add note to session sess-1'));
+    expect(screen.getByText('Assigned sess-1')).toBeTruthy();
+    fireEvent.press(screen.getByText('Save Note'));
+
+    await waitFor(() => {
+      expect(apiClient.createNote).toHaveBeenCalledWith({}, {
+        jobId: 'job-1',
+        sessionId: 'sess-1',
+        body: 'Saved note body',
+      });
+    });
+  });
+
   it('updates an existing note from edit flow', async () => {
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
@@ -497,7 +539,7 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
   });
 
-  it('hides in-progress sessions from cards and note session chooser', async () => {
+  it('hides in-progress sessions from session cards but lists them in the session picker', async () => {
     apiClient.fetchJobDetail.mockResolvedValueOnce({
       ...baseJob,
       displaySessions: [
@@ -512,6 +554,7 @@ describe('JobDetailScreen manual session and note flows', () => {
           dateLabel: 'Apr 18, 2026',
           timeRangeLabel: '9:00 AM – …',
           durationLabel: '0.2h',
+          attachments: [],
         },
       ],
       inProgressSession: {
@@ -521,6 +564,7 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 18, 2026',
         timeRangeLabel: '9:00 AM – …',
         durationLabel: '0.2h',
+        attachments: [],
       },
     });
 
@@ -534,7 +578,7 @@ describe('JobDetailScreen manual session and note flows', () => {
     fireEvent.press(screen.getByLabelText('Add NOTES'));
     fireEvent.press(screen.getByText('Open Session Picker'));
     expect(screen.getByText('Pick sess-1')).toBeTruthy();
-    expect(screen.queryByText('Pick sess-progress')).toBeNull();
+    expect(screen.getByText('Pick sess-progress')).toBeTruthy();
   });
 
   // --- Materials ---
@@ -593,6 +637,29 @@ describe('JobDetailScreen manual session and note flows', () => {
     fireEvent.press(screen.getByLabelText('Add MATERIALS'));
     fireEvent.press(screen.getByText('Open Material Session Picker'));
     fireEvent.press(screen.getByText('Pick sess-1'));
+    fireEvent.press(screen.getByText('Save Material'));
+
+    await waitFor(() => {
+      expect(apiClient.createMaterial).toHaveBeenCalledWith({}, {
+        jobId: 'job-1',
+        sessionId: 'sess-1',
+        description: 'Copper wire',
+        quantity: 3,
+        unit: 'ea',
+        unitCostCents: 250,
+      });
+    });
+  });
+
+  it('creates a material from a session card add action', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Add material to session sess-1')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Add material to session sess-1'));
+    expect(screen.getByText('Material assigned sess-1')).toBeTruthy();
     fireEvent.press(screen.getByText('Save Material'));
 
     await waitFor(() => {

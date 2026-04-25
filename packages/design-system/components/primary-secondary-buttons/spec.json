@@ -33,7 +33,7 @@
       "Semantic/Status/Success/Text",
       "Semantic/Status/Warning/Text"
     ],
-    "spacing": ["Spacing/4", "Spacing/8", "Spacing/10", "Spacing/16", "Spacing/40"],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16", "Spacing/40"],
     "typography": ["Typography/Metric-S"],
     "radius": ["Radius/12"]
   },
@@ -78,7 +78,7 @@
       "secondary": {
         "minHeight": 32,
         "paddingY": 14,
-        "gapToken": "Spacing/10",
+        "gapToken": "Spacing/12",
         "radiusPx": 8
       }
     },

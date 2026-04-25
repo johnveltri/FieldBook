@@ -593,6 +593,7 @@ describe('jobs api client', () => {
             session_id: null,
             body: 'Long enough body that will be truncated for the excerpt preview...',
             created_at: '2026-04-17T11:00:00.000Z',
+            updated_at: '2026-04-17T11:00:00.000Z',
           },
           {
             id: 'note-session',
@@ -600,6 +601,7 @@ describe('jobs api client', () => {
             session_id: 'sess-a',
             body: 'Short',
             created_at: '2026-04-17T10:30:00.000Z',
+            updated_at: '2026-04-17T10:30:00.000Z',
           },
         ],
         error: null,
@@ -680,5 +682,93 @@ describe('jobs api client', () => {
       body: 'Short',
       excerpt: 'Short',
     });
+  });
+
+  it('fetchJobDetail merges session notes and materials into attachments sorted by updated_at desc', async () => {
+    const notesData = [
+      {
+        id: 'note-older',
+        job_id: null,
+        session_id: 'sess-x',
+        body: 'Older note',
+        created_at: '2026-04-17T08:00:00.000Z',
+        updated_at: '2026-04-17T08:00:00.000Z',
+      },
+      {
+        id: 'note-newer',
+        job_id: null,
+        session_id: 'sess-x',
+        body: 'Newer note',
+        created_at: '2026-04-17T09:00:00.000Z',
+        updated_at: '2026-04-17T12:00:00.000Z',
+      },
+    ];
+    const matData = [
+      {
+        id: 'mat-mid',
+        job_id: null,
+        session_id: 'sess-x',
+        description: 'Wire spool',
+        quantity: 2,
+        unit: 'ea',
+        unit_cost_cents: 200,
+        total_cost_cents: 400,
+        created_at: '2026-04-17T10:00:00.000Z',
+        updated_at: '2026-04-17T10:00:00.000Z',
+      },
+    ];
+    const notesBuilder = makeBuilder({
+      awaitResult: { data: notesData, error: null },
+    });
+    const matsBuilder = makeBuilder({ awaitResult: { data: matData, error: null } });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            maybeSingleResult: {
+              data: {
+                id: 'job-att',
+                short_description: 'Job',
+                customer_name: 'C',
+                service_address: '1 St',
+                job_type: 'x',
+                job_work_status: 'in_progress',
+                job_payment_state: 'pending',
+                revenue_cents: 0,
+                collected_cents: 0,
+                updated_at: '2026-04-17T10:00:00.000Z',
+              },
+              error: null,
+            },
+          }),
+        ],
+        sessions: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'sess-x',
+                  job_id: 'job-att',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T09:00:00.000Z',
+                  ended_at: '2026-04-16T10:00:00.000Z',
+                },
+              ],
+              error: null,
+            },
+          }),
+        ],
+        notes: [notesBuilder],
+        materials: [matsBuilder, makeBuilder({ awaitResult: { data: [], error: null } })],
+        job_activity_events: [makeBuilder({ awaitResult: { data: [], error: null } })],
+      },
+    });
+
+    const detail = await fetchJobDetail(client as never, 'job-att');
+    expect(detail).not.toBeNull();
+    const sess = detail!.displaySessions.find((s) => s.id === 'sess-x');
+    expect(sess).toBeDefined();
+    expect(sess!.attachments.map((a) => a.id)).toEqual(['note-newer', 'mat-mid', 'note-older']);
   });
 });

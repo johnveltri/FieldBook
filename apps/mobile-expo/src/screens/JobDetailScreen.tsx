@@ -610,6 +610,14 @@ export function JobDetailScreen({
     setNoteFlow('addNote');
   }, []);
 
+  const openAddNoteForSession = useCallback((sessionId: string) => {
+    setEditingNoteId(null);
+    setDraftBody('');
+    setDraftSessionId(sessionId);
+    setNoteSheetMounted(true);
+    setNoteFlow('addNote');
+  }, []);
+
   const openEditNote = useCallback(
     (noteId: string) => {
       const n = findNote(noteId);
@@ -733,6 +741,17 @@ export function JobDetailScreen({
     setMatDraftQuantity(1);
     setMatDraftUnit('ea');
     setMatDraftSessionId(null);
+    setMaterialSheetMounted(true);
+    setMaterialFlow('addMaterial');
+  }, []);
+
+  const openAddMaterialForSession = useCallback((sessionId: string) => {
+    setEditingMaterialId(null);
+    setMatDraftDescription('');
+    setMatDraftUnitCostCents(0);
+    setMatDraftQuantity(1);
+    setMatDraftUnit('ea');
+    setMatDraftSessionId(sessionId);
     setMaterialSheetMounted(true);
     setMaterialFlow('addMaterial');
   }, []);
@@ -876,32 +895,40 @@ export function JobDetailScreen({
     [job],
   );
 
-  /** Completed sessions only, mapped for the generic `ChooseSessionBottomSheet`. */
+  /**
+   * All non-deleted sessions (ended + in progress) for the session picker and
+   * draft session labels — matches `job.allSessions`.
+   */
+  const allSessionsList = useMemo(
+    () => job?.allSessions ?? [],
+    [job?.allSessions],
+  );
+
   const chooserSessions = useMemo<ChooseSessionBottomSheetSession[]>(
     () =>
-      visibleSessions.map((s) => ({
+      allSessionsList.map((s) => ({
         id: s.id,
         dateLabel: s.dateLabel,
         timeRangeLabel: s.timeRangeLabel,
       })),
-    [visibleSessions],
+    [allSessionsList],
   );
 
   /** Hydrated version of `draftSessionId` used by the note sheet subtitle + pill icon. */
   const draftAssignedSession = useMemo(() => {
     if (!draftSessionId) return null;
-    const s = visibleSessions.find((x) => x.id === draftSessionId);
+    const s = allSessionsList.find((x) => x.id === draftSessionId);
     if (!s) return null;
     return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
-  }, [draftSessionId, visibleSessions]);
+  }, [draftSessionId, allSessionsList]);
 
   /** Hydrated version of `matDraftSessionId` used by the material sheet subtitle + pill. */
   const matDraftAssignedSession = useMemo(() => {
     if (!matDraftSessionId) return null;
-    const s = visibleSessions.find((x) => x.id === matDraftSessionId);
+    const s = allSessionsList.find((x) => x.id === matDraftSessionId);
     if (!s) return null;
     return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
-  }, [matDraftSessionId, visibleSessions]);
+  }, [matDraftSessionId, allSessionsList]);
 
   /** Preset UOM options for the unit-of-measure dropdown (Figma `1882:1781`). */
   const unitOptions = useMemo<DropdownBottomSheetOption[]>(
@@ -1102,6 +1129,15 @@ export function JobDetailScreen({
                 setExpandedSessionId((prev) => (prev === s.id ? null : s.id))
               }
               onEditPress={() => openEditSession(s.id)}
+              onAddNote={() => openAddNoteForSession(s.id)}
+              onAddMaterial={() => openAddMaterialForSession(s.id)}
+              onPressAttachment={({ kind, id }) => {
+                if (kind === 'note') {
+                  openEditNote(id);
+                } else {
+                  openEditMaterial(id);
+                }
+              }}
             />
           ))}
         </View>

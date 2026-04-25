@@ -5,6 +5,7 @@ export type {
   JobDetailNote,
   JobDetailNoteBucket,
   JobDetailSession,
+  JobDetailSessionAttachment,
   JobDetailViewModel,
   JobDetailWorkStatus,
 } from './jobDetailView';

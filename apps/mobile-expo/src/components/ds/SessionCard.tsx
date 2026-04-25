@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   color,
@@ -6,18 +5,13 @@ import {
   radius,
   space,
 } from '@fieldbook/design-system/lib/tokens';
-
 import type { JobDetailSession } from '@fieldbook/shared-types';
+
 import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
-import {
-  JobDetailIconViewSessionChevron,
-  SessionCaptureTileMaterialIcon,
-  SessionCaptureTileNoteIcon,
-  SessionCaptureTilePhotoIcon,
-  SessionCaptureTileVoiceIcon,
-  SessionCardEditPencilIcon,
-} from '../figma-icons/JobDetailScreenIcons';
+import { JobDetailIconViewSessionChevron, SessionCardEditPencilIcon } from '../figma-icons/JobDetailScreenIcons';
+import { SessionAddToSessionTiles } from './SessionAddToSessionTiles';
+import { SessionAttachmentList } from './SessionAttachmentList';
 
 type SessionCardProps = {
   session: JobDetailSession;
@@ -25,49 +19,14 @@ type SessionCardProps = {
   expanded: boolean;
   onToggle: () => void;
   onEditPress: () => void;
+  onAddNote: () => void;
+  onAddMaterial: () => void;
+  onPressAttachment: (item: { kind: 'note' | 'material'; id: string }) => void;
 };
-
-type TileKind = 'note' | 'material' | 'photo' | 'voice';
-
-const TILE_LABEL: Record<TileKind, string> = {
-  note: 'Note',
-  material: 'Material',
-  photo: 'Photo',
-  voice: 'Voice',
-};
-
-function tileIcon(kind: TileKind, tint: string): ReactNode {
-  const props = { color: tint };
-  switch (kind) {
-    case 'note':
-      return <SessionCaptureTileNoteIcon {...props} />;
-    case 'material':
-      return <SessionCaptureTileMaterialIcon {...props} />;
-    case 'photo':
-      return <SessionCaptureTilePhotoIcon {...props} />;
-    case 'voice':
-      return <SessionCaptureTileVoiceIcon {...props} />;
-  }
-}
-
-function tileTint(kind: TileKind): string {
-  switch (kind) {
-    case 'note':
-      return color('Semantic/Activity/Note');
-    case 'material':
-      return color('Semantic/Activity/Material');
-    case 'photo':
-      return color('Semantic/Activity/Photo');
-    case 'voice':
-      return color('Semantic/Activity/Voice');
-  }
-}
 
 /**
- * Collapsible session row (Figma View Session `1284:577`).
- * Collapsed matches the existing JobDetail list row; expanded exposes EDIT
- * and the read-only capture tile row + "No notes, materials or photos yet" empty state.
- * Capture tiles are display-only (per spec) — no handlers plumbed through yet.
+ * Collapsible session row (Figma View Session `1284:577` / `1285:465`).
+ * Expanded: EDIT, Add to Session (Note/Material tappable), attachment list.
  */
 export function SessionCard({
   session,
@@ -75,6 +34,9 @@ export function SessionCard({
   expanded,
   onToggle,
   onEditPress,
+  onAddNote,
+  onAddMaterial,
+  onPressAttachment,
 }: SessionCardProps) {
   return (
     <View style={styles.card}>
@@ -88,16 +50,12 @@ export function SessionCard({
         <View style={styles.header}>
           <View style={styles.leading}>
             <View style={styles.datePad}>
-              <Text style={[typography.bodyBold, { color: fg.primary }]}>
-                {session.dateLabel}
-              </Text>
+              <Text style={[typography.bodyBold, { color: fg.primary }]}>{session.dateLabel}</Text>
             </View>
             <Text style={typography.sessionTimeRange}>{session.timeRangeLabel}</Text>
           </View>
           <View style={styles.trailing}>
-            <Text style={[typography.metric, { textTransform: 'none' }]}>
-              {session.durationLabel}
-            </Text>
+            <Text style={[typography.metric, { textTransform: 'none' }]}>{session.durationLabel}</Text>
             <View style={expanded ? styles.chevronExpanded : undefined}>
               <JobDetailIconViewSessionChevron color={fg.secondary} />
             </View>
@@ -126,32 +84,17 @@ export function SessionCard({
             </Pressable>
           </View>
 
-          <View style={styles.captureSection}>
-            <Text style={[typography.bodySmall, { color: fg.primary }]}>
-              Add to Session
-            </Text>
-            <View style={styles.tileRow}>
-              {(['note', 'material', 'photo', 'voice'] as TileKind[]).map((kind) => (
-                <View key={kind} style={styles.tile}>
-                  {tileIcon(kind, tileTint(kind))}
-                  <Text style={[styles.tileLabel, { color: fg.primary }]}>
-                    {TILE_LABEL[kind]}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
+          <SessionAddToSessionTiles
+            typography={typography}
+            onAddNote={onAddNote}
+            onAddMaterial={onAddMaterial}
+          />
 
-          <View style={styles.emptyWrap}>
-            <Text
-              style={[
-                typography.bodySmall,
-                { color: fg.secondary, textAlign: 'center' },
-              ]}
-            >
-              No notes, materials or photos yet
-            </Text>
-          </View>
+          <SessionAttachmentList
+            typography={typography}
+            attachments={session.attachments}
+            onPressAttachment={onPressAttachment}
+          />
         </View>
       ) : null}
     </View>
@@ -210,38 +153,6 @@ const styles = StyleSheet.create({
     paddingVertical: space('Spacing/4'),
     borderRadius: radius('Radius/Full'),
     backgroundColor: color('Semantic/Status/Error/BG'),
-  },
-  captureSection: {
-    marginTop: space('Spacing/16'),
-    paddingHorizontal: space('Spacing/16'),
-    gap: space('Spacing/8'),
-  },
-  tileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space('Spacing/8'),
-    flexWrap: 'wrap',
-  },
-  tile: {
-    width: 73.75,
-    height: 56,
-    borderRadius: radius('Radius/12'),
-    borderWidth: 1,
-    borderColor: border.subtle,
-    backgroundColor: bg.surfaceWhite,
-    alignItems: 'center',
-    paddingTop: 10,
-    gap: 6,
-  },
-  tileLabel: {
-    fontSize: 8.5,
-    fontWeight: '700',
-    lineHeight: 12,
-  },
-  emptyWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: space('Spacing/16'),
   },
   pressed: {
     opacity: 0.75,

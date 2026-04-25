@@ -146,7 +146,7 @@ export function SearchBar({
     maxWidth,
     display: 'flex',
     flexDirection: 'column',
-    gap: space('Spacing/10'),
+    gap: space('Spacing/8'),
   };
 
   const fieldRow: CSSProperties = {
@@ -211,7 +211,7 @@ export function SearchBar({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: space('Spacing/10'),
+    gap: space('Spacing/8'),
     position: 'relative',
     overflow: 'hidden',
   };

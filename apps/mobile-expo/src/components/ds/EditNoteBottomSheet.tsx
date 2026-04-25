@@ -56,6 +56,8 @@ type EditNoteBottomSheetProps = {
    * reset.
    */
   onSessionPillPress?: (currentValues: EditNoteBottomSheetValues) => void;
+  /** @default true — set false when this sheet replaces another (e.g. live session) without stacking. */
+  registerInGlobalStack?: boolean;
 };
 
 /**
@@ -80,6 +82,7 @@ export function EditNoteBottomSheet({
   onSavePress,
   onDeletePress,
   onSessionPillPress,
+  registerInGlobalStack = true,
 }: EditNoteBottomSheetProps) {
   const [body, setBody] = useState<string>(values?.body ?? '');
 
@@ -95,7 +98,12 @@ export function EditNoteBottomSheet({
   const showSessionPill = canAttachSession || assignedSession !== null;
 
   return (
-    <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
+    <BottomSheetShell
+      visible={visible}
+      onClose={onClose}
+      onClosed={onClosed}
+      registerInGlobalStack={registerInGlobalStack}
+    >
       <View style={styles.body}>
         <Pressable
           accessibilityRole="button"

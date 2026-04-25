@@ -51,6 +51,8 @@ type DropdownBottomSheetProps = {
   onBack?: () => void;
   /** Called when the user selects a preset row or submits the Custom input. */
   onSelect: (value: string) => void;
+  /** @default true — set false when this sheet replaces another (e.g. live session) without stacking. */
+  registerInGlobalStack?: boolean;
 };
 
 /**
@@ -75,6 +77,7 @@ export function DropdownBottomSheet({
   onClosed,
   onBack,
   onSelect,
+  registerInGlobalStack = true,
 }: DropdownBottomSheetProps) {
   const optionValues = options.map((o) => o.value);
   const presetMatch =
@@ -116,7 +119,12 @@ export function DropdownBottomSheet({
   const bodyMaxHeight = Math.max(320, windowHeight - sheetChrome);
 
   return (
-    <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
+    <BottomSheetShell
+      visible={visible}
+      onClose={onClose}
+      onClosed={onClosed}
+      registerInGlobalStack={registerInGlobalStack}
+    >
       <View style={[styles.body, { maxHeight: bodyMaxHeight }]}>
         <Pressable
           accessibilityRole="button"
