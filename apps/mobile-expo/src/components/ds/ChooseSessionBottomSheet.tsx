@@ -32,6 +32,8 @@ type ChooseSessionBottomSheetProps = {
   onSelect: (sessionId: string) => void;
   /** Only wired in `edit` mode. */
   onRemove?: () => void;
+  /** @default true — set false when this sheet replaces another (e.g. live session) without stacking. */
+  registerInGlobalStack?: boolean;
 };
 
 /**
@@ -51,6 +53,7 @@ export function ChooseSessionBottomSheet({
   onBack,
   onSelect,
   onRemove,
+  registerInGlobalStack = true,
 }: ChooseSessionBottomSheetProps) {
   const title = mode === 'edit' ? 'Edit Session' : 'Add to Session';
   const list =
@@ -59,7 +62,12 @@ export function ChooseSessionBottomSheet({
       : sessions;
 
   return (
-    <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
+    <BottomSheetShell
+      visible={visible}
+      onClose={onClose}
+      onClosed={onClosed}
+      registerInGlobalStack={registerInGlobalStack}
+    >
       <View style={styles.body}>
         <Pressable
           accessibilityRole="button"

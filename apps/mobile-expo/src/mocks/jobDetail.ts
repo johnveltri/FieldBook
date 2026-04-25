@@ -42,6 +42,7 @@ export const mockJobDetail: JobDetailViewModel = {
       dateLabel: 'Mar 25, 2026',
       timeRangeLabel: '9:00 AM – 10:00 AM',
       durationLabel: '1.0h',
+      attachments: [],
     },
   ],
   allSessions: [
@@ -52,6 +53,7 @@ export const mockJobDetail: JobDetailViewModel = {
       dateLabel: 'Mar 25, 2026',
       timeRangeLabel: '9:00 AM – 10:00 AM',
       durationLabel: '1.0h',
+      attachments: [],
     },
   ],
   inProgressSession: null,

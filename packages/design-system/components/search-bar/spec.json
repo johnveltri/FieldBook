@@ -34,7 +34,7 @@
       "Foundation/Text/Primary",
       "Foundation/Text/Secondary"
     ],
-    "spacing": ["Spacing/4", "Spacing/8", "Spacing/10", "Spacing/12", "Spacing/16", "Spacing/20"],
+    "spacing": ["Spacing/4", "Spacing/8", "Spacing/12", "Spacing/16", "Spacing/20"],
     "typography": ["Typography/Body-Bold", "Typography/Input", "Typography/Input-Small"],
     "radius": ["Radius/12", "Radius/16"]
   },

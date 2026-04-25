@@ -5,14 +5,37 @@ import {
   UbuntuSansMono_600SemiBold,
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Animated, Dimensions, Easing, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Animated, Dimensions, Easing, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  createMaterial,
+  createNote,
+  deleteMaterial,
+  deleteNote,
+  fetchJobDetail,
+  updateMaterial,
+  updateNote,
+} from '@fieldbook/api-client';
+import type {
+  JobDetailMaterialLine,
+  JobDetailNote,
+  JobDetailViewModel,
+} from '@fieldbook/shared-types';
+
+import {
+  ChooseSessionBottomSheet,
+  DropdownBottomSheet,
   EditLiveSessionBottomSheet,
+  EditMaterialBottomSheet,
+  EditNoteBottomSheet,
   LiveSessionBottomSheet,
   MinimizedLiveSessionBar,
+  type ChooseSessionBottomSheetSession,
+  type DropdownBottomSheetOption,
+  type EditMaterialBottomSheetValues,
+  type EditNoteBottomSheetValues,
   type EditLiveSessionSavePayload,
 } from './ds';
 import {
@@ -20,6 +43,7 @@ import {
   useTopmostBottomSheet,
 } from '../context/BottomSheetStackContext';
 import { useLiveSession } from '../context/LiveSessionContext';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { createTextStyles, space } from '../theme/nativeTokens';
 
 type LiveSessionOverlayProps = {
@@ -72,6 +96,404 @@ export function LiveSessionOverlay({ onNavigateToJob }: LiveSessionOverlayProps)
       }),
     [],
   );
+
+  const [jobDetail, setJobDetail] = useState<JobDetailViewModel | null>(null);
+
+  type NoteFlow = 'closed' | 'addNote' | 'editNote' | 'attachSession' | 'editSession';
+  const [noteFlow, setNoteFlow] = useState<NoteFlow>('closed');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [draftBody, setDraftBody] = useState('');
+  const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
+  const [noteSaving, setNoteSaving] = useState(false);
+
+  type MaterialFlow =
+    | 'closed'
+    | 'addMaterial'
+    | 'editMaterial'
+    | 'attachSession'
+    | 'editSession'
+    | 'chooseUnit';
+  const [materialFlow, setMaterialFlow] = useState<MaterialFlow>('closed');
+  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
+  const [matDraftDescription, setMatDraftDescription] = useState('');
+  const [matDraftUnitCostCents, setMatDraftUnitCostCents] = useState(0);
+  const [matDraftQuantity, setMatDraftQuantity] = useState(1);
+  const [matDraftUnit, setMatDraftUnit] = useState('ea');
+  const [matDraftSessionId, setMatDraftSessionId] = useState<string | null>(null);
+  const [materialSaving, setMaterialSaving] = useState(false);
+
+  const refetchJobDetail = useCallback(async () => {
+    if (!liveSession || !isSupabaseConfigured()) return;
+    try {
+      const j = await fetchJobDetail(supabase, liveSession.jobId);
+      if (j) setJobDetail(j);
+    } catch {
+      // best-effort; attachment list may stay stale
+    }
+  }, [liveSession]);
+
+  useEffect(() => {
+    if (!liveSession) {
+      setJobDetail(null);
+      setNoteFlow('closed');
+      setMaterialFlow('closed');
+      return;
+    }
+    void refetchJobDetail();
+  }, [liveSession, refetchJobDetail]);
+
+  useEffect(() => {
+    if (liveSession && mode === 'sheet') {
+      void refetchJobDetail();
+    }
+  }, [mode, liveSession, refetchJobDetail]);
+
+  // Note/material flows only apply to the main live sheet. Closing that layer
+  // (minimize, edit live session) abandons the draft the same as navigating away.
+  useEffect(() => {
+    if (mode === 'minimized' || mode === 'hidden' || mode === 'editSheet') {
+      setNoteFlow('closed');
+      setMaterialFlow('closed');
+    }
+  }, [mode]);
+
+  const jobId = liveSession?.jobId;
+
+  const findNote = useCallback(
+    (noteId: string): JobDetailNote | null => {
+      if (!jobDetail) return null;
+      for (const bucket of jobDetail.noteBuckets) {
+        const hit = bucket.notes.find((n) => n.id === noteId);
+        if (hit) return hit;
+      }
+      return null;
+    },
+    [jobDetail],
+  );
+
+  const findMaterial = useCallback(
+    (materialId: string): JobDetailMaterialLine | null => {
+      if (!jobDetail) return null;
+      for (const bucket of jobDetail.materialBuckets) {
+        const hit = bucket.items.find((m) => m.id === materialId);
+        if (hit) return hit;
+      }
+      return null;
+    },
+    [jobDetail],
+  );
+
+  const formatErrorMessage = useCallback((e: unknown): string => {
+    if (e instanceof Error) return e.message;
+    if (
+      typeof e === 'object' &&
+      e !== null &&
+      'message' in e &&
+      typeof (e as { message: unknown }).message === 'string'
+    ) {
+      return (e as { message: string }).message;
+    }
+    return String(e);
+  }, []);
+
+  const allSessionsList = useMemo(
+    () => jobDetail?.allSessions ?? [],
+    [jobDetail?.allSessions],
+  );
+
+  const chooserSessions = useMemo<ChooseSessionBottomSheetSession[]>(
+    () =>
+      allSessionsList.map((s) => ({
+        id: s.id,
+        dateLabel: s.dateLabel,
+        timeRangeLabel: s.timeRangeLabel,
+      })),
+    [allSessionsList],
+  );
+
+  const draftAssignedSession = useMemo(() => {
+    if (!draftSessionId) return null;
+    const s = allSessionsList.find((x) => x.id === draftSessionId);
+    if (!s) return null;
+    return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
+  }, [draftSessionId, allSessionsList]);
+
+  const matDraftAssignedSession = useMemo(() => {
+    if (!matDraftSessionId) return null;
+    const s = allSessionsList.find((x) => x.id === matDraftSessionId);
+    if (!s) return null;
+    return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
+  }, [matDraftSessionId, allSessionsList]);
+
+  const unitOptions = useMemo<DropdownBottomSheetOption[]>(
+    () =>
+      (['ea', 'ft', 'pcs', 'kit', 'lb', 'gal', 'lot'] as const).map((u) => ({
+        id: u,
+        label: u,
+        value: u,
+      })),
+    [],
+  );
+
+  const liveAttachments = useMemo(() => {
+    if (!jobDetail?.inProgressSession || !liveSession) return [];
+    if (jobDetail.inProgressSession.id !== liveSession.id) return [];
+    return jobDetail.inProgressSession.attachments;
+  }, [jobDetail, liveSession]);
+
+  /** Show the live session capture UI only when no note/material sub-flow (swap, not stack). */
+  const showLiveSessionMain = useMemo(
+    () =>
+      mode === 'sheet' && noteFlow === 'closed' && materialFlow === 'closed',
+    [mode, materialFlow, noteFlow],
+  );
+
+  const showNoteForm = mode === 'sheet' && (noteFlow === 'addNote' || noteFlow === 'editNote');
+  const showNoteSessionPicker =
+    mode === 'sheet' && (noteFlow === 'attachSession' || noteFlow === 'editSession');
+  const showMaterialForm =
+    mode === 'sheet' && (materialFlow === 'addMaterial' || materialFlow === 'editMaterial');
+  const showMaterialSessionPicker =
+    mode === 'sheet' && (materialFlow === 'attachSession' || materialFlow === 'editSession');
+  const showMaterialUnitPicker = mode === 'sheet' && materialFlow === 'chooseUnit';
+
+  const closeNoteFlow = useCallback(() => {
+    setNoteFlow('closed');
+  }, []);
+
+  const openAddNoteFromLive = useCallback(() => {
+    if (!liveSession) return;
+    setEditingNoteId(null);
+    setDraftBody('');
+    setDraftSessionId(liveSession.id);
+    setNoteFlow('addNote');
+  }, [liveSession]);
+
+  const openEditNote = useCallback(
+    (noteId: string) => {
+      const n = findNote(noteId);
+      if (!n) return;
+      setEditingNoteId(noteId);
+      setDraftBody(n.body);
+      setDraftSessionId(n.sessionId);
+      setNoteFlow('editNote');
+    },
+    [findNote],
+  );
+
+  const openSessionPickerFromNoteSheet = useCallback(() => {
+    setNoteFlow(draftSessionId ? 'editSession' : 'attachSession');
+  }, [draftSessionId]);
+
+  const returnToNoteSheet = useCallback(() => {
+    setNoteFlow(editingNoteId ? 'editNote' : 'addNote');
+  }, [editingNoteId]);
+
+  const onSelectDraftSession = useCallback(
+    (sessionId: string) => {
+      setDraftSessionId(sessionId);
+      returnToNoteSheet();
+    },
+    [returnToNoteSheet],
+  );
+
+  const onRemoveDraftSession = useCallback(() => {
+    setDraftSessionId(null);
+    returnToNoteSheet();
+  }, [returnToNoteSheet]);
+
+  const onSaveNewNote = useCallback(
+    async ({ body }: EditNoteBottomSheetValues) => {
+      if (!jobId) return;
+      setNoteSaving(true);
+      try {
+        await createNote(supabase, {
+          jobId,
+          sessionId: draftSessionId,
+          body,
+        });
+        await refetchJobDetail();
+        closeNoteFlow();
+      } catch (e) {
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save note.');
+      } finally {
+        setNoteSaving(false);
+      }
+    },
+    [closeNoteFlow, draftSessionId, formatErrorMessage, jobId, refetchJobDetail],
+  );
+
+  const onSaveNoteChanges = useCallback(
+    async ({ body }: EditNoteBottomSheetValues) => {
+      if (!editingNoteId || !jobId) return;
+      setNoteSaving(true);
+      try {
+        await updateNote(supabase, editingNoteId, {
+          body,
+          sessionId: draftSessionId,
+          jobId: draftSessionId === null ? jobId : undefined,
+        });
+        await refetchJobDetail();
+        closeNoteFlow();
+      } catch (e) {
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save note.');
+      } finally {
+        setNoteSaving(false);
+      }
+    },
+    [closeNoteFlow, draftSessionId, editingNoteId, formatErrorMessage, jobId, refetchJobDetail],
+  );
+
+  const onDeleteEditingNote = useCallback(async () => {
+    if (!editingNoteId) {
+      closeNoteFlow();
+      return;
+    }
+    setNoteSaving(true);
+    try {
+      await deleteNote(supabase, editingNoteId);
+      await refetchJobDetail();
+      closeNoteFlow();
+    } catch (e) {
+      Alert.alert('Delete failed', formatErrorMessage(e) || 'Could not delete note.');
+    } finally {
+      setNoteSaving(false);
+    }
+  }, [closeNoteFlow, editingNoteId, formatErrorMessage, refetchJobDetail]);
+
+  const closeMaterialFlow = useCallback(() => {
+    setMaterialFlow('closed');
+  }, []);
+
+  const openAddMaterialFromLive = useCallback(() => {
+    if (!liveSession) return;
+    setEditingMaterialId(null);
+    setMatDraftDescription('');
+    setMatDraftUnitCostCents(0);
+    setMatDraftQuantity(1);
+    setMatDraftUnit('ea');
+    setMatDraftSessionId(liveSession.id);
+    setMaterialFlow('addMaterial');
+  }, [liveSession]);
+
+  const openEditMaterial = useCallback(
+    (materialId: string) => {
+      const m = findMaterial(materialId);
+      if (!m) return;
+      setEditingMaterialId(materialId);
+      setMatDraftDescription(m.name);
+      setMatDraftUnitCostCents(m.unitCostCents);
+      setMatDraftQuantity(m.quantity);
+      setMatDraftUnit(m.unit || 'ea');
+      setMatDraftSessionId(m.sessionId);
+      setMaterialFlow('editMaterial');
+    },
+    [findMaterial],
+  );
+
+  const returnToMaterialSheet = useCallback(() => {
+    setMaterialFlow(editingMaterialId ? 'editMaterial' : 'addMaterial');
+  }, [editingMaterialId]);
+
+  const openSessionPickerFromMaterialSheet = useCallback(() => {
+    setMaterialFlow(matDraftSessionId ? 'editSession' : 'attachSession');
+  }, [matDraftSessionId]);
+
+  const openUnitPickerFromMaterialSheet = useCallback(() => {
+    setMaterialFlow('chooseUnit');
+  }, []);
+
+  const onSelectMaterialSession = useCallback(
+    (sessionId: string) => {
+      setMatDraftSessionId(sessionId);
+      returnToMaterialSheet();
+    },
+    [returnToMaterialSheet],
+  );
+
+  const onRemoveMaterialSession = useCallback(() => {
+    setMatDraftSessionId(null);
+    returnToMaterialSheet();
+  }, [returnToMaterialSheet]);
+
+  const onSelectMaterialUnit = useCallback(
+    (unit: string) => {
+      setMatDraftUnit(unit || 'ea');
+      returnToMaterialSheet();
+    },
+    [returnToMaterialSheet],
+  );
+
+  const onSaveNewMaterial = useCallback(
+    async (values: EditMaterialBottomSheetValues) => {
+      if (!jobId) return;
+      setMaterialSaving(true);
+      try {
+        await createMaterial(supabase, {
+          jobId,
+          sessionId: matDraftSessionId,
+          description: values.description,
+          quantity: values.quantity,
+          unit: values.unit,
+          unitCostCents: values.unitCostCents,
+        });
+        await refetchJobDetail();
+        closeMaterialFlow();
+      } catch (e) {
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save material.');
+      } finally {
+        setMaterialSaving(false);
+      }
+    },
+    [closeMaterialFlow, formatErrorMessage, jobId, matDraftSessionId, refetchJobDetail],
+  );
+
+  const onSaveMaterialChanges = useCallback(
+    async (values: EditMaterialBottomSheetValues) => {
+      if (!editingMaterialId || !jobId) return;
+      setMaterialSaving(true);
+      try {
+        await updateMaterial(supabase, editingMaterialId, {
+          description: values.description,
+          quantity: values.quantity,
+          unit: values.unit,
+          unitCostCents: values.unitCostCents,
+          sessionId: matDraftSessionId,
+          jobId: matDraftSessionId === null ? jobId : undefined,
+        });
+        await refetchJobDetail();
+        closeMaterialFlow();
+      } catch (e) {
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save material.');
+      } finally {
+        setMaterialSaving(false);
+      }
+    },
+    [
+      closeMaterialFlow,
+      editingMaterialId,
+      formatErrorMessage,
+      jobId,
+      matDraftSessionId,
+      refetchJobDetail],
+  );
+
+  const onDeleteEditingMaterial = useCallback(async () => {
+    if (!editingMaterialId) {
+      closeMaterialFlow();
+      return;
+    }
+    setMaterialSaving(true);
+    try {
+      await deleteMaterial(supabase, editingMaterialId);
+      await refetchJobDetail();
+      closeMaterialFlow();
+    } catch (e) {
+      Alert.alert('Delete failed', formatErrorMessage(e) || 'Could not delete material.');
+    } finally {
+      setMaterialSaving(false);
+    }
+  }, [closeMaterialFlow, editingMaterialId, formatErrorMessage, refetchJobDetail]);
 
   const handleEndSession = useCallback(async () => {
     const ended = await endLiveSessionNow();
@@ -179,9 +601,19 @@ export function LiveSessionOverlay({ onNavigateToJob }: LiveSessionOverlayProps)
       */}
       <LiveSessionBottomSheet
         typography={typography}
-        visible={mode === 'sheet'}
+        visible={showLiveSessionMain}
         jobShortDescription={liveSession.jobShortDescription}
         startedAt={liveSession.startedAt}
+        attachments={liveAttachments}
+        onAddNote={openAddNoteFromLive}
+        onAddMaterial={openAddMaterialFromLive}
+        onPressAttachment={({ kind, id }) => {
+          if (kind === 'note') {
+            openEditNote(id);
+          } else {
+            openEditMaterial(id);
+          }
+        }}
         onMinimize={minimize}
         onEditPress={openEditSheet}
         onEndSessionPress={() => void handleEndSession()}
@@ -197,6 +629,123 @@ export function LiveSessionOverlay({ onNavigateToJob }: LiveSessionOverlayProps)
         onBack={closeEditSheet}
         onSavePress={(payload) => void handleEditSave(payload)}
         onDeletePress={() => void handleEditDelete()}
+      />
+
+      {/*
+        Note / material + pickers: swap into the same modal layer as the live
+        session sheet (same idea as `mode === 'editSheet'` vs `sheet` for
+        Edit Live). No second scrim on top of the live session.
+      */}
+      <EditNoteBottomSheet
+        typography={typography}
+        visible={showNoteForm}
+        title={editingNoteId ? 'Edit Note' : 'Add Note'}
+        primaryLabel={editingNoteId ? 'SAVE CHANGES' : 'SAVE NEW NOTE'}
+        values={{ body: draftBody }}
+        assignedSession={draftAssignedSession}
+        canAttachSession={chooserSessions.length > 0}
+        registerInGlobalStack={false}
+        onClose={closeNoteFlow}
+        onBack={closeNoteFlow}
+        onSavePress={(values) => {
+          if (noteSaving) return;
+          if (editingNoteId) {
+            void onSaveNoteChanges(values);
+          } else {
+            void onSaveNewNote(values);
+          }
+        }}
+        onDeletePress={() => {
+          if (noteSaving) return;
+          void onDeleteEditingNote();
+        }}
+        onSessionPillPress={(values) => {
+          setDraftBody(values.body);
+          openSessionPickerFromNoteSheet();
+        }}
+      />
+      <ChooseSessionBottomSheet
+        typography={typography}
+        visible={showNoteSessionPicker}
+        mode={noteFlow === 'editSession' ? 'edit' : 'attach'}
+        sessions={chooserSessions}
+        currentSessionId={draftSessionId}
+        registerInGlobalStack={false}
+        onClose={closeNoteFlow}
+        onBack={returnToNoteSheet}
+        onSelect={onSelectDraftSession}
+        onRemove={onRemoveDraftSession}
+      />
+      <EditMaterialBottomSheet
+        typography={typography}
+        visible={showMaterialForm}
+        title={editingMaterialId ? 'Edit Material' : 'Add Material'}
+        primaryLabel={editingMaterialId ? 'SAVE CHANGES' : 'SAVE NEW MATERIAL'}
+        values={{
+          description: matDraftDescription,
+          unitCostCents: matDraftUnitCostCents,
+          quantity: matDraftQuantity,
+          unit: matDraftUnit,
+        }}
+        assignedSession={matDraftAssignedSession}
+        canAttachSession={chooserSessions.length > 0}
+        registerInGlobalStack={false}
+        onClose={closeMaterialFlow}
+        onBack={closeMaterialFlow}
+        onSavePress={(values) => {
+          if (materialSaving) return;
+          setMatDraftDescription(values.description);
+          setMatDraftUnitCostCents(values.unitCostCents);
+          setMatDraftQuantity(values.quantity);
+          setMatDraftUnit(values.unit);
+          if (editingMaterialId) {
+            void onSaveMaterialChanges(values);
+          } else {
+            void onSaveNewMaterial(values);
+          }
+        }}
+        onDeletePress={() => {
+          if (materialSaving) return;
+          void onDeleteEditingMaterial();
+        }}
+        onSessionPillPress={(values) => {
+          setMatDraftDescription(values.description);
+          setMatDraftUnitCostCents(values.unitCostCents);
+          setMatDraftQuantity(values.quantity);
+          setMatDraftUnit(values.unit);
+          openSessionPickerFromMaterialSheet();
+        }}
+        onUnitPress={(values) => {
+          setMatDraftDescription(values.description);
+          setMatDraftUnitCostCents(values.unitCostCents);
+          setMatDraftQuantity(values.quantity);
+          setMatDraftUnit(values.unit);
+          openUnitPickerFromMaterialSheet();
+        }}
+      />
+      <ChooseSessionBottomSheet
+        typography={typography}
+        visible={showMaterialSessionPicker}
+        mode={materialFlow === 'editSession' ? 'edit' : 'attach'}
+        sessions={chooserSessions}
+        currentSessionId={matDraftSessionId}
+        registerInGlobalStack={false}
+        onClose={closeMaterialFlow}
+        onBack={returnToMaterialSheet}
+        onSelect={onSelectMaterialSession}
+        onRemove={onRemoveMaterialSession}
+      />
+      <DropdownBottomSheet
+        typography={typography}
+        visible={showMaterialUnitPicker}
+        options={unitOptions}
+        currentValue={matDraftUnit}
+        allowCustom
+        customPlaceholder="Custom"
+        registerInGlobalStack={false}
+        onClose={closeMaterialFlow}
+        onBack={returnToMaterialSheet}
+        onSelect={onSelectMaterialUnit}
       />
 
       {/*

@@ -68,6 +68,8 @@ type EditMaterialBottomSheetProps = {
    * note on `onSessionPillPress`).
    */
   onUnitPress?: (currentValues: EditMaterialBottomSheetValues) => void;
+  /** @default true — set false when this sheet replaces another (e.g. live session) without stacking. */
+  registerInGlobalStack?: boolean;
 };
 
 function toCurrencyString(cents: number): string {
@@ -152,6 +154,7 @@ export function EditMaterialBottomSheet({
   onDeletePress,
   onSessionPillPress,
   onUnitPress,
+  registerInGlobalStack = true,
 }: EditMaterialBottomSheetProps) {
   const [description, setDescription] = useState<string>(
     values?.description ?? '',
@@ -202,7 +205,12 @@ export function EditMaterialBottomSheet({
   });
 
   return (
-    <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
+    <BottomSheetShell
+      visible={visible}
+      onClose={onClose}
+      onClosed={onClosed}
+      registerInGlobalStack={registerInGlobalStack}
+    >
       <View style={styles.body}>
         <Pressable
           accessibilityRole="button"

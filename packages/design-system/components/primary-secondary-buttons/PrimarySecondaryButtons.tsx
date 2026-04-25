@@ -171,7 +171,7 @@ export function PrimarySecondaryButtons({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: leadingSecondary != null ? space('Spacing/10') : 0,
+        gap: leadingSecondary != null ? space('Spacing/12') : 0,
         ...buttonShadow,
       }
     : {
@@ -192,7 +192,7 @@ export function PrimarySecondaryButtons({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: leadingSecondary != null ? space('Spacing/10') : 0,
+        gap: leadingSecondary != null ? space('Spacing/12') : 0,
         ...buttonShadow,
       };
 

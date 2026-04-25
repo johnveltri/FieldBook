@@ -4,6 +4,7 @@ import type {
   JobDetailNote,
   JobDetailNoteBucket,
   JobDetailSession,
+  JobDetailSessionAttachment,
   JobDetailViewModel,
   JobDetailWorkStatus,
   JobId,
@@ -46,6 +47,7 @@ type NoteRow = {
   session_id: string | null;
   body: string;
   created_at: string;
+  updated_at: string;
 };
 
 type MaterialRow = {
@@ -59,6 +61,7 @@ type MaterialRow = {
   unit_cost_cents: number | null;
   total_cost_cents: number;
   created_at: string;
+  updated_at: string;
 };
 
 type ActivityRow = {
@@ -117,7 +120,7 @@ function mapWorkStatus(row: JobRow): JobDetailWorkStatus {
   }
 }
 
-function mapSession(row: SessionRow): JobDetailSession {
+function mapSession(row: SessionRow, attachments: JobDetailSessionAttachment[] = []): JobDetailSession {
   const start = new Date(row.started_at);
   const end = row.ended_at ? new Date(row.ended_at) : null;
   const timeFmt = new Intl.DateTimeFormat('en-US', {
@@ -135,6 +138,7 @@ function mapSession(row: SessionRow): JobDetailSession {
     dateLabel: formatDateLabel(row.started_at),
     timeRangeLabel: `${startStr} – ${endStr}`,
     durationLabel: `${hours.toFixed(1)}h`,
+    attachments,
   };
 }
 
@@ -142,6 +146,44 @@ function excerptNote(body: string, max = 120): string {
   const t = body.trim();
   if (t.length <= max) return t;
   return `${t.slice(0, max)}…`;
+}
+
+function materialAttachmentTitle(line: JobDetailMaterialLine): string {
+  if (line.quantityLabel && line.quantityLabel !== '—') {
+    return `${line.name} (${line.quantityLabel})`;
+  }
+  return line.name;
+}
+
+/**
+ * Merges a session’s notes and materials, sorted by `updated_at` descending
+ * (falls back to `created_at` when `updated_at` is missing in tests).
+ */
+function mergeSessionAttachments(
+  sessionNotes: NoteRow[],
+  sessionMats: MaterialRow[],
+): JobDetailSessionAttachment[] {
+  const noteItems: JobDetailSessionAttachment[] = sessionNotes.map((n) => ({
+    kind: 'note' as const,
+    id: n.id,
+    updatedAt: n.updated_at || n.created_at,
+    title: excerptNote(n.body),
+  }));
+  const matItems: JobDetailSessionAttachment[] = sessionMats.map((m) => {
+    const line = materialLine(m);
+    return {
+      kind: 'material' as const,
+      id: m.id,
+      updatedAt: m.updated_at || m.created_at,
+      title: materialAttachmentTitle(line),
+      priceLabel: line.priceLabel,
+    };
+  });
+  const merged = [...noteItems, ...matItems];
+  merged.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  );
+  return merged;
 }
 
 function materialLine(row: MaterialRow): JobDetailMaterialLine {
@@ -213,7 +255,7 @@ export async function fetchJobDetail(
 
   const notesBase = client
     .from('notes')
-    .select('id, job_id, session_id, body, created_at')
+    .select('id, job_id, session_id, body, created_at, updated_at')
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
   const notesQ =
@@ -334,6 +376,13 @@ export async function fetchJobDetail(
     }
   }
 
+  const attachmentBySessionId = new Map<string, JobDetailSessionAttachment[]>();
+  for (const s of activeSessions) {
+    const sessionNotes = notesBySession.get(s.id) ?? [];
+    const sessionMats = matsBySession.get(s.id) ?? [];
+    attachmentBySessionId.set(s.id, mergeSessionAttachments(sessionNotes, sessionMats));
+  }
+
   const mapNote = (n: NoteRow) => ({
     id: n.id,
     body: n.body,
@@ -393,10 +442,16 @@ export async function fetchJobDetail(
       sessionCount,
     },
     // Current UI shows completed sessions only.
-    displaySessions: endedSessions.map(mapSession),
+    displaySessions: endedSessions.map((s) =>
+      mapSession(s, attachmentBySessionId.get(s.id) ?? []),
+    ),
     // Keep full non-deleted set for future dedicated in-progress UI.
-    allSessions: activeSessions.map(mapSession),
-    inProgressSession: inProgressSession ? mapSession(inProgressSession) : null,
+    allSessions: activeSessions.map((s) =>
+      mapSession(s, attachmentBySessionId.get(s.id) ?? []),
+    ),
+    inProgressSession: inProgressSession
+      ? mapSession(inProgressSession, attachmentBySessionId.get(inProgressSession.id) ?? [])
+      : null,
     materialBuckets,
     noteBuckets,
     timeline,
