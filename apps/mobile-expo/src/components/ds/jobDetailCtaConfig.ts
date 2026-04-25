@@ -11,39 +11,50 @@ export type JobCtaResolved = {
   borderColor?: string;
 };
 
+const infoBlue = color('Semantic/Status/Info/Text');
+const warningOrange = color('Semantic/Status/Warning/Text');
+const successGreen = color('Semantic/Status/Success/Text');
+
 /**
- * Primary job action — fills use `Semantic/Action/Primary`; flat shadow (`shadowOpacity` 0) per Fieldbook CTA spec.
+ * Primary job action — tones follow design-system primary-secondary-buttons
+ * (Info / Warning / Success / Outline / Neutral); flat shadow (`shadowOpacity` 0).
  */
 export function jobDetailCtaConfig(status: JobDetailWorkStatus): JobCtaResolved {
   const surfaceWhite = color('Foundation/Surface/White');
   const textPrimary = color('Foundation/Text/Primary');
   const canvasWarm = color('Foundation/Background/CanvasWarm');
-  const primary = color('Semantic/Action/Primary');
 
   switch (status) {
     case 'notStarted':
-    case 'onHold':
       return {
         label: 'MARK IN PROGRESS',
-        backgroundColor: primary,
+        backgroundColor: infoBlue,
         labelColor: surfaceWhite,
-        shadowColor: primary,
+        shadowColor: infoBlue,
+        shadowOpacity: 0,
+      };
+    case 'onHold':
+      return {
+        label: 'RESUME JOB',
+        backgroundColor: infoBlue,
+        labelColor: surfaceWhite,
+        shadowColor: infoBlue,
         shadowOpacity: 0,
       };
     case 'inProgress':
       return {
         label: 'MARK COMPLETED',
-        backgroundColor: primary,
+        backgroundColor: warningOrange,
         labelColor: surfaceWhite,
-        shadowColor: primary,
+        shadowColor: warningOrange,
         shadowOpacity: 0,
       };
     case 'completed':
       return {
         label: 'MARK PAID',
-        backgroundColor: primary,
+        backgroundColor: successGreen,
         labelColor: surfaceWhite,
-        shadowColor: primary,
+        shadowColor: successGreen,
         shadowOpacity: 0,
       };
     case 'paid':
@@ -64,5 +75,25 @@ export function jobDetailCtaConfig(status: JobDetailWorkStatus): JobCtaResolved 
         shadowColor: textPrimary,
         shadowOpacity: 0,
       };
+  }
+}
+
+/** Next `JobDetailWorkStatus` when the user taps the primary CTA. */
+export function nextStatusAfterPrimaryAction(
+  current: JobDetailWorkStatus,
+): JobDetailWorkStatus {
+  switch (current) {
+    case 'notStarted':
+      return 'inProgress';
+    case 'inProgress':
+      return 'completed';
+    case 'completed':
+      return 'paid';
+    case 'paid':
+      return 'completed';
+    case 'onHold':
+      return 'inProgress';
+    case 'cancelled':
+      return 'notStarted';
   }
 }

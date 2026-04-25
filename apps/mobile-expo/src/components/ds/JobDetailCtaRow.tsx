@@ -14,12 +14,16 @@ export function JobDetailCtaRow({
   onPrimaryPress,
   onMorePress,
   MoreIcon,
+  primaryDisabled,
+  moreDisabled,
 }: {
   workStatus: JobDetailWorkStatus;
   typography: TextStyles;
   onPrimaryPress: () => void;
   onMorePress: () => void;
   MoreIcon: ReactElement<{ color: string }>;
+  primaryDisabled?: boolean;
+  moreDisabled?: boolean;
 }) {
   const cta = useMemo(() => jobDetailCtaConfig(workStatus), [workStatus]);
 
@@ -42,12 +46,13 @@ export function JobDetailCtaRow({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={cta.label}
+        disabled={primaryDisabled}
         onPress={onPrimaryPress}
         style={({ pressed }) => [
           styles.ctaPrimary,
           {
             backgroundColor: cta.backgroundColor,
-            opacity: pressed ? 0.92 : 1,
+            opacity: primaryDisabled ? 0.5 : pressed ? 0.92 : 1,
             borderWidth: cta.borderWidth ?? 0,
             borderColor: cta.borderColor ?? 'transparent',
           },
@@ -60,8 +65,13 @@ export function JobDetailCtaRow({
       </Pressable>
       <Pressable
         accessibilityRole="button"
+        disabled={moreDisabled}
         onPress={onMorePress}
-        style={({ pressed }) => [styles.ctaMore, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.ctaMore,
+          pressed && !moreDisabled && styles.pressed,
+          moreDisabled && { opacity: 0.5 },
+        ]}
       >
         {MoreIcon}
       </Pressable>

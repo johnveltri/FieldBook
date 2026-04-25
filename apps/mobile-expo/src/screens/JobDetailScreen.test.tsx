@@ -48,12 +48,10 @@ jest.mock('../components/bottom-nav/BottomNavTabIcons', () => ({
 
 jest.mock('../components/figma-icons/JobDetailScreenIcons', () => ({
   JobDetailIconCtaMore: () => null,
-  JobDetailIconRowCardLeading: () => null,
   JobDetailIconSectionAdd: () => null,
   JobDetailIconSectionMaterials: () => null,
   JobDetailIconSectionNotes: () => null,
   JobDetailIconSectionSessions: () => null,
-  JobDetailIconSectionTimeline: () => null,
   JobDetailIconTopClose: () => null,
   JobDetailIconTopEdit: () => null,
   JobDetailIconViewNote: () => null,
@@ -372,10 +370,6 @@ describe('JobDetailScreen manual session and note flows', () => {
         ],
       },
     ],
-    timeline: {
-      title: 'Session started',
-      timeLabel: '10:00 AM',
-    },
   };
 
   beforeEach(() => {

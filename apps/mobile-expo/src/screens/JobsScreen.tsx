@@ -400,7 +400,12 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
             </View>
           ) : (
             jobs.map((job) => (
-              <JobsCard key={job.id} job={job} onPress={() => onOpenJobDetail(job.id)} typography={typography} />
+              <JobsCard
+                key={job.id}
+                job={job}
+                onPress={() => onOpenJobDetail(job.id)}
+                typography={typography}
+              />
             ))
           )}
         </View>

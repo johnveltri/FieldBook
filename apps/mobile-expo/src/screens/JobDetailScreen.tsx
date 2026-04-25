@@ -1,5 +1,5 @@
 /**
- * Job detail screen — single job: header, earnings, CTAs, metrics, sessions, materials, notes, timeline.
+ * Job detail screen — single job: header, earnings, CTAs, metrics, sessions, materials, notes.
  *
  * **Layout:** Full-screen `CanvasTiledBackground` → `ScrollView` (transparent so the lined canvas shows in gutters)
  * → optional fixed `BottomNavJobs` pinned to the bottom (outside the scroll so it stays visible).
@@ -41,6 +41,7 @@ import {
   JobDetailMetricTertiary,
   JobDetailSummaryCard,
   NewSessionBottomSheet,
+  nextStatusAfterPrimaryAction,
   SessionCard,
   type ChooseSessionBottomSheetSession,
   type DropdownBottomSheetOption,
@@ -56,12 +57,10 @@ import {
 } from '../components/bottom-nav/BottomNavTabIcons';
 import {
   JobDetailIconCtaMore,
-  JobDetailIconRowCardLeading,
   JobDetailIconSectionAdd,
   JobDetailIconSectionMaterials,
   JobDetailIconSectionNotes,
   JobDetailIconSectionSessions,
-  JobDetailIconSectionTimeline,
   JobDetailIconTopClose,
   JobDetailIconTopEdit,
   JobDetailIconViewNote,
@@ -79,6 +78,7 @@ import {
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
+  updateJobStatusById,
   updateMaterial,
   updateNote,
   updateSessionTimes,
@@ -88,9 +88,14 @@ import type {
   JobDetailNote,
   JobDetailSession,
   JobDetailViewModel,
+  JobDetailWorkStatus,
 } from '@fieldbook/shared-types';
 
 import { isStaleJwtError, useLiveSession } from '../context/LiveSessionContext';
+import {
+  buildJobStatusSheetOptions,
+  isJobDetailWorkStatus,
+} from '../lib/jobStatusSheet';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   CONTENT_MAX_WIDTH,
@@ -175,6 +180,9 @@ export function JobDetailScreen({
   const [jobSaving, setJobSaving] = useState(false);
   const [editSheetMounted, setEditSheetMounted] = useState(false);
   const [editSheetVisible, setEditSheetVisible] = useState(false);
+  const [statusSheetMounted, setStatusSheetMounted] = useState(false);
+  const [statusSheetVisible, setStatusSheetVisible] = useState(false);
+  const [statusActionPending, setStatusActionPending] = useState(false);
 
   /** State machine for the session add/edit flow. */
   type SessionFlow = 'closed' | 'chooser' | 'addForm' | 'editForm';
@@ -527,6 +535,59 @@ export function JobDetailScreen({
     }
     return String(e);
   }, []);
+
+  const closeStatusSheet = useCallback(() => {
+    setStatusSheetVisible(false);
+  }, []);
+
+  const openStatusSheet = useCallback(() => {
+    setStatusSheetMounted(true);
+    setStatusSheetVisible(true);
+  }, []);
+
+  const jobStatusSheetOptions = useMemo<DropdownBottomSheetOption[]>(
+    () => buildJobStatusSheetOptions(),
+    [],
+  );
+
+  const onPrimaryStatusCta = useCallback(async () => {
+    if (!job || statusActionPending) return;
+    const next = nextStatusAfterPrimaryAction(job.workStatus);
+    setStatusActionPending(true);
+    try {
+      await updateJobStatusById(supabase, job.id, next);
+      await refetchJob();
+    } catch (e) {
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not update job status.',
+      );
+    } finally {
+      setStatusActionPending(false);
+    }
+  }, [job, statusActionPending, refetchJob, formatErrorMessage]);
+
+  const onSelectJobStatusFromSheet = useCallback(
+    async (value: string) => {
+      if (!job || statusActionPending) return;
+      if (!isJobDetailWorkStatus(value)) return;
+      const next = value;
+      setStatusActionPending(true);
+      try {
+        await updateJobStatusById(supabase, job.id, next);
+        await refetchJob();
+        closeStatusSheet();
+      } catch (e) {
+        Alert.alert(
+          'Update failed',
+          formatErrorMessage(e) || 'Could not update job status.',
+        );
+      } finally {
+        setStatusActionPending(false);
+      }
+    },
+    [job, statusActionPending, refetchJob, formatErrorMessage, closeStatusSheet],
+  );
 
   const onSaveNewSession = useCallback(
     async (values: EditSessionBottomSheetValues) => {
@@ -1103,9 +1164,13 @@ export function JobDetailScreen({
           <JobDetailCtaRow
             workStatus={job.workStatus}
             typography={typography}
-            onPrimaryPress={() => {}}
-            onMorePress={() => {}}
+            onPrimaryPress={() => {
+              void onPrimaryStatusCta();
+            }}
+            onMorePress={openStatusSheet}
             MoreIcon={<JobDetailIconCtaMore color={fg.primary} />}
+            primaryDisabled={statusActionPending}
+            moreDisabled={statusActionPending}
           />
           <JobDetailMetricTertiary metrics={job.metrics} typography={typography} />
         </View>
@@ -1167,24 +1232,6 @@ export function JobDetailScreen({
           typography={typography}
           onNotePress={openEditNote}
         />
-
-        <SectionHeaderFigma
-          title="TIMELINE"
-          icon={<JobDetailIconSectionTimeline color={color('Brand/Accent')} />}
-          typography={typography}
-          showAdd={false}
-        />
-
-        {/* `RowCard` `activityCard` (`786:28` / `787:55`) — matches DS: subtle border, 12 gap, icon well. */}
-        <View style={[styles.rowCard, { maxWidth: CONTENT_MAX_WIDTH, width: '100%' }]}>
-          <View style={styles.rowCardIconWrap}>
-            <JobDetailIconRowCardLeading color={color('Brand/Primary')} />
-          </View>
-          <View style={styles.rowCardTextStack}>
-            <Text style={[typography.bodyBold, { color: fg.primary }]}>{job.timeline.title}</Text>
-            <Text style={[typography.bodySmall, { color: fg.secondary }]}>{job.timeline.timeLabel}</Text>
-          </View>
-        </View>
       </Animated.ScrollView>
 
       {/* Tab bar stays fixed while list scrolls; `bottomInset` clears home indicator. */}
@@ -1199,6 +1246,22 @@ export function JobDetailScreen({
           onSavePress={onSaveJobSheet}
           onDeletePress={() => {
             void onDeleteJobSheet();
+          }}
+        />
+      ) : null}
+      {statusSheetMounted ? (
+        <DropdownBottomSheet
+          typography={typography}
+          visible={statusSheetVisible}
+          options={jobStatusSheetOptions}
+          currentValue={job?.workStatus ?? null}
+          allowCustom={false}
+          onClose={closeStatusSheet}
+          onClosed={() => {
+            setStatusSheetMounted(false);
+          }}
+          onSelect={(value) => {
+            void onSelectJobStatusFromSheet(value);
           }}
         />
       ) : null}
@@ -1415,7 +1478,7 @@ export function JobDetailScreen({
 
 // --- Section header (Figma `371:2179` Row) ---
 
-/** Leading icon + Metric-S title; optional trailing ADD pill (hidden for e.g. Timeline when `showAdd` is false). */
+/** Leading icon + Metric-S title; optional trailing ADD pill when `showAdd` is true. */
 function SectionHeaderFigma({
   title,
   icon,
@@ -1820,34 +1883,6 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
     paddingHorizontal: space('Spacing/16'),
     paddingVertical: space('Spacing/16'),
-  },
-
-  /** Timeline activity row — icon well + two-line text stack. */
-  rowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: space('Spacing/74'),
-    paddingHorizontal: space('Spacing/20'),
-    paddingVertical: space('Spacing/16'),
-    backgroundColor: bg.surface,
-    borderRadius: radius('Radius/16'),
-    borderWidth: 1,
-    borderColor: border.subtle,
-    gap: space('Spacing/12'),
-  },
-  rowCardIconWrap: {
-    width: space('Spacing/28'),
-    height: space('Spacing/28'),
-    borderRadius: radius('Radius/14'),
-    backgroundColor: colorWithAlpha('Brand/Primary', 0.1),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  /** `row-card-title-stack` — `gap: Spacing/4` in `RowCard.tsx` `activityCard`. */
-  rowCardTextStack: {
-    flex: 1,
-    minWidth: 0,
-    gap: space('Spacing/4'),
   },
 
   /** Pinned below scroll: top hairline + solid canvas so tab strip does not show scroll bleed. */

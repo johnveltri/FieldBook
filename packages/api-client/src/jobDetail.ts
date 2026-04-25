@@ -64,13 +64,6 @@ type MaterialRow = {
   updated_at: string;
 };
 
-type ActivityRow = {
-  id: string;
-  event_type: string;
-  created_at: string;
-  payload: unknown;
-};
-
 const moneyFmt = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
@@ -85,13 +78,6 @@ function formatDateLabel(iso: string): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date(iso));
-}
-
-function formatTimeLabel(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
   }).format(new Date(iso));
 }
 
@@ -263,7 +249,7 @@ export async function fetchJobDetail(
       ? notesBase.or(`job_id.eq.${jobId},session_id.in.(${sessionIds.join(',')})`)
       : notesBase.eq('job_id', jobId);
 
-  const [notesRes, matsJobRes, matsSessRes, actRes] = await Promise.all([
+  const [notesRes, matsJobRes, matsSessRes] = await Promise.all([
     notesQ,
     client
       .from('materials')
@@ -277,23 +263,15 @@ export async function fetchJobDetail(
           .in('session_id', sessionIds)
           .is('deleted_at', null)
       : Promise.resolve({ data: [] as MaterialRow[], error: null }),
-    client
-      .from('job_activity_events')
-      .select('id, event_type, created_at, payload')
-      .eq('job_id', jobId)
-      .order('created_at', { ascending: false })
-      .limit(8),
   ]);
 
   if (notesRes.error) throw notesRes.error;
   if (matsJobRes.error) throw matsJobRes.error;
   if (matsSessRes.error) throw matsSessRes.error;
-  if (actRes.error) throw actRes.error;
 
   const notesRaw = notesRes.data;
   const matsJob = matsJobRes.data;
   const matsSess = matsSessRes.data;
-  const actRaw = actRes.data;
 
   const matById = new Map<string, MaterialRow>();
   for (const m of (matsJob ?? []) as MaterialRow[]) matById.set(m.id, m);
@@ -411,17 +389,6 @@ export async function fetchJobDetail(
     }
   }
 
-  const activities = (actRaw ?? []) as ActivityRow[];
-  const latest = activities[0];
-  const timeline = latest
-    ? {
-        title: latest.event_type.replace(/_/g, ' '),
-        timeLabel: formatTimeLabel(latest.created_at),
-      }
-    : {
-        title: activeSessions.length ? 'Session activity' : 'No activity yet',
-        timeLabel: formatTimeLabel(j.updated_at),
-      };
   return {
     id: j.id,
     shortDescription: j.short_description,
@@ -454,6 +421,5 @@ export async function fetchJobDetail(
       : null,
     materialBuckets,
     noteBuckets,
-    timeline,
   };
 }

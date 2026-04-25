@@ -4,11 +4,12 @@ import type { JobDetailWorkStatus } from '@fieldbook/shared-types';
 
 import type { TextStyles } from '../../theme/nativeTokens';
 
-const PILL_LABEL: Record<JobDetailWorkStatus, string> = {
-  paid: 'PAID',
+/** User-facing copy for each status (header pill + status picker). Stored all caps to match LABEL typography. */
+export const JOB_DETAIL_WORK_STATUS_LABEL: Record<JobDetailWorkStatus, string> = {
   notStarted: 'NOT STARTED',
   inProgress: 'IN PROGRESS',
   completed: 'COMPLETED',
+  paid: 'PAID',
   onHold: 'ON HOLD',
   cancelled: 'CANCELLED',
 };
@@ -68,8 +69,8 @@ export function JobDetailStatusPill({
   const c = statusPillColors(kind);
   return (
     <View style={[styles.pillOuter, { backgroundColor: c.bg, borderColor: c.border }]}>
-      <Text style={[typography.pillCompact, { color: c.text, textTransform: 'none' }]}>
-        {PILL_LABEL[kind]}
+      <Text style={[typography.statusPillLabel, { color: c.text }]}>
+        {JOB_DETAIL_WORK_STATUS_LABEL[kind]}
       </Text>
     </View>
   );

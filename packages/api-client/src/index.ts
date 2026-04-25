@@ -5,8 +5,10 @@ export {
   deleteJobById,
   fetchFirstJobIdForCurrentUser,
   fetchJobById,
+  jobDetailWorkStatusToDbColumns,
   listJobsForCurrentUser,
   updateJobById,
+  updateJobStatusById,
   type ListJobsForCurrentUserItem,
   type UpdateJobInput,
 } from './jobs';
