@@ -18,6 +18,30 @@ comment on column public.sessions.started_tz is
   'IANA timezone of the device when the session started. Used by the auto-end-at-midnight job so the cutoff is the user''s local 23:59:59 rather than UTC midnight.';
 
 -- 2. Enforce one in-progress session per user globally.
+--
+-- Older app versions only enforced one in-progress session per job, so a
+-- user could already have in-progress sessions on multiple jobs. Keep the
+-- newest session active and end the older duplicates before creating the
+-- stricter per-user index; otherwise this migration can fail at deploy time.
+with ranked_active_sessions as (
+  select
+    id,
+    started_at,
+    row_number() over (
+      partition by user_id
+      order by started_at desc, created_at desc, id desc
+    ) as rn
+  from public.sessions
+  where session_status = 'in_progress'
+    and deleted_at is null
+)
+update public.sessions s
+   set session_status = 'ended',
+       ended_at = greatest(now(), ranked.started_at)
+  from ranked_active_sessions ranked
+ where s.id = ranked.id
+   and ranked.rn > 1;
+
 create unique index if not exists sessions_one_active_per_user_idx
   on public.sessions (user_id)
   where session_status = 'in_progress' and deleted_at is null;

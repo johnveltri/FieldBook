@@ -118,6 +118,8 @@ export function EditLiveSessionBottomSheet({
   const [startTime, setStartTime] = useState<Date>(initialStart);
   /** Null until the user explicitly picks an end time. */
   const [endTime, setEndTime] = useState<Date | null>(null);
+  /** iOS spinner seed for optional end time; opening the picker alone is not a selection. */
+  const [iosDraftEndTime, setIosDraftEndTime] = useState<Date | null>(null);
   const [iosPicker, setIosPicker] = useState<PickerKind | null>(null);
 
   // Re-seed every time the sheet opens so reopening after a minimize→edit
@@ -127,6 +129,7 @@ export function EditLiveSessionBottomSheet({
     setDate(initialDate);
     setStartTime(initialStart);
     setEndTime(null);
+    setIosDraftEndTime(null);
     setIosPicker(null);
   }, [initialDate, initialStart, visible]);
 
@@ -144,7 +147,11 @@ export function EditLiveSessionBottomSheet({
     (kind: PickerKind) => {
       const fallback = kind === 'endTime' ? new Date() : startTime;
       const current =
-        kind === 'date' ? date : kind === 'startTime' ? startTime : (endTime ?? fallback);
+        kind === 'date'
+          ? date
+          : kind === 'startTime'
+            ? startTime
+            : (endTime ?? iosDraftEndTime ?? fallback);
       if (Platform.OS === 'android') {
         DateTimePickerAndroid.open({
           value: current,
@@ -158,19 +165,23 @@ export function EditLiveSessionBottomSheet({
         return;
       }
       // On iOS, opening end-time without a value should seed the picker
-      // with `now` so the spinner has something to land on. We don't store
-      // that as a "user picked it" until the user actually scrolls.
-      if (kind === 'endTime' && !endTime) {
-        setEndTime(new Date());
-      }
+      // with `now` so the spinner has something to land on. Keep that seed
+      // separate from `endTime`; merely opening the picker must not turn a
+      // start-time-only save into "end this session".
+      if (kind === 'endTime') setIosDraftEndTime(current);
       setIosPicker((prev) => (prev === kind ? null : kind));
     },
-    [applyPick, date, endTime, startTime],
+    [applyPick, date, endTime, iosDraftEndTime, startTime],
   );
 
   const handleIosChange = useCallback(
     (_event: DateTimePickerEvent, selectedDate?: Date) => {
       if (!iosPicker || !selectedDate) return;
+      if (iosPicker === 'endTime') {
+        setIosDraftEndTime(selectedDate);
+        setEndTime(selectedDate);
+        return;
+      }
       applyPick(iosPicker, selectedDate);
     },
     [applyPick, iosPicker],
@@ -192,7 +203,7 @@ export function EditLiveSessionBottomSheet({
       : iosPicker === 'startTime'
         ? startTime
         : iosPicker === 'endTime'
-          ? (endTime ?? new Date())
+          ? (iosDraftEndTime ?? endTime ?? new Date())
           : null;
 
   return (
