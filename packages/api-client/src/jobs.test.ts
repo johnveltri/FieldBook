@@ -6,7 +6,10 @@ import {
   deleteJobById,
   jobDetailWorkStatusToDbColumns,
   listJobsForCurrentUser,
+  listJobsForCurrentUserPage,
   updateJobById,
+  updateJobNoMaterialsConfirmed,
+  isNoMaterialsConfirmedColumnMissingError,
   updateJobStatusById,
 } from './jobs';
 import { makeBuilder, makeClient } from './testUtils';
@@ -181,6 +184,38 @@ describe('jobs api client', () => {
     );
   });
 
+  it('isNoMaterialsConfirmedColumnMissingError matches PostgREST schema cache message', () => {
+    expect(
+      isNoMaterialsConfirmedColumnMissingError(
+        new Error(
+          "Could not find the 'no_materials_confirmed' column of 'jobs' in the schema cache",
+        ),
+      ),
+    ).toBe(true);
+    expect(isNoMaterialsConfirmedColumnMissingError(new Error('permission denied'))).toBe(false);
+  });
+
+  it('updateJobNoMaterialsConfirmed patches no_materials_confirmed', async () => {
+    let patch: unknown;
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            onUpdate: (value) => {
+              patch = value;
+            },
+            maybeSingleResult: { data: { id: 'job-1' }, error: null },
+          }),
+        ],
+      },
+    });
+
+    await updateJobNoMaterialsConfirmed(client as never, 'job-1', true);
+
+    expect(patch).toEqual({ no_materials_confirmed: true });
+  });
+
   it('updateJobById rejects blank titles and invalid revenue', async () => {
     const client = makeClient({
       authUserId: 'user-1',
@@ -197,7 +232,7 @@ describe('jobs api client', () => {
         revenueCents: 0,
         jobType: '',
       }),
-    ).rejects.toThrow('Job title is required.');
+    ).rejects.toThrow('Short description is required.');
 
     await expect(
       updateJobById(client as never, 'job-1', {
@@ -233,11 +268,14 @@ describe('jobs api client', () => {
                   short_description: 'Install faucet',
                   customer_name: 'Alice',
                   updated_at: '2026-04-17T10:00:00.000Z',
+                  created_at: '2026-04-10T08:00:00.000Z',
+                  last_worked_at: '2026-04-16T12:00:00.000Z',
                   job_type: 'plumbing',
                   job_work_status: 'completed',
                   job_payment_state: 'paid',
                   revenue_cents: 50000,
                   collected_cents: 50000,
+                  is_financially_complete: true,
                 },
               ],
               error: null,
@@ -314,8 +352,300 @@ describe('jobs api client', () => {
       materialsCents: -5000,
       netEarningsCents: 45000,
       collectedCents: 50000,
+      hasMaterials: true,
+      hasSessions: true,
     });
+    expect(rows[0].lastWorkedAt).toBe('2026-04-16T12:00:00.000Z');
+    expect(rows[0].createdAt).toBe('2026-04-10T08:00:00.000Z');
     expect(rows[0].lastWorkedLabel).toContain('Last worked');
+    expect(rows[0].lastWorkedLabel).toContain('Apr 16, 2026');
+  });
+
+  it('listJobsForCurrentUserPage sets hasMore when the page is full', async () => {
+    const row = (id: string) => ({
+      id,
+      short_description: 'J',
+      customer_name: null,
+      updated_at: '2026-04-17T10:00:00.000Z',
+      created_at: '2026-04-10T08:00:00.000Z',
+      last_worked_at: '2026-04-16T12:00:00.000Z',
+      job_type: 'x',
+      job_work_status: 'not_started' as const,
+      job_payment_state: null,
+      revenue_cents: 0,
+      collected_cents: 0,
+      is_financially_complete: false,
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            awaitResult: { data: [row('job-a'), row('job-b')], error: null },
+          }),
+          makeBuilder({
+            awaitResult: { data: [row('job-c')], error: null },
+          }),
+        ],
+        sessions: [
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+        ],
+        materials: [
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+        ],
+      },
+    });
+
+    const first = await listJobsForCurrentUserPage(client as never, { limit: 2, offset: 0 });
+    expect(first.items).toHaveLength(2);
+    expect(first.hasMore).toBe(true);
+    expect(first.items[0]).toMatchObject({ hasMaterials: false, hasSessions: false });
+
+    const second = await listJobsForCurrentUserPage(client as never, { limit: 2, offset: 2 });
+    expect(second.items).toHaveLength(1);
+    expect(second.hasMore).toBe(false);
+  });
+
+  it('listJobsForCurrentUserPage applies open-tab query filters', async () => {
+    const jobsBuilder = makeBuilder({
+      awaitResult: { data: [], error: null },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [jobsBuilder],
+      },
+    });
+
+    await listJobsForCurrentUserPage(client as never, { limit: 10, offset: 0, tab: 'open' });
+
+    const neqSpy = jobsBuilder.neq as unknown as { mock: { calls: unknown[][] } };
+    const orSpy = jobsBuilder.or as unknown as { mock: { calls: unknown[][] } };
+    expect(neqSpy.mock.calls).toContainEqual(['job_work_status', 'canceled']);
+    expect(orSpy.mock.calls.length).toBeGreaterThan(0);
+    const clause = String(orSpy.mock.calls[0]?.[0]);
+    expect(clause).toContain('is_financially_complete.eq.false');
+    expect(clause).toContain('job_work_status.eq.in_progress');
+    expect(clause).toContain('job_payment_state.eq.pending');
+  });
+
+  it('listJobsForCurrentUserPage falls back when financial completeness column is missing', async () => {
+    const missingColumnBuilder = makeBuilder({
+      awaitResult: {
+        data: null,
+        error: {
+          code: '42703',
+          message: 'column jobs.is_financially_complete does not exist',
+        },
+      },
+    });
+    const legacyBuilder = makeBuilder({
+      awaitResult: {
+        data: [
+          {
+            id: 'job-legacy',
+            short_description: 'Legacy schema job',
+            customer_name: null,
+            updated_at: '2026-04-17T10:00:00.000Z',
+            created_at: '2026-04-10T08:00:00.000Z',
+            last_worked_at: '2026-04-16T12:00:00.000Z',
+            job_type: 'x',
+            job_work_status: 'not_started' as const,
+            job_payment_state: null,
+            revenue_cents: 10000,
+            collected_cents: 0,
+          },
+        ],
+        error: null,
+      },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [missingColumnBuilder, legacyBuilder],
+        sessions: [makeBuilder({ awaitResult: { data: [], error: null } })],
+        materials: [makeBuilder({ awaitResult: { data: [], error: null } })],
+      },
+    });
+
+    const result = await listJobsForCurrentUserPage(client as never, {
+      limit: 10,
+      offset: 0,
+      tab: 'open',
+    });
+
+    const firstSelect = missingColumnBuilder.select as unknown as { mock: { calls: unknown[][] } };
+    const secondSelect = legacyBuilder.select as unknown as { mock: { calls: unknown[][] } };
+    const secondOr = legacyBuilder.or as unknown as { mock: { calls: unknown[][] } };
+    expect(String(firstSelect.mock.calls[0]?.[0])).toContain('is_financially_complete');
+    expect(String(secondSelect.mock.calls[0]?.[0])).not.toContain('is_financially_complete');
+    expect(String(secondOr.mock.calls[0]?.[0])).toContain('job_work_status.neq.completed');
+    expect(result.items[0]).toMatchObject({
+      id: 'job-legacy',
+      isFinanciallyComplete: false,
+    });
+  });
+
+  it('legacy financial completeness fallback requires description, revenue, material, and session', async () => {
+    const row = (id: string, shortDescription: string, revenueCents: number) => ({
+      id,
+      short_description: shortDescription,
+      customer_name: null,
+      updated_at: '2026-04-17T10:00:00.000Z',
+      created_at: '2026-04-10T08:00:00.000Z',
+      last_worked_at: '2026-04-16T12:00:00.000Z',
+      job_type: 'x',
+      job_work_status: 'not_started' as const,
+      job_payment_state: null,
+      revenue_cents: revenueCents,
+      collected_cents: 0,
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                row('job-complete', 'Legacy schema job', 10000),
+                row('job-placeholder', 'Untitled Job', 10000),
+                row('job-no-revenue', 'No revenue', 0),
+                row('job-no-materials', 'No materials', 10000),
+                row('job-no-sessions', 'No sessions', 10000),
+              ],
+              error: null,
+            },
+          }),
+        ],
+        sessions: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'sess-complete',
+                  job_id: 'job-complete',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T12:00:00.000Z',
+                },
+                {
+                  id: 'sess-placeholder',
+                  job_id: 'job-placeholder',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T12:00:00.000Z',
+                },
+                {
+                  id: 'sess-no-revenue',
+                  job_id: 'job-no-revenue',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T12:00:00.000Z',
+                },
+                {
+                  id: 'sess-no-materials',
+                  job_id: 'job-no-materials',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T12:00:00.000Z',
+                },
+              ],
+              error: null,
+            },
+          }),
+        ],
+        materials: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'mat-complete',
+                  job_id: 'job-complete',
+                  session_id: null,
+                  total_cost_cents: 4000,
+                },
+                {
+                  id: 'mat-placeholder',
+                  job_id: 'job-placeholder',
+                  session_id: null,
+                  total_cost_cents: 4000,
+                },
+                {
+                  id: 'mat-no-revenue',
+                  job_id: 'job-no-revenue',
+                  session_id: null,
+                  total_cost_cents: 4000,
+                },
+                {
+                  id: 'mat-no-sessions',
+                  job_id: 'job-no-sessions',
+                  session_id: null,
+                  total_cost_cents: 4000,
+                },
+              ],
+              error: null,
+            },
+          }),
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+        ],
+      },
+    });
+
+    const result = await listJobsForCurrentUserPage(client as never, { limit: 10, offset: 0 });
+    expect(
+      Object.fromEntries(result.items.map((item) => [item.id, item.isFinanciallyComplete])),
+    ).toEqual({
+      'job-complete': true,
+      'job-placeholder': false,
+      'job-no-revenue': false,
+      'job-no-materials': false,
+      'job-no-sessions': false,
+    });
+  });
+
+  it('listJobsForCurrentUserPage applies search ilike or filter', async () => {
+    const jobsBuilder = makeBuilder({
+      awaitResult: { data: [], error: null },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [jobsBuilder],
+      },
+    });
+
+    await listJobsForCurrentUserPage(client as never, {
+      limit: 10,
+      offset: 0,
+      search: '  fan  ',
+    });
+
+    const orSpy = jobsBuilder.or as unknown as { mock: { calls: unknown[][] } };
+    expect(orSpy.mock.calls.length).toBeGreaterThan(0);
+    const clause = String(orSpy.mock.calls[0]?.[0]);
+    expect(clause).toContain('short_description.ilike.');
+    expect(clause).toContain('customer_name.ilike.');
+    expect(clause).toContain('%fan%');
+  });
+
+  it('listJobsForCurrentUserPage applies paid-tab query filters', async () => {
+    const jobsBuilder = makeBuilder({
+      awaitResult: { data: [], error: null },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [jobsBuilder],
+      },
+    });
+
+    await listJobsForCurrentUserPage(client as never, { limit: 10, offset: 0, tab: 'paid' });
+
+    const eqSpy = jobsBuilder.eq as unknown as { mock: { calls: unknown[][] } };
+    expect(eqSpy.mock.calls).toContainEqual(['job_work_status', 'completed']);
+    expect(eqSpy.mock.calls).toContainEqual(['job_payment_state', 'paid']);
   });
 
   it('listJobsForCurrentUser filters out soft-deleted materials from per-job rollups', async () => {
@@ -355,11 +685,14 @@ describe('jobs api client', () => {
                   short_description: 'Panel install',
                   customer_name: 'Alex',
                   updated_at: '2026-04-17T10:00:00.000Z',
+                  created_at: '2026-04-10T08:00:00.000Z',
+                  last_worked_at: '2026-04-16T11:00:00.000Z',
                   job_type: 'electrical',
                   job_work_status: 'in_progress',
                   job_payment_state: 'pending',
                   revenue_cents: 80000,
                   collected_cents: 0,
+                  is_financially_complete: true,
                 },
               ],
               error: null,
@@ -416,11 +749,14 @@ describe('jobs api client', () => {
             short_description: 'Water heater replacement',
             customer_name: 'Bob',
             updated_at: '2026-04-17T10:00:00.000Z',
+            created_at: '2026-04-10T08:00:00.000Z',
+            last_worked_at: '2026-04-16T12:00:00.000Z',
             job_type: 'plumbing',
             job_work_status: 'completed',
             job_payment_state: 'pending',
             revenue_cents: 120000,
             collected_cents: 0,
+            is_financially_complete: true,
           },
         ],
         error: null,
@@ -483,6 +819,7 @@ describe('jobs api client', () => {
           revenue_cents: 120000,
           collected_cents: 0,
           updated_at: '2026-04-17T10:00:00.000Z',
+          last_worked_at: '2026-04-16T12:00:00.000Z',
         },
         error: null,
       },
@@ -573,6 +910,12 @@ describe('jobs api client', () => {
     expect(listRow.materialsCents).toBe(jobDetail.earnings.materialsCents);
     expect(listRow.netEarningsCents).toBe(jobDetail.earnings.netEarningsCents);
     expect(listRow.timeLabel).toBe(jobDetail.metrics.timeLabel);
+    expect(listRow.lastWorkedLabel).toBe(jobDetail.lastWorkedLabel);
+    expect(listRow.lastWorkedAt).toBe('2026-04-16T12:00:00.000Z');
+    expect(listRow.createdAt).toBe('2026-04-10T08:00:00.000Z');
+    expect(listRow.isFinanciallyComplete).toBe(true);
+    expect(listRow.hasMaterials).toBe(true);
+    expect(listRow.hasSessions).toBe(true);
   });
 
   it('fetchJobDetail includes only ended sessions in the sessions list', async () => {
@@ -593,6 +936,7 @@ describe('jobs api client', () => {
                 revenue_cents: 150000,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
+                last_worked_at: '2026-04-17T09:00:00.000Z',
               },
               error: null,
             },
@@ -633,6 +977,7 @@ describe('jobs api client', () => {
 
     expect(detail).not.toBeNull();
     expect(detail?.displaySessions.map((s) => s.id)).toEqual(['sess-ended']);
+    expect(detail?.noMaterialsConfirmed).toBe(false);
   });
 
   it('fetchJobDetail maps note id/body/sessionId and filters soft-deleted notes', async () => {
@@ -677,6 +1022,7 @@ describe('jobs api client', () => {
                 revenue_cents: 90000,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
+                last_worked_at: '2026-04-16T10:00:00.000Z',
               },
               error: null,
             },
@@ -789,6 +1135,7 @@ describe('jobs api client', () => {
                 revenue_cents: 0,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
+                last_worked_at: '2026-04-16T10:00:00.000Z',
               },
               error: null,
             },

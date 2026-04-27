@@ -128,6 +128,11 @@ export type JobDetailViewModel = {
   inProgressSession: JobDetailSession | null;
   materialBuckets: JobDetailMaterialBucket[];
   noteBuckets: JobDetailNoteBucket[];
+  /**
+   * User confirmed there were no materials for this job; satisfies the materials
+   * leg of `is_financially_complete` until a material row is added.
+   */
+  noMaterialsConfirmed: boolean;
 };
 
 /** @deprecated Use JobDetailViewModel */

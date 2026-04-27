@@ -16,7 +16,7 @@ import { BottomSheetShell } from './BottomSheetShell';
 import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
 
 export type EditJobBottomSheetValues = {
-  jobTitle: string;
+  shortDescription: string;
   customerName: string;
   serviceAddress: string;
   revenue: string;
@@ -34,7 +34,7 @@ type EditJobBottomSheetProps = {
 };
 
 const DEFAULT_VALUES: EditJobBottomSheetValues = {
-  jobTitle: 'Bathroom Remodel Phase 1',
+  shortDescription: 'Bathroom Remodel Phase 1',
   customerName: 'Andrew G',
   serviceAddress: '123 Main Street, Perrysburg, OH 43551',
   revenue: '5,678.87',
@@ -77,26 +77,26 @@ export function EditJobBottomSheet({
   onDeletePress,
 }: EditJobBottomSheetProps) {
   const v = { ...DEFAULT_VALUES, ...values };
-  const [jobTitle, setJobTitle] = useState(v.jobTitle);
+  const [shortDescription, setShortDescription] = useState(v.shortDescription);
   const [customerName, setCustomerName] = useState(v.customerName);
   const [serviceAddress, setServiceAddress] = useState(v.serviceAddress);
   const [revenue, setRevenue] = useState(v.revenue);
   const [jobType, setJobType] = useState<string>(v.jobType);
-  const jobTitleRef = useRef<TextInput>(null);
+  const shortDescriptionRef = useRef<TextInput>(null);
   const customerNameRef = useRef<TextInput>(null);
   const serviceAddressRef = useRef<TextInput>(null);
   const revenueRef = useRef<TextInput>(null);
   const jobTypeRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    setJobTitle(v.jobTitle);
+    setShortDescription(v.shortDescription);
     setCustomerName(v.customerName);
     setServiceAddress(v.serviceAddress);
     setRevenue(v.revenue);
     setJobType(v.jobType);
   }, [
     v.customerName,
-    v.jobTitle,
+    v.shortDescription,
     v.jobType,
     v.revenue,
     v.serviceAddress,
@@ -124,10 +124,10 @@ export function EditJobBottomSheet({
         <View style={styles.fields}>
           <InputShell>
             <TextInput
-              ref={jobTitleRef}
-              value={jobTitle}
-              onChangeText={setJobTitle}
-              placeholder="Job title"
+              ref={shortDescriptionRef}
+              value={shortDescription}
+              onChangeText={setShortDescription}
+              placeholder="Short description"
               placeholderTextColor={fg.secondary}
               editable
               showSoftInputOnFocus
@@ -193,7 +193,7 @@ export function EditJobBottomSheet({
           primaryLabel="SAVE CHANGES"
           onPrimaryPress={() =>
             onSavePress?.({
-              jobTitle,
+              shortDescription,
               customerName,
               serviceAddress,
               revenue,

@@ -78,6 +78,8 @@ import {
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
+  updateJobNoMaterialsConfirmed,
+  isNoMaterialsConfirmedColumnMissingError,
   updateJobStatusById,
   updateMaterial,
   updateNote,
@@ -91,6 +93,7 @@ import type {
   JobDetailWorkStatus,
 } from '@fieldbook/shared-types';
 
+import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { isStaleJwtError, useLiveSession } from '../context/LiveSessionContext';
 import {
   buildJobStatusSheetOptions,
@@ -102,6 +105,7 @@ import {
   TOP_HEADER_MAX_WIDTH,
   bg,
   border,
+  cardShadowRn,
   createTextStyles,
   fg,
   space,
@@ -231,6 +235,7 @@ export function JobDetailScreen({
   const [matDraftSessionId, setMatDraftSessionId] = useState<string | null>(null);
   const [materialSheetMounted, setMaterialSheetMounted] = useState(false);
   const [materialSaving, setMaterialSaving] = useState(false);
+  const [noMaterialsSaving, setNoMaterialsSaving] = useState(false);
   /** Set when Supabase is configured but fetch returns null or throws (no silent mock). */
   const [jobLoadError, setJobLoadError] = useState<string | null>(null);
   /** Ensures we only auto-open the edit sheet once per navigation (see `initialEditOpen`). */
@@ -312,7 +317,7 @@ export function JobDetailScreen({
       maximumFractionDigits: 2,
     });
     return {
-      jobTitle: j.shortDescription,
+      shortDescription: j.shortDescription,
       customerName: j.customerName,
       serviceAddress: j.serviceAddress,
       revenue,
@@ -330,7 +335,7 @@ export function JobDetailScreen({
       setJobSaving(true);
       try {
         await updateJobById(supabase, job.id, {
-          shortDescription: values.jobTitle,
+          shortDescription: values.shortDescription,
           customerName: values.customerName.trim(),
           serviceAddress: values.serviceAddress.trim(),
           revenueCents,
@@ -376,6 +381,7 @@ export function JobDetailScreen({
   // --- Live session integration ---
 
   const liveSessionCtx = useLiveSession();
+  const { invalidateJobsList } = useJobsListInvalidation();
   const liveSessionForThisJob =
     liveSessionCtx.liveSession?.jobId === job?.id ? liveSessionCtx.liveSession : null;
 
@@ -600,6 +606,7 @@ export function JobDetailScreen({
           endedAt: values.endedAt,
         });
         await refetchJob();
+        invalidateJobsList();
         closeSessionFlow();
       } catch (e) {
         Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save session.');
@@ -607,7 +614,7 @@ export function JobDetailScreen({
         setSessionSaving(false);
       }
     },
-    [closeSessionFlow, formatErrorMessage, job, refetchJob],
+    [closeSessionFlow, formatErrorMessage, invalidateJobsList, job, refetchJob],
   );
 
   const onSaveSessionChanges = useCallback(
@@ -620,6 +627,7 @@ export function JobDetailScreen({
           endedAt: values.endedAt,
         });
         await refetchJob();
+        invalidateJobsList();
         closeSessionFlow();
       } catch (e) {
         Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save session.');
@@ -627,7 +635,7 @@ export function JobDetailScreen({
         setSessionSaving(false);
       }
     },
-    [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob],
+    [closeSessionFlow, editingSessionId, formatErrorMessage, invalidateJobsList, refetchJob],
   );
 
   const onDeleteEditingSession = useCallback(async () => {
@@ -636,13 +644,14 @@ export function JobDetailScreen({
     try {
       await deleteSession(supabase, editingSessionId);
       await refetchJob();
+      invalidateJobsList();
       closeSessionFlow();
     } catch (e) {
       Alert.alert('Delete failed', formatErrorMessage(e) || 'Could not delete session.');
     } finally {
       setSessionSaving(false);
     }
-  }, [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob]);
+  }, [closeSessionFlow, editingSessionId, formatErrorMessage, invalidateJobsList, refetchJob]);
 
   // --- Note add/edit flow ---
 
@@ -880,6 +889,7 @@ export function JobDetailScreen({
           unitCostCents: values.unitCostCents,
         });
         await refetchJob();
+        invalidateJobsList();
         closeMaterialFlow();
       } catch (e) {
         Alert.alert(
@@ -890,7 +900,7 @@ export function JobDetailScreen({
         setMaterialSaving(false);
       }
     },
-    [closeMaterialFlow, formatErrorMessage, job, matDraftSessionId, refetchJob],
+    [closeMaterialFlow, formatErrorMessage, invalidateJobsList, job, matDraftSessionId, refetchJob],
   );
 
   const onSaveMaterialChanges = useCallback(
@@ -909,6 +919,7 @@ export function JobDetailScreen({
           jobId: matDraftSessionId === null ? job.id : undefined,
         });
         await refetchJob();
+        invalidateJobsList();
         closeMaterialFlow();
       } catch (e) {
         Alert.alert(
@@ -923,6 +934,7 @@ export function JobDetailScreen({
       closeMaterialFlow,
       editingMaterialId,
       formatErrorMessage,
+      invalidateJobsList,
       job,
       matDraftSessionId,
       refetchJob,
@@ -939,6 +951,7 @@ export function JobDetailScreen({
     try {
       await deleteMaterial(supabase, editingMaterialId);
       await refetchJob();
+      invalidateJobsList();
       closeMaterialFlow();
     } catch (e) {
       Alert.alert(
@@ -948,7 +961,69 @@ export function JobDetailScreen({
     } finally {
       setMaterialSaving(false);
     }
-  }, [closeMaterialFlow, editingMaterialId, formatErrorMessage, refetchJob]);
+  }, [closeMaterialFlow, editingMaterialId, formatErrorMessage, invalidateJobsList, refetchJob]);
+
+  const onConfirmNoMaterialsUsed = useCallback(async () => {
+    if (!job || noMaterialsSaving || !supabaseReady) return;
+    setNoMaterialsSaving(true);
+    try {
+      await updateJobNoMaterialsConfirmed(supabase, job.id, true);
+      await refetchJob();
+      invalidateJobsList();
+    } catch (e) {
+      if (isNoMaterialsConfirmedColumnMissingError(e)) {
+        Alert.alert(
+          'Database update required',
+          'Your Supabase project is missing the jobs.no_materials_confirmed column. Apply migrations from the Field Book repo (e.g. 20260429120000_job_no_materials_confirmed.sql), run `supabase db push` against this project, then try again.',
+        );
+      } else {
+        Alert.alert(
+          'Update failed',
+          formatErrorMessage(e) || 'Could not confirm materials.',
+        );
+      }
+    } finally {
+      setNoMaterialsSaving(false);
+    }
+  }, [
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noMaterialsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
+
+  const onUndoNoMaterialsUsed = useCallback(async () => {
+    if (!job || noMaterialsSaving || !supabaseReady) return;
+    setNoMaterialsSaving(true);
+    try {
+      await updateJobNoMaterialsConfirmed(supabase, job.id, false);
+      await refetchJob();
+      invalidateJobsList();
+    } catch (e) {
+      if (isNoMaterialsConfirmedColumnMissingError(e)) {
+        Alert.alert(
+          'Database update required',
+          'Your Supabase project is missing the jobs.no_materials_confirmed column. Apply migrations from the Field Book repo (e.g. 20260429120000_job_no_materials_confirmed.sql), run `supabase db push` against this project, then try again.',
+        );
+      } else {
+        Alert.alert(
+          'Update failed',
+          formatErrorMessage(e) || 'Could not undo materials confirmation.',
+        );
+      }
+    } finally {
+      setNoMaterialsSaving(false);
+    }
+  }, [
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noMaterialsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
 
   /** Sessions visible in current Job Detail UI (completed only). */
   const visibleSessions = useMemo(
@@ -1184,27 +1259,31 @@ export function JobDetailScreen({
           onAddPress={openSessionChooser}
         />
         <View style={[styles.sessionList, { maxWidth: CONTENT_MAX_WIDTH }]}>
-          {visibleSessions.map((s) => (
-            <SessionCard
-              key={s.id}
-              session={s}
-              typography={typography}
-              expanded={expandedSessionId === s.id}
-              onToggle={() =>
-                setExpandedSessionId((prev) => (prev === s.id ? null : s.id))
-              }
-              onEditPress={() => openEditSession(s.id)}
-              onAddNote={() => openAddNoteForSession(s.id)}
-              onAddMaterial={() => openAddMaterialForSession(s.id)}
-              onPressAttachment={({ kind, id }) => {
-                if (kind === 'note') {
-                  openEditNote(id);
-                } else {
-                  openEditMaterial(id);
+          {visibleSessions.length === 0 ? (
+            <SectionEmptyStateCard message="No sessions recorded." typography={typography} />
+          ) : (
+            visibleSessions.map((s) => (
+              <SessionCard
+                key={s.id}
+                session={s}
+                typography={typography}
+                expanded={expandedSessionId === s.id}
+                onToggle={() =>
+                  setExpandedSessionId((prev) => (prev === s.id ? null : s.id))
                 }
-              }}
-            />
-          ))}
+                onEditPress={() => openEditSession(s.id)}
+                onAddNote={() => openAddNoteForSession(s.id)}
+                onAddMaterial={() => openAddMaterialForSession(s.id)}
+                onPressAttachment={({ kind, id }) => {
+                  if (kind === 'note') {
+                    openEditNote(id);
+                  } else {
+                    openEditMaterial(id);
+                  }
+                }}
+              />
+            ))
+          )}
         </View>
 
         <SectionHeaderFigma
@@ -1214,11 +1293,27 @@ export function JobDetailScreen({
           showAdd
           onAddPress={openAddMaterial}
         />
-        <ViewMaterialsBuckets
-          buckets={job.materialBuckets}
-          typography={typography}
-          onMaterialPress={openEditMaterial}
-        />
+        {job.materialBuckets.length === 0 ? (
+          job.noMaterialsConfirmed ? (
+            <MaterialsConfirmedNoUseCard
+              typography={typography}
+              onUndo={onUndoNoMaterialsUsed}
+              undoDisabled={noMaterialsSaving}
+            />
+          ) : (
+            <MaterialsEmptyStateCard
+              typography={typography}
+              onConfirmNoMaterials={onConfirmNoMaterialsUsed}
+              confirmDisabled={noMaterialsSaving}
+            />
+          )
+        ) : (
+          <ViewMaterialsBuckets
+            buckets={job.materialBuckets}
+            typography={typography}
+            onMaterialPress={openEditMaterial}
+          />
+        )}
 
         <SectionHeaderFigma
           title="NOTES"
@@ -1227,11 +1322,15 @@ export function JobDetailScreen({
           showAdd
           onAddPress={openAddNote}
         />
-        <ViewNotesBuckets
-          buckets={job.noteBuckets}
-          typography={typography}
-          onNotePress={openEditNote}
-        />
+        {job.noteBuckets.length === 0 ? (
+          <SectionEmptyStateCard message="No notes recorded." typography={typography} />
+        ) : (
+          <ViewNotesBuckets
+            buckets={job.noteBuckets}
+            typography={typography}
+            onNotePress={openEditNote}
+          />
+        )}
       </Animated.ScrollView>
 
       {/* Tab bar stays fixed while list scrolls; `bottomInset` clears home indicator. */}
@@ -1472,6 +1571,102 @@ export function JobDetailScreen({
           />
         </>
       ) : null}
+    </View>
+  );
+}
+
+// --- Section empty states (Figma `787:73`, `787:97`) ---
+
+function SectionEmptyStateCard({
+  message,
+  typography,
+}: {
+  message: string;
+  typography: TextStyles;
+}) {
+  return (
+    <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+      <View style={[styles.viewCardBorder, cardShadowRn, styles.sectionEmptyCardPad]}>
+        <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>{message}</Text>
+      </View>
+    </View>
+  );
+}
+
+function MaterialsEmptyStateCard({
+  typography,
+  onConfirmNoMaterials,
+  confirmDisabled,
+}: {
+  typography: TextStyles;
+  onConfirmNoMaterials: () => void;
+  confirmDisabled?: boolean;
+}) {
+  const ctaColor = color('Semantic/Status/Success/Text');
+  return (
+    <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+      <View style={[styles.viewCardBorder, cardShadowRn, styles.materialsEmptyCardPad]}>
+        <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+          No materials recorded.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Confirm no materials used"
+          onPress={onConfirmNoMaterials}
+          disabled={confirmDisabled}
+          style={({ pressed }) => [
+            styles.materialsConfirmCta,
+            pressed && !confirmDisabled && styles.pressed,
+            confirmDisabled ? { opacity: 0.5 } : null,
+          ]}
+        >
+          <Text style={[typography.labelCaps, { color: ctaColor, textAlign: 'center' }]}>
+            CONFIRM NO MATERIALS USED
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function MaterialsConfirmedNoUseCard({
+  typography,
+  onUndo,
+  undoDisabled,
+}: {
+  typography: TextStyles;
+  onUndo: () => void;
+  undoDisabled?: boolean;
+}) {
+  const ok = color('Semantic/Status/Success/Text');
+  return (
+    <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+      <View style={[styles.viewCardBorder, cardShadowRn, styles.materialsEmptyCardPad]}>
+        <Text style={[typography.bodyBold, { color: ok, textAlign: 'center' }]}>
+          ✓ No materials used
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Undo no materials confirmation"
+          onPress={onUndo}
+          disabled={undoDisabled}
+          style={({ pressed }) => [pressed && !undoDisabled && styles.pressed, undoDisabled ? { opacity: 0.5 } : null]}
+        >
+          <Text
+            style={[
+              typography.bodySmall,
+              {
+                color: fg.secondary,
+                textDecorationLine: 'underline',
+                textAlign: 'center',
+                marginTop: space('Spacing/12'),
+              },
+            ]}
+          >
+            Undo
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -1844,6 +2039,27 @@ const styles = StyleSheet.create({
   /** Column wrapper for the Sessions list — caps to DS content width. */
   sessionList: {
     width: '100%',
+  },
+
+  sectionEmptyCardPad: {
+    paddingVertical: space('Spacing/20'),
+    paddingHorizontal: space('Spacing/16'),
+    alignItems: 'center',
+  },
+  materialsEmptyCardPad: {
+    paddingVertical: space('Spacing/20'),
+    paddingHorizontal: space('Spacing/16'),
+    alignItems: 'center',
+    gap: space('Spacing/16'),
+  },
+  materialsConfirmCta: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: space('Spacing/12'),
+    paddingHorizontal: space('Spacing/16'),
+    borderRadius: radius('Radius/Full'),
+    backgroundColor: color('Semantic/Status/Success/BG'),
   },
 
   /** Vertical breathing room around materials/notes cards (Figma `py-[9px]`). */

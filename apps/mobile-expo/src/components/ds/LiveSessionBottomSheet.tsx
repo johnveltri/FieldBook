@@ -39,7 +39,7 @@ type LiveSessionBottomSheetProps = {
  * Live Session bottom sheet (Figma `1897:3091` — "Live Session Bottom Sheet").
  *
  * Owns its own dark `live-session-header` slab (back button + ACTIVE SESSION
- * pill + job title + 70px monospace counter) drawn flush to the rounded top
+ * pill + short description + 70px monospace counter) drawn flush to the rounded top
  * corners via `BottomSheetShell variant='fullbleedDark'`.
  *
  * The body holds a single `LiveSessionCaptureCard` (collapsible session info

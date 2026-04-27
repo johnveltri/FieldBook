@@ -31,6 +31,8 @@ type JobRow = {
   revenue_cents: number | null;
   collected_cents: number | null;
   updated_at: string;
+  last_worked_at: string | null;
+  no_materials_confirmed?: boolean | null;
 };
 
 type SessionRow = {
@@ -63,6 +65,18 @@ type MaterialRow = {
   created_at: string;
   updated_at: string;
 };
+
+const JOB_DETAIL_JOB_SELECT_BASE =
+  'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at, last_worked_at';
+
+const JOB_DETAIL_JOB_SELECT_WITH_NO_MATERIALS_FLAG =
+  `${JOB_DETAIL_JOB_SELECT_BASE}, no_materials_confirmed`;
+
+function isMissingNoMaterialsConfirmedColumn(error: unknown): boolean {
+  if (typeof error !== 'object' || error == null) return false;
+  const e = error as { message?: unknown };
+  return typeof e.message === 'string' && e.message.includes('no_materials_confirmed');
+}
 
 const moneyFmt = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -211,19 +225,17 @@ export async function fetchJobDetail(
   client: FieldbookSupabaseClient,
   jobId: JobId,
 ): Promise<JobDetailViewModel | null> {
-  const { data: job, error: jobErr } = await client
-    .from('jobs')
-    .select(
-      'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at',
-    )
-    .eq('id', jobId)
-    .is('deleted_at', null)
-    .maybeSingle();
+  const runJobSelect = (columns: string) =>
+    client.from('jobs').select(columns).eq('id', jobId).is('deleted_at', null).maybeSingle();
 
+  let { data: job, error: jobErr } = await runJobSelect(JOB_DETAIL_JOB_SELECT_WITH_NO_MATERIALS_FLAG);
+  if (jobErr != null && isMissingNoMaterialsConfirmedColumn(jobErr)) {
+    ({ data: job, error: jobErr } = await runJobSelect(JOB_DETAIL_JOB_SELECT_BASE));
+  }
   if (jobErr) throw jobErr;
   if (!job) return null;
 
-  const j = job as JobRow;
+  const j = job as unknown as JobRow;
 
   const { data: sessionsRaw, error: sErr } = await client
     .from('sessions')
@@ -304,13 +316,11 @@ export async function fetchJobDetail(
         )}/hr`
       : '—';
 
-  let lastTs = 0;
-  for (const s of activeSessions) {
-    const t = new Date(s.ended_at ?? s.started_at).getTime();
-    if (t > lastTs) lastTs = t;
-  }
+  const lastWorkedAt = j.last_worked_at ?? null;
   const lastWorkedLabel =
-    lastTs > 0 ? `Last worked ${formatDateLabel(new Date(lastTs).toISOString())}` : 'No sessions yet';
+    lastWorkedAt != null && lastWorkedAt !== ''
+      ? `Last worked ${formatDateLabel(lastWorkedAt)}`
+      : 'No sessions yet';
 
   const matsUnassigned = materials.filter((m) => m.session_id == null);
   const matsBySession = new Map<string, MaterialRow[]>();
@@ -421,5 +431,6 @@ export async function fetchJobDetail(
       : null,
     materialBuckets,
     noteBuckets,
+    noMaterialsConfirmed: Boolean(j.no_materials_confirmed),
   };
 }

@@ -30,6 +30,11 @@ export {
 export { LiveSessionBottomSheet } from './LiveSessionBottomSheet';
 export { LiveSessionCaptureCard } from './LiveSessionCaptureCard';
 export { MinimizedLiveSessionBar } from './MinimizedLiveSessionBar';
+export {
+  JobsOpenStackSectionHeader,
+  JOBS_OPEN_SECTION_KINDS,
+  type JobsOpenSectionKind,
+} from './JobsOpenStackSectionHeader';
 export { JobDetailJobHeader } from './JobDetailJobHeader';
 export { JobDetailMetricTertiary } from './JobDetailMetricTertiary';
 export { JobDetailStatusPill, JOB_DETAIL_WORK_STATUS_LABEL } from './JobDetailStatusPill';

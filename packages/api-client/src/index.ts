@@ -7,9 +7,14 @@ export {
   fetchJobById,
   jobDetailWorkStatusToDbColumns,
   listJobsForCurrentUser,
+  listJobsForCurrentUserPage,
   updateJobById,
+  updateJobNoMaterialsConfirmed,
+  isNoMaterialsConfirmedColumnMissingError,
   updateJobStatusById,
   type ListJobsForCurrentUserItem,
+  type ListJobsForCurrentUserPageResult,
+  type ListJobsForCurrentUserTab,
   type UpdateJobInput,
 } from './jobs';
 export {

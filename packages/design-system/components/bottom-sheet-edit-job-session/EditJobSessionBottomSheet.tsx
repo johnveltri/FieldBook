@@ -40,7 +40,7 @@ const JOB_FILLED_DEFAULT = {
 } as const;
 
 const JOB_PLACEHOLDER_COPY = {
-  jobTitle: 'Job Description',
+  jobTitle: 'Short description',
   customerName: 'Customer Name',
   addressLine1: 'Service Address',
   addressLine2: '',
@@ -326,7 +326,7 @@ export function EditJobSessionBottomSheet({
           onChange={(e) =>
             onJobChange?.({ ...j, jobTitle: e.target.value })
           }
-          aria-label="Job title"
+          aria-label="Short description"
           style={inputShell(38, jc.title)}
         />
         <input

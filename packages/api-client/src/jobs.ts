@@ -87,6 +87,10 @@ export type ListJobsForCurrentUserItem = {
   shortDescription: string;
   customerName: string | null;
   updatedAt: string;
+  /** ISO 8601 from `jobs.last_worked_at`; null when the job has no qualifying sessions. */
+  lastWorkedAt: string | null;
+  /** ISO 8601 from `jobs.created_at`; used with `lastWorkedAt` for list section bucketing (sort aligns with `list_recency_at` in DB). */
+  createdAt: string;
   lastWorkedLabel: string;
   timeLabel: string;
   jobType: string | null;
@@ -98,6 +102,13 @@ export type ListJobsForCurrentUserItem = {
   /** Optional: may be unavailable on older local schemas. */
   netEarningsCents: number | null;
   collectedCents: number | null;
+  isFinanciallyComplete: boolean;
+  /** True when the job has at least one active (non-deleted) material line attributed to it (job_id or session). */
+  hasMaterials: boolean;
+  /** True when the user confirmed “no materials used” on the job (no material rows). */
+  noMaterialsConfirmed: boolean;
+  /** True when the job has at least one non-deleted session. */
+  hasSessions: boolean;
 };
 
 type ListJobsRow = {
@@ -105,11 +116,15 @@ type ListJobsRow = {
   short_description: string;
   customer_name: string | null;
   updated_at: string;
+  created_at: string;
+  last_worked_at: string | null;
   job_type: string | null;
   job_work_status: JobWorkStatusDb;
   job_payment_state: JobPaymentState | null;
   revenue_cents: number | null;
   collected_cents: number | null;
+  is_financially_complete?: boolean | null;
+  no_materials_confirmed?: boolean | null;
 };
 
 type ListJobSessionRow = {
@@ -135,45 +150,140 @@ function formatDateLabel(iso: string): string {
   }).format(new Date(iso));
 }
 
-function mapWorkStatus(row: {
-  job_work_status: JobWorkStatusDb;
-  job_payment_state: JobPaymentState | null;
-}): JobDetailWorkStatus {
-  if (row.job_work_status === 'completed' && row.job_payment_state === 'paid') return 'paid';
-  switch (row.job_work_status) {
-    case 'not_started':
-      return 'notStarted';
-    case 'in_progress':
-      return 'inProgress';
-    case 'on_hold':
-      return 'onHold';
-    case 'completed':
-      return 'completed';
-    case 'canceled':
-      return 'cancelled';
-    default:
-      return 'notStarted';
-  }
+/** Batch size for `listJobsForCurrentUser` full fetch (tests / small batches). */
+const JOB_LIST_INTERNAL_PAGE_SIZE = 100;
+
+/**
+ * Strips ILIKE metacharacters so user input cannot widen a `ilike.%…%` match.
+ * Commas are removed so PostgREST `or()` clause parsing stays unambiguous.
+ */
+export function sanitizeJobListSearchTerm(raw: string): string {
+  return raw.replace(/\\/g, '').replace(/%/g, '').replace(/_/g, '').replace(/,/g, ' ').trim();
+}
+
+export type ListJobsForCurrentUserPageResult = {
+  items: ListJobsForCurrentUserItem[];
+  hasMore: boolean;
+};
+
+export type ListJobsForCurrentUserTab = 'all' | 'open' | 'paid';
+
+/** Full list row including financial completeness + no-materials confirmation flag. */
+const JOB_LIST_SELECT_FULL =
+  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_financially_complete, no_materials_confirmed';
+
+/** Older DBs with `is_financially_complete` but not yet `no_materials_confirmed`. */
+const JOB_LIST_SELECT_FINANCIAL_WITHOUT_NO_MATERIALS_FLAG =
+  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_financially_complete';
+
+const JOB_LIST_SELECT_LEGACY =
+  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents';
+
+function isMissingFinancialCompletenessColumn(error: unknown): boolean {
+  if (typeof error !== 'object' || error == null) return false;
+  const e = error as { code?: unknown; message?: unknown };
+  return (
+    e.code === '42703' ||
+    (typeof e.message === 'string' && e.message.includes('is_financially_complete'))
+  );
+}
+
+function isMissingNoMaterialsConfirmedColumn(error: unknown): boolean {
+  if (typeof error !== 'object' || error == null) return false;
+  const e = error as { message?: unknown };
+  return typeof e.message === 'string' && e.message.includes('no_materials_confirmed');
+}
+
+function isFinanciallyCompleteFallback(row: ListJobsRow, hasMaterials: boolean, hasSessions: boolean): boolean {
+  const desc = row.short_description.trim();
+  const materialsOk = hasMaterials || Boolean(row.no_materials_confirmed);
+  return (
+    desc !== '' &&
+    desc !== 'Untitled Job' &&
+    (row.revenue_cents ?? 0) > 0 &&
+    materialsOk &&
+    hasSessions
+  );
 }
 
 /**
- * Returns all jobs visible to the signed-in user (RLS), newest first.
+ * One page of jobs ordered by `list_recency_at` desc (`coalesce(last_worked_at, created_at)`), then `id` desc.
+ * Rollups (time, materials, net) are computed for rows in this page only.
  */
-export async function listJobsForCurrentUser(
+export async function listJobsForCurrentUserPage(
   client: FieldbookSupabaseClient,
+  options: {
+    limit: number;
+    offset: number;
+    tab?: ListJobsForCurrentUserTab;
+    search?: string;
+  },
+): Promise<ListJobsForCurrentUserPageResult> {
+  const { limit, offset, tab = 'all', search } = options;
+  const runQuery = async (selectColumns: string) => {
+    const includeFinancialCompleteness = selectColumns.includes('is_financially_complete');
+    let listQuery = client.from('jobs').select(selectColumns).is('deleted_at', null);
+
+    if (tab === 'open') {
+      listQuery = listQuery
+        .neq('job_work_status', 'canceled')
+        .or(
+          includeFinancialCompleteness
+            ? 'is_financially_complete.eq.false,job_work_status.eq.in_progress,and(job_work_status.eq.completed,or(job_payment_state.is.null,job_payment_state.eq.pending))'
+            : 'job_work_status.neq.completed,and(job_work_status.eq.completed,or(job_payment_state.is.null,job_payment_state.eq.pending))',
+        );
+    } else if (tab === 'paid') {
+      listQuery = listQuery.eq('job_work_status', 'completed').eq('job_payment_state', 'paid');
+    }
+
+    const searchTrimmed = search?.trim() ?? '';
+    if (searchTrimmed !== '') {
+      const core = sanitizeJobListSearchTerm(searchTrimmed);
+      if (core.length === 0) {
+        listQuery = listQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+      } else {
+        const p = `%${core}%`;
+        listQuery = listQuery.or(`short_description.ilike.${p},customer_name.ilike.${p}`);
+      }
+    }
+
+    return listQuery
+      .order('list_recency_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + limit - 1);
+  };
+
+  let result = await runQuery(JOB_LIST_SELECT_FULL);
+  if (result.error != null && isMissingNoMaterialsConfirmedColumn(result.error)) {
+    result = await runQuery(JOB_LIST_SELECT_FINANCIAL_WITHOUT_NO_MATERIALS_FLAG);
+  }
+  if (result.error != null && isMissingFinancialCompletenessColumn(result.error)) {
+    result = await runQuery(JOB_LIST_SELECT_LEGACY);
+  }
+
+  if (result.error) throw result.error;
+  const rows = ((result.data ?? []) as unknown) as ListJobsRow[];
+  if (rows.length === 0) {
+    return { items: [], hasMore: false };
+  }
+  const items = await enrichJobsRowsWithSessionRollups(client, rows);
+  return {
+    items,
+    hasMore: rows.length === limit,
+  };
+}
+
+function lastWorkedLabelFromColumn(lastWorkedAt: string | null): string {
+  if (lastWorkedAt == null || lastWorkedAt === '') {
+    return 'No sessions yet';
+  }
+  return `Last worked ${formatDateLabel(lastWorkedAt)}`;
+}
+
+async function enrichJobsRowsWithSessionRollups(
+  client: FieldbookSupabaseClient,
+  rows: ListJobsRow[],
 ): Promise<ListJobsForCurrentUserItem[]> {
-  const { data, error } = await client
-    .from('jobs')
-    .select(
-      'id, short_description, customer_name, updated_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents',
-    )
-    .is('deleted_at', null)
-    .order('updated_at', { ascending: false });
-
-  if (error) throw error;
-  const rows = (data ?? []) as ListJobsRow[];
-  if (rows.length === 0) return [];
-
   const jobIds = rows.map((row) => row.id);
   const { data: sessionsData, error: sessionsError } = await client
     .from('sessions')
@@ -185,9 +295,11 @@ export async function listJobsForCurrentUser(
     (s) => s.session_status !== 'deleted',
   );
   const sessionJobIdBySessionId = new Map<string, string>();
+  const sessionCountByJobId = new Map<string, number>();
   const totalHoursByJobId = new Map<string, number>();
   for (const s of sessions) {
     sessionJobIdBySessionId.set(s.id, s.job_id);
+    sessionCountByJobId.set(s.job_id, (sessionCountByJobId.get(s.job_id) ?? 0) + 1);
     if (s.session_status === 'ended' || s.session_status === 'in_progress') {
       const a = new Date(s.started_at).getTime();
       const b = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
@@ -196,19 +308,7 @@ export async function listJobsForCurrentUser(
     }
   }
 
-  const latestWorkedByJobId = new Map<string, number>();
-  for (const s of sessions) {
-    const ts = new Date(s.ended_at ?? s.started_at).getTime();
-    const prev = latestWorkedByJobId.get(s.job_id) ?? 0;
-    if (ts > prev) latestWorkedByJobId.set(s.job_id, ts);
-  }
-
   const sessionIds = sessions.map((s) => s.id);
-  // Match `fetchJobDetail`: exclude soft-deleted materials from the
-  // per-job rollup so the MAT / NET metrics on the jobs list stay in
-  // sync with what the user sees on JobDetailScreen after deleting a
-  // material. Without this filter the rollup keeps counting deleted
-  // rows and the list card's materials + net never drop back down.
   const [materialsByJobRes, materialsBySessionRes] = await Promise.all([
     client
       .from('materials')
@@ -235,11 +335,13 @@ export async function listJobsForCurrentUser(
   }
 
   const materialsSpendByJobId = new Map<string, number>();
+  const jobsWithMaterialLines = new Set<string>();
   for (const m of materialById.values()) {
     const materialJobId =
       m.job_id ??
       (m.session_id ? sessionJobIdBySessionId.get(m.session_id) ?? null : null);
     if (!materialJobId) continue;
+    jobsWithMaterialLines.add(materialJobId);
     materialsSpendByJobId.set(
       materialJobId,
       (materialsSpendByJobId.get(materialJobId) ?? 0) + m.total_cost_cents,
@@ -247,33 +349,83 @@ export async function listJobsForCurrentUser(
   }
 
   return rows.map((row) => {
-    const latestTs = latestWorkedByJobId.get(row.id) ?? 0;
-    const lastWorkedLabel =
-      latestTs > 0
-        ? `Last worked ${formatDateLabel(new Date(latestTs).toISOString())}`
-        : 'No sessions yet';
+    const lastWorkedAt = row.last_worked_at ?? null;
     const totalHours = totalHoursByJobId.get(row.id) ?? 0;
     const materialsSpendCents = materialsSpendByJobId.get(row.id) ?? 0;
     const materialsCents = -materialsSpendCents;
     const revenueCents = row.revenue_cents ?? 0;
     const netEarningsCents = revenueCents + materialsCents;
+    const hasMaterials = jobsWithMaterialLines.has(row.id);
+    const hasSessions = (sessionCountByJobId.get(row.id) ?? 0) > 0;
+    const isFinanciallyComplete =
+      row.is_financially_complete ??
+      isFinanciallyCompleteFallback(row, hasMaterials, hasSessions);
 
     return {
-    id: row.id,
-    shortDescription: row.short_description,
-    customerName: row.customer_name,
-    updatedAt: row.updated_at,
-    lastWorkedLabel,
-    timeLabel: `${totalHours.toFixed(1)}h`,
-    jobType: row.job_type,
-    workStatus: mapWorkStatus(row),
-    jobPaymentState: row.job_payment_state,
-    revenueCents: row.revenue_cents,
-    materialsCents,
-    netEarningsCents,
-    collectedCents: row.collected_cents,
+      id: row.id,
+      shortDescription: row.short_description,
+      customerName: row.customer_name,
+      updatedAt: row.updated_at,
+      createdAt: row.created_at,
+      lastWorkedAt,
+      lastWorkedLabel: lastWorkedLabelFromColumn(lastWorkedAt),
+      timeLabel: `${totalHours.toFixed(1)}h`,
+      jobType: row.job_type,
+      workStatus: mapWorkStatus(row),
+      jobPaymentState: row.job_payment_state,
+      revenueCents: row.revenue_cents,
+      materialsCents,
+      netEarningsCents,
+      collectedCents: row.collected_cents,
+      isFinanciallyComplete,
+      hasMaterials,
+      noMaterialsConfirmed: Boolean(row.no_materials_confirmed),
+      hasSessions,
     };
   });
+}
+
+function mapWorkStatus(row: {
+  job_work_status: JobWorkStatusDb;
+  job_payment_state: JobPaymentState | null;
+}): JobDetailWorkStatus {
+  if (row.job_work_status === 'completed' && row.job_payment_state === 'paid') return 'paid';
+  switch (row.job_work_status) {
+    case 'not_started':
+      return 'notStarted';
+    case 'in_progress':
+      return 'inProgress';
+    case 'on_hold':
+      return 'onHold';
+    case 'completed':
+      return 'completed';
+    case 'canceled':
+      return 'cancelled';
+    default:
+      return 'notStarted';
+  }
+}
+
+/**
+ * Returns all jobs visible to the signed-in user (RLS), ordered by `list_recency_at`
+ * desc, then `id` desc. Implemented as repeated page fetches; prefer
+ * `listJobsForCurrentUserPage` in UI for large accounts.
+ */
+export async function listJobsForCurrentUser(
+  client: FieldbookSupabaseClient,
+): Promise<ListJobsForCurrentUserItem[]> {
+  const acc: ListJobsForCurrentUserItem[] = [];
+  let offset = 0;
+  for (;;) {
+    const { items, hasMore } = await listJobsForCurrentUserPage(client, {
+      limit: JOB_LIST_INTERNAL_PAGE_SIZE,
+      offset,
+    });
+    acc.push(...items);
+    if (!hasMore) break;
+    offset += JOB_LIST_INTERNAL_PAGE_SIZE;
+  }
+  return acc;
 }
 
 export async function createBlankJobForCurrentUser(
@@ -325,7 +477,7 @@ export async function deleteJobById(
 function normalizeEditableJobInput(input: UpdateJobInput): UpdateJobInput {
   const shortDescription = input.shortDescription.trim();
   if (!shortDescription) {
-    throw new Error('Job title is required.');
+    throw new Error('Short description is required.');
   }
 
   if (
@@ -342,6 +494,43 @@ function normalizeEditableJobInput(input: UpdateJobInput): UpdateJobInput {
     revenueCents: input.revenueCents,
     jobType: input.jobType.trim(),
   };
+}
+
+/** True when PostgREST reports the `jobs.no_materials_confirmed` column is absent (migration not applied). */
+export function isNoMaterialsConfirmedColumnMissingError(error: unknown): boolean {
+  const msg =
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : error instanceof Error
+        ? error.message
+        : String(error);
+  return msg.includes('no_materials_confirmed');
+}
+
+/**
+ * Sets whether the user has confirmed there were no materials on this job.
+ * Triggers server-side `is_financially_complete` refresh when the column exists.
+ */
+export async function updateJobNoMaterialsConfirmed(
+  client: FieldbookSupabaseClient,
+  id: JobId,
+  noMaterialsConfirmed: boolean,
+): Promise<void> {
+  const { data, error } = await client
+    .from('jobs')
+    .update({ no_materials_confirmed: noMaterialsConfirmed })
+    .eq('id', id)
+    .is('deleted_at', null)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error('Update affected no rows (check RLS: job must be owned by you).');
+  }
 }
 
 export async function updateJobById(

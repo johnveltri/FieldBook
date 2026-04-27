@@ -1,0 +1,53 @@
+{
+  "component": {
+    "name": "Jobs Open Stack Section Header",
+    "kind": "family",
+    "description": "Stacked section header for Jobs **OPEN** tab list groups: leading marker + title line (count) + subcopy. React Native implementation lives in `mobile-expo`; this spec documents Figma sources and tokens.",
+    "maxWidth": 393
+  },
+  "variants": {
+    "incomplete": {
+      "figmaNodeId": "443:2253",
+      "title": "INCOMPLETE · {count}",
+      "subtitle": "Missing key info",
+      "leading": "Warning triangle (outline + exclamation), 14×14",
+      "titleColor": "Semantic/Status/Warning/Text",
+      "subtitleColor": "Semantic/Status/Warning/Text"
+    },
+    "inProgress": {
+      "figmaNodeId": "1022:456",
+      "title": "IN PROGRESS · {count}",
+      "subtitle": "Active work underway",
+      "leading": "Solid 14×14 circle, fill Semantic/Status/Info/Text",
+      "titleColor": "Semantic/Status/Info/Text",
+      "subtitleColor": "Semantic/Status/Info/Text"
+    },
+    "unpaid": {
+      "figmaNodeId": "1022:468",
+      "title": "UNPAID · {count}",
+      "subtitle": "Completed but not paid",
+      "leading": "Hollow 14×14 circle, 2px border Foundation/Text/Secondary",
+      "titleColor": "Semantic/Status/Neutral/Text",
+      "subtitleColor": "Semantic/Status/Neutral/Text"
+    }
+  },
+  "tokens": {
+    "colors": [
+      "Foundation/Text/Secondary",
+      "Semantic/Status/Info/Text",
+      "Semantic/Status/Neutral/Text",
+      "Semantic/Status/Warning/Text"
+    ],
+    "spacing": ["Spacing/8", "Spacing/20", "Spacing/36", "Spacing/16"],
+    "typography": ["Typography/Section/MetricS-Dense", "Typography/Body-Small"]
+  },
+  "layout": {
+    "paddingTop": "Spacing/36",
+    "paddingBottom": "Spacing/16",
+    "paddingHorizontal": "Spacing/20",
+    "gapHeadingToSubtitle": 4,
+    "subtitleInsetStart": 22,
+    "headingRowGap": "Spacing/8",
+    "leadingSize": 14
+  }
+}

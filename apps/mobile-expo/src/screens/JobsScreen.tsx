@@ -6,20 +6,24 @@ import {
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
+  type ListRenderItem,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createBlankJobForCurrentUser,
-  listJobsForCurrentUser,
+  listJobsForCurrentUserPage,
   type ListJobsForCurrentUserItem,
+  type ListJobsForCurrentUserTab,
 } from '@fieldbook/api-client';
 import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/tokens';
 
@@ -32,9 +36,15 @@ import {
 import {
   JobsFabPlusIcon,
   JobsInboxIcon,
+  JobsSearchClearIcon,
   JobsSearchIcon,
 } from '../components/figma-icons/JobsScreenIcons';
-import { JobDetailStatusPill } from '../components/ds';
+import {
+  JobDetailStatusPill,
+  JobsOpenStackSectionHeader,
+  type JobsOpenSectionKind,
+} from '../components/ds';
+import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   CONTENT_MAX_WIDTH,
@@ -46,6 +56,8 @@ import {
   fg,
   space,
 } from '../theme/nativeTokens';
+
+const PAGE_SIZE = 20;
 
 type JobsScreenProps = {
   onOpenJobDetail: (jobId?: string, options?: { initialEditOpen?: boolean }) => void;
@@ -152,10 +164,12 @@ function JobsCard({
   job,
   onPress,
   typography,
+  incompletePills,
 }: {
   job: ListJobsForCurrentUserItem;
   onPress: () => void;
   typography: Typography;
+  incompletePills?: string[];
 }) {
   const category = (job.jobType ?? '').trim().toUpperCase();
   const showCategoryChip = category.length > 0;
@@ -180,6 +194,16 @@ function JobsCard({
               <JobDetailStatusPill kind={job.workStatus} typography={typography} />
             </View>
           </View>
+
+          {incompletePills != null && incompletePills.length > 0 ? (
+            <View style={styles.incompletePillsRow}>
+              {incompletePills.map((label) => (
+                <View key={label} style={styles.incompletePill}>
+                  <Text style={[typography.labelCaps, styles.incompletePillLabel]}>{label}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           {showCategoryChip ? (
             <View style={styles.categoryChip}>
@@ -231,9 +255,170 @@ function JobsCard({
   );
 }
 
+type JobsBucket = 'today' | 'pastWeek' | 'pastMonth' | 'older';
+
+function isSameLocalCalendarDay(anchorMs: number, nowMs: number): boolean {
+  const a = new Date(anchorMs);
+  const n = new Date(nowMs);
+  return (
+    a.getFullYear() === n.getFullYear() &&
+    a.getMonth() === n.getMonth() &&
+    a.getDate() === n.getDate()
+  );
+}
+
+/** Section buckets use the same recency signal as DB list sort: last session activity, else job creation. Mutually exclusive: TODAY → PAST WEEK → PAST MONTH → OLDER. */
+function jobsBucket(lastWorkedAt: string | null, createdAt: string, nowMs: number): JobsBucket {
+  const anchor =
+    lastWorkedAt != null && lastWorkedAt !== '' ? lastWorkedAt : createdAt;
+  const t = new Date(anchor).getTime();
+  if (Number.isNaN(t)) return 'older';
+  const ms7 = 7 * 86_400_000;
+  const ms30 = 30 * 86_400_000;
+  if (isSameLocalCalendarDay(t, nowMs)) return 'today';
+  if (t >= nowMs - ms7) return 'pastWeek';
+  if (t >= nowMs - ms30) return 'pastMonth';
+  return 'older';
+}
+
+const BUCKET_TITLE: Record<JobsBucket, string> = {
+  today: 'TODAY',
+  pastWeek: 'PAST WEEK',
+  pastMonth: 'PAST MONTH',
+  older: 'OLDER',
+};
+
+function isJobIncomplete(job: ListJobsForCurrentUserItem): boolean {
+  return !job.isFinanciallyComplete;
+}
+
+function incompletePillsFor(job: ListJobsForCurrentUserItem): string[] {
+  const pills: string[] = [];
+  const desc = job.shortDescription.trim();
+  if (desc === '' || desc === 'Untitled Job') pills.push('NO SHORT DESCRIPTION');
+  if (job.revenueCents == null || job.revenueCents === 0) pills.push('NO REVENUE');
+  if (!job.hasMaterials && !job.noMaterialsConfirmed) pills.push('NO MATERIALS');
+  if (!job.hasSessions) pills.push('NO SESSIONS');
+  return pills;
+}
+
+type JobsFlatRow =
+  | { kind: 'section'; key: string; mode: 'recency'; title: string }
+  | {
+      kind: 'section';
+      key: string;
+      mode: 'openStack';
+      openKind: JobsOpenSectionKind;
+      count: number;
+    }
+  | { kind: 'job'; job: ListJobsForCurrentUserItem; key: string; incompletePills?: string[] };
+
+function buildFlatRows(jobs: ListJobsForCurrentUserItem[]): JobsFlatRow[] {
+  const nowMs = Date.now();
+  let prev: JobsBucket | null = null;
+  const rows: JobsFlatRow[] = [];
+  for (const job of jobs) {
+    const b = jobsBucket(job.lastWorkedAt, job.createdAt, nowMs);
+    if (b !== prev) {
+      rows.push({
+        kind: 'section',
+        mode: 'recency',
+        title: BUCKET_TITLE[b],
+        key: `h-${b}-${rows.length}`,
+      });
+      prev = b;
+    }
+    rows.push({ kind: 'job', job, key: job.id });
+  }
+  return rows;
+}
+
+function buildOpenFlatRows(jobs: ListJobsForCurrentUserItem[]): JobsFlatRow[] {
+  const incomplete: ListJobsForCurrentUserItem[] = [];
+  const inProgress: ListJobsForCurrentUserItem[] = [];
+  const unpaid: ListJobsForCurrentUserItem[] = [];
+  for (const job of jobs) {
+    if (isJobIncomplete(job)) incomplete.push(job);
+    else if (job.workStatus === 'inProgress') inProgress.push(job);
+    else if (job.workStatus === 'completed') unpaid.push(job);
+  }
+
+  const rows: JobsFlatRow[] = [];
+  const pushOpenSection = (
+    openKind: JobsOpenSectionKind,
+    sectionJobs: ListJobsForCurrentUserItem[],
+    withPills: boolean,
+  ) => {
+    if (sectionJobs.length === 0) return;
+    rows.push({
+      kind: 'section',
+      mode: 'openStack',
+      openKind,
+      count: sectionJobs.length,
+      key: `h-open-${openKind}-${rows.length}`,
+    });
+    for (const job of sectionJobs) {
+      rows.push({
+        kind: 'job',
+        job,
+        key: job.id,
+        incompletePills: withPills ? incompletePillsFor(job) : undefined,
+      });
+    }
+  };
+
+  pushOpenSection('incomplete', incomplete, true);
+  pushOpenSection('inProgress', inProgress, false);
+  pushOpenSection('unpaid', unpaid, false);
+  return rows;
+}
+
+function JobsLoadingSkeleton({ typography }: { typography: Typography }) {
+  const pulse = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0.4,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  return (
+    <View style={styles.skeletonWrap} accessibilityLabel="Loading jobs">
+      {[0, 1, 2].map((i) => (
+        <Animated.View
+          key={i}
+          style={[
+            styles.skeletonRow,
+            {
+              opacity: pulse,
+            },
+          ]}
+        />
+      ))}
+      <ActivityIndicator color={color('Brand/Primary')} style={{ marginTop: space('Spacing/24') }} />
+      <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/12') }]}>
+        Loading jobs…
+      </Text>
+    </View>
+  );
+}
+
 export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenProps) {
   const insets = useSafeAreaInsets();
   const scrollY = useMemo(() => new Animated.Value(0), []);
+  const { version } = useJobsListInvalidation();
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,
     UbuntuSansMono_400Regular,
@@ -253,42 +438,146 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
   );
 
   const [jobs, setJobs] = useState<ListJobsForCurrentUserItem[]>([]);
+  const jobsRef = useRef(jobs);
+  useEffect(() => {
+    jobsRef.current = jobs;
+  }, [jobs]);
+
+  const [activeTab, setActiveTab] = useState<ListJobsForCurrentUserTab>('all');
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreInFlight = useRef(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [creatingJob, setCreatingJob] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef<TextInput>(null);
+  const firstPageRequestIdRef = useRef(0);
 
-  const loadJobs = useCallback(async () => {
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
+  const formatLoadError = useCallback((error: unknown): string => {
+    return error instanceof Error
+      ? error.message
+      : typeof error === 'object' &&
+          error !== null &&
+          'message' in error &&
+          typeof (error as { message: unknown }).message === 'string'
+        ? (error as { message: string }).message
+        : 'Failed to load jobs.';
+  }, []);
+
+  const loadFirstPage = useCallback(async () => {
+    const requestId = firstPageRequestIdRef.current + 1;
+    firstPageRequestIdRef.current = requestId;
     if (!isSupabaseConfigured()) {
       setLoading(false);
       setJobs([]);
+      setHasMore(false);
       setLoadError('Supabase is not configured.');
+      return;
+    }
+    if (searchFocused && debouncedSearch.trim() === '') {
+      setLoading(false);
+      setJobs([]);
+      setHasMore(false);
+      setLoadError(null);
       return;
     }
     setLoading(true);
     setLoadError(null);
+    setHasMore(true);
     try {
-      const rows = await listJobsForCurrentUser(supabase);
-      setJobs(rows);
+      const { items, hasMore: more } = await listJobsForCurrentUserPage(supabase, {
+        limit: PAGE_SIZE,
+        offset: 0,
+        tab: activeTab,
+        search: debouncedSearch.trim() || undefined,
+      });
+      if (firstPageRequestIdRef.current !== requestId) return;
+      setJobs(items);
+      setHasMore(more);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === 'object' &&
-              error !== null &&
-              'message' in error &&
-              typeof (error as { message: unknown }).message === 'string'
-            ? (error as { message: string }).message
-            : 'Failed to load jobs.';
+      if (firstPageRequestIdRef.current !== requestId) return;
       setJobs([]);
-      setLoadError(message);
+      setHasMore(false);
+      setLoadError(formatLoadError(error));
     } finally {
-      setLoading(false);
+      if (firstPageRequestIdRef.current === requestId) {
+        setLoading(false);
+      }
     }
-  }, []);
+  }, [activeTab, debouncedSearch, formatLoadError, searchFocused]);
 
   useEffect(() => {
-    void loadJobs();
-  }, [loadJobs]);
+    void loadFirstPage();
+  }, [version, loadFirstPage]);
+
+  const loadNextPage = useCallback(async () => {
+    if (!isSupabaseConfigured() || loadMoreInFlight.current || loading || !hasMore) return;
+    if (searchFocused && debouncedSearch.trim() === '') return;
+    const requestId = firstPageRequestIdRef.current;
+    loadMoreInFlight.current = true;
+    setLoadingMore(true);
+    setLoadError(null);
+    try {
+      const offset = jobsRef.current.length;
+      const { items, hasMore: more } = await listJobsForCurrentUserPage(supabase, {
+        limit: PAGE_SIZE,
+        offset,
+        tab: activeTab,
+        search: debouncedSearch.trim() || undefined,
+      });
+      if (firstPageRequestIdRef.current !== requestId) return;
+      setJobs((prev) => {
+        const seen = new Set(prev.map((j) => j.id));
+        const next = [...prev];
+        for (const j of items) {
+          if (!seen.has(j.id)) next.push(j);
+        }
+        return next;
+      });
+      setHasMore(more);
+    } catch (error) {
+      if (firstPageRequestIdRef.current !== requestId) return;
+      setLoadError(formatLoadError(error));
+    } finally {
+      loadMoreInFlight.current = false;
+      if (firstPageRequestIdRef.current === requestId) {
+        setLoadingMore(false);
+      }
+    }
+  }, [activeTab, debouncedSearch, formatLoadError, hasMore, loading, searchFocused]);
+
+  const onSearchFocus = useCallback(() => {
+    setSearchFocused(true);
+    setDebouncedSearch(searchQuery);
+  }, [searchQuery]);
+
+  const exitSearch = useCallback(() => {
+    searchInputRef.current?.blur();
+    setSearchFocused(false);
+    setSearchQuery('');
+    setDebouncedSearch('');
+  }, []);
+
+  const onSearchBlur = useCallback(() => {
+    exitSearch();
+  }, [exitSearch]);
+
+  const onEndReached = useCallback(() => {
+    void loadNextPage();
+  }, [loadNextPage]);
+
+  const flatData = useMemo(
+    () => (activeTab === 'open' ? buildOpenFlatRows(jobs) : buildFlatRows(jobs)),
+    [activeTab, jobs],
+  );
 
   const onCreateJob = useCallback(async () => {
     if (creatingJob) return;
@@ -317,6 +606,265 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
     }
   }, [creatingJob, onOpenJobDetail]);
 
+  const renderItem = useCallback<ListRenderItem<JobsFlatRow>>(
+    ({ item }) => {
+      if (item.kind === 'section') {
+        if (item.mode === 'recency') {
+          return (
+            <View style={styles.listRowBand}>
+              <View style={[styles.sectionHeader, styles.listRowInner, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+                <Text style={typography.metricS}>{item.title}</Text>
+              </View>
+            </View>
+          );
+        }
+        return (
+          <View style={styles.listRowBand}>
+            <View style={[styles.listRowInner, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+              <JobsOpenStackSectionHeader
+                kind={item.openKind}
+                count={item.count}
+                typography={typography}
+              />
+            </View>
+          </View>
+        );
+      }
+      return (
+        <View style={styles.listRowBand}>
+          <View style={[styles.jobRowWrap, styles.listRowInner, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+            <JobsCard
+              job={item.job}
+              onPress={() => onOpenJobDetail(item.job.id)}
+              typography={typography}
+              incompletePills={item.incompletePills}
+            />
+          </View>
+        </View>
+      );
+    },
+    [onOpenJobDetail, typography],
+  );
+
+  const listHeader = useMemo(
+    () => (
+      <View style={styles.listHeaderBand}>
+        <View style={[styles.topHeader, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+          <Text style={typography.displayH1}>JOBS</Text>
+          <View style={styles.inboxWrap}>
+            <JobsInboxIcon color={fg.primary} />
+            <View style={styles.inboxBadge}>
+              <Text style={[typography.bodySmall, { color: bg.canvasWarm }]}>10</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.searchBarOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+          <View style={[styles.searchBar, searchFocused && styles.searchBarFocused]}>
+            <View style={styles.searchIconSlot} pointerEvents="none">
+              <JobsSearchIcon color={fg.secondary} />
+            </View>
+            <TextInput
+              ref={searchInputRef}
+              testID="jobs-search-input"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onFocus={onSearchFocus}
+              onBlur={onSearchBlur}
+              placeholder="Search by job or customer"
+              placeholderTextColor={fg.secondary}
+              style={[typography.body, styles.searchInput]}
+              selectionColor={color('Brand/Primary')}
+              returnKeyType="search"
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+            {searchFocused ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Close search"
+                onPress={exitSearch}
+                hitSlop={12}
+                style={({ pressed }) => [styles.searchClearButton, pressed && styles.pressed]}
+              >
+                <JobsSearchClearIcon color={fg.primary} />
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+
+        {searchFocused && debouncedSearch.trim() === '' ? (
+          <View style={[styles.searchEmptyPanel, { maxWidth: CONTENT_MAX_WIDTH }]}>
+            <View style={styles.searchEmptyInner}>
+              <View style={styles.searchEmptyIconWrap}>
+                <JobsSearchIcon color={fg.secondary} size={32} />
+              </View>
+              <Text style={[typography.bodyBold, { color: fg.secondary, textAlign: 'center' }]}>
+                Start typing to search jobs
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        {searchFocused ? null : (
+          <View style={[styles.tabsWrap, { maxWidth: CONTENT_MAX_WIDTH }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: activeTab === 'all' }}
+              onPress={() => setActiveTab('all')}
+              style={({ pressed }) => [
+                activeTab === 'all' ? styles.tabActive : styles.tabIdle,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text
+                style={[
+                  typography.statusPillLabel,
+                  styles.jobsTabLabel,
+                  { color: activeTab === 'all' ? fg.primary : fg.secondary },
+                ]}
+              >
+                All
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: activeTab === 'open' }}
+              onPress={() => setActiveTab('open')}
+              style={({ pressed }) => [
+                activeTab === 'open' ? styles.tabActive : styles.tabIdle,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text
+                style={[
+                  typography.statusPillLabel,
+                  styles.jobsTabLabel,
+                  { color: activeTab === 'open' ? fg.primary : fg.secondary },
+                ]}
+              >
+                Open
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: activeTab === 'paid' }}
+              onPress={() => setActiveTab('paid')}
+              style={({ pressed }) => [
+                activeTab === 'paid' ? styles.tabActive : styles.tabIdle,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text
+                style={[
+                  typography.statusPillLabel,
+                  styles.jobsTabLabel,
+                  { color: activeTab === 'paid' ? fg.primary : fg.secondary },
+                ]}
+              >
+                Paid
+              </Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    ),
+    [
+      activeTab,
+      debouncedSearch,
+      exitSearch,
+      onSearchBlur,
+      onSearchFocus,
+      searchFocused,
+      searchQuery,
+      typography,
+    ],
+  );
+
+  const listEmpty = useMemo(() => {
+    if (loading) {
+      return <JobsLoadingSkeleton typography={typography} />;
+    }
+    if (loadError) {
+      return (
+        <View style={styles.centerState}>
+          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+            {loadError}
+          </Text>
+        </View>
+      );
+    }
+    if (searchFocused && debouncedSearch.trim() === '') {
+      return null;
+    }
+    if (searchFocused && debouncedSearch.trim() !== '' && jobs.length === 0) {
+      return (
+        <View style={styles.centerState}>
+          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+            No matching jobs.
+          </Text>
+        </View>
+      );
+    }
+    if (activeTab === 'open' && jobs.length === 0) {
+      return (
+        <View style={styles.centerState}>
+          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+            All caught up! No open jobs.
+          </Text>
+        </View>
+      );
+    }
+    if (activeTab === 'paid' && jobs.length === 0) {
+      return (
+        <View style={styles.centerState}>
+          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+            No paid jobs yet.
+          </Text>
+        </View>
+      );
+    }
+    if (activeTab === 'open' && jobs.length > 0 && flatData.length === 0) {
+      return (
+        <View style={styles.centerState}>
+          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+            No jobs in Incomplete, In Progress, or Unpaid right now.
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.centerState}>
+        <Text style={[typography.body, { color: fg.secondary }]}>No jobs yet.</Text>
+      </View>
+    );
+  }, [
+    activeTab,
+    debouncedSearch,
+    flatData.length,
+    jobs.length,
+    loadError,
+    loading,
+    searchFocused,
+    typography,
+  ]);
+
+  const listFooter = useMemo(() => {
+    const showSpinner = loadingMore;
+    const showPageError = loadError != null && jobs.length > 0;
+    if (!showSpinner && !showPageError) return null;
+    return (
+      <View style={[styles.listFooter, styles.listRowBand]}>
+        {showPageError ? (
+          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center', marginBottom: space('Spacing/12') }]}>
+            {loadError}
+          </Text>
+        ) : null}
+        {showSpinner ? <ActivityIndicator color={color('Brand/Primary')} /> : null}
+      </View>
+    );
+  }, [jobs.length, loadError, loadingMore, typography]);
+
   if (!fontsLoaded) {
     return (
       <View style={styles.root}>
@@ -327,6 +875,7 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
 
   const bottomNavReservedHeight =
     space('Spacing/8') + 1 + 64 + space('Spacing/8') + insets.bottom;
+  const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
 
   return (
     <View style={styles.root}>
@@ -340,76 +889,29 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
       >
         <View style={styles.topAccent} />
       </View>
-      <Animated.ScrollView
-        style={[styles.scroll, { paddingTop: Math.max(insets.top - space('Spacing/12'), 0) }]}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
+      <Animated.FlatList
+        data={loading ? [] : flatData}
+        keyExtractor={(item) => item.key}
+        renderItem={renderItem}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        ListFooterComponent={listFooter}
+        style={[styles.scroll, { paddingTop: headerTopPad }]}
+        contentContainerStyle={[
+          styles.flatListContent,
+          {
+            paddingBottom: bottomNavReservedHeight + space('Spacing/20') + 72,
+            flexGrow: 1,
+          },
+        ]}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
         scrollEventThrottle={16}
-        contentContainerStyle={{
-          alignItems: 'center',
-          paddingBottom: bottomNavReservedHeight + space('Spacing/20') + 72,
-        }}
-      >
-        <View style={[styles.topHeader, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
-          <Text style={typography.displayH1}>JOBS</Text>
-          <View style={styles.inboxWrap}>
-            <JobsInboxIcon color={fg.primary} />
-            <View style={styles.inboxBadge}>
-              <Text style={[typography.bodySmall, { color: bg.canvasWarm }]}>10</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.searchBar, { maxWidth: CONTENT_MAX_WIDTH }]}>
-          <JobsSearchIcon color={fg.secondary} />
-          <Text style={[typography.body, { color: fg.secondary }]}>Search jobs or customers...</Text>
-        </View>
-
-        <View style={[styles.tabsWrap, { maxWidth: CONTENT_MAX_WIDTH }]}>
-          <View style={styles.tabActive}>
-            <Text style={[typography.labelCaps, { color: fg.primary }]}>All</Text>
-          </View>
-          <View style={styles.tabIdle}>
-            <Text style={typography.labelCaps}>Open</Text>
-          </View>
-          <View style={styles.tabIdle}>
-            <Text style={typography.labelCaps}>Paid</Text>
-          </View>
-        </View>
-
-        <View style={[styles.sectionHeader, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
-          <Text style={typography.metricS}>THIS WEEK</Text>
-        </View>
-
-        <View style={[styles.jobsListWrap, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
-          {loading ? (
-            <View style={styles.centerState}>
-              <ActivityIndicator />
-            </View>
-          ) : loadError ? (
-            <View style={styles.centerState}>
-              <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
-                {loadError}
-              </Text>
-            </View>
-          ) : jobs.length === 0 ? (
-            <View style={styles.centerState}>
-              <Text style={[typography.body, { color: fg.secondary }]}>No jobs yet.</Text>
-            </View>
-          ) : (
-            jobs.map((job) => (
-              <JobsCard
-                key={job.id}
-                job={job}
-                onPress={() => onOpenJobDetail(job.id)}
-                typography={typography}
-              />
-            ))
-          )}
-        </View>
-      </Animated.ScrollView>
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.35}
+        keyboardShouldPersistTaps="handled"
+      />
 
       {suppressFab ? null : (
         <View
@@ -444,6 +946,22 @@ const styles = StyleSheet.create({
    */
   root: { flex: 1, alignItems: 'center', backgroundColor: bg.canvasWarm },
   scroll: { flex: 1, width: '100%', backgroundColor: 'transparent' },
+  flatListContent: {
+    // `center` collapses row width to min-content and breaks job cards; stretch
+    // full width, then center capped blocks via `listRowBand` / `listHeaderBand`.
+    alignItems: 'stretch',
+  },
+  listHeaderBand: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  listRowBand: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  listRowInner: {
+    width: '100%',
+  },
   safeAreaTopAccentWrap: {
     position: 'absolute',
     width: '100%',
@@ -483,18 +1001,66 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 4,
   },
-  searchBar: {
+  searchBarOuter: {
     width: '100%',
-    height: 48,
+  },
+  searchBar: {
+    position: 'relative',
+    width: '100%',
+    minHeight: 48,
     backgroundColor: bg.surfaceWhite,
-    borderWidth: 1,
+    // Keep borderWidth constant so the white input area does not shrink on focus.
+    borderWidth: 2,
     borderColor: border.subtle,
     borderRadius: 12,
     ...cardShadowRn,
-    paddingHorizontal: space('Spacing/16'),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space('Spacing/12'),
+    paddingRight: space('Spacing/12'),
+  },
+  searchBarFocused: {
+    borderColor: color('Brand/PrimaryStroke'),
+  },
+  searchIconSlot: {
+    position: 'absolute',
+    left: 14,
+    top: 0,
+    bottom: 0,
+    width: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 44,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 10,
+    paddingRight: space('Spacing/8'),
+    color: fg.primary,
+    minHeight: 48,
+  },
+  searchClearButton: {
+    padding: 5,
+    borderRadius: radius('Radius/Full'),
+    backgroundColor: colorWithAlpha('Foundation/Text/Primary', 0.1),
+  },
+  searchEmptyPanel: {
+    width: '100%',
+    marginTop: space('Spacing/12'),
+    backgroundColor: bg.surfaceWhite,
+    borderWidth: 1,
+    borderColor: border.default,
+    borderRadius: 16,
+    ...cardShadowRn,
+    paddingVertical: space('Spacing/16'),
+    paddingHorizontal: space('Spacing/20'),
+  },
+  searchEmptyInner: {
+    alignItems: 'center',
+    paddingVertical: space('Spacing/12'),
+    paddingHorizontal: space('Spacing/12'),
+  },
+  searchEmptyIconWrap: {
+    marginBottom: space('Spacing/8'),
   },
   tabsWrap: {
     width: '100%',
@@ -521,22 +1087,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  jobsTabLabel: {
+    textTransform: 'uppercase',
+  },
   sectionHeader: {
     width: '100%',
     paddingHorizontal: space('Spacing/20'),
     paddingTop: space('Spacing/36'),
     paddingBottom: space('Spacing/16'),
   },
-  jobsListWrap: {
+  jobRowWrap: {
     width: '100%',
     paddingHorizontal: space('Spacing/20'),
-    gap: space('Spacing/12'),
+    marginBottom: space('Spacing/12'),
+  },
+  listFooter: {
+    paddingVertical: space('Spacing/20'),
+    alignItems: 'center',
+    width: '100%',
+  },
+  skeletonWrap: {
+    width: '100%',
+    maxWidth: TOP_HEADER_MAX_WIDTH,
+    paddingHorizontal: space('Spacing/20'),
+    paddingTop: space('Spacing/24'),
+    alignItems: 'center',
+    minHeight: 220,
+  },
+  skeletonRow: {
+    width: '100%',
+    height: 72,
+    borderRadius: 16,
+    backgroundColor: bg.subtle,
+    marginBottom: space('Spacing/12'),
+    borderWidth: 1,
+    borderColor: border.subtle,
   },
   centerState: {
     width: '100%',
     minHeight: 220,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: space('Spacing/20'),
   },
   jobCard: {
     width: '100%',
@@ -574,6 +1166,22 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: space('Spacing/8'),
     paddingVertical: space('Spacing/4'),
+  },
+  incompletePillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space('Spacing/8'),
+  },
+  incompletePill: {
+    backgroundColor: color('Semantic/Status/Warning/BG'),
+    borderWidth: 1,
+    borderColor: color('Semantic/Status/Warning/Stroke'),
+    borderRadius: radius('Radius/8'),
+    paddingHorizontal: space('Spacing/8'),
+    paddingVertical: space('Spacing/4'),
+  },
+  incompletePillLabel: {
+    color: color('Semantic/Status/Warning/Label'),
   },
   metricsRow: {
     borderTopWidth: 1,
