@@ -553,6 +553,22 @@ export async function bumpJobToInProgressIfNotStarted(
   if (error) throw error;
 }
 
+/**
+ * Best-effort variant for call sites where the primary write has already
+ * succeeded. A status-bump failure must not make the caller retry and create
+ * duplicate/conflicting session state.
+ */
+export async function tryBumpJobToInProgressIfNotStarted(
+  client: FieldbookSupabaseClient,
+  jobId: JobId,
+): Promise<void> {
+  try {
+    await bumpJobToInProgressIfNotStarted(client, jobId);
+  } catch {
+    // Session creation is the source of truth; callers refresh after creation.
+  }
+}
+
 export async function updateJobById(
   client: FieldbookSupabaseClient,
   id: JobId,

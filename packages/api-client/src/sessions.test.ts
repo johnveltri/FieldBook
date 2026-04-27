@@ -50,6 +50,32 @@ describe('sessions api client', () => {
     });
   });
 
+  it('createManualSession still returns the inserted id when the status bump fails', async () => {
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        sessions: [
+          makeBuilder({
+            singleResult: { data: { id: 'sess-123' }, error: null },
+          }),
+        ],
+        jobs: [
+          makeBuilder({
+            awaitResult: { data: null, error: new Error('status bump failed') },
+          }),
+        ],
+      },
+    });
+
+    await expect(
+      createManualSession(client as never, {
+        jobId: 'job-9',
+        startedAt: '2026-04-17T13:00:00.000Z',
+        endedAt: '2026-04-17T14:30:00.000Z',
+      }),
+    ).resolves.toBe('sess-123');
+  });
+
   it('createManualSession throws when no authenticated user exists', async () => {
     const client = makeClient({
       authUserId: null,

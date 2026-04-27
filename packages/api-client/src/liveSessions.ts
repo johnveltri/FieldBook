@@ -1,7 +1,7 @@
 import type { ActiveLiveSession, JobId } from '@fieldbook/shared-types';
 
 import type { FieldbookSupabaseClient } from './client';
-import { bumpJobToInProgressIfNotStarted } from './jobs';
+import { tryBumpJobToInProgressIfNotStarted } from './jobs';
 import type { SessionId } from './sessions';
 
 export type CreateLiveSessionInput = {
@@ -122,7 +122,7 @@ export async function createLiveSession(
   if (inserted.error) throw inserted.error;
   const row = inserted.data as { id: string };
 
-  await bumpJobToInProgressIfNotStarted(client, input.jobId);
+  await tryBumpJobToInProgressIfNotStarted(client, input.jobId);
 
   return {
     id: row.id,
