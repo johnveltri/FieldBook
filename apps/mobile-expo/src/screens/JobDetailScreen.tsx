@@ -889,6 +889,7 @@ export function JobDetailScreen({
           unitCostCents: values.unitCostCents,
         });
         await refetchJob();
+        invalidateJobsList();
         closeMaterialFlow();
       } catch (e) {
         Alert.alert(
@@ -899,7 +900,7 @@ export function JobDetailScreen({
         setMaterialSaving(false);
       }
     },
-    [closeMaterialFlow, formatErrorMessage, job, matDraftSessionId, refetchJob],
+    [closeMaterialFlow, formatErrorMessage, invalidateJobsList, job, matDraftSessionId, refetchJob],
   );
 
   const onSaveMaterialChanges = useCallback(
@@ -918,6 +919,7 @@ export function JobDetailScreen({
           jobId: matDraftSessionId === null ? job.id : undefined,
         });
         await refetchJob();
+        invalidateJobsList();
         closeMaterialFlow();
       } catch (e) {
         Alert.alert(
@@ -932,6 +934,7 @@ export function JobDetailScreen({
       closeMaterialFlow,
       editingMaterialId,
       formatErrorMessage,
+      invalidateJobsList,
       job,
       matDraftSessionId,
       refetchJob,
@@ -948,6 +951,7 @@ export function JobDetailScreen({
     try {
       await deleteMaterial(supabase, editingMaterialId);
       await refetchJob();
+      invalidateJobsList();
       closeMaterialFlow();
     } catch (e) {
       Alert.alert(
@@ -957,7 +961,7 @@ export function JobDetailScreen({
     } finally {
       setMaterialSaving(false);
     }
-  }, [closeMaterialFlow, editingMaterialId, formatErrorMessage, refetchJob]);
+  }, [closeMaterialFlow, editingMaterialId, formatErrorMessage, invalidateJobsList, refetchJob]);
 
   const onConfirmNoMaterialsUsed = useCallback(async () => {
     if (!job || noMaterialsSaving || !supabaseReady) return;
