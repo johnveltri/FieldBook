@@ -241,6 +241,7 @@ describe('jobs api client', () => {
                   job_payment_state: 'paid',
                   revenue_cents: 50000,
                   collected_cents: 50000,
+                  is_financially_complete: true,
                 },
               ],
               error: null,
@@ -339,6 +340,7 @@ describe('jobs api client', () => {
       job_payment_state: null,
       revenue_cents: 0,
       collected_cents: 0,
+      is_financially_complete: false,
     });
     const client = makeClient({
       authUserId: 'user-1',
@@ -389,7 +391,184 @@ describe('jobs api client', () => {
     const orSpy = jobsBuilder.or as unknown as { mock: { calls: unknown[][] } };
     expect(neqSpy.mock.calls).toContainEqual(['job_work_status', 'canceled']);
     expect(orSpy.mock.calls.length).toBeGreaterThan(0);
-    expect(String(orSpy.mock.calls[0]?.[0])).toContain('job_work_status.neq.completed');
+    const clause = String(orSpy.mock.calls[0]?.[0]);
+    expect(clause).toContain('is_financially_complete.eq.false');
+    expect(clause).toContain('job_work_status.eq.in_progress');
+    expect(clause).toContain('job_payment_state.eq.pending');
+  });
+
+  it('listJobsForCurrentUserPage falls back when financial completeness column is missing', async () => {
+    const missingColumnBuilder = makeBuilder({
+      awaitResult: {
+        data: null,
+        error: {
+          code: '42703',
+          message: 'column jobs.is_financially_complete does not exist',
+        },
+      },
+    });
+    const legacyBuilder = makeBuilder({
+      awaitResult: {
+        data: [
+          {
+            id: 'job-legacy',
+            short_description: 'Legacy schema job',
+            customer_name: null,
+            updated_at: '2026-04-17T10:00:00.000Z',
+            created_at: '2026-04-10T08:00:00.000Z',
+            last_worked_at: '2026-04-16T12:00:00.000Z',
+            job_type: 'x',
+            job_work_status: 'not_started' as const,
+            job_payment_state: null,
+            revenue_cents: 10000,
+            collected_cents: 0,
+          },
+        ],
+        error: null,
+      },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [missingColumnBuilder, legacyBuilder],
+        sessions: [makeBuilder({ awaitResult: { data: [], error: null } })],
+        materials: [makeBuilder({ awaitResult: { data: [], error: null } })],
+      },
+    });
+
+    const result = await listJobsForCurrentUserPage(client as never, {
+      limit: 10,
+      offset: 0,
+      tab: 'open',
+    });
+
+    const firstSelect = missingColumnBuilder.select as unknown as { mock: { calls: unknown[][] } };
+    const secondSelect = legacyBuilder.select as unknown as { mock: { calls: unknown[][] } };
+    const secondOr = legacyBuilder.or as unknown as { mock: { calls: unknown[][] } };
+    expect(String(firstSelect.mock.calls[0]?.[0])).toContain('is_financially_complete');
+    expect(String(secondSelect.mock.calls[0]?.[0])).not.toContain('is_financially_complete');
+    expect(String(secondOr.mock.calls[0]?.[0])).toContain('job_work_status.neq.completed');
+    expect(result.items[0]).toMatchObject({
+      id: 'job-legacy',
+      isFinanciallyComplete: false,
+    });
+  });
+
+  it('legacy financial completeness fallback requires description, revenue, material, and session', async () => {
+    const row = (id: string, shortDescription: string, revenueCents: number) => ({
+      id,
+      short_description: shortDescription,
+      customer_name: null,
+      updated_at: '2026-04-17T10:00:00.000Z',
+      created_at: '2026-04-10T08:00:00.000Z',
+      last_worked_at: '2026-04-16T12:00:00.000Z',
+      job_type: 'x',
+      job_work_status: 'not_started' as const,
+      job_payment_state: null,
+      revenue_cents: revenueCents,
+      collected_cents: 0,
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                row('job-complete', 'Legacy schema job', 10000),
+                row('job-placeholder', 'Untitled Job', 10000),
+                row('job-no-revenue', 'No revenue', 0),
+                row('job-no-materials', 'No materials', 10000),
+                row('job-no-sessions', 'No sessions', 10000),
+              ],
+              error: null,
+            },
+          }),
+        ],
+        sessions: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'sess-complete',
+                  job_id: 'job-complete',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T12:00:00.000Z',
+                },
+                {
+                  id: 'sess-placeholder',
+                  job_id: 'job-placeholder',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T12:00:00.000Z',
+                },
+                {
+                  id: 'sess-no-revenue',
+                  job_id: 'job-no-revenue',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T12:00:00.000Z',
+                },
+                {
+                  id: 'sess-no-materials',
+                  job_id: 'job-no-materials',
+                  session_status: 'ended',
+                  started_at: '2026-04-16T10:00:00.000Z',
+                  ended_at: '2026-04-16T12:00:00.000Z',
+                },
+              ],
+              error: null,
+            },
+          }),
+        ],
+        materials: [
+          makeBuilder({
+            awaitResult: {
+              data: [
+                {
+                  id: 'mat-complete',
+                  job_id: 'job-complete',
+                  session_id: null,
+                  total_cost_cents: 4000,
+                },
+                {
+                  id: 'mat-placeholder',
+                  job_id: 'job-placeholder',
+                  session_id: null,
+                  total_cost_cents: 4000,
+                },
+                {
+                  id: 'mat-no-revenue',
+                  job_id: 'job-no-revenue',
+                  session_id: null,
+                  total_cost_cents: 4000,
+                },
+                {
+                  id: 'mat-no-sessions',
+                  job_id: 'job-no-sessions',
+                  session_id: null,
+                  total_cost_cents: 4000,
+                },
+              ],
+              error: null,
+            },
+          }),
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+        ],
+      },
+    });
+
+    const result = await listJobsForCurrentUserPage(client as never, { limit: 10, offset: 0 });
+    expect(
+      Object.fromEntries(result.items.map((item) => [item.id, item.isFinanciallyComplete])),
+    ).toEqual({
+      'job-complete': true,
+      'job-placeholder': false,
+      'job-no-revenue': false,
+      'job-no-materials': false,
+      'job-no-sessions': false,
+    });
   });
 
   it('listJobsForCurrentUserPage applies search ilike or filter', async () => {
@@ -479,6 +658,7 @@ describe('jobs api client', () => {
                   job_payment_state: 'pending',
                   revenue_cents: 80000,
                   collected_cents: 0,
+                  is_financially_complete: true,
                 },
               ],
               error: null,
@@ -542,6 +722,7 @@ describe('jobs api client', () => {
             job_payment_state: 'pending',
             revenue_cents: 120000,
             collected_cents: 0,
+            is_financially_complete: true,
           },
         ],
         error: null,
@@ -698,6 +879,7 @@ describe('jobs api client', () => {
     expect(listRow.lastWorkedLabel).toBe(jobDetail.lastWorkedLabel);
     expect(listRow.lastWorkedAt).toBe('2026-04-16T12:00:00.000Z');
     expect(listRow.createdAt).toBe('2026-04-10T08:00:00.000Z');
+    expect(listRow.isFinanciallyComplete).toBe(true);
     expect(listRow.hasMaterials).toBe(true);
     expect(listRow.hasSessions).toBe(true);
   });

@@ -289,12 +289,7 @@ const BUCKET_TITLE: Record<JobsBucket, string> = {
 };
 
 function isJobIncomplete(job: ListJobsForCurrentUserItem): boolean {
-  const desc = job.shortDescription.trim();
-  const noDescription = desc === '' || desc === 'Untitled Job';
-  const noRevenue = job.revenueCents == null || job.revenueCents === 0;
-  const noMaterials = !job.hasMaterials;
-  const noSessions = !job.hasSessions;
-  return noDescription || noRevenue || noMaterials || noSessions;
+  return !job.isFinanciallyComplete;
 }
 
 function incompletePillsFor(job: ListJobsForCurrentUserItem): string[] {
@@ -459,6 +454,7 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
+  const firstPageRequestIdRef = useRef(0);
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
@@ -477,6 +473,8 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
   }, []);
 
   const loadFirstPage = useCallback(async () => {
+    const requestId = firstPageRequestIdRef.current + 1;
+    firstPageRequestIdRef.current = requestId;
     if (!isSupabaseConfigured()) {
       setLoading(false);
       setJobs([]);
@@ -501,14 +499,18 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
         tab: activeTab,
         search: debouncedSearch.trim() || undefined,
       });
+      if (firstPageRequestIdRef.current !== requestId) return;
       setJobs(items);
       setHasMore(more);
     } catch (error) {
+      if (firstPageRequestIdRef.current !== requestId) return;
       setJobs([]);
       setHasMore(false);
       setLoadError(formatLoadError(error));
     } finally {
-      setLoading(false);
+      if (firstPageRequestIdRef.current === requestId) {
+        setLoading(false);
+      }
     }
   }, [activeTab, debouncedSearch, formatLoadError, searchFocused]);
 
@@ -519,6 +521,7 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
   const loadNextPage = useCallback(async () => {
     if (!isSupabaseConfigured() || loadMoreInFlight.current || loading || !hasMore) return;
     if (searchFocused && debouncedSearch.trim() === '') return;
+    const requestId = firstPageRequestIdRef.current;
     loadMoreInFlight.current = true;
     setLoadingMore(true);
     setLoadError(null);
@@ -530,6 +533,7 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
         tab: activeTab,
         search: debouncedSearch.trim() || undefined,
       });
+      if (firstPageRequestIdRef.current !== requestId) return;
       setJobs((prev) => {
         const seen = new Set(prev.map((j) => j.id));
         const next = [...prev];
@@ -540,10 +544,13 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
       });
       setHasMore(more);
     } catch (error) {
+      if (firstPageRequestIdRef.current !== requestId) return;
       setLoadError(formatLoadError(error));
     } finally {
       loadMoreInFlight.current = false;
-      setLoadingMore(false);
+      if (firstPageRequestIdRef.current === requestId) {
+        setLoadingMore(false);
+      }
     }
   }, [activeTab, debouncedSearch, formatLoadError, hasMore, loading, searchFocused]);
 

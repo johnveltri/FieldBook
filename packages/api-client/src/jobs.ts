@@ -102,6 +102,7 @@ export type ListJobsForCurrentUserItem = {
   /** Optional: may be unavailable on older local schemas. */
   netEarningsCents: number | null;
   collectedCents: number | null;
+  isFinanciallyComplete: boolean;
   /** True when the job has at least one active (non-deleted) material line attributed to it (job_id or session). */
   hasMaterials: boolean;
   /** True when the job has at least one non-deleted session. */
@@ -120,6 +121,7 @@ type ListJobsRow = {
   job_payment_state: JobPaymentState | null;
   revenue_cents: number | null;
   collected_cents: number | null;
+  is_financially_complete?: boolean | null;
 };
 
 type ListJobSessionRow = {
@@ -163,6 +165,26 @@ export type ListJobsForCurrentUserPageResult = {
 
 export type ListJobsForCurrentUserTab = 'all' | 'open' | 'paid';
 
+const JOB_LIST_SELECT_WITH_FINANCIAL_COMPLETENESS =
+  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_financially_complete';
+
+const JOB_LIST_SELECT_LEGACY =
+  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents';
+
+function isMissingFinancialCompletenessColumn(error: unknown): boolean {
+  if (typeof error !== 'object' || error == null) return false;
+  const e = error as { code?: unknown; message?: unknown };
+  return (
+    e.code === '42703' ||
+    (typeof e.message === 'string' && e.message.includes('is_financially_complete'))
+  );
+}
+
+function isFinanciallyCompleteFallback(row: ListJobsRow, hasMaterials: boolean, hasSessions: boolean): boolean {
+  const desc = row.short_description.trim();
+  return desc !== '' && desc !== 'Untitled Job' && (row.revenue_cents ?? 0) > 0 && hasMaterials && hasSessions;
+}
+
 /**
  * One page of jobs ordered by `list_recency_at` desc (`coalesce(last_worked_at, created_at)`), then `id` desc.
  * Rollups (time, materials, net) are computed for rows in this page only.
@@ -177,41 +199,52 @@ export async function listJobsForCurrentUserPage(
   },
 ): Promise<ListJobsForCurrentUserPageResult> {
   const { limit, offset, tab = 'all', search } = options;
-  let listQuery = client
-    .from('jobs')
-    .select(
-      'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents',
-    )
-    .is('deleted_at', null);
+  const runQuery = async (includeFinancialCompleteness: boolean) => {
+    let listQuery = client
+      .from('jobs')
+      .select(
+        (includeFinancialCompleteness
+          ? JOB_LIST_SELECT_WITH_FINANCIAL_COMPLETENESS
+          : JOB_LIST_SELECT_LEGACY) as string,
+      )
+      .is('deleted_at', null);
 
-  if (tab === 'open') {
-    listQuery = listQuery
-      .neq('job_work_status', 'canceled')
-      .or(
-        'job_work_status.neq.completed,and(job_work_status.eq.completed,or(job_payment_state.is.null,job_payment_state.neq.paid))',
-      );
-  } else if (tab === 'paid') {
-    listQuery = listQuery.eq('job_work_status', 'completed').eq('job_payment_state', 'paid');
-  }
-
-  const searchTrimmed = search?.trim() ?? '';
-  if (searchTrimmed !== '') {
-    const core = sanitizeJobListSearchTerm(searchTrimmed);
-    if (core.length === 0) {
-      listQuery = listQuery.eq('id', '00000000-0000-0000-0000-000000000000');
-    } else {
-      const p = `%${core}%`;
-      listQuery = listQuery.or(`short_description.ilike.${p},customer_name.ilike.${p}`);
+    if (tab === 'open') {
+      listQuery = listQuery
+        .neq('job_work_status', 'canceled')
+        .or(
+          includeFinancialCompleteness
+            ? 'is_financially_complete.eq.false,job_work_status.eq.in_progress,and(job_work_status.eq.completed,or(job_payment_state.is.null,job_payment_state.eq.pending))'
+            : 'job_work_status.neq.completed,and(job_work_status.eq.completed,or(job_payment_state.is.null,job_payment_state.eq.pending))',
+        );
+    } else if (tab === 'paid') {
+      listQuery = listQuery.eq('job_work_status', 'completed').eq('job_payment_state', 'paid');
     }
+
+    const searchTrimmed = search?.trim() ?? '';
+    if (searchTrimmed !== '') {
+      const core = sanitizeJobListSearchTerm(searchTrimmed);
+      if (core.length === 0) {
+        listQuery = listQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+      } else {
+        const p = `%${core}%`;
+        listQuery = listQuery.or(`short_description.ilike.${p},customer_name.ilike.${p}`);
+      }
+    }
+
+    return listQuery
+      .order('list_recency_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + limit - 1);
+  };
+
+  let result = await runQuery(true);
+  if (result.error != null && isMissingFinancialCompletenessColumn(result.error)) {
+    result = await runQuery(false);
   }
 
-  const { data, error } = await listQuery
-    .order('list_recency_at', { ascending: false })
-    .order('id', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (error) throw error;
-  const rows = (data ?? []) as ListJobsRow[];
+  if (result.error) throw result.error;
+  const rows = ((result.data ?? []) as unknown) as ListJobsRow[];
   if (rows.length === 0) {
     return { items: [], hasMore: false };
   }
@@ -304,6 +337,11 @@ async function enrichJobsRowsWithSessionRollups(
     const materialsCents = -materialsSpendCents;
     const revenueCents = row.revenue_cents ?? 0;
     const netEarningsCents = revenueCents + materialsCents;
+    const hasMaterials = jobsWithMaterialLines.has(row.id);
+    const hasSessions = (sessionCountByJobId.get(row.id) ?? 0) > 0;
+    const isFinanciallyComplete =
+      row.is_financially_complete ??
+      isFinanciallyCompleteFallback(row, hasMaterials, hasSessions);
 
     return {
       id: row.id,
@@ -321,8 +359,9 @@ async function enrichJobsRowsWithSessionRollups(
       materialsCents,
       netEarningsCents,
       collectedCents: row.collected_cents,
-      hasMaterials: jobsWithMaterialLines.has(row.id),
-      hasSessions: (sessionCountByJobId.get(row.id) ?? 0) > 0,
+      isFinanciallyComplete,
+      hasMaterials,
+      hasSessions,
     };
   });
 }
