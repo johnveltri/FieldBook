@@ -122,4 +122,5 @@ export const mockJobDetail: JobDetailViewModel = {
       ],
     },
   ],
+  noMaterialsConfirmed: false,
 };

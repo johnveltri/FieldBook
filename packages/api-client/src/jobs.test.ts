@@ -8,6 +8,8 @@ import {
   listJobsForCurrentUser,
   listJobsForCurrentUserPage,
   updateJobById,
+  updateJobNoMaterialsConfirmed,
+  isNoMaterialsConfirmedColumnMissingError,
   updateJobStatusById,
 } from './jobs';
 import { makeBuilder, makeClient } from './testUtils';
@@ -180,6 +182,38 @@ describe('jobs api client', () => {
     await expect(updateJobStatusById(client as never, 'job-1', 'paid')).rejects.toThrow(
       'Update affected no rows',
     );
+  });
+
+  it('isNoMaterialsConfirmedColumnMissingError matches PostgREST schema cache message', () => {
+    expect(
+      isNoMaterialsConfirmedColumnMissingError(
+        new Error(
+          "Could not find the 'no_materials_confirmed' column of 'jobs' in the schema cache",
+        ),
+      ),
+    ).toBe(true);
+    expect(isNoMaterialsConfirmedColumnMissingError(new Error('permission denied'))).toBe(false);
+  });
+
+  it('updateJobNoMaterialsConfirmed patches no_materials_confirmed', async () => {
+    let patch: unknown;
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            onUpdate: (value) => {
+              patch = value;
+            },
+            maybeSingleResult: { data: { id: 'job-1' }, error: null },
+          }),
+        ],
+      },
+    });
+
+    await updateJobNoMaterialsConfirmed(client as never, 'job-1', true);
+
+    expect(patch).toEqual({ no_materials_confirmed: true });
   });
 
   it('updateJobById rejects blank titles and invalid revenue', async () => {
@@ -943,6 +977,7 @@ describe('jobs api client', () => {
 
     expect(detail).not.toBeNull();
     expect(detail?.displaySessions.map((s) => s.id)).toEqual(['sess-ended']);
+    expect(detail?.noMaterialsConfirmed).toBe(false);
   });
 
   it('fetchJobDetail maps note id/body/sessionId and filters soft-deleted notes', async () => {

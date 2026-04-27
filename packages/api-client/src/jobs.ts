@@ -105,6 +105,8 @@ export type ListJobsForCurrentUserItem = {
   isFinanciallyComplete: boolean;
   /** True when the job has at least one active (non-deleted) material line attributed to it (job_id or session). */
   hasMaterials: boolean;
+  /** True when the user confirmed “no materials used” on the job (no material rows). */
+  noMaterialsConfirmed: boolean;
   /** True when the job has at least one non-deleted session. */
   hasSessions: boolean;
 };
@@ -122,6 +124,7 @@ type ListJobsRow = {
   revenue_cents: number | null;
   collected_cents: number | null;
   is_financially_complete?: boolean | null;
+  no_materials_confirmed?: boolean | null;
 };
 
 type ListJobSessionRow = {
@@ -165,7 +168,12 @@ export type ListJobsForCurrentUserPageResult = {
 
 export type ListJobsForCurrentUserTab = 'all' | 'open' | 'paid';
 
-const JOB_LIST_SELECT_WITH_FINANCIAL_COMPLETENESS =
+/** Full list row including financial completeness + no-materials confirmation flag. */
+const JOB_LIST_SELECT_FULL =
+  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_financially_complete, no_materials_confirmed';
+
+/** Older DBs with `is_financially_complete` but not yet `no_materials_confirmed`. */
+const JOB_LIST_SELECT_FINANCIAL_WITHOUT_NO_MATERIALS_FLAG =
   'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_financially_complete';
 
 const JOB_LIST_SELECT_LEGACY =
@@ -180,9 +188,22 @@ function isMissingFinancialCompletenessColumn(error: unknown): boolean {
   );
 }
 
+function isMissingNoMaterialsConfirmedColumn(error: unknown): boolean {
+  if (typeof error !== 'object' || error == null) return false;
+  const e = error as { message?: unknown };
+  return typeof e.message === 'string' && e.message.includes('no_materials_confirmed');
+}
+
 function isFinanciallyCompleteFallback(row: ListJobsRow, hasMaterials: boolean, hasSessions: boolean): boolean {
   const desc = row.short_description.trim();
-  return desc !== '' && desc !== 'Untitled Job' && (row.revenue_cents ?? 0) > 0 && hasMaterials && hasSessions;
+  const materialsOk = hasMaterials || Boolean(row.no_materials_confirmed);
+  return (
+    desc !== '' &&
+    desc !== 'Untitled Job' &&
+    (row.revenue_cents ?? 0) > 0 &&
+    materialsOk &&
+    hasSessions
+  );
 }
 
 /**
@@ -199,15 +220,9 @@ export async function listJobsForCurrentUserPage(
   },
 ): Promise<ListJobsForCurrentUserPageResult> {
   const { limit, offset, tab = 'all', search } = options;
-  const runQuery = async (includeFinancialCompleteness: boolean) => {
-    let listQuery = client
-      .from('jobs')
-      .select(
-        (includeFinancialCompleteness
-          ? JOB_LIST_SELECT_WITH_FINANCIAL_COMPLETENESS
-          : JOB_LIST_SELECT_LEGACY) as string,
-      )
-      .is('deleted_at', null);
+  const runQuery = async (selectColumns: string) => {
+    const includeFinancialCompleteness = selectColumns.includes('is_financially_complete');
+    let listQuery = client.from('jobs').select(selectColumns).is('deleted_at', null);
 
     if (tab === 'open') {
       listQuery = listQuery
@@ -238,9 +253,12 @@ export async function listJobsForCurrentUserPage(
       .range(offset, offset + limit - 1);
   };
 
-  let result = await runQuery(true);
+  let result = await runQuery(JOB_LIST_SELECT_FULL);
+  if (result.error != null && isMissingNoMaterialsConfirmedColumn(result.error)) {
+    result = await runQuery(JOB_LIST_SELECT_FINANCIAL_WITHOUT_NO_MATERIALS_FLAG);
+  }
   if (result.error != null && isMissingFinancialCompletenessColumn(result.error)) {
-    result = await runQuery(false);
+    result = await runQuery(JOB_LIST_SELECT_LEGACY);
   }
 
   if (result.error) throw result.error;
@@ -361,6 +379,7 @@ async function enrichJobsRowsWithSessionRollups(
       collectedCents: row.collected_cents,
       isFinanciallyComplete,
       hasMaterials,
+      noMaterialsConfirmed: Boolean(row.no_materials_confirmed),
       hasSessions,
     };
   });
@@ -475,6 +494,43 @@ function normalizeEditableJobInput(input: UpdateJobInput): UpdateJobInput {
     revenueCents: input.revenueCents,
     jobType: input.jobType.trim(),
   };
+}
+
+/** True when PostgREST reports the `jobs.no_materials_confirmed` column is absent (migration not applied). */
+export function isNoMaterialsConfirmedColumnMissingError(error: unknown): boolean {
+  const msg =
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : error instanceof Error
+        ? error.message
+        : String(error);
+  return msg.includes('no_materials_confirmed');
+}
+
+/**
+ * Sets whether the user has confirmed there were no materials on this job.
+ * Triggers server-side `is_financially_complete` refresh when the column exists.
+ */
+export async function updateJobNoMaterialsConfirmed(
+  client: FieldbookSupabaseClient,
+  id: JobId,
+  noMaterialsConfirmed: boolean,
+): Promise<void> {
+  const { data, error } = await client
+    .from('jobs')
+    .update({ no_materials_confirmed: noMaterialsConfirmed })
+    .eq('id', id)
+    .is('deleted_at', null)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error('Update affected no rows (check RLS: job must be owned by you).');
+  }
 }
 
 export async function updateJobById(

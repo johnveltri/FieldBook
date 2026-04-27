@@ -306,6 +306,9 @@ jest.mock('@fieldbook/api-client', () => ({
   fetchFirstJobIdForCurrentUser: jest.fn(),
   fetchJobDetail: jest.fn(),
   updateJobById: jest.fn(),
+  updateJobNoMaterialsConfirmed: jest.fn(),
+  isNoMaterialsConfirmedColumnMissingError: jest.fn(() => false),
+  updateJobStatusById: jest.fn(),
   updateMaterial: jest.fn(),
   updateNote: jest.fn(),
   updateSessionTimes: jest.fn(),
@@ -377,6 +380,7 @@ describe('JobDetailScreen manual session and note flows', () => {
         ],
       },
     ],
+    noMaterialsConfirmed: false,
   };
 
   beforeEach(() => {
@@ -391,6 +395,8 @@ describe('JobDetailScreen manual session and note flows', () => {
     apiClient.createMaterial.mockResolvedValue('mat-new-1');
     apiClient.updateMaterial.mockResolvedValue(undefined);
     apiClient.deleteMaterial.mockResolvedValue(undefined);
+    apiClient.updateJobNoMaterialsConfirmed.mockResolvedValue(undefined);
+    apiClient.updateJobStatusById.mockResolvedValue(undefined);
   });
 
   it('creates a manual session from add flow', async () => {

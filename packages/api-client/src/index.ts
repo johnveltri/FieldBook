@@ -9,6 +9,8 @@ export {
   listJobsForCurrentUser,
   listJobsForCurrentUserPage,
   updateJobById,
+  updateJobNoMaterialsConfirmed,
+  isNoMaterialsConfirmedColumnMissingError,
   updateJobStatusById,
   type ListJobsForCurrentUserItem,
   type ListJobsForCurrentUserPageResult,
