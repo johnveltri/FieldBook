@@ -92,10 +92,10 @@ export type SearchBarProps = {
 export function SearchBar({
   value,
   onChange,
-  placeholder = 'Search jobs or customers...',
+  placeholder = 'Search by short description or customer',
   showEmptyHint = false,
   emptyHintTitle = 'Start typing to search jobs',
-  emptyHintSubtitle = 'Search by job name or customer',
+  emptyHintSubtitle = 'Search by short description or customer',
   onClear,
   maxWidth = 345,
   className,

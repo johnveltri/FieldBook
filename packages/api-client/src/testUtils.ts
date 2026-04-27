@@ -19,7 +19,7 @@ export function makeBuilder(options: BuilderOptions = {}) {
   const maybeSingleResult: QueryResult = options.maybeSingleResult ?? awaitResult;
 
   const builder: Record<string, unknown> = {};
-  const chainMethods = ['select', 'eq', 'is', 'order', 'limit', 'in', 'or'];
+  const chainMethods = ['select', 'eq', 'neq', 'is', 'order', 'limit', 'range', 'in', 'or'];
 
   for (const m of chainMethods) {
     (builder as Record<string, unknown>)[m] = vi.fn(() => builder);

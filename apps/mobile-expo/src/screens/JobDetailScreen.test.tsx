@@ -15,6 +15,13 @@ jest.mock('expo-font', () => ({
 // requires Supabase env + AuthContext + AppState wiring that's out of
 // scope for these tests, so we stub it here with a no-op shape that
 // reports "no live session in progress".
+jest.mock('../context/JobsListInvalidationContext', () => ({
+  useJobsListInvalidation: () => ({
+    version: 0,
+    invalidateJobsList: jest.fn(),
+  }),
+}));
+
 jest.mock('../context/LiveSessionContext', () => ({
   useLiveSession: () => ({
     liveSession: null,

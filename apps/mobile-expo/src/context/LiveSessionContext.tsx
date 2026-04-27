@@ -19,6 +19,7 @@ import type { ActiveLiveSession } from '@fieldbook/shared-types';
 
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useJobsListInvalidation } from './JobsListInvalidationContext';
 
 /**
  * UI presentation mode for the live session. Decoupled from the wire-state
@@ -120,6 +121,7 @@ type LiveSessionProviderProps = {
  */
 export function LiveSessionProvider({ children }: LiveSessionProviderProps) {
   const { session: authSession, loading: authLoading } = useAuth();
+  const { invalidateJobsList } = useJobsListInvalidation();
   const userId = authSession?.user.id ?? null;
 
   const [liveSession, setLiveSession] = useState<ActiveLiveSession | null>(null);
@@ -245,6 +247,7 @@ export function LiveSessionProvider({ children }: LiveSessionProviderProps) {
       setMode('hidden');
       try {
         await endLiveSession(supabase, ended.id, { endedAt: input?.endedAt });
+        invalidateJobsList();
       } catch (err) {
         // Restore so the bar reappears and the user can retry.
         setLiveSession(ended);
@@ -253,7 +256,7 @@ export function LiveSessionProvider({ children }: LiveSessionProviderProps) {
       }
       return ended;
     },
-    [liveSession],
+    [invalidateJobsList, liveSession],
   );
 
   const updateLiveSessionStartedAt = useCallback<
@@ -294,13 +297,14 @@ export function LiveSessionProvider({ children }: LiveSessionProviderProps) {
     setMode('hidden');
     try {
       await deleteSession(supabase, deleted.id);
+      invalidateJobsList();
     } catch (err) {
       setLiveSession(deleted);
       setMode('minimized');
       throw err;
     }
     return deleted;
-  }, [liveSession]);
+  }, [invalidateJobsList, liveSession]);
 
   const value = useMemo<LiveSessionContextValue>(
     () => ({

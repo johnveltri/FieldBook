@@ -7,6 +7,7 @@ import { AuthSignOutButton } from './src/components/AuthSignOutButton';
 import { LiveSessionOverlay } from './src/components/LiveSessionOverlay';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { BottomSheetStackProvider } from './src/context/BottomSheetStackContext';
+import { JobsListInvalidationProvider } from './src/context/JobsListInvalidationContext';
 import {
   LiveSessionProvider,
   useLiveSession,
@@ -98,9 +99,11 @@ export default function App() {
         {configured ? (
           <AuthProvider>
             <BottomSheetStackProvider>
-              <LiveSessionProvider>
-                <AuthenticatedShell />
-              </LiveSessionProvider>
+              <JobsListInvalidationProvider>
+                <LiveSessionProvider>
+                  <AuthenticatedShell />
+                </LiveSessionProvider>
+              </JobsListInvalidationProvider>
             </BottomSheetStackProvider>
           </AuthProvider>
         ) : (

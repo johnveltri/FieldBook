@@ -2,16 +2,32 @@ import Svg, { Path } from 'react-native-svg';
 
 type StrokeProps = { color: string };
 
+type SearchIconProps = StrokeProps & { size?: number };
+
 /** Exact vector from Figma asset `bce55f02-0121-4b5e-b926-9ee74a8fb65b` (20x20). */
-export function JobsSearchIcon({ color }: StrokeProps) {
+export function JobsSearchIcon({ color, size = 20 }: SearchIconProps) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
       <Path
         d="M17.6167 17.6167L14 14M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z"
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/** Clear control for jobs search — Figma `790:300` (14×14 stroke). */
+export function JobsSearchClearIcon({ color }: StrokeProps) {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
+      <Path
+        d="M3.5 3.5l7 7M10.5 3.5l-7 7"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
       />
     </Svg>
   );

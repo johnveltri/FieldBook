@@ -31,6 +31,7 @@ type JobRow = {
   revenue_cents: number | null;
   collected_cents: number | null;
   updated_at: string;
+  last_worked_at: string | null;
 };
 
 type SessionRow = {
@@ -214,7 +215,7 @@ export async function fetchJobDetail(
   const { data: job, error: jobErr } = await client
     .from('jobs')
     .select(
-      'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at',
+      'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at, last_worked_at',
     )
     .eq('id', jobId)
     .is('deleted_at', null)
@@ -304,13 +305,11 @@ export async function fetchJobDetail(
         )}/hr`
       : '—';
 
-  let lastTs = 0;
-  for (const s of activeSessions) {
-    const t = new Date(s.ended_at ?? s.started_at).getTime();
-    if (t > lastTs) lastTs = t;
-  }
+  const lastWorkedAt = j.last_worked_at ?? null;
   const lastWorkedLabel =
-    lastTs > 0 ? `Last worked ${formatDateLabel(new Date(lastTs).toISOString())}` : 'No sessions yet';
+    lastWorkedAt != null && lastWorkedAt !== ''
+      ? `Last worked ${formatDateLabel(lastWorkedAt)}`
+      : 'No sessions yet';
 
   const matsUnassigned = materials.filter((m) => m.session_id == null);
   const matsBySession = new Map<string, MaterialRow[]>();

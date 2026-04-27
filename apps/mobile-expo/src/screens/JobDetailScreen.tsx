@@ -91,6 +91,7 @@ import type {
   JobDetailWorkStatus,
 } from '@fieldbook/shared-types';
 
+import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { isStaleJwtError, useLiveSession } from '../context/LiveSessionContext';
 import {
   buildJobStatusSheetOptions,
@@ -312,7 +313,7 @@ export function JobDetailScreen({
       maximumFractionDigits: 2,
     });
     return {
-      jobTitle: j.shortDescription,
+      shortDescription: j.shortDescription,
       customerName: j.customerName,
       serviceAddress: j.serviceAddress,
       revenue,
@@ -330,7 +331,7 @@ export function JobDetailScreen({
       setJobSaving(true);
       try {
         await updateJobById(supabase, job.id, {
-          shortDescription: values.jobTitle,
+          shortDescription: values.shortDescription,
           customerName: values.customerName.trim(),
           serviceAddress: values.serviceAddress.trim(),
           revenueCents,
@@ -376,6 +377,7 @@ export function JobDetailScreen({
   // --- Live session integration ---
 
   const liveSessionCtx = useLiveSession();
+  const { invalidateJobsList } = useJobsListInvalidation();
   const liveSessionForThisJob =
     liveSessionCtx.liveSession?.jobId === job?.id ? liveSessionCtx.liveSession : null;
 
@@ -600,6 +602,7 @@ export function JobDetailScreen({
           endedAt: values.endedAt,
         });
         await refetchJob();
+        invalidateJobsList();
         closeSessionFlow();
       } catch (e) {
         Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save session.');
@@ -607,7 +610,7 @@ export function JobDetailScreen({
         setSessionSaving(false);
       }
     },
-    [closeSessionFlow, formatErrorMessage, job, refetchJob],
+    [closeSessionFlow, formatErrorMessage, invalidateJobsList, job, refetchJob],
   );
 
   const onSaveSessionChanges = useCallback(
@@ -620,6 +623,7 @@ export function JobDetailScreen({
           endedAt: values.endedAt,
         });
         await refetchJob();
+        invalidateJobsList();
         closeSessionFlow();
       } catch (e) {
         Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save session.');
@@ -627,7 +631,7 @@ export function JobDetailScreen({
         setSessionSaving(false);
       }
     },
-    [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob],
+    [closeSessionFlow, editingSessionId, formatErrorMessage, invalidateJobsList, refetchJob],
   );
 
   const onDeleteEditingSession = useCallback(async () => {
@@ -636,13 +640,14 @@ export function JobDetailScreen({
     try {
       await deleteSession(supabase, editingSessionId);
       await refetchJob();
+      invalidateJobsList();
       closeSessionFlow();
     } catch (e) {
       Alert.alert('Delete failed', formatErrorMessage(e) || 'Could not delete session.');
     } finally {
       setSessionSaving(false);
     }
-  }, [closeSessionFlow, editingSessionId, formatErrorMessage, refetchJob]);
+  }, [closeSessionFlow, editingSessionId, formatErrorMessage, invalidateJobsList, refetchJob]);
 
   // --- Note add/edit flow ---
 

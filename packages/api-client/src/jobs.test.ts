@@ -6,6 +6,7 @@ import {
   deleteJobById,
   jobDetailWorkStatusToDbColumns,
   listJobsForCurrentUser,
+  listJobsForCurrentUserPage,
   updateJobById,
   updateJobStatusById,
 } from './jobs';
@@ -197,7 +198,7 @@ describe('jobs api client', () => {
         revenueCents: 0,
         jobType: '',
       }),
-    ).rejects.toThrow('Job title is required.');
+    ).rejects.toThrow('Short description is required.');
 
     await expect(
       updateJobById(client as never, 'job-1', {
@@ -233,6 +234,8 @@ describe('jobs api client', () => {
                   short_description: 'Install faucet',
                   customer_name: 'Alice',
                   updated_at: '2026-04-17T10:00:00.000Z',
+                  created_at: '2026-04-10T08:00:00.000Z',
+                  last_worked_at: '2026-04-16T12:00:00.000Z',
                   job_type: 'plumbing',
                   job_work_status: 'completed',
                   job_payment_state: 'paid',
@@ -314,8 +317,122 @@ describe('jobs api client', () => {
       materialsCents: -5000,
       netEarningsCents: 45000,
       collectedCents: 50000,
+      hasMaterials: true,
+      hasSessions: true,
     });
+    expect(rows[0].lastWorkedAt).toBe('2026-04-16T12:00:00.000Z');
+    expect(rows[0].createdAt).toBe('2026-04-10T08:00:00.000Z');
     expect(rows[0].lastWorkedLabel).toContain('Last worked');
+    expect(rows[0].lastWorkedLabel).toContain('Apr 16, 2026');
+  });
+
+  it('listJobsForCurrentUserPage sets hasMore when the page is full', async () => {
+    const row = (id: string) => ({
+      id,
+      short_description: 'J',
+      customer_name: null,
+      updated_at: '2026-04-17T10:00:00.000Z',
+      created_at: '2026-04-10T08:00:00.000Z',
+      last_worked_at: '2026-04-16T12:00:00.000Z',
+      job_type: 'x',
+      job_work_status: 'not_started' as const,
+      job_payment_state: null,
+      revenue_cents: 0,
+      collected_cents: 0,
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [
+          makeBuilder({
+            awaitResult: { data: [row('job-a'), row('job-b')], error: null },
+          }),
+          makeBuilder({
+            awaitResult: { data: [row('job-c')], error: null },
+          }),
+        ],
+        sessions: [
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+        ],
+        materials: [
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+          makeBuilder({ awaitResult: { data: [], error: null } }),
+        ],
+      },
+    });
+
+    const first = await listJobsForCurrentUserPage(client as never, { limit: 2, offset: 0 });
+    expect(first.items).toHaveLength(2);
+    expect(first.hasMore).toBe(true);
+    expect(first.items[0]).toMatchObject({ hasMaterials: false, hasSessions: false });
+
+    const second = await listJobsForCurrentUserPage(client as never, { limit: 2, offset: 2 });
+    expect(second.items).toHaveLength(1);
+    expect(second.hasMore).toBe(false);
+  });
+
+  it('listJobsForCurrentUserPage applies open-tab query filters', async () => {
+    const jobsBuilder = makeBuilder({
+      awaitResult: { data: [], error: null },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [jobsBuilder],
+      },
+    });
+
+    await listJobsForCurrentUserPage(client as never, { limit: 10, offset: 0, tab: 'open' });
+
+    const neqSpy = jobsBuilder.neq as unknown as { mock: { calls: unknown[][] } };
+    const orSpy = jobsBuilder.or as unknown as { mock: { calls: unknown[][] } };
+    expect(neqSpy.mock.calls).toContainEqual(['job_work_status', 'canceled']);
+    expect(orSpy.mock.calls.length).toBeGreaterThan(0);
+    expect(String(orSpy.mock.calls[0]?.[0])).toContain('job_work_status.neq.completed');
+  });
+
+  it('listJobsForCurrentUserPage applies search ilike or filter', async () => {
+    const jobsBuilder = makeBuilder({
+      awaitResult: { data: [], error: null },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [jobsBuilder],
+      },
+    });
+
+    await listJobsForCurrentUserPage(client as never, {
+      limit: 10,
+      offset: 0,
+      search: '  fan  ',
+    });
+
+    const orSpy = jobsBuilder.or as unknown as { mock: { calls: unknown[][] } };
+    expect(orSpy.mock.calls.length).toBeGreaterThan(0);
+    const clause = String(orSpy.mock.calls[0]?.[0]);
+    expect(clause).toContain('short_description.ilike.');
+    expect(clause).toContain('customer_name.ilike.');
+    expect(clause).toContain('%fan%');
+  });
+
+  it('listJobsForCurrentUserPage applies paid-tab query filters', async () => {
+    const jobsBuilder = makeBuilder({
+      awaitResult: { data: [], error: null },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [jobsBuilder],
+      },
+    });
+
+    await listJobsForCurrentUserPage(client as never, { limit: 10, offset: 0, tab: 'paid' });
+
+    const eqSpy = jobsBuilder.eq as unknown as { mock: { calls: unknown[][] } };
+    expect(eqSpy.mock.calls).toContainEqual(['job_work_status', 'completed']);
+    expect(eqSpy.mock.calls).toContainEqual(['job_payment_state', 'paid']);
   });
 
   it('listJobsForCurrentUser filters out soft-deleted materials from per-job rollups', async () => {
@@ -355,6 +472,8 @@ describe('jobs api client', () => {
                   short_description: 'Panel install',
                   customer_name: 'Alex',
                   updated_at: '2026-04-17T10:00:00.000Z',
+                  created_at: '2026-04-10T08:00:00.000Z',
+                  last_worked_at: '2026-04-16T11:00:00.000Z',
                   job_type: 'electrical',
                   job_work_status: 'in_progress',
                   job_payment_state: 'pending',
@@ -416,6 +535,8 @@ describe('jobs api client', () => {
             short_description: 'Water heater replacement',
             customer_name: 'Bob',
             updated_at: '2026-04-17T10:00:00.000Z',
+            created_at: '2026-04-10T08:00:00.000Z',
+            last_worked_at: '2026-04-16T12:00:00.000Z',
             job_type: 'plumbing',
             job_work_status: 'completed',
             job_payment_state: 'pending',
@@ -483,6 +604,7 @@ describe('jobs api client', () => {
           revenue_cents: 120000,
           collected_cents: 0,
           updated_at: '2026-04-17T10:00:00.000Z',
+          last_worked_at: '2026-04-16T12:00:00.000Z',
         },
         error: null,
       },
@@ -573,6 +695,11 @@ describe('jobs api client', () => {
     expect(listRow.materialsCents).toBe(jobDetail.earnings.materialsCents);
     expect(listRow.netEarningsCents).toBe(jobDetail.earnings.netEarningsCents);
     expect(listRow.timeLabel).toBe(jobDetail.metrics.timeLabel);
+    expect(listRow.lastWorkedLabel).toBe(jobDetail.lastWorkedLabel);
+    expect(listRow.lastWorkedAt).toBe('2026-04-16T12:00:00.000Z');
+    expect(listRow.createdAt).toBe('2026-04-10T08:00:00.000Z');
+    expect(listRow.hasMaterials).toBe(true);
+    expect(listRow.hasSessions).toBe(true);
   });
 
   it('fetchJobDetail includes only ended sessions in the sessions list', async () => {
@@ -593,6 +720,7 @@ describe('jobs api client', () => {
                 revenue_cents: 150000,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
+                last_worked_at: '2026-04-17T09:00:00.000Z',
               },
               error: null,
             },
@@ -677,6 +805,7 @@ describe('jobs api client', () => {
                 revenue_cents: 90000,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
+                last_worked_at: '2026-04-16T10:00:00.000Z',
               },
               error: null,
             },
@@ -789,6 +918,7 @@ describe('jobs api client', () => {
                 revenue_cents: 0,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
+                last_worked_at: '2026-04-16T10:00:00.000Z',
               },
               error: null,
             },
