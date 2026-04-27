@@ -12,6 +12,7 @@ import {
   LiveSessionProvider,
   useLiveSession,
 } from './src/context/LiveSessionContext';
+import type { ListJobsForCurrentUserTab } from '@fieldbook/api-client';
 import { isSupabaseConfigured } from './src/lib/supabase';
 import { JobsScreen } from './src/screens/JobsScreen';
 import { JobDetailScreen } from './src/screens/JobDetailScreen';
@@ -27,6 +28,8 @@ function AuthenticatedShell() {
   const [jobDetailInitialEditOpen, setJobDetailInitialEditOpen] = useState(false);
   /** Bump on each "View job" so Job Detail refetches (same user, fresh data). */
   const [jobDetailLoadKey, setJobDetailLoadKey] = useState(0);
+  /** Persisted while Job Detail is open so closing returns to the same Jobs tab. */
+  const [jobsListTab, setJobsListTab] = useState<ListJobsForCurrentUserTab>('all');
 
   // Hooks must be called unconditionally — bail-out renders below still execute these.
   const liveSession = useLiveSession();
@@ -58,6 +61,8 @@ function AuthenticatedShell() {
       {!jobDetailOpen ? (
         <View style={styles.root}>
           <JobsScreen
+            jobsListTab={jobsListTab}
+            onJobsListTabChange={setJobsListTab}
             // Suppress the "New Job" FAB while a live session is in progress —
             // the floating MinimizedLiveSessionBar takes its slot per spec.
             suppressFab={liveSession.hasLiveSession}

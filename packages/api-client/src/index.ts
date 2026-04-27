@@ -9,6 +9,7 @@ export {
   listJobsForCurrentUser,
   listJobsForCurrentUserPage,
   updateJobById,
+  bumpJobToInProgressIfNotStarted,
   updateJobNoMaterialsConfirmed,
   isNoMaterialsConfirmedColumnMissingError,
   updateJobStatusById,

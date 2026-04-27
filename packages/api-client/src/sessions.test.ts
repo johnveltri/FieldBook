@@ -6,6 +6,7 @@ import { makeBuilder, makeClient } from './testUtils';
 describe('sessions api client', () => {
   it('createManualSession inserts manual ended session and returns id', async () => {
     let inserted: unknown;
+    let jobPatch: unknown;
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
@@ -15,6 +16,14 @@ describe('sessions api client', () => {
               inserted = payload;
             },
             singleResult: { data: { id: 'sess-123' }, error: null },
+          }),
+        ],
+        jobs: [
+          makeBuilder({
+            onUpdate: (patch) => {
+              jobPatch = patch;
+            },
+            awaitResult: { data: null, error: null },
           }),
         ],
       },
@@ -34,6 +43,10 @@ describe('sessions api client', () => {
       session_status: 'ended',
       started_at: '2026-04-17T13:00:00.000Z',
       ended_at: '2026-04-17T14:30:00.000Z',
+    });
+    expect(jobPatch).toEqual({
+      job_work_status: 'in_progress',
+      job_payment_state: null,
     });
   });
 

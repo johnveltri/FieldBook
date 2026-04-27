@@ -9,6 +9,7 @@ import {
   listJobsForCurrentUserPage,
   updateJobById,
   updateJobNoMaterialsConfirmed,
+  bumpJobToInProgressIfNotStarted,
   isNoMaterialsConfirmedColumnMissingError,
   updateJobStatusById,
 } from './jobs';
@@ -193,6 +194,31 @@ describe('jobs api client', () => {
       ),
     ).toBe(true);
     expect(isNoMaterialsConfirmedColumnMissingError(new Error('permission denied'))).toBe(false);
+  });
+
+  it('bumpJobToInProgressIfNotStarted patches job to in_progress', async () => {
+    let patch: unknown;
+    const jobBuilder = makeBuilder({
+      onUpdate: (value) => {
+        patch = value;
+      },
+      awaitResult: { data: null, error: null },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        jobs: [jobBuilder],
+      },
+    });
+
+    await bumpJobToInProgressIfNotStarted(client as never, 'job-1');
+
+    expect(patch).toEqual({
+      job_work_status: 'in_progress',
+      job_payment_state: null,
+    });
+    expect(jobBuilder.eq).toHaveBeenCalledWith('id', 'job-1');
+    expect(jobBuilder.eq).toHaveBeenCalledWith('job_work_status', 'not_started');
   });
 
   it('updateJobNoMaterialsConfirmed patches no_materials_confirmed', async () => {

@@ -26,6 +26,7 @@ describe('live sessions api client', () => {
               },
             }),
           ],
+          jobs: [makeBuilder({ awaitResult: { data: null, error: null } })],
         },
       });
 
@@ -69,6 +70,7 @@ describe('live sessions api client', () => {
               },
             }),
           ],
+          jobs: [makeBuilder({ awaitResult: { data: null, error: null } })],
         },
       });
 
@@ -114,6 +116,7 @@ describe('live sessions api client', () => {
               },
             }),
           ],
+          jobs: [makeBuilder({ awaitResult: { data: null, error: null } })],
         },
       });
 

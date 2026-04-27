@@ -1,6 +1,7 @@
 import type { JobId } from '@fieldbook/shared-types';
 
 import type { FieldbookSupabaseClient } from './client';
+import { bumpJobToInProgressIfNotStarted } from './jobs';
 
 export type SessionId = string;
 
@@ -59,7 +60,9 @@ export async function createManualSession(
     .single();
 
   if (error) throw error;
-  return (data as { id: string }).id;
+  const sessionId = (data as { id: string }).id;
+  await bumpJobToInProgressIfNotStarted(client, input.jobId);
+  return sessionId;
 }
 
 /** Updates start/end timestamps on an existing session (no status change). */
