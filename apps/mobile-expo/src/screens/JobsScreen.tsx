@@ -66,6 +66,12 @@ type JobsScreenProps = {
    * in progress — the floating MinimizedLiveSessionBar takes its slot.
    */
   suppressFab?: boolean;
+  /**
+   * When both are set, the All / Open / Paid tab is controlled by the parent so it
+   * survives navigation (e.g. Job Detail unmounts this screen).
+   */
+  jobsListTab?: ListJobsForCurrentUserTab;
+  onJobsListTabChange?: (tab: ListJobsForCurrentUserTab) => void;
 };
 
 type Typography = ReturnType<typeof createTextStyles>;
@@ -415,7 +421,12 @@ function JobsLoadingSkeleton({ typography }: { typography: Typography }) {
   );
 }
 
-export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenProps) {
+export function JobsScreen({
+  onOpenJobDetail,
+  suppressFab = false,
+  jobsListTab: jobsListTabProp,
+  onJobsListTabChange,
+}: JobsScreenProps) {
   const insets = useSafeAreaInsets();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const { version } = useJobsListInvalidation();
@@ -443,7 +454,17 @@ export function JobsScreen({ onOpenJobDetail, suppressFab = false }: JobsScreenP
     jobsRef.current = jobs;
   }, [jobs]);
 
-  const [activeTab, setActiveTab] = useState<ListJobsForCurrentUserTab>('all');
+  const [internalJobsTab, setInternalJobsTab] = useState<ListJobsForCurrentUserTab>('all');
+  const jobsTabControlled =
+    jobsListTabProp !== undefined && onJobsListTabChange !== undefined;
+  const activeTab = jobsTabControlled ? jobsListTabProp : internalJobsTab;
+  const setActiveTab = useCallback(
+    (t: ListJobsForCurrentUserTab) => {
+      if (jobsTabControlled) onJobsListTabChange(t);
+      else setInternalJobsTab(t);
+    },
+    [jobsTabControlled, onJobsListTabChange],
+  );
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);

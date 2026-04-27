@@ -6,6 +6,7 @@ import { makeBuilder, makeClient } from './testUtils';
 describe('sessions api client', () => {
   it('createManualSession inserts manual ended session and returns id', async () => {
     let inserted: unknown;
+    let jobPatch: unknown;
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
@@ -15,6 +16,14 @@ describe('sessions api client', () => {
               inserted = payload;
             },
             singleResult: { data: { id: 'sess-123' }, error: null },
+          }),
+        ],
+        jobs: [
+          makeBuilder({
+            onUpdate: (patch) => {
+              jobPatch = patch;
+            },
+            awaitResult: { data: null, error: null },
           }),
         ],
       },
@@ -35,6 +44,36 @@ describe('sessions api client', () => {
       started_at: '2026-04-17T13:00:00.000Z',
       ended_at: '2026-04-17T14:30:00.000Z',
     });
+    expect(jobPatch).toEqual({
+      job_work_status: 'in_progress',
+      job_payment_state: null,
+    });
+  });
+
+  it('createManualSession still returns the inserted id when the status bump fails', async () => {
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        sessions: [
+          makeBuilder({
+            singleResult: { data: { id: 'sess-123' }, error: null },
+          }),
+        ],
+        jobs: [
+          makeBuilder({
+            awaitResult: { data: null, error: new Error('status bump failed') },
+          }),
+        ],
+      },
+    });
+
+    await expect(
+      createManualSession(client as never, {
+        jobId: 'job-9',
+        startedAt: '2026-04-17T13:00:00.000Z',
+        endedAt: '2026-04-17T14:30:00.000Z',
+      }),
+    ).resolves.toBe('sess-123');
   });
 
   it('createManualSession throws when no authenticated user exists', async () => {

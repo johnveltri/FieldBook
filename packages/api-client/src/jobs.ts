@@ -533,6 +533,42 @@ export async function updateJobNoMaterialsConfirmed(
   }
 }
 
+/**
+ * If the job is still `not_started`, set it to `in_progress` (e.g. after the first session is created).
+ * No-op when no row matches (already in progress, completed, etc.).
+ */
+export async function bumpJobToInProgressIfNotStarted(
+  client: FieldbookSupabaseClient,
+  jobId: JobId,
+): Promise<void> {
+  const { error } = await client
+    .from('jobs')
+    .update({
+      job_work_status: 'in_progress',
+      job_payment_state: null,
+    })
+    .eq('id', jobId)
+    .eq('job_work_status', 'not_started')
+    .is('deleted_at', null);
+  if (error) throw error;
+}
+
+/**
+ * Best-effort variant for call sites where the primary write has already
+ * succeeded. A status-bump failure must not make the caller retry and create
+ * duplicate/conflicting session state.
+ */
+export async function tryBumpJobToInProgressIfNotStarted(
+  client: FieldbookSupabaseClient,
+  jobId: JobId,
+): Promise<void> {
+  try {
+    await bumpJobToInProgressIfNotStarted(client, jobId);
+  } catch {
+    // Session creation is the source of truth; callers refresh after creation.
+  }
+}
+
 export async function updateJobById(
   client: FieldbookSupabaseClient,
   id: JobId,

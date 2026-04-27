@@ -26,6 +26,7 @@ describe('live sessions api client', () => {
               },
             }),
           ],
+          jobs: [makeBuilder({ awaitResult: { data: null, error: null } })],
         },
       });
 
@@ -69,6 +70,7 @@ describe('live sessions api client', () => {
               },
             }),
           ],
+          jobs: [makeBuilder({ awaitResult: { data: null, error: null } })],
         },
       });
 
@@ -114,6 +116,7 @@ describe('live sessions api client', () => {
               },
             }),
           ],
+          jobs: [makeBuilder({ awaitResult: { data: null, error: null } })],
         },
       });
 
@@ -131,6 +134,42 @@ describe('live sessions api client', () => {
       // We still return the requested timezone in the local payload so the
       // bar / counter render correctly even though the column is absent.
       expect(result.startedTz).toBe('America/Chicago');
+    });
+
+    it('returns the created live session when the status bump fails', async () => {
+      const client = makeClient({
+        authUserId: 'user-1',
+        buildersByTable: {
+          sessions: [
+            makeBuilder({
+              singleResult: {
+                data: { id: 'sess-live-1' },
+                error: null,
+              },
+            }),
+          ],
+          jobs: [
+            makeBuilder({
+              awaitResult: { data: null, error: new Error('status bump failed') },
+            }),
+          ],
+        },
+      });
+
+      await expect(
+        createLiveSession(client as never, {
+          jobId: 'job-9',
+          jobShortDescription: 'Bathroom remodel phase 1',
+          startedAt: '2026-04-25T15:00:00.000Z',
+          startedTz: 'America/Chicago',
+        }),
+      ).resolves.toEqual({
+        id: 'sess-live-1',
+        jobId: 'job-9',
+        startedAt: '2026-04-25T15:00:00.000Z',
+        startedTz: 'America/Chicago',
+        jobShortDescription: 'Bathroom remodel phase 1',
+      });
     });
 
     it('throws when no authenticated user exists', async () => {
