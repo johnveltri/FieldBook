@@ -5,7 +5,6 @@ import {
   UbuntuSansMono_600SemiBold,
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
-import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -29,11 +28,6 @@ import { color, colorWithAlpha, radius } from '@fieldbook/design-system/lib/toke
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import {
-  BottomNavIconEarnings,
-  BottomNavIconHome,
-  BottomNavIconJobs,
-} from '../components/bottom-nav/BottomNavTabIcons';
-import {
   JobsFabPlusIcon,
   JobsInboxIcon,
   JobsSearchClearIcon,
@@ -44,6 +38,7 @@ import {
   JobsOpenStackSectionHeader,
   type JobsOpenSectionKind,
 } from '../components/ds';
+import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
@@ -83,87 +78,6 @@ function formatUsd(cents: number | null | undefined): string {
     currency: 'USD',
     maximumFractionDigits: 0,
   }).format(value / 100);
-}
-
-function BottomNavTabCell({
-  selected,
-  label,
-  icon,
-  typography,
-}: {
-  selected: boolean;
-  label: string;
-  icon: ReactNode;
-  typography: Typography;
-}) {
-  return (
-    <View
-      style={[
-        styles.bottomNavTabCell,
-        { justifyContent: selected ? 'space-between' : 'flex-end' },
-      ]}
-    >
-      {selected ? (
-        <View style={styles.bottomNavIndicatorWrap}>
-          <View style={styles.bottomNavIndicator} />
-        </View>
-      ) : null}
-      <View style={styles.bottomNavTabContent}>
-        <View style={styles.bottomNavIconSlot}>{icon}</View>
-        <Text
-          style={[
-            typography.labelCaps,
-            { color: selected ? color('Brand/Primary') : fg.primary, textAlign: 'center' },
-          ]}
-        >
-          {label}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function BottomNavJobs({
-  typography,
-  bottomInset,
-}: {
-  typography: Typography;
-  bottomInset: number;
-}) {
-  const stripPad = space('Spacing/8');
-  return (
-    <View
-      style={[
-        styles.bottomNav,
-        {
-          maxWidth: TOP_HEADER_MAX_WIDTH,
-          paddingHorizontal: stripPad,
-          paddingBottom: bottomInset + stripPad - space('Spacing/32'),
-        },
-      ]}
-    >
-      <View style={styles.bottomNavInner}>
-        <BottomNavTabCell
-          selected={false}
-          label="HOME"
-          typography={typography}
-          icon={<BottomNavIconHome color={fg.primary} />}
-        />
-        <BottomNavTabCell
-          selected
-          label="JOBS"
-          typography={typography}
-          icon={<BottomNavIconJobs color={color('Brand/Primary')} />}
-        />
-        <BottomNavTabCell
-          selected={false}
-          label="EARNINGS"
-          typography={typography}
-          icon={<BottomNavIconEarnings color={fg.primary} />}
-        />
-      </View>
-    </View>
-  );
 }
 
 function JobsCard({
@@ -897,6 +811,12 @@ export function JobsScreen({
   const bottomNavReservedHeight =
     space('Spacing/8') + 1 + 64 + space('Spacing/8') + insets.bottom;
   const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
+  const fabBottomOffset =
+    space('Spacing/8') +
+    insets.bottom +
+    64 +
+    space('Spacing/12') -
+    shellBottomNavOuterHeight(insets.bottom);
 
   return (
     <View style={styles.root}>
@@ -938,7 +858,7 @@ export function JobsScreen({
         <View
           style={[
             styles.fabWrap,
-            { bottom: space('Spacing/8') + insets.bottom + 64 + space('Spacing/12') },
+            { bottom: fabBottomOffset },
           ]}
         >
           <Pressable
@@ -954,7 +874,6 @@ export function JobsScreen({
         </View>
       )}
 
-      <BottomNavJobs typography={typography} bottomInset={insets.bottom} />
     </View>
   );
 }
@@ -1239,45 +1158,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
-  },
-  bottomNav: {
-    width: '100%',
-    alignSelf: 'center',
-    flexShrink: 0,
-    marginTop: space('Spacing/8'),
-    borderTopWidth: 1,
-    borderTopColor: colorWithAlpha('Foundation/Border/Default', 0.05),
-    backgroundColor: bg.canvasWarm,
-  },
-  bottomNavInner: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    minHeight: space('Spacing/64'),
-    width: '100%',
-  },
-  bottomNavTabCell: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: space('Spacing/64'),
-  },
-  bottomNavIndicatorWrap: {
-    alignItems: 'center',
-    paddingTop: space('Spacing/2'),
-  },
-  bottomNavIndicator: {
-    borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Brand/Primary'),
-    width: space('Spacing/32'),
-    height: space('Spacing/4'),
-  },
-  bottomNavTabContent: {
-    alignItems: 'center',
-    gap: space('Spacing/2'),
-    padding: space('Spacing/12'),
-  },
-  bottomNavIconSlot: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: space('Spacing/28'),
   },
 });
