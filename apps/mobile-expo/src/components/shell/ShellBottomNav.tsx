@@ -27,14 +27,18 @@ import {
 
 export type ShellMainTab = 'home' | 'jobs' | 'earnings';
 
+function shellBottomNavBottomPadding(insetsBottom: number): number {
+  const stripPad = space('Spacing/8');
+  return Math.max(0, insetsBottom + stripPad - space('Spacing/32'));
+}
+
 /** Matches `ShellBottomNav` outer height (main content bottom → screen bottom). */
 export function shellBottomNavOuterHeight(insetsBottom: number): number {
-  const stripPad = space('Spacing/8');
   return (
     space('Spacing/8') +
     1 +
     space('Spacing/64') +
-    (insetsBottom + stripPad - space('Spacing/32'))
+    shellBottomNavBottomPadding(insetsBottom)
   );
 }
 
@@ -115,6 +119,7 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
   }
 
   const stripPad = space('Spacing/8');
+  const bottomPadding = shellBottomNavBottomPadding(insets.bottom);
   const homeStroke = selected === 'home' ? dsColor('Brand/Primary') : fg.primary;
   const jobsStroke = selected === 'jobs' ? dsColor('Brand/Primary') : fg.primary;
   const earningsStroke = selected === 'earnings' ? dsColor('Brand/Primary') : fg.primary;
@@ -126,7 +131,7 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
         {
           maxWidth: TOP_HEADER_MAX_WIDTH,
           paddingHorizontal: stripPad,
-          paddingBottom: insets.bottom + stripPad - space('Spacing/32'),
+          paddingBottom: bottomPadding,
         },
       ]}
     >
