@@ -1,10 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { AuthSignOutButton } from './src/components/AuthSignOutButton';
 import { LiveSessionOverlay } from './src/components/LiveSessionOverlay';
+import { ShellBottomNav, type ShellMainTab } from './src/components/shell/ShellBottomNav';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { BottomSheetStackProvider } from './src/context/BottomSheetStackContext';
 import { JobsListInvalidationProvider } from './src/context/JobsListInvalidationContext';
@@ -14,14 +14,17 @@ import {
 } from './src/context/LiveSessionContext';
 import type { ListJobsForCurrentUserTab } from '@fieldbook/api-client';
 import { isSupabaseConfigured } from './src/lib/supabase';
+import { EarningsScreen } from './src/screens/EarningsScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
 import { JobsScreen } from './src/screens/JobsScreen';
 import { JobDetailScreen } from './src/screens/JobDetailScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { color } from '@fieldbook/design-system/lib/tokens';
 
 function AuthenticatedShell() {
   const { session, loading } = useAuth();
-  /** When true, job detail is shown without the shell sign-out control; X returns here. */
+  /** When true, job detail covers tab shell (HOME / JOBS / EARNINGS); X returns here. */
   const [jobDetailOpen, setJobDetailOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   /** True when opening detail from "New job" FAB — JobDetailScreen auto-opens the edit sheet. */
@@ -30,6 +33,19 @@ function AuthenticatedShell() {
   const [jobDetailLoadKey, setJobDetailLoadKey] = useState(0);
   /** Persisted while Job Detail is open so closing returns to the same Jobs tab. */
   const [jobsListTab, setJobsListTab] = useState<ListJobsForCurrentUserTab>('all');
+  const [mainTab, setMainTab] = useState<ShellMainTab>('jobs');
+  /** Profile is stacked over Home while staying on the HOME bottom-nav tab. */
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  useEffect(() => {
+    if (mainTab !== 'home') setProfileOpen(false);
+  }, [mainTab]);
+
+  const onShellTabSelect = useCallback((tab: ShellMainTab) => {
+    setMainTab(tab);
+    // HOME tab tap closes Profile overlay (same tab stays selected).
+    if (tab === 'home') setProfileOpen(false);
+  }, []);
 
   // Hooks must be called unconditionally — bail-out renders below still execute these.
   const liveSession = useLiveSession();
@@ -59,21 +75,30 @@ function AuthenticatedShell() {
   return (
     <View style={styles.root}>
       {!jobDetailOpen ? (
-        <View style={styles.root}>
-          <JobsScreen
-            jobsListTab={jobsListTab}
-            onJobsListTabChange={setJobsListTab}
-            // Suppress the "New Job" FAB while a live session is in progress —
-            // the floating MinimizedLiveSessionBar takes its slot per spec.
-            suppressFab={liveSession.hasLiveSession}
-            onOpenJobDetail={(jobId?: string, options?: { initialEditOpen?: boolean }) => {
-              setSelectedJobId(jobId ?? null);
-              setJobDetailInitialEditOpen(options?.initialEditOpen ?? false);
-              setJobDetailLoadKey((k) => k + 1);
-              setJobDetailOpen(true);
-            }}
-          />
-          <AuthSignOutButton />
+        <View style={styles.shellColumn}>
+          <View style={styles.shellMain}>
+            {mainTab === 'home' && !profileOpen ? (
+              <HomeScreen onOpenProfile={() => setProfileOpen(true)} />
+            ) : null}
+            {mainTab === 'home' && profileOpen ? (
+              <ProfileScreen onBack={() => setProfileOpen(false)} />
+            ) : null}
+            {mainTab === 'jobs' ? (
+              <JobsScreen
+                jobsListTab={jobsListTab}
+                onJobsListTabChange={setJobsListTab}
+                suppressFab={liveSession.hasLiveSession}
+                onOpenJobDetail={(jobId?: string, options?: { initialEditOpen?: boolean }) => {
+                  setSelectedJobId(jobId ?? null);
+                  setJobDetailInitialEditOpen(options?.initialEditOpen ?? false);
+                  setJobDetailLoadKey((k) => k + 1);
+                  setJobDetailOpen(true);
+                }}
+              />
+            ) : null}
+            {mainTab === 'earnings' ? <EarningsScreen /> : null}
+          </View>
+          <ShellBottomNav selected={mainTab} onSelect={onShellTabSelect} />
         </View>
       ) : (
         <JobDetailScreen
@@ -129,6 +154,13 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: color('Foundation/Background/Default'),
+  },
+  shellColumn: {
+    flex: 1,
+    width: '100%',
+  },
+  shellMain: {
+    flex: 1,
   },
   centered: {
     justifyContent: 'center',

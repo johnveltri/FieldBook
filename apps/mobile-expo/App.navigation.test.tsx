@@ -19,13 +19,6 @@ jest.mock('./src/context/AuthContext', () => {
   };
 });
 
-jest.mock('./src/components/AuthSignOutButton', () => ({
-  AuthSignOutButton: () => {
-    const { Text } = require('react-native');
-    return <Text>SignOut</Text>;
-  },
-}));
-
 // Stub out the global Live Session UI so tests don't hit Supabase / fonts
 // / AppState while exercising the JobsScreen ↔ JobDetailScreen pipe.
 jest.mock('./src/context/LiveSessionContext', () => {

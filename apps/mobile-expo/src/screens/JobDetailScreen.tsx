@@ -126,7 +126,7 @@ function supabaseApiHostLabel(): string {
 }
 
 export type JobDetailScreenProps = {
-  /** Top-left close (X): return to the shell home screen (e.g. where sign out lives). */
+  /** Top-left close (X): return to the tab shell (HOME / JOBS / EARNINGS). */
   onRequestClose?: () => void;
   /** Signed-in user (refetch job list when this changes). */
   sessionUserId?: string | null;
@@ -1900,6 +1900,7 @@ function BottomNavJobs({
   bottomInset: number;
 }) {
   const primary = fg.primary;
+  const jobsSelectedStroke = color('Brand/Primary');
   const stripPad = space('Spacing/8');
 
   return (
@@ -1924,7 +1925,7 @@ function BottomNavJobs({
           selected
           label="JOBS"
           typography={typography}
-          icon={<BottomNavIconJobs color={color('Brand/Primary')} />}
+          icon={<BottomNavIconJobs color={jobsSelectedStroke} />}
         />
         <BottomNavTabCell
           selected={false}
