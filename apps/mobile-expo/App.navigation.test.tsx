@@ -73,26 +73,59 @@ jest.mock('./src/screens/JobsScreen', () => ({
   },
 }));
 
+type ShellTab = 'home' | 'jobs' | 'earnings';
+
 jest.mock('./src/screens/JobDetailScreen', () => ({
   JobDetailScreen: ({
     jobId,
     loadKey,
     sessionUserId,
     onRequestClose,
+    onSelectShellTab,
   }: {
     jobId?: string | null;
     loadKey?: number;
     sessionUserId?: string;
     onRequestClose?: () => void;
+    onSelectShellTab?: (tab: ShellTab) => void;
   }) => {
     const { Text, View } = require('react-native');
     return (
       <View>
         <Text testID="detail-props">{`jobId:${jobId ?? 'null'}|loadKey:${loadKey ?? 0}|user:${sessionUserId ?? ''}`}</Text>
         <Text onPress={() => onRequestClose?.()}>CloseDetail</Text>
+        <Text onPress={() => onSelectShellTab?.('home')}>DetailNavHome</Text>
+        <Text onPress={() => onSelectShellTab?.('jobs')}>DetailNavJobs</Text>
+        <Text onPress={() => onSelectShellTab?.('earnings')}>DetailNavEarnings</Text>
       </View>
     );
   },
+}));
+
+jest.mock('./src/screens/HomeScreen', () => {
+  const { Text } = require('react-native');
+  return {
+    HomeScreen: () => <Text testID="home-screen">HomeScreen</Text>,
+  };
+});
+
+jest.mock('./src/screens/EarningsScreen', () => {
+  const { Text } = require('react-native');
+  return {
+    EarningsScreen: () => <Text testID="earnings-screen">EarningsScreen</Text>,
+  };
+});
+
+jest.mock('./src/screens/ProfileScreen', () => {
+  const { Text } = require('react-native');
+  return {
+    ProfileScreen: () => <Text testID="profile-screen">ProfileScreen</Text>,
+  };
+});
+
+jest.mock('./src/components/shell/ShellBottomNav', () => ({
+  ShellBottomNav: () => null,
+  shellBottomNavOuterHeight: () => 0,
 }));
 
 describe('App jobs to detail sync', () => {
@@ -115,6 +148,39 @@ describe('App jobs to detail sync', () => {
     expect(screen.getByTestId('detail-props')).toBeTruthy();
 
     fireEvent.press(screen.getByText('CloseDetail'));
+    expect(screen.getByTestId('jobs-screen')).toBeTruthy();
+  });
+
+  it('switches to HOME and dismisses Job Detail when the HOME tab is tapped from inside detail', () => {
+    const screen = render(<App />);
+
+    fireEvent.press(screen.getByText('OpenJob'));
+    expect(screen.getByTestId('detail-props')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('DetailNavHome'));
+    expect(screen.queryByTestId('detail-props')).toBeNull();
+    expect(screen.getByTestId('home-screen')).toBeTruthy();
+  });
+
+  it('switches to EARNINGS and dismisses Job Detail when the EARNINGS tab is tapped from inside detail', () => {
+    const screen = render(<App />);
+
+    fireEvent.press(screen.getByText('OpenJob'));
+    expect(screen.getByTestId('detail-props')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('DetailNavEarnings'));
+    expect(screen.queryByTestId('detail-props')).toBeNull();
+    expect(screen.getByTestId('earnings-screen')).toBeTruthy();
+  });
+
+  it('returns to JobsScreen when the JOBS tab is tapped from inside Job Detail', () => {
+    const screen = render(<App />);
+
+    fireEvent.press(screen.getByText('OpenJob'));
+    expect(screen.getByTestId('detail-props')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('DetailNavJobs'));
+    expect(screen.queryByTestId('detail-props')).toBeNull();
     expect(screen.getByTestId('jobs-screen')).toBeTruthy();
   });
 });

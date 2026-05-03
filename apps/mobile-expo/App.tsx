@@ -60,6 +60,20 @@ function AuthenticatedShell() {
     [],
   );
 
+  /**
+   * Tapping a tab from inside `JobDetailScreen` closes the detail and
+   * switches the shell to that tab. JOBS returns to `JobsScreen`; HOME and
+   * EARNINGS go to their respective screens. We always close detail because
+   * it covers the shell — leaving it open would just hide the tab the user
+   * just navigated to.
+   */
+  const onJobDetailSelectShellTab = useCallback((tab: ShellMainTab) => {
+    setMainTab(tab);
+    if (tab === 'home') setProfileOpen(false);
+    setJobDetailOpen(false);
+    setJobDetailInitialEditOpen(false);
+  }, []);
+
   if (loading) {
     return (
       <View style={[styles.root, styles.centered]}>
@@ -111,6 +125,7 @@ function AuthenticatedShell() {
             setJobDetailOpen(false);
             setJobDetailInitialEditOpen(false);
           }}
+          onSelectShellTab={onJobDetailSelectShellTab}
         />
       )}
 

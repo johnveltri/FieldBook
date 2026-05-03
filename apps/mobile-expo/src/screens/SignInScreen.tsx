@@ -35,6 +35,8 @@ export function SignInScreen() {
   const { signIn, signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
@@ -74,13 +76,24 @@ export function SignInScreen() {
       setError('Enter email and password.');
       return;
     }
+    if (mode === 'signUp') {
+      if (!firstName.trim() || !lastName.trim()) {
+        setError('Enter your first and last name.');
+        return;
+      }
+    }
     setBusy(true);
     try {
       if (mode === 'signIn') {
         const { error: err } = await signIn(trimmed, password);
         if (err) setError(err.message);
       } else {
-        const { error: signUpErr } = await signUp(trimmed, password);
+        // First/last name go into raw_user_meta_data so the
+        // public.handle_new_user trigger can seed the profiles row.
+        const { error: signUpErr } = await signUp(trimmed, password, {
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+        });
         if (signUpErr) {
           setError(signUpErr.message);
           return;
@@ -102,7 +115,7 @@ export function SignInScreen() {
     } finally {
       setBusy(false);
     }
-  }, [email, password, mode, signIn, signUp]);
+  }, [email, password, firstName, lastName, mode, signIn, signUp]);
 
   if (!fontsLoaded) {
     return (
@@ -144,6 +157,52 @@ export function SignInScreen() {
             <Text style={[text.body, { color: fg.secondary, marginBottom: gap }]}>
               Sign in with email and password
             </Text>
+
+            {mode === 'signUp' ? (
+              <>
+                <Text
+                  style={[
+                    text.caption,
+                    { color: fg.secondary, marginBottom: space('Spacing/8') },
+                  ]}
+                >
+                  First name
+                </Text>
+                <TextInput
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  placeholder="Alex"
+                  placeholderTextColor={fg.muted}
+                  style={[styles.input, text.body, { color: fg.primary }]}
+                  editable={!busy}
+                />
+                <Text
+                  style={[
+                    text.caption,
+                    {
+                      color: fg.secondary,
+                      marginBottom: space('Spacing/8'),
+                      marginTop: gap,
+                    },
+                  ]}
+                >
+                  Last name
+                </Text>
+                <TextInput
+                  value={lastName}
+                  onChangeText={setLastName}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  placeholder="Builder"
+                  placeholderTextColor={fg.muted}
+                  style={[styles.input, text.body, { color: fg.primary }]}
+                  editable={!busy}
+                />
+                <View style={{ height: gap }} />
+              </>
+            ) : null}
 
             <Text style={[text.caption, { color: fg.secondary, marginBottom: space('Spacing/8') }]}>
               Email

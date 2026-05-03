@@ -51,10 +51,9 @@ import {
 } from '../components/ds';
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import {
-  BottomNavIconEarnings,
-  BottomNavIconHome,
-  BottomNavIconJobs,
-} from '../components/bottom-nav/BottomNavTabIcons';
+  ShellBottomNav,
+  type ShellMainTab,
+} from '../components/shell/ShellBottomNav';
 import {
   JobDetailIconCtaMore,
   JobDetailIconSectionAdd,
@@ -128,6 +127,13 @@ function supabaseApiHostLabel(): string {
 export type JobDetailScreenProps = {
   /** Top-left close (X): return to the tab shell (HOME / JOBS / EARNINGS). */
   onRequestClose?: () => void;
+  /**
+   * Tab nav handler — closes Job Detail and switches the parent shell to the
+   * tapped tab (HOME / JOBS / EARNINGS). Owned by the parent because Job
+   * Detail covers the shell entirely while open and needs the parent to flip
+   * `mainTab` + dismiss this screen in one update.
+   */
+  onSelectShellTab?: (tab: ShellMainTab) => void;
   /** Signed-in user (refetch job list when this changes). */
   sessionUserId?: string | null;
   sessionEmail?: string | null;
@@ -141,6 +147,7 @@ export type JobDetailScreenProps = {
 
 export function JobDetailScreen({
   onRequestClose,
+  onSelectShellTab,
   sessionUserId,
   sessionEmail,
   jobId,
@@ -1333,8 +1340,15 @@ export function JobDetailScreen({
         )}
       </Animated.ScrollView>
 
-      {/* Tab bar stays fixed while list scrolls; `bottomInset` clears home indicator. */}
-      <BottomNavJobs typography={typography} bottomInset={insets.bottom} />
+      {/* Shared bottom nav — JOBS is the active tab here. Tapping HOME /
+          JOBS / EARNINGS bubbles up to the parent which closes Job Detail
+          and switches the shell tab in one update (see App.tsx). */}
+      <ShellBottomNav
+        selected="jobs"
+        onSelect={(tab) => {
+          onSelectShellTab?.(tab);
+        }}
+      />
       {editSheetMounted ? (
         <EditJobBottomSheet
           typography={typography}
@@ -1851,92 +1865,10 @@ function ViewNotesBuckets({
   );
 }
 
-// --- Bottom nav (Figma `225:12089` — vectors from `BottomNavTabIcons`, not Ionicons) ---
-
-/** One tab: optional orange top indicator when selected; label recolors to brand primary. */
-function BottomNavTabCell({
-  selected,
-  label,
-  icon,
-  typography,
-}: {
-  selected: boolean;
-  label: string;
-  icon: ReactNode;
-  typography: TextStyles;
-}) {
-  const brand = color('Brand/Primary');
-  const labelColor = selected ? brand : fg.primary;
-  const tabPad = space('Spacing/12');
-  const indicatorW = space('Spacing/32');
-  const indicatorH = space('Spacing/4');
-
-  return (
-    <View
-      style={[
-        styles.bottomNavTabCell,
-        { justifyContent: selected ? 'space-between' : 'flex-end' },
-      ]}
-    >
-      {selected ? (
-        <View style={styles.bottomNavIndicatorWrap}>
-          <View style={[styles.bottomNavIndicator, { width: indicatorW, height: indicatorH }]} />
-        </View>
-      ) : null}
-      <View style={[styles.bottomNavTabContent, { padding: tabPad }]}>
-        <View style={styles.bottomNavIconSlot}>{icon}</View>
-        <Text style={[typography.labelCaps, { color: labelColor, textAlign: 'center' }]}>{label}</Text>
-      </View>
-    </View>
-  );
-}
-
-/** Three tabs (HOME / JOBS / EARNINGS); JOBS selected — placeholder until navigation is wired. */
-function BottomNavJobs({
-  typography,
-  bottomInset,
-}: {
-  typography: TextStyles;
-  bottomInset: number;
-}) {
-  const primary = fg.primary;
-  const jobsSelectedStroke = color('Brand/Primary');
-  const stripPad = space('Spacing/8');
-
-  return (
-    <View
-      style={[
-        styles.bottomNav,
-        {
-          maxWidth: TOP_HEADER_MAX_WIDTH,
-          paddingHorizontal: stripPad,
-          paddingBottom: bottomInset + stripPad - space('Spacing/32'),
-        },
-      ]}
-    >
-      <View style={styles.bottomNavInner}>
-        <BottomNavTabCell
-          selected={false}
-          label="HOME"
-          typography={typography}
-          icon={<BottomNavIconHome color={primary} />}
-        />
-        <BottomNavTabCell
-          selected
-          label="JOBS"
-          typography={typography}
-          icon={<BottomNavIconJobs color={jobsSelectedStroke} />}
-        />
-        <BottomNavTabCell
-          selected={false}
-          label="EARNINGS"
-          typography={typography}
-          icon={<BottomNavIconEarnings color={primary} />}
-        />
-      </View>
-    </View>
-  );
-}
+// Bottom nav (Figma `225:12089`) is rendered via the shared
+// `ShellBottomNav` component (see imports above). The local
+// `BottomNavTabCell` / `BottomNavJobs` placeholders that used to live here
+// were removed when the tabs were wired for cross-screen navigation.
 
 // -----------------------------------------------------------------------------
 // Styles — grouped roughly top-to-bottom to match the component tree
@@ -2102,44 +2034,4 @@ const styles = StyleSheet.create({
     paddingVertical: space('Spacing/16'),
   },
 
-  /** Pinned below scroll: top hairline + solid canvas so tab strip does not show scroll bleed. */
-  bottomNav: {
-    width: '100%',
-    alignSelf: 'center',
-    flexShrink: 0,
-    marginTop: space('Spacing/8'),
-    borderTopWidth: 1,
-    borderTopColor: colorWithAlpha('Foundation/Border/Default', 0.05),
-    backgroundColor: bg.canvasWarm,
-  },
-  /** Three equal tabs; min height matches Figma tab strip. */
-  bottomNavInner: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    minHeight: space('Spacing/64'),
-    width: '100%',
-  },
-  bottomNavTabCell: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: space('Spacing/64'),
-  },
-  bottomNavIndicatorWrap: {
-    alignItems: 'center',
-    paddingTop: space('Spacing/2'),
-  },
-  bottomNavIndicator: {
-    borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Brand/Primary'),
-  },
-  bottomNavTabContent: {
-    alignItems: 'center',
-    gap: space('Spacing/2'),
-  },
-  /** Centers Figma SVG icons (`gap-[2px]` to label is on `bottomNavTabContent`). Max height aligns tabs. */
-  bottomNavIconSlot: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: space('Spacing/28'),
-  },
 });

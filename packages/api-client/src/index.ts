@@ -52,3 +52,13 @@ export {
   type MaterialId,
   type UpdateMaterialInput,
 } from './materials';
+export {
+  fetchCurrentUserProfile,
+  updateCurrentUserProfile,
+  type UpdateUserProfileInput,
+  type UserProfile,
+} from './profiles';
+export {
+  deleteCurrentAccount,
+  updateCurrentUserPassword,
+} from './account';

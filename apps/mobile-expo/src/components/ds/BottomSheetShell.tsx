@@ -11,11 +11,11 @@ import {
   Dimensions,
   Easing,
   Keyboard,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  type KeyboardEvent,
   type LayoutChangeEvent,
   View,
 } from 'react-native';
@@ -103,7 +103,6 @@ export function BottomSheetShell({
   const hiddenOffset = windowHeight;
   const translateY = useRef(new Animated.Value(hiddenOffset)).current;
   const scrimOpacity = useRef(new Animated.Value(0)).current;
-  const keyboardOffset = useRef(new Animated.Value(0)).current;
   const forcedOffset = useRef(new Animated.Value(0)).current;
 
   /**
@@ -113,6 +112,14 @@ export function BottomSheetShell({
    * short.
    */
   const [contentOverflow, setContentOverflow] = useState(false);
+
+  /**
+   * Tracks keyboard visibility so we can drop the safe-area bottom from
+   * `paddingBottom` when the keyboard is up — the keyboard already covers
+   * that region, otherwise the sheet ends up with ~SB extra cream below
+   * the primary CTA when typing.
+   */
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -189,36 +196,24 @@ export function BottomSheetShell({
     [registerInGlobalStack, sheetId, sheetStack, visible],
   );
 
+  // We let `KeyboardAvoidingView` (below) actually push the sheet up; this
+  // listener only tracks the keyboard-visible flag so we can drop the
+  // safe-area bottom from the sheet's own `paddingBottom` while it's open
+  // (the keyboard already covers that region).
   useEffect(() => {
-    const updateKeyboardOffset = (event: KeyboardEvent, show: boolean) => {
-      const height = show
-        ? Math.max(0, event.endCoordinates.height - insets.bottom)
-        : 0;
-      Animated.timing(keyboardOffset, {
-        toValue: height,
-        duration: event.duration ?? 220,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }).start();
-    };
-
+    const onShow = () => setKeyboardVisible(true);
+    const onHide = () => setKeyboardVisible(false);
     const showEvent =
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent =
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const showSub = Keyboard.addListener(showEvent, (e) =>
-      updateKeyboardOffset(e, true),
-    );
-    const hideSub = Keyboard.addListener(hideEvent, (e) =>
-      updateKeyboardOffset(e, false),
-    );
-
+    const showSub = Keyboard.addListener(showEvent, onShow);
+    const hideSub = Keyboard.addListener(hideEvent, onHide);
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, [insets.bottom, keyboardOffset]);
+  }, []);
 
   const isFullbleed = variant === 'fullbleedDark';
 
@@ -232,16 +227,22 @@ export function BottomSheetShell({
     ? Math.max(160, windowHeight * autoSizeUpToFraction)
     : undefined;
 
+  // When the keyboard is up the keyboard itself covers the home indicator
+  // / safe-area bottom region, so we collapse our own safe-area
+  // paddingBottom to keep the primary CTA flush ~12px above the keyboard
+  // top instead of leaving an SB-sized gap of cream below it.
+  const effectiveSafeBottom = keyboardVisible ? 0 : insets.bottom;
+
   // The inner scrollview becomes height-locked when content overflows. We
   // approximate the available content height by subtracting the chrome we
   // own (handle area, safe-area bottom). Children own their padding when
   // `fullbleedDark`, so the only overhead there is the safe-area bottom.
   const sheetChromeHeight = isFullbleed
-    ? insets.bottom + space('Spacing/12')
+    ? effectiveSafeBottom + space('Spacing/12')
     : space('Spacing/16') /* paddingTop */ +
       6 /* handle h */ +
       space('Spacing/16') /* handle marginBottom */ +
-      insets.bottom +
+      effectiveSafeBottom +
       space('Spacing/12');
 
   const scrollViewMaxHeight =
@@ -256,6 +257,9 @@ export function BottomSheetShell({
       style={styles.overlay}
       pointerEvents={visible ? 'box-none' : 'none'}
     >
+      {/* Scrim sits in its OWN absolutely-positioned layer so it covers
+          the full screen (including the area behind the keyboard) — keeps
+          tap-to-dismiss working everywhere outside the sheet. */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Close bottom sheet"
@@ -265,51 +269,74 @@ export function BottomSheetShell({
       >
         <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]} />
       </Pressable>
-      <Animated.View
-        onLayout={handleSheetLayout}
-        style={[
-          isFullbleed ? styles.sheetFullbleed : styles.sheet,
-          {
-            paddingBottom: isFullbleed ? 0 : insets.bottom + space('Spacing/12'),
-            maxHeight: maxSheetHeight,
-            transform: [
-              {
-                translateY: Animated.add(
-                  translateY,
-                  Animated.multiply(Animated.add(keyboardOffset, forcedOffset), -1),
-                ),
-              },
-            ],
-          },
-        ]}
-        pointerEvents={visible ? 'auto' : 'none'}
+      {/* `KeyboardAvoidingView` adds bottom padding equal to the keyboard
+          height when it appears. Combined with `justifyContent: 'flex-end'`
+          this pushes the sheet UP so its bottom edge stays flush with the
+          keyboard top regardless of how iOS reports keyboard frames on
+          this device. We use `behavior="padding"` on iOS (smooth animation
+          alongside our open/close transform) and `'height'` on Android
+          which works better with the soft input mode. */}
+      <KeyboardAvoidingView
+        style={styles.kav}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        pointerEvents="box-none"
       >
-        {!isFullbleed ? <View style={styles.handle} /> : null}
-        {scrollViewMaxHeight != null ? (
-          <ScrollView
-            style={{ maxHeight: scrollViewMaxHeight }}
-            contentContainerStyle={isFullbleed ? undefined : styles.contentContainer}
-            scrollEnabled={contentOverflow}
-            showsVerticalScrollIndicator={contentOverflow}
-            onContentSizeChange={(_w, h) => {
-              setContentOverflow(h > scrollViewMaxHeight);
-            }}
-            keyboardShouldPersistTaps="handled"
-          >
-            {isFullbleed ? children : <View style={styles.content}>{children}</View>}
-          </ScrollView>
-        ) : isFullbleed ? (
-          children
-        ) : (
-          <View style={styles.content}>{children}</View>
-        )}
-      </Animated.View>
+        <Animated.View
+          onLayout={handleSheetLayout}
+          style={[
+            isFullbleed ? styles.sheetFullbleed : styles.sheet,
+            {
+              paddingBottom: isFullbleed ? 0 : effectiveSafeBottom + space('Spacing/12'),
+              maxHeight: maxSheetHeight,
+              transform: [
+                {
+                  translateY: Animated.add(
+                    translateY,
+                    Animated.multiply(forcedOffset, -1),
+                  ),
+                },
+              ],
+            },
+          ]}
+          pointerEvents={visible ? 'auto' : 'none'}
+        >
+          {!isFullbleed ? <View style={styles.handle} /> : null}
+          {scrollViewMaxHeight != null ? (
+            <ScrollView
+              style={{ maxHeight: scrollViewMaxHeight }}
+              contentContainerStyle={isFullbleed ? undefined : styles.contentContainer}
+              scrollEnabled={contentOverflow}
+              showsVerticalScrollIndicator={contentOverflow}
+              onContentSizeChange={(_w, h) => {
+                setContentOverflow(h > scrollViewMaxHeight);
+              }}
+              keyboardShouldPersistTaps="handled"
+            >
+              {isFullbleed ? children : <View style={styles.content}>{children}</View>}
+            </ScrollView>
+          ) : isFullbleed ? (
+            children
+          ) : (
+            <View style={styles.content}>{children}</View>
+          )}
+        </Animated.View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+  },
+  /**
+   * `KeyboardAvoidingView` host. Fills the overlay (so its `flex-end`
+   * justification anchors the sheet to the bottom of whatever space is left
+   * after the keyboard takes its share). The KAV adds `paddingBottom` on
+   * iOS / shrinks `height` on Android when the keyboard appears.
+   */
+  kav: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
   },
