@@ -11,6 +11,15 @@ const mockDeleteJobById = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockListRecentJobsForCurrentUser = jest.fn<
   (...args: unknown[]) => Promise<unknown[]>
 >();
+const mockGetWeeklyNetEarningsCentsForCurrentUser = jest.fn<
+  (...args: unknown[]) => Promise<{ netEarningsCents: number; jobCount: number }>
+>();
+const mockListJobsForCurrentUserPage = jest.fn<
+  (...args: unknown[]) => Promise<{ items: unknown[]; hasMore: boolean }>
+>();
+const mockListRecentDetailedJobsForCurrentUser = jest.fn<
+  (...args: unknown[]) => Promise<unknown[]>
+>();
 const mockTryBumpJobToInProgressIfNotStarted = jest.fn<
   (...args: unknown[]) => Promise<void>
 >();
@@ -28,11 +37,11 @@ jest.mock('@fieldbook/api-client', () => ({
     mockCreateBlankJobForLiveSessionStart(...args),
   deleteJobById: (...args: unknown[]) => mockDeleteJobById(...args),
   listRecentJobsForCurrentUser: (...args: unknown[]) => mockListRecentJobsForCurrentUser(...args),
-  getWeeklyNetEarningsCentsForCurrentUser: jest.fn(() =>
-    Promise.resolve({ netEarningsCents: 0, jobCount: 0 }),
-  ),
-  listJobsForCurrentUserPage: jest.fn(() => Promise.resolve({ items: [], hasMore: false })),
-  listRecentDetailedJobsForCurrentUser: jest.fn(() => Promise.resolve([])),
+  getWeeklyNetEarningsCentsForCurrentUser: (...args: unknown[]) =>
+    mockGetWeeklyNetEarningsCentsForCurrentUser(...args),
+  listJobsForCurrentUserPage: (...args: unknown[]) => mockListJobsForCurrentUserPage(...args),
+  listRecentDetailedJobsForCurrentUser: (...args: unknown[]) =>
+    mockListRecentDetailedJobsForCurrentUser(...args),
   tryBumpJobToInProgressIfNotStarted: (...args: unknown[]) =>
     mockTryBumpJobToInProgressIfNotStarted(...args),
 }));
@@ -94,6 +103,31 @@ jest.mock('../components/shell/ShellBottomNav', () => ({
   shellBottomNavOuterHeight: () => 80,
 }));
 
+function job(overrides: Record<string, unknown>) {
+  return {
+    id: 'job-1',
+    shortDescription: 'Install light fixture',
+    customerName: 'Alice',
+    updatedAt: '2026-05-09T12:00:00.000Z',
+    createdAt: '2026-05-01T12:00:00.000Z',
+    lastWorkedAt: '2026-05-09T12:00:00.000Z',
+    lastWorkedLabel: 'Last worked May 9, 2026',
+    timeLabel: '2.0h',
+    jobType: 'electrical',
+    workStatus: 'inProgress',
+    jobPaymentState: 'pending',
+    revenueCents: 50000,
+    materialsCents: -12000,
+    netEarningsCents: 38000,
+    collectedCents: 0,
+    isFinanciallyComplete: true,
+    hasMaterials: true,
+    noMaterialsConfirmed: false,
+    hasSessions: true,
+    ...overrides,
+  };
+}
+
 describe('HomeScreen quick session', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
@@ -102,6 +136,12 @@ describe('HomeScreen quick session', () => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     mockIsSupabaseConfigured.mockReturnValue(true);
     mockListRecentJobsForCurrentUser.mockResolvedValue([]);
+    mockGetWeeklyNetEarningsCentsForCurrentUser.mockResolvedValue({
+      netEarningsCents: 0,
+      jobCount: 0,
+    });
+    mockListJobsForCurrentUserPage.mockResolvedValue({ items: [], hasMore: false });
+    mockListRecentDetailedJobsForCurrentUser.mockResolvedValue([]);
     mockTryBumpJobToInProgressIfNotStarted.mockResolvedValue(undefined);
     mockDeleteJobById.mockResolvedValue(undefined);
     mockRefreshLiveSession.mockResolvedValue(null);
@@ -157,5 +197,89 @@ describe('HomeScreen quick session', () => {
     expect(mockDeleteJobById).not.toHaveBeenCalled();
     expect(mockInvalidateJobsList).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('network after insert')).toBeNull();
+  });
+
+  it('renders home modules from API data and opens job detail from module cards', async () => {
+    mockGetWeeklyNetEarningsCentsForCurrentUser.mockResolvedValue({
+      netEarningsCents: 123456,
+      jobCount: 2,
+    });
+    mockListJobsForCurrentUserPage.mockResolvedValue({
+      items: [
+        job({
+          id: 'job-incomplete-1',
+          shortDescription: 'Untitled Job',
+          revenueCents: 0,
+          isFinanciallyComplete: false,
+          hasMaterials: false,
+          hasSessions: false,
+        }),
+        job({
+          id: 'job-incomplete-2',
+          shortDescription: 'Finish trim',
+          isFinanciallyComplete: false,
+          hasMaterials: false,
+          noMaterialsConfirmed: false,
+        }),
+        job({
+          id: 'job-incomplete-3',
+          shortDescription: 'Paint entry',
+          isFinanciallyComplete: false,
+          revenueCents: 0,
+        }),
+        job({
+          id: 'job-incomplete-4',
+          shortDescription: 'Wire outlet',
+          isFinanciallyComplete: false,
+          hasSessions: false,
+        }),
+      ],
+      hasMore: false,
+    });
+    mockListRecentDetailedJobsForCurrentUser.mockResolvedValue([
+      job({
+        id: 'job-recent-1',
+        shortDescription: 'Replace ceiling fan',
+        customerName: 'Sam',
+        updatedAt: '2026-05-08T12:00:00.000Z',
+      }),
+    ]);
+
+    const onOpenJobDetail = jest.fn();
+    const screen = render(
+      <HomeScreen onOpenProfile={() => undefined} onOpenJobDetail={onOpenJobDetail} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('$1,234.56')).toBeTruthy();
+    });
+
+    expect(mockGetWeeklyNetEarningsCentsForCurrentUser).toHaveBeenCalledWith({
+      client: 'supabase',
+    });
+    expect(mockListJobsForCurrentUserPage).toHaveBeenCalledWith(
+      { client: 'supabase' },
+      expect.objectContaining({ tab: 'open', limit: 20, offset: 0 }),
+    );
+    expect(mockListRecentDetailedJobsForCurrentUser).toHaveBeenCalledWith(
+      { client: 'supabase' },
+      { limit: 3 },
+    );
+    expect(screen.getByText('NEEDS ATTENTION')).toBeTruthy();
+    expect(screen.getByText('Description, Revenue, Materials, Sessions')).toBeTruthy();
+    expect(screen.getByText('3 of 4 jobs')).toBeTruthy();
+    expect(screen.queryByText('Wire outlet')).toBeNull();
+    expect(screen.getByText('JUMP BACK IN')).toBeTruthy();
+    expect(screen.getByText('Replace ceiling fan')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('3 of 4 jobs'));
+    expect(screen.getByText('Wire outlet')).toBeTruthy();
+    expect(screen.getByText('4 of 4 jobs')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Untitled Job'));
+    expect(onOpenJobDetail).toHaveBeenCalledWith('job-incomplete-1');
+
+    fireEvent.press(screen.getByText('Replace ceiling fan'));
+    expect(onOpenJobDetail).toHaveBeenCalledWith('job-recent-1');
   });
 });

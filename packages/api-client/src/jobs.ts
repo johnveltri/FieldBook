@@ -514,7 +514,7 @@ export async function getWeeklyNetEarningsCentsForCurrentUser(
 
   const { data: sessionRows, error: sessionsError } = await client
     .from('sessions')
-    .select('job_id')
+    .select('id, job_id')
     .eq('session_status', 'ended')
     .gte('ended_at', windowStartIso)
     .is('deleted_at', null);
@@ -530,6 +530,20 @@ export async function getWeeklyNetEarningsCentsForCurrentUser(
     return { netEarningsCents: 0, jobCount: 0 };
   }
 
+  const { data: allSessionRows, error: allSessionsError } = await client
+    .from('sessions')
+    .select('id')
+    .in('job_id', jobIds)
+    .is('deleted_at', null);
+
+  if (allSessionsError) throw allSessionsError;
+
+  const sessionIds = [
+    ...new Set(
+      ((allSessionRows ?? []) as { id: string }[]).map((r) => r.id).filter(Boolean),
+    ),
+  ];
+
   const { data: jobsData, error: jobsError } = await client
     .from('jobs')
     .select('revenue_cents')
@@ -543,17 +557,36 @@ export async function getWeeklyNetEarningsCentsForCurrentUser(
     0,
   );
 
-  const { data: materialsData, error: materialsError } = await client
-    .from('materials')
-    .select('total_cost_cents')
-    .in('job_id', jobIds)
-    .is('deleted_at', null);
+  const [materialsByJobRes, materialsBySessionRes] = await Promise.all([
+    client
+      .from('materials')
+      .select('id, total_cost_cents')
+      .in('job_id', jobIds)
+      .is('deleted_at', null),
+    sessionIds.length > 0
+      ? client
+          .from('materials')
+          .select('id, total_cost_cents')
+          .in('session_id', sessionIds)
+          .is('deleted_at', null)
+      : Promise.resolve({ data: [] as { id: string; total_cost_cents: number }[], error: null }),
+  ]);
 
-  if (materialsError) throw materialsError;
+  if (materialsByJobRes.error) throw materialsByJobRes.error;
+  if (materialsBySessionRes.error) throw materialsBySessionRes.error;
 
-  const materialsSpendCents = (
-    (materialsData ?? []) as { total_cost_cents: number }[]
-  ).reduce((acc, row) => acc + row.total_cost_cents, 0);
+  const materialById = new Map<string, { id: string; total_cost_cents: number }>();
+  for (const m of (materialsByJobRes.data ?? []) as { id: string; total_cost_cents: number }[]) {
+    materialById.set(m.id, m);
+  }
+  for (const m of (materialsBySessionRes.data ?? []) as { id: string; total_cost_cents: number }[]) {
+    materialById.set(m.id, m);
+  }
+
+  const materialsSpendCents = [...materialById.values()].reduce(
+    (acc, row) => acc + row.total_cost_cents,
+    0,
+  );
 
   const netEarningsCents = revenueCents - materialsSpendCents;
   return { netEarningsCents, jobCount: jobIds.length };
