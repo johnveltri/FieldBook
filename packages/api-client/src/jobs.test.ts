@@ -5,6 +5,7 @@ import {
   createBlankJobForCurrentUser,
   createBlankJobForLiveSessionStart,
   deleteJobById,
+  getWeeklyNetEarningsCentsForCurrentUser,
   jobDetailWorkStatusToDbColumns,
   listJobsForCurrentUser,
   listJobsForCurrentUserPage,
@@ -136,6 +137,59 @@ describe('jobs api client', () => {
     expect(builder.order).toHaveBeenCalledWith('updated_at', { ascending: false });
     expect(builder.order).toHaveBeenCalledWith('id', { ascending: false });
     expect(builder.limit).toHaveBeenCalledWith(3);
+  });
+
+  it('getWeeklyNetEarningsCentsForCurrentUser includes session-attached materials', async () => {
+    const weeklySessionsBuilder = makeBuilder({
+      awaitResult: {
+        data: [{ id: 'sess-weekly', job_id: 'job-weekly' }],
+        error: null,
+      },
+    });
+    const allJobSessionsBuilder = makeBuilder({
+      awaitResult: {
+        data: [{ id: 'sess-weekly' }, { id: 'sess-old' }],
+        error: null,
+      },
+    });
+    const materialsByJobBuilder = makeBuilder({
+      awaitResult: {
+        data: [{ id: 'mat-job', total_cost_cents: 1500 }],
+        error: null,
+      },
+    });
+    const materialsBySessionBuilder = makeBuilder({
+      awaitResult: {
+        data: [{ id: 'mat-session', total_cost_cents: 2000 }],
+        error: null,
+      },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        sessions: [weeklySessionsBuilder, allJobSessionsBuilder],
+        jobs: [
+          makeBuilder({
+            awaitResult: {
+              data: [{ revenue_cents: 10000 }],
+              error: null,
+            },
+          }),
+        ],
+        materials: [materialsByJobBuilder, materialsBySessionBuilder],
+      },
+    });
+
+    const result = await getWeeklyNetEarningsCentsForCurrentUser(client as never);
+
+    expect(result).toEqual({ netEarningsCents: 6500, jobCount: 1 });
+    expect(weeklySessionsBuilder.select).toHaveBeenCalledWith('id, job_id');
+    expect(allJobSessionsBuilder.in).toHaveBeenCalledWith('job_id', ['job-weekly']);
+    expect(materialsByJobBuilder.in).toHaveBeenCalledWith('job_id', ['job-weekly']);
+    expect(materialsBySessionBuilder.in).toHaveBeenCalledWith('session_id', [
+      'sess-weekly',
+      'sess-old',
+    ]);
   });
 
   it('deleteJobById performs soft-delete and validates affected rows', async () => {

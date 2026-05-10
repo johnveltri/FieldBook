@@ -494,6 +494,138 @@ export async function listRecentJobsForCurrentUser(
   }));
 }
 
+export type WeeklyNetEarningsForCurrentUserResult = {
+  netEarningsCents: number;
+  /** Distinct jobs that had at least one ended session in the rolling window. */
+  jobCount: number;
+};
+
+const MS_PER_DAY = 86_400_000;
+
+/**
+ * Net earnings (revenue minus materials) summed over distinct jobs that had at
+ * least one **ended** session whose `ended_at` falls within the last 7 days.
+ * Full job revenue and all material lines for those jobs are included.
+ */
+export async function getWeeklyNetEarningsCentsForCurrentUser(
+  client: FieldbookSupabaseClient,
+): Promise<WeeklyNetEarningsForCurrentUserResult> {
+  const windowStartIso = new Date(Date.now() - 7 * MS_PER_DAY).toISOString();
+
+  const { data: sessionRows, error: sessionsError } = await client
+    .from('sessions')
+    .select('id, job_id')
+    .eq('session_status', 'ended')
+    .gte('ended_at', windowStartIso)
+    .is('deleted_at', null);
+
+  if (sessionsError) throw sessionsError;
+
+  const jobIds = [
+    ...new Set(
+      ((sessionRows ?? []) as { job_id: string }[]).map((r) => r.job_id).filter(Boolean),
+    ),
+  ];
+  if (jobIds.length === 0) {
+    return { netEarningsCents: 0, jobCount: 0 };
+  }
+
+  const { data: allSessionRows, error: allSessionsError } = await client
+    .from('sessions')
+    .select('id')
+    .in('job_id', jobIds)
+    .is('deleted_at', null);
+
+  if (allSessionsError) throw allSessionsError;
+
+  const sessionIds = [
+    ...new Set(
+      ((allSessionRows ?? []) as { id: string }[]).map((r) => r.id).filter(Boolean),
+    ),
+  ];
+
+  const { data: jobsData, error: jobsError } = await client
+    .from('jobs')
+    .select('revenue_cents')
+    .in('id', jobIds)
+    .is('deleted_at', null);
+
+  if (jobsError) throw jobsError;
+
+  const revenueCents = ((jobsData ?? []) as { revenue_cents: number | null }[]).reduce(
+    (acc, row) => acc + (row.revenue_cents ?? 0),
+    0,
+  );
+
+  const [materialsByJobRes, materialsBySessionRes] = await Promise.all([
+    client
+      .from('materials')
+      .select('id, total_cost_cents')
+      .in('job_id', jobIds)
+      .is('deleted_at', null),
+    sessionIds.length > 0
+      ? client
+          .from('materials')
+          .select('id, total_cost_cents')
+          .in('session_id', sessionIds)
+          .is('deleted_at', null)
+      : Promise.resolve({ data: [] as { id: string; total_cost_cents: number }[], error: null }),
+  ]);
+
+  if (materialsByJobRes.error) throw materialsByJobRes.error;
+  if (materialsBySessionRes.error) throw materialsBySessionRes.error;
+
+  const materialById = new Map<string, { id: string; total_cost_cents: number }>();
+  for (const m of (materialsByJobRes.data ?? []) as { id: string; total_cost_cents: number }[]) {
+    materialById.set(m.id, m);
+  }
+  for (const m of (materialsBySessionRes.data ?? []) as { id: string; total_cost_cents: number }[]) {
+    materialById.set(m.id, m);
+  }
+
+  const materialsSpendCents = [...materialById.values()].reduce(
+    (acc, row) => acc + row.total_cost_cents,
+    0,
+  );
+
+  const netEarningsCents = revenueCents - materialsSpendCents;
+  return { netEarningsCents, jobCount: jobIds.length };
+}
+
+/**
+ * Recent jobs with full list rollups (time, materials, net), ordered by
+ * `updated_at` then `id`. Use for Home “Jump back in”.
+ */
+export async function listRecentDetailedJobsForCurrentUser(
+  client: FieldbookSupabaseClient,
+  options: { limit: number },
+): Promise<ListJobsForCurrentUserItem[]> {
+  const limit = Math.max(1, Math.floor(options.limit));
+
+  const runQuery = async (selectColumns: string) => {
+    const listQuery = client.from('jobs').select(selectColumns).is('deleted_at', null);
+    return listQuery
+      .order('updated_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(limit);
+  };
+
+  let result = await runQuery(JOB_LIST_SELECT_FULL);
+  if (result.error != null && isMissingNoMaterialsConfirmedColumn(result.error)) {
+    result = await runQuery(JOB_LIST_SELECT_FINANCIAL_WITHOUT_NO_MATERIALS_FLAG);
+  }
+  if (result.error != null && isMissingFinancialCompletenessColumn(result.error)) {
+    result = await runQuery(JOB_LIST_SELECT_LEGACY);
+  }
+
+  if (result.error) throw result.error;
+  const rows = ((result.data ?? []) as unknown) as ListJobsRow[];
+  if (rows.length === 0) {
+    return [];
+  }
+  return enrichJobsRowsWithSessionRollups(client, rows);
+}
+
 export async function createBlankJobForLiveSessionStart(
   client: FieldbookSupabaseClient,
   input: { shortDescription: string },
