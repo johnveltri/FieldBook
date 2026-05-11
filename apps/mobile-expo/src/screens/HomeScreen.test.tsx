@@ -321,4 +321,44 @@ describe('HomeScreen quick session', () => {
     expect(screen.queryByText('Estimate panel')).toBeNull();
     expect(screen.queryByText('Paused repair')).toBeNull();
   });
+
+  it('shows pending-payment rows for completed jobs in the open tab', async () => {
+    mockListJobsForCurrentUserPage.mockResolvedValue({
+      items: [
+        job({
+          id: 'job-payment-1',
+          shortDescription: 'Garbage Disposal Install',
+          isFinanciallyComplete: true,
+          workStatus: 'completed',
+          jobPaymentState: 'pending',
+          lastWorkedAt: '2026-05-08T12:00:00.000Z',
+        }),
+        job({
+          id: 'job-payment-paid',
+          shortDescription: 'Paid faucet repair',
+          isFinanciallyComplete: true,
+          workStatus: 'paid',
+          jobPaymentState: 'paid',
+          lastWorkedAt: '2026-05-08T12:00:00.000Z',
+        }),
+      ],
+      hasMore: false,
+    });
+
+    const onOpenJobDetail = jest.fn();
+    const screen = render(
+      <HomeScreen onOpenProfile={() => undefined} onOpenJobDetail={onOpenJobDetail} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Garbage Disposal Install')).toBeTruthy();
+    });
+    expect(screen.getByText('Completed:')).toBeTruthy();
+    expect(screen.getByText('Pending payment')).toBeTruthy();
+    expect(screen.getByText('Review →')).toBeTruthy();
+    expect(screen.queryByText('Paid faucet repair')).toBeNull();
+
+    fireEvent.press(screen.getByText('Garbage Disposal Install'));
+    expect(onOpenJobDetail).toHaveBeenCalledWith('job-payment-1');
+  });
 });

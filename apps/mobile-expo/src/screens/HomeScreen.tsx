@@ -35,6 +35,7 @@ import {
   IncompleteJobRowCard,
   JobCard,
   MetricSnapshotCard,
+  PendingPaymentRowCard,
   QuickActionsBottomSheet,
   SectionHeader,
   WorkedNotMarkedCompleteRowCard,
@@ -85,6 +86,13 @@ function missingFieldsLabelsForHome(job: ListJobsForCurrentUserItem): string[] {
 function needsReviewMarkComplete(job: ListJobsForCurrentUserItem): boolean {
   if (!job.isFinanciallyComplete || job.lastWorkedAt == null) return false;
   return job.workStatus === 'inProgress';
+}
+
+function needsReviewPayment(job: ListJobsForCurrentUserItem): boolean {
+  return (
+    job.workStatus === 'completed' &&
+    (job.jobPaymentState == null || job.jobPaymentState === 'pending')
+  );
 }
 
 function formatWeeklyUsd(cents: number): string {
@@ -163,7 +171,10 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail }: HomeScreenProps) 
     const review = openTabJobsPage
       .filter(needsReviewMarkComplete)
       .map((j) => ({ kind: 'review' as const, job: j }));
-    return [...incomplete, ...review];
+    const payment = openTabJobsPage
+      .filter(needsReviewPayment)
+      .map((j) => ({ kind: 'payment' as const, job: j }));
+    return [...incomplete, ...review, ...payment];
   }, [openTabJobsPage]);
 
   const runHomeFetch = useCallback(async (isCancelled: () => boolean) => {
@@ -440,8 +451,14 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail }: HomeScreenProps) 
                         typography={typography}
                         onPress={() => onOpenJobDetail(job.id)}
                       />
-                    ) : (
+                    ) : kind === 'review' ? (
                       <WorkedNotMarkedCompleteRowCard
+                        title={job.shortDescription.trim() || 'Untitled Job'}
+                        typography={typography}
+                        onPress={() => onOpenJobDetail(job.id)}
+                      />
+                    ) : (
+                      <PendingPaymentRowCard
                         title={job.shortDescription.trim() || 'Untitled Job'}
                         typography={typography}
                         onPress={() => onOpenJobDetail(job.id)}
