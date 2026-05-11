@@ -291,6 +291,20 @@ describe('HomeScreen quick session', () => {
           workStatus: 'inProgress',
           lastWorkedAt: '2026-05-08T12:00:00.000Z',
         }),
+        job({
+          id: 'job-review-not-started',
+          shortDescription: 'Estimate panel',
+          isFinanciallyComplete: true,
+          workStatus: 'notStarted',
+          lastWorkedAt: '2026-05-08T12:00:00.000Z',
+        }),
+        job({
+          id: 'job-review-on-hold',
+          shortDescription: 'Paused repair',
+          isFinanciallyComplete: true,
+          workStatus: 'onHold',
+          lastWorkedAt: '2026-05-08T12:00:00.000Z',
+        }),
       ],
       hasMore: false,
     });
@@ -304,5 +318,7 @@ describe('HomeScreen quick session', () => {
     });
     expect(screen.getByText('Worked: Not marked complete')).toBeTruthy();
     expect(screen.getByText('Review →')).toBeTruthy();
+    expect(screen.queryByText('Estimate panel')).toBeNull();
+    expect(screen.queryByText('Paused repair')).toBeNull();
   });
 });

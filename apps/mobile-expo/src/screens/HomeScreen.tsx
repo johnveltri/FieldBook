@@ -81,11 +81,10 @@ function missingFieldsLabelsForHome(job: ListJobsForCurrentUserItem): string[] {
   return incompletePillsFor(job).map((p) => HOME_PILL_TO_MISSING[p] ?? p);
 }
 
-/** Financially complete but sessions exist (`lastWorkedAt`) while work is not completed/paid/cancelled. */
+/** Financially complete in-progress jobs with work that still need to be marked complete. */
 function needsReviewMarkComplete(job: ListJobsForCurrentUserItem): boolean {
   if (!job.isFinanciallyComplete || job.lastWorkedAt == null) return false;
-  const s = job.workStatus;
-  return s === 'notStarted' || s === 'inProgress' || s === 'onHold';
+  return job.workStatus === 'inProgress';
 }
 
 function formatWeeklyUsd(cents: number): string {
