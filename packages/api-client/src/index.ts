@@ -82,3 +82,9 @@ export {
   deleteCurrentAccount,
   updateCurrentUserPassword,
 } from './account';
+export {
+  recordLegalAcceptance,
+  recordSignupLegalAcceptances,
+  type LegalDocumentType,
+  type RecordLegalAcceptanceInput,
+} from './consent';

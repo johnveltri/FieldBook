@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { describe, expect, it } from '@jest/globals';
+
 import {
   REQUIRED_PRIVACY_VERSION,
   REQUIRED_TERMS_VERSION,
