@@ -2,6 +2,7 @@
 
 import { FormEvent, KeyboardEvent, ReactNode, useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import {
   ArrowRight, Check, CheckCircle2, ChevronDown, DollarSign, LayoutDashboard,
   Menu, Sparkles, X,
@@ -37,12 +38,13 @@ function NavLink({ id, children, onNavigate, active = false }: { id: string; chi
   return <a className={active ? styles.navLinkActive : undefined} aria-current={active ? "page" : undefined} href={`#${id}`} onClick={(event) => { event.preventDefault(); onNavigate?.(); scrollToSection(id); }}>{children}</a>;
 }
 
-function MultiSelect({ label, name, options, value, onChange }: {
-  label: string; name: string; options: SelectOption[]; value: string[]; onChange: (next: string[]) => void;
+function MultiSelect({ label, name, options, value, onChange, showError }: {
+  label: string; name: string; options: SelectOption[]; value: string[]; onChange: (next: string[]) => void; showError: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const errorId = `${menuId}-error`;
   useEffect(() => {
     const close = (event: MouseEvent) => { if (!box.current?.contains(event.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", close); return () => document.removeEventListener("mousedown", close);
@@ -52,7 +54,7 @@ function MultiSelect({ label, name, options, value, onChange }: {
   const display = value.length === 0 ? `Select ${label.toLowerCase()}...` : value.length === 1 ? options.find((item) => item.value === value[0])?.label : `${value.length} selected`;
   return <div className={styles.selectWrap} ref={box}>
     <input type="hidden" name={name} value={value.join(",")} />
-    <button type="button" className={styles.selectButton} aria-expanded={open} aria-controls={menuId} onClick={() => setOpen(!open)} onKeyDown={onKeyDown}>
+    <button type="button" className={styles.selectButton} data-waitlist-field={name} data-invalid={showError || undefined} aria-expanded={open} aria-controls={menuId} aria-describedby={showError ? errorId : undefined} onClick={() => setOpen(!open)} onKeyDown={onKeyDown}>
       <span className={value.length ? undefined : styles.placeholder}>{display}</span><ChevronDown size={19} aria-hidden className={open ? styles.chevronOpen : undefined} />
     </button>
     <AnimatePresence>
@@ -63,6 +65,7 @@ function MultiSelect({ label, name, options, value, onChange }: {
         </label>)}
       </motion.div>}
     </AnimatePresence>
+    {showError ? <span id={errorId} className={styles.validation}>Choose at least one option.</span> : null}
   </div>;
 }
 
@@ -79,13 +82,80 @@ export function LandingPage() {
   const [pastHero, setPastHero] = useState(false);
   const [waitlistVisible, setWaitlistVisible] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [validationAttempted, setValidationAttempted] = useState(false);
   const [trades, setTrades] = useState<string[]>([]);
   const [trackingTools, setTrackingTools] = useState<string[]>([]);
   const [jobSources, setJobSources] = useState<string[]>([]);
   const reducedMotion = useReducedMotion();
   const animate = reducedMotion ? undefined : "visible";
   const initial = reducedMotion ? false : "hidden";
-  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!trades.length || !trackingTools.length || !jobSources.length) return; setSubmitted(true); };
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setValidationAttempted(true);
+    if (!trades.length || !trackingTools.length || !jobSources.length) {
+      setErrorMessage("Choose at least one option for each highlighted field.");
+      const firstMissing = !trades.length
+        ? "trades"
+        : !trackingTools.length
+          ? "trackingTools"
+          : "jobSources";
+      requestAnimationFrame(() => {
+        document.querySelector<HTMLButtonElement>(`[data-waitlist-field="${firstMissing}"]`)?.focus();
+      });
+      return;
+    }
+
+    const form = event.currentTarget;
+    const firstNameEl = form.elements.namedItem("firstName");
+    const emailEl = form.elements.namedItem("email");
+    if (!(firstNameEl instanceof HTMLInputElement) || !(emailEl instanceof HTMLInputElement)) {
+      setErrorMessage("Please check your entries and try again.");
+      return;
+    }
+
+    const firstName = firstNameEl.value.trim();
+    const email = emailEl.value.trim();
+    const usesSoftwareInput = form.querySelector<HTMLInputElement>('input[name="usesSoftware"]:checked');
+    if (!usesSoftwareInput) return;
+    const privacyAcceptedInput = form.elements.namedItem("privacyAccepted");
+    if (!(privacyAcceptedInput instanceof HTMLInputElement) || !privacyAcceptedInput.checked) {
+      setErrorMessage("Please accept the Privacy Policy to join the waitlist.");
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName,
+          email,
+          trades,
+          usesSoftware: usesSoftwareInput.value === "yes",
+          trackingTools,
+          jobSources,
+          privacyAccepted: true,
+        }),
+      });
+
+      const data = (await response.json()) as { ok?: boolean; message?: string };
+      if (!response.ok || !data.ok) {
+        setErrorMessage(data.message ?? "Something went wrong. Please try again.");
+        return;
+      }
+
+      setSubmitted(true);
+    } catch {
+      setErrorMessage("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll<HTMLElement>("main#top > section"));
@@ -174,9 +244,9 @@ export function LandingPage() {
       <section id="faq" className={styles.faq}><div className={styles.content}><motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .3 }} transition={{ duration: .8, ease: [0.22, 1, .36, 1] }}>Frequently asked questions</motion.h2><motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: .1 }} variants={stagger}>{faqs.map(([question, answer], index) => <FaqItem key={question} question={question} answer={answer} open={index === 0} />)}</motion.div></div></section>
 
       <section className={styles.finalCta}><Blueprint variant="dots" /><motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: .4 }} variants={stagger}><motion.span variants={reveal} className={styles.badge}>Beta available now</motion.span><motion.h2 variants={reveal}>Know which jobs were worth it</motion.h2><motion.p variants={reveal}>Log jobs. Track profit. Price smarter.</motion.p><motion.div variants={reveal}><NavLink id="waitlist"><motion.span className={styles.whiteButton} whileHover={{ scale: 1.05, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)" }} whileTap={{ scale: .95 }}>Join the waitlist <ArrowRight size={19} /></motion.span></NavLink></motion.div><motion.small variants={reveal}>Free job &amp; profit tracking for independent tradespeople.</motion.small></motion.div></section>
-      <Waitlist submitted={submitted} setSubmitted={setSubmitted} trades={trades} setTrades={setTrades} trackingTools={trackingTools} setTrackingTools={setTrackingTools} jobSources={jobSources} setJobSources={setJobSources} onSubmit={submit} />
+      <Waitlist submitted={submitted} setSubmitted={setSubmitted} trades={trades} setTrades={setTrades} trackingTools={trackingTools} setTrackingTools={setTrackingTools} jobSources={jobSources} setJobSources={setJobSources} onSubmit={submit} submitting={submitting} errorMessage={errorMessage} validationAttempted={validationAttempted} />
     </main>
-    <footer className={styles.footer}><div><strong>FieldSolo</strong><p>Free job tracking for tradespeople who work for themselves.</p></div><nav aria-label="Footer navigation">{navItems.map(([label, id]) => <NavLink key={id} id={id}>{label}</NavLink>)}<NavLink id="waitlist">Waitlist</NavLink></nav><small>© {new Date().getFullYear()} FieldSolo. All rights reserved.</small></footer>
+    <footer className={styles.footer}><div><strong>FieldSolo</strong><p>Free job tracking for tradespeople who work for themselves.</p></div><nav aria-label="Footer navigation">{navItems.map(([label, id]) => <NavLink key={id} id={id}>{label}</NavLink>)}<NavLink id="waitlist">Waitlist</NavLink><Link href="/privacy">Privacy</Link></nav><small>© {new Date().getFullYear()} FieldSolo. All rights reserved.</small></footer>
   </div>;
 }
 
@@ -185,19 +255,22 @@ function FaqItem({ question, answer, open }: { question: string; answer: string;
   return <motion.article variants={reveal} whileHover={{ scale: 1.01, backgroundColor: "rgba(250, 246, 240, 0.8)", borderColor: "rgba(196, 75, 43, 0.3)", boxShadow: "0 4px 6px -1px rgba(43, 52, 65, 0.1), 0 2px 4px -2px rgba(43, 52, 65, 0.1)" }} className={styles.faqItem}><button aria-expanded={isOpen} aria-controls={id} onClick={() => setOpen(!isOpen)}><span>{question}</span><span className={styles.faqMark}>{isOpen ? "−" : "+"}</span></button><div id={id} hidden={!isOpen}><p>{answer}</p></div></motion.article>;
 }
 
-function Waitlist({ submitted, setSubmitted, trades, setTrades, trackingTools, setTrackingTools, jobSources, setJobSources, onSubmit }: {
-  submitted: boolean; setSubmitted: (value: boolean) => void; trades: string[]; setTrades: (next: string[]) => void; trackingTools: string[]; setTrackingTools: (next: string[]) => void; jobSources: string[]; setJobSources: (next: string[]) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+function Waitlist({ submitted, setSubmitted, trades, setTrades, trackingTools, setTrackingTools, jobSources, setJobSources, onSubmit, submitting, errorMessage, validationAttempted }: {
+  submitted: boolean; setSubmitted: (value: boolean) => void; trades: string[]; setTrades: (next: string[]) => void; trackingTools: string[]; setTrackingTools: (next: string[]) => void; jobSources: string[]; setJobSources: (next: string[]) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; submitting: boolean; errorMessage: string; validationAttempted: boolean;
 }) {
   if (submitted) return <section id="waitlist" className={`${styles.waitlist} ${styles.success}`}><Blueprint /><motion.div initial={{ opacity: 0, scale: .8, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 200, damping: 20 }}><motion.span className={styles.successIcon} initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: .2, type: "spring", stiffness: 200, damping: 15 }}><Check /></motion.span><motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .4 }}>You’re on the list!</motion.h2><motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .5 }}>Thanks for joining the FieldSolo waitlist. We’ll be in touch with early access and product updates.</motion.p><motion.button className={styles.primaryButton} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .6 }} whileHover={{ scale: 1.03 }} whileTap={{ scale: .97 }} onClick={() => { setSubmitted(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Back to top</motion.button></motion.div></section>;
   return <section id="waitlist" className={styles.waitlist}><Blueprint variant="dots" /><div className={styles.waitlistGrid}><motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: .2 }} variants={stagger}><motion.span variants={reveal} className={styles.earlyBadge}><b>Beta</b> Early access</motion.span><motion.h2 variants={reveal}>Join the FieldSolo waitlist</motion.h2><motion.p variants={reveal}>FieldSolo is still in beta, but is growing fast. If you’re interested in helping shape the future of FieldSolo with us, we’d love to have you.</motion.p><motion.aside variants={reveal} animate={{ y: [-5, 5, -5] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}><Check /> Secure your spot for early access.</motion.aside></motion.div>
-    <motion.form className={styles.form} onSubmit={onSubmit} initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .2 }} transition={{ duration: .8, ease: [0.22, 1, .36, 1], delay: .2 }} whileHover={{ boxShadow: "0 25px 50px -12px rgba(43, 52, 65, 0.15)" }}>
+    <motion.form className={styles.form} method="post" action="/api/waitlist" onSubmit={onSubmit} initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .2 }} transition={{ duration: .8, ease: [0.22, 1, .36, 1], delay: .2 }} whileHover={{ boxShadow: "0 25px 50px -12px rgba(43, 52, 65, 0.15)" }}>
+      <div className={styles.honeypot} aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
       <label>First name<input name="firstName" required autoComplete="given-name" placeholder="Enter your first name" /></label>
       <label>Email address<input name="email" type="email" required autoComplete="email" placeholder="Enter your email" /></label>
-      <label>Trade <MultiSelect label="your trade(s)" name="trades" options={tradeOptions} value={trades} onChange={setTrades} /><span className={styles.validation}>{trades.length ? "" : "Choose at least one trade"}</span></label>
+      <label>Trade <MultiSelect label="your trade(s)" name="trades" options={tradeOptions} value={trades} onChange={setTrades} showError={validationAttempted && !trades.length} /></label>
       <fieldset><legend>Do you currently pay for field service software?</legend><motion.label whileHover={{ scale: 1.02, backgroundColor: "rgba(250, 246, 240, 1)" }} whileTap={{ scale: .98 }}><input name="usesSoftware" value="no" type="radio" required /> No</motion.label><motion.label whileHover={{ scale: 1.02, backgroundColor: "rgba(250, 246, 240, 1)" }} whileTap={{ scale: .98 }}><input name="usesSoftware" value="yes" type="radio" required /> Yes</motion.label></fieldset>
-      <label>What do you use today to track jobs? <MultiSelect label="tracking tool(s)" name="trackingTools" options={trackingToolOptions} value={trackingTools} onChange={setTrackingTools} /><span className={styles.validation}>{trackingTools.length ? "" : "Choose at least one option"}</span></label>
-      <label>Where do most of your jobs come from? <MultiSelect label="job source(s)" name="jobSources" options={jobSourceOptions} value={jobSources} onChange={setJobSources} /><span className={styles.validation}>{jobSources.length ? "" : "Choose at least one option"}</span></label>
-      <motion.button className={styles.primaryButton} type="submit" whileHover={{ scale: 1.03, boxShadow: "0 10px 15px -3px rgba(196, 75, 43, 0.3)" }} whileTap={{ scale: .97 }}>Join the waitlist <ArrowRight size={19} /></motion.button><small>No spam. Just early access, product updates, and opportunities to share your feedback.</small>
+      <label>What do you use today to track jobs? <MultiSelect label="tracking tool(s)" name="trackingTools" options={trackingToolOptions} value={trackingTools} onChange={setTrackingTools} showError={validationAttempted && !trackingTools.length} /></label>
+      <label>Where do most of your jobs come from? <MultiSelect label="job source(s)" name="jobSources" options={jobSourceOptions} value={jobSources} onChange={setJobSources} showError={validationAttempted && !jobSources.length} /></label>
+      <div className={styles.consent}><input id="waitlist-privacy-consent" name="privacyAccepted" value="true" type="checkbox" required /><label htmlFor="waitlist-privacy-consent">I agree to the <Link href="/privacy">Privacy Policy</Link> and consent to receive FieldSolo early-access and product updates.</label></div>
+      {errorMessage ? <p className={styles.formError} role="alert">{errorMessage}</p> : null}
+      <motion.button className={styles.primaryButton} type="submit" disabled={submitting} whileHover={submitting ? undefined : { scale: 1.03, boxShadow: "0 10px 15px -3px rgba(196, 75, 43, 0.3)" }} whileTap={submitting ? undefined : { scale: .97 }}>{submitting ? "Joining..." : <>Join the waitlist <ArrowRight size={19} /></>}</motion.button><small>No spam. Just early access, product updates, and opportunities to share your feedback.</small>
     </motion.form>
   </div></section>;
 }

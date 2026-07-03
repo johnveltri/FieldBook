@@ -4,7 +4,7 @@
 
 **Implementation evidence:** `http://localhost:3000/`, captured after page-load motion completed. Full-page comparison artifacts were captured locally in `/tmp/fieldsolo-marketing-prototype/figma-reference-full.png` and `/tmp/fieldsolo-marketing-prototype/local-alignment.png`.
 
-**State:** Desktop default landing state; preview-only waitlist form.
+**State:** Desktop default landing state; waitlist form wired to Supabase via `/api/waitlist`.
 
 **ZIP comparison (2026-06-21):** Ran the uploaded Vite prototype locally and
 captured it beside the marketing implementation at the same 1000px desktop
@@ -41,7 +41,7 @@ implementation also follows the ZIP's 1024px problem-section stack breakpoint.
 
 ## Follow-up polish
 
-- Phase 2 should swap the preview-only submit transition for the real waitlist API response and confirmation state.
+- Waitlist form submits to Supabase via `POST /api/waitlist` (service-role insert). Manage signups in Supabase Studio.
 
 **final result: passed**
 

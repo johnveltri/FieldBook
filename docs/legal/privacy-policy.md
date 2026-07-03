@@ -1,9 +1,9 @@
 # FieldSolo Privacy Policy
 
-**Effective date:** June 21, 2026  
-**Policy version:** 2026-06-21
+**Effective date:** July 3, 2026
+**Policy version:** 2026-07-03
 
-FieldSolo is operated by **Veltri Ventures LLC** ("FieldSolo," "we," "us," or "our"). This Privacy Policy explains how we collect, use, disclose, retain, and protect information when you use the FieldSolo mobile application, website, and related services (collectively, the "Services").
+FieldSolo is operated by **Veltri Ventures LLC** ("FieldSolo," "we," "us," or "our"). This Privacy Policy explains how we collect, use, disclose, retain, and protect information when you use the FieldSolo mobile application, website, waitlist, and related services (collectively, the "Services").
 
 This policy is intended for U.S. users. FieldSolo is for adults aged 18 and older and is not directed to children.
 
@@ -13,7 +13,7 @@ We collect information you provide directly, information created while you use t
 
 ### Current FieldSolo data
 
-- **Account and profile information:** email address, first and last name, trade selections, account identifier, authentication information, and privacy-policy acceptance record.
+- **Waitlist, account, and profile information:** first and last name, email address, trade selections, current software and job-tracking practices, job-source selections, account identifier, authentication information, marketing-consent status, and privacy-policy acceptance record.
 - **Job record information:** job descriptions, customer names, service addresses, job type, notes, materials, work-session dates and times, payment status, revenue, costs, collected amounts, and earnings calculations.
 - **Service-use and diagnostic information:** app interactions, app/session identifiers, device platform, app version, coarse operational error categories, and similar information needed to understand and improve reliability. If analytics is enabled, FieldSolo uses this information only after you agree to analytics collection.
 - **Communications and privacy requests:** information you send to us, including requests to access, correct, export, delete, or otherwise manage your data.
@@ -29,6 +29,7 @@ FieldSolo does not currently collect precise GPS location, calendar data, email 
 We use information to:
 
 - provide, secure, personalize, maintain, and support the Services;
+- operate the waitlist and send requested early-access and product updates;
 - create and display your job records and earnings insights;
 - authenticate users, prevent fraud and abuse, troubleshoot, and enforce our terms;
 - communicate about your account, privacy requests, service changes, and support;
@@ -62,6 +63,8 @@ FieldSolo uses product analytics only after you agree to analytics collection. Y
 
 We retain personal information only for as long as reasonably necessary for the purposes described in this policy, including providing the Services, maintaining security, meeting legal obligations, resolving disputes, and enforcing agreements.
 
+You may ask us to remove your waitlist record or stop waitlist marketing messages at any time by emailing [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com). Marketing emails will also include any unsubscribe mechanism required by applicable law.
+
 When you delete your account, we delete active account and User Content systems within 30 days. Encrypted backup copies are scheduled to expire within 90 days. We may retain a limited amount of information longer when necessary for legal compliance, security, fraud prevention, dispute resolution, or enforcement, and will limit that retained information to the relevant purpose.
 
 ## Security
@@ -77,10 +80,11 @@ FieldSolo honors the following requests for all users, regardless of state of re
 - deletion of personal information;
 - portability of eligible information in a usable format;
 - withdrawal of analytics consent;
+- withdrawal of waitlist marketing consent and deletion of a waitlist record;
 - opt-out of a sale, targeted advertising, or certain profiling, if FieldSolo ever offers those activities; and
 - appeal of a privacy-request decision.
 
-To make a request, email [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com) or use the privacy choices page at `https://fieldsolo.com/privacy-choices`. To delete an account, use the in-app Delete account control or `https://fieldsolo.com/delete-account`. We may verify requests using information associated with your account. Authorized agents may submit requests by contacting us with proof of authorization. If we deny a request, you may appeal by replying to the decision or emailing privacy@fieldsolo.com with "Privacy Appeal" in the subject line.
+To make a request or remove a waitlist record, email [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com). To delete an app account, use the in-app Delete account control or email us. We may verify requests using information associated with your account or waitlist record. Authorized agents may submit requests by contacting us with proof of authorization. If we deny a request, you may appeal by replying to the decision or emailing privacy@fieldsolo.com with "Privacy Appeal" in the subject line.
 
 ## State Privacy Notices
 
@@ -96,5 +100,3 @@ For questions or privacy requests, contact:
 
 **Veltri Ventures LLC, operating FieldSolo**  
 [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com)
-
-Before publication, add FieldSolo's confirmed business mailing address here if required by counsel or applicable law.
