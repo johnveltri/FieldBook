@@ -1462,8 +1462,8 @@ function LandingPage() {
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ProductCard, {
                                                 step: 1,
                                                 title: "Mobile-optimized tracking",
-                                                image: "/images/source-1.png",
-                                                imageAlt: "Smartphone home screen",
+                                                image: "/images/live-session.png",
+                                                imageAlt: "FieldSolo live job session screen",
                                                 children: "Start a live session while you work or log the job later when the day slows down. Add the basics first. Fill in the rest when you have time."
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/marketing/src/components/LandingPage.tsx",
@@ -1473,8 +1473,8 @@ function LandingPage() {
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ProductCard, {
                                                 step: 2,
                                                 title: "Capture what matters",
-                                                image: "/images/source-2.png",
-                                                imageAlt: "Smartphone used in the field",
+                                                image: "/images/job-notes-materials.png",
+                                                imageAlt: "FieldSolo job notes and materials screen",
                                                 children: "Capture time, materials, notes, revenue, and payment status without the complicated paperwork."
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/marketing/src/components/LandingPage.tsx",
@@ -1484,8 +1484,8 @@ function LandingPage() {
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ProductCard, {
                                                 step: 3,
                                                 title: "Close out loose ends",
-                                                image: "/images/source-3.png",
-                                                imageAlt: "Smartphone displaying a performance chart",
+                                                image: "/images/open-jobs.png",
+                                                imageAlt: "FieldSolo open jobs screen",
                                                 children: "Stay on top of unpaid jobs and incomplete records before they’re forgotten."
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/marketing/src/components/LandingPage.tsx",
@@ -1495,8 +1495,8 @@ function LandingPage() {
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ProductCard, {
                                                 step: 4,
                                                 title: "Understand your margins",
-                                                image: "/images/source-4.png",
-                                                imageAlt: "Analytics dashboard",
+                                                image: "/images/earnings-summary.png",
+                                                imageAlt: "FieldSolo earnings summary screen",
                                                 children: "Review revenue, material costs, net profit, and net-per-hour for one job, or the whole month."
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/marketing/src/components/LandingPage.tsx",
@@ -1506,8 +1506,8 @@ function LandingPage() {
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ProductCard, {
                                                 step: 5,
                                                 title: "Learn from your history",
-                                                image: "/images/source-5.png",
-                                                imageAlt: "Smartphone lock screen",
+                                                image: "/images/earnings-profit-ranking.png",
+                                                imageAlt: "FieldSolo earnings profit ranking screen",
                                                 children: "Search past jobs, see your best and worst jobs, and price smarter next time."
                                             }, void 0, false, {
                                                 fileName: "[project]/apps/marketing/src/components/LandingPage.tsx",
