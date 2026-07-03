@@ -11,6 +11,7 @@ This file is the canonical source of truth for current legal document version id
 
 - **Canonical markdown:** [`privacy-policy.md`](./privacy-policy.md), [`terms.md`](./terms.md)
 - **Marketing site constants:** `PRIVACY_POLICY_VERSION` and `TERMS_VERSION` in [`apps/marketing/src/lib/waitlist-validation.ts`](../../apps/marketing/src/lib/waitlist-validation.ts)
+- **Mobile app constants:** `REQUIRED_PRIVACY_VERSION` and `REQUIRED_TERMS_VERSION` in [`apps/mobile-expo/src/lib/legal-versions.ts`](../../apps/mobile-expo/src/lib/legal-versions.ts)
 - **Website pages:** `policyVersion` in [`apps/marketing/src/app/privacy/page.tsx`](../../apps/marketing/src/app/privacy/page.tsx), `termsVersion` in [`apps/marketing/src/app/terms/page.tsx`](../../apps/marketing/src/app/terms/page.tsx)
 - **Waitlist consent:** `waitlist_signups.privacy_policy_version` (marketing waitlist only)
 - **App user consent:** `legal_acceptances.document_version` (authenticated users; see backend migration)
