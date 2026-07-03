@@ -43,7 +43,7 @@ import {
 export function SignInScreen() {
   const insets = useSafeAreaInsets();
   const scrollY = useMemo(() => new Animated.Value(0), []);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, setSignupLegalPending } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -143,7 +143,7 @@ export function SignInScreen() {
         });
         // First/last name go into raw_user_meta_data so the
         // public.handle_new_user trigger can seed the profiles row.
-        const { error: signUpErr } = await signUp(trimmed, password, {
+        const { error: signUpErr, session: signUpSession } = await signUp(trimmed, password, {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
         });
@@ -161,24 +161,26 @@ export function SignInScreen() {
           ...emailProperties(trimmed),
           email: trimmed,
         });
-        // In local/dev projects email confirmation may vary; attempt sign-in immediately.
-        const { error: signInErr } = await signIn(trimmed, password);
-        if (signInErr) {
-          analytics.capture('sign_up_failed', {
-            stage: 'immediate_sign_in',
-            ...emailProperties(trimmed),
-            email: trimmed,
-            ...errorProperties(signInErr),
-          });
-          setError(
-            `Account created. ${
-              signInErr.message || 'Sign in next to continue.'
-            }`,
-          );
-          setMode('signIn');
-          return;
-        }
+
+        setSignupLegalPending(true);
         try {
+          if (!signUpSession) {
+            const { error: signInErr } = await signIn(trimmed, password);
+            if (signInErr) {
+              analytics.capture('sign_up_failed', {
+                stage: 'immediate_sign_in',
+                ...emailProperties(trimmed),
+                email: trimmed,
+                ...errorProperties(signInErr),
+              });
+              setError(
+                'Account created. Check your email to confirm your account, then sign in.',
+              );
+              setMode('signIn');
+              return;
+            }
+          }
+
           await recordSignupLegalAcceptances(supabase, {
             privacyVersion: REQUIRED_PRIVACY_VERSION,
             termsVersion: REQUIRED_TERMS_VERSION,
@@ -197,6 +199,8 @@ export function SignInScreen() {
               ? consentErr.message
               : 'Could not save your legal acceptance. Try signing in again.',
           );
+        } finally {
+          setSignupLegalPending(false);
         }
       }
     } catch (e) {
@@ -210,7 +214,7 @@ export function SignInScreen() {
     } finally {
       setBusy(false);
     }
-  }, [email, password, firstName, lastName, legalAccepted, mode, signIn, signUp]);
+  }, [email, password, firstName, lastName, legalAccepted, mode, setSignupLegalPending, signIn, signUp]);
 
   if (!fontsLoaded) {
     return (

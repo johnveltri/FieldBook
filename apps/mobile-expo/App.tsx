@@ -44,7 +44,7 @@ import { color } from '@fieldsolo/design-system/lib/tokens';
 import { bg } from './src/theme/nativeTokens';
 
 function AuthenticatedShell() {
-  const { session, loading } = useAuth();
+  const { session, loading, signupLegalPending } = useAuth();
   const [legalGate, setLegalGate] = useState<'loading' | 'blocked' | 'ready'>('loading');
   /** When true, job detail covers tab shell (HOME / JOBS / EARNINGS); X returns here. */
   const [jobDetailOpen, setJobDetailOpen] = useState(false);
@@ -69,8 +69,8 @@ function AuthenticatedShell() {
   const liveSession = useLiveSession();
 
   useEffect(() => {
-    if (!session) {
-      setLegalGate('loading');
+    if (!session || signupLegalPending) {
+      if (!session) setLegalGate('loading');
       return;
     }
 
@@ -96,7 +96,7 @@ function AuthenticatedShell() {
     return () => {
       cancelled = true;
     };
-  }, [session?.user.id]);
+  }, [session?.user.id, signupLegalPending]);
 
   const openInbox = useCallback(() => {
     analytics.capture('inbox_opened', { source: 'jobs_header' });
@@ -226,7 +226,7 @@ function AuthenticatedShell() {
     return () => sub.remove();
   }, [liveSession.hasLiveSession, session]);
 
-  if (loading || (session && legalGate === 'loading')) {
+  if (loading || signupLegalPending || (session && legalGate === 'loading')) {
     return (
       <View style={[styles.root, styles.centered]}>
         <ActivityIndicator />

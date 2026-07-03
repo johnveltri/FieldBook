@@ -27,6 +27,11 @@ type LegalAcceptanceRow = {
 async function requireAuthenticatedUserId(
   client: FieldSoloSupabaseClient,
 ): Promise<string> {
+  const { data: sessionData, error: sessionError } = await client.auth.getSession();
+  if (sessionError) throw sessionError;
+  const sessionUserId = sessionData.session?.user?.id;
+  if (sessionUserId) return sessionUserId;
+
   const { data, error } = await client.auth.getUser();
   if (error) throw error;
   const userId = data.user?.id;

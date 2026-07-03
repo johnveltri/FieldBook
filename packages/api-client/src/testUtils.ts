@@ -68,6 +68,12 @@ export function makeClient(options: ClientOptions) {
 
   return {
     auth: {
+      getSession: vi.fn(async () => ({
+        data: {
+          session: options.authUserId ? { user: { id: options.authUserId } } : null,
+        },
+        error: null,
+      })),
       getUser: vi.fn(async () => ({
         data: { user: options.authUserId ? { id: options.authUserId } : null },
         error: null,

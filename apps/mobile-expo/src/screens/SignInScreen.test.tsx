@@ -12,6 +12,7 @@ jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     signIn: jest.fn(),
     signUp: jest.fn(),
+    setSignupLegalPending: jest.fn(),
   }),
 }));
 
