@@ -38,6 +38,20 @@ Use the project **Project URL** and **anon public** key as:
 
 Local defaults after `supabase start` are shown in the CLI output (`API URL` and `anon key`).
 
+## Env for `apps/marketing`
+
+The waitlist form submits through a server-side route handler using the **service role** key (never expose as `NEXT_PUBLIC`):
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `WAITLIST_RATE_LIMIT_SALT` (a random server-only secret used to hash IP addresses for abuse prevention)
+
+See [`apps/marketing/.env.example`](../apps/marketing/.env.example). Local values come from `npx supabase status --workdir backend`.
+
+## Waitlist signups
+
+Marketing waitlist rows live in `public.waitlist_signups`. RLS is enabled with **no policies**, so anon/authenticated clients cannot read or write the table. Inserts happen only via the marketing app's `/api/waitlist` route (service role). The route uses a honeypot, same-origin checks, strict payload limits, and an atomic per-IP hash rate limit. View, filter, export, and update `status` (pending/invited/converted) in Supabase Studio.
+
 The Expo app still uses the publishable anon key for Supabase Auth and session refresh. Shared
 schema migrations no longer grant direct public-table access to the `anon` role.
 
