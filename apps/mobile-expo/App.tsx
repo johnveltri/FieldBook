@@ -21,8 +21,17 @@ import {
   useLiveSession,
 } from './src/context/LiveSessionContext';
 import type { ListJobsForCurrentUserTab } from '@fieldsolo/api-client';
+import {
+  fetchLatestLegalAcceptanceVersions,
+  needsLegalReacceptance,
+} from '@fieldsolo/api-client';
 import { analytics, emailProperties } from './src/lib/analytics';
-import { isSupabaseConfigured } from './src/lib/supabase';
+import { isSupabaseConfigured, supabase } from './src/lib/supabase';
+import {
+  REQUIRED_PRIVACY_VERSION,
+  REQUIRED_TERMS_VERSION,
+} from './src/lib/legal-versions';
+import { LegalReacceptanceModal } from './src/components/LegalReacceptanceModal';
 import { EarningsScreen, type EarningsWindow } from './src/screens/EarningsScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { InboxScreen } from './src/screens/InboxScreen';
@@ -36,6 +45,7 @@ import { bg } from './src/theme/nativeTokens';
 
 function AuthenticatedShell() {
   const { session, loading } = useAuth();
+  const [legalGate, setLegalGate] = useState<'loading' | 'blocked' | 'ready'>('loading');
   /** When true, job detail covers tab shell (HOME / JOBS / EARNINGS); X returns here. */
   const [jobDetailOpen, setJobDetailOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -57,6 +67,36 @@ function AuthenticatedShell() {
   const [inboxLoadKey, setInboxLoadKey] = useState(0);
   // Hooks must be called unconditionally — bail-out renders below still execute these.
   const liveSession = useLiveSession();
+
+  useEffect(() => {
+    if (!session) {
+      setLegalGate('loading');
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      setLegalGate('loading');
+      try {
+        const accepted = await fetchLatestLegalAcceptanceVersions(supabase);
+        if (cancelled) return;
+        setLegalGate(
+          needsLegalReacceptance(accepted, {
+            privacyVersion: REQUIRED_PRIVACY_VERSION,
+            termsVersion: REQUIRED_TERMS_VERSION,
+          })
+            ? 'blocked'
+            : 'ready',
+        );
+      } catch {
+        if (!cancelled) setLegalGate('blocked');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user.id]);
 
   const openInbox = useCallback(() => {
     analytics.capture('inbox_opened', { source: 'jobs_header' });
@@ -186,7 +226,7 @@ function AuthenticatedShell() {
     return () => sub.remove();
   }, [liveSession.hasLiveSession, session]);
 
-  if (loading) {
+  if (loading || (session && legalGate === 'loading')) {
     return (
       <View style={[styles.root, styles.centered]}>
         <ActivityIndicator />
@@ -200,6 +240,12 @@ function AuthenticatedShell() {
 
   return (
     <View style={styles.root}>
+      <LegalReacceptanceModal
+        visible={legalGate === 'blocked'}
+        onAccepted={() => setLegalGate('ready')}
+      />
+      {legalGate === 'ready' ? (
+        <>
       {jobDetailOpen ? (
         <JobDetailScreen
           loadKey={jobDetailLoadKey}
@@ -304,6 +350,8 @@ function AuthenticatedShell() {
       )}
 
       <LiveSessionOverlay onSessionEnded={({ jobId }) => onLiveSessionEnded(jobId)} />
+        </>
+      ) : null}
     </View>
   );
 }

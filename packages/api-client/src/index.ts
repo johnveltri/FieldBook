@@ -84,7 +84,11 @@ export {
 } from './account';
 export {
   recordLegalAcceptance,
+  recordReacceptanceLegalAcceptances,
   recordSignupLegalAcceptances,
+  fetchLatestLegalAcceptanceVersions,
+  needsLegalReacceptance,
+  type LegalAcceptanceVersions,
   type LegalDocumentType,
   type RecordLegalAcceptanceInput,
 } from './consent';
