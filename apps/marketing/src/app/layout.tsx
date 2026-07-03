@@ -7,11 +7,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fieldsolo.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "FieldSolo | Built for the work after the work",
+    default: "FieldSolo | Job & Profit Tracker for Tradespeople",
     template: "%s | FieldSolo",
   },
   description:
-    "FieldSolo helps skilled trade professionals keep jobs, notes, materials, and the next move in one place.",
+    "FieldSolo helps skilled trade professionals keep jobs, notes, materials, and profit tracking all in one place. ",
   applicationName: "FieldSolo",
   robots: {
     index: false,
