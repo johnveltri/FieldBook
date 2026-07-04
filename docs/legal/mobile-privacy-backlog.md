@@ -1,6 +1,6 @@
 # FieldSolo Mobile App Privacy Backlog
 
-**Status:** Backlog — mobile app changes not yet implemented  
+**Status:** In progress — mobile privacy backlog #1–#8 implemented on `marketing/privacy-2`; #9 tests and Support screen in flight  
 **Prepared:** July 3, 2026  
 **Related:** [privacy-policy.md](./privacy-policy.md), [terms.md](./terms.md), [consent-versions.md](./consent-versions.md)
 
@@ -115,12 +115,12 @@ Remove sensitive properties at capture sites rather than relying on sanitizer:
 
 | Test | Scope |
 | --- | --- |
-| Signup requires legal checkbox | UI / integration |
-| Version bump triggers reacceptance modal | UI / integration |
-| No analytics events before consent granted | Unit (`analytics.test.ts`) |
-| Withdrawal clears local anonymous ID | Unit |
-| `legal_acceptances` RLS (own rows only) | Backend |
-| `analytics_consent` RLS (own rows only) | Backend |
+| Signup requires legal checkbox | UI / integration | Done (`SignInScreen.test.tsx`) |
+| Version bump triggers reacceptance modal | UI / integration | Done (`App.legal-gate.test.tsx`, `LegalReacceptanceModal.test.tsx`) |
+| No analytics events before consent granted | Unit (`analytics.test.ts`) | Done (`client.consent.test.ts`) |
+| Withdrawal clears local anonymous ID | Unit | Done (`client.consent.test.ts`) |
+| `legal_acceptances` RLS (own rows only) | Backend | Done (`consent_tables_rls.test.sql`) |
+| `analytics_consent` RLS (own rows only) | Backend | Done (`consent_tables_rls.test.sql`) |
 
 ## Backend ready (implemented)
 

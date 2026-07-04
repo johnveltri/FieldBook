@@ -1,8 +1,12 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
-import { describe, expect, it, jest } from '@jest/globals';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 
 import { SignInScreen } from './SignInScreen';
+
+const mockSignIn = jest.fn(async () => ({ error: null, session: null }));
+const mockSignUp = jest.fn(async () => ({ error: null, session: { user: { id: 'user-1' } } }));
+const mockSetSignupLegalPending = jest.fn();
 
 jest.mock('expo-font', () => ({
   useFonts: () => [true],
@@ -10,9 +14,9 @@ jest.mock('expo-font', () => ({
 
 jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
-    signIn: jest.fn(),
-    signUp: jest.fn(),
-    setSignupLegalPending: jest.fn(),
+    signIn: mockSignIn,
+    signUp: mockSignUp,
+    setSignupLegalPending: mockSetSignupLegalPending,
   }),
 }));
 
@@ -28,7 +32,22 @@ jest.mock('../lib/analytics', () => ({
   errorProperties: () => ({}),
 }));
 
+const mockRecordSignupLegalAcceptances = jest.fn(async () => undefined);
+
+jest.mock('@fieldsolo/api-client', () => ({
+  recordSignupLegalAcceptances: (...args: unknown[]) =>
+    mockRecordSignupLegalAcceptances(...(args as [])),
+}));
+
+jest.mock('../lib/supabase', () => ({
+  supabase: {},
+}));
+
 describe('SignInScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders the FieldSolo brand name', () => {
     const { getByText } = render(<SignInScreen />);
 
@@ -40,5 +59,44 @@ describe('SignInScreen', () => {
 
     expect(getAllByText('Privacy Policy').length).toBeGreaterThan(0);
     expect(getAllByText('Terms').length).toBeGreaterThan(0);
+  });
+
+  it('requires the legal checkbox before creating an account', async () => {
+    const screen = render(<SignInScreen />);
+
+    fireEvent.press(screen.getByText('Need an account? Sign up'));
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'tech@example.com');
+    fireEvent.changeText(screen.getByPlaceholderText('Alex'), 'Alex');
+    fireEvent.changeText(screen.getByPlaceholderText('Builder'), 'Builder');
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'password123');
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Create account'));
+    });
+
+    expect(
+      screen.getByText('Agree to the Privacy Policy and Terms to create an account.'),
+    ).toBeTruthy();
+    expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  it('submits sign up after the legal checkbox is checked', async () => {
+    const screen = render(<SignInScreen />);
+
+    fireEvent.press(screen.getByText('Need an account? Sign up'));
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'tech@example.com');
+    fireEvent.changeText(screen.getByPlaceholderText('Alex'), 'Alex');
+    fireEvent.changeText(screen.getByPlaceholderText('Builder'), 'Builder');
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'password123');
+    fireEvent.press(screen.getByRole('checkbox'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Create account'));
+    });
+
+    await waitFor(() => {
+      expect(mockSignUp).toHaveBeenCalledTimes(1);
+      expect(mockRecordSignupLegalAcceptances).toHaveBeenCalledTimes(1);
+    });
   });
 });

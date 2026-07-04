@@ -14,6 +14,18 @@ PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
   -f backend/supabase/tests/materials_soft_delete.test.sql
 ```
 
+```bash
+PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -f backend/supabase/tests/consent_tables_rls.test.sql
+```
+
+Or run all DB tests:
+
+```bash
+npm run test:db
+```
+
 Each test prints a final `*.test.sql PASSED` row on success. Any failed
 `do $$ … raise exception … $$` inside the file causes `psql` to exit
 non-zero because of the `-v ON_ERROR_STOP=1` flag.

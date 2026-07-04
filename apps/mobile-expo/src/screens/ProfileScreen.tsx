@@ -45,6 +45,7 @@ import { useAuth } from '../context/AuthContext';
 import { analytics, changedFields, emailProperties, errorProperties } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
 import { PrivacyChoicesScreen } from './PrivacyChoicesScreen';
+import { SupportScreen } from './SupportScreen';
 import { TRADE_PRESETS, formatTradesForDisplay } from '../lib/trades';
 import {
   TOP_HEADER_MAX_WIDTH,
@@ -119,6 +120,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [privacyChoicesOpen, setPrivacyChoicesOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -378,11 +380,18 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
   );
 
   const openPrivacyChoices = useCallback(() => {
+    setSupportOpen(false);
     setPrivacyChoicesOpen(true);
+  }, []);
+
+  const openSupport = useCallback(() => {
+    setPrivacyChoicesOpen(false);
+    setSupportOpen(true);
   }, []);
 
   const accountRows: ProfileRowsCardRow[] = useMemo(
     () => [
+      { kind: 'link', label: 'Support', onPress: openSupport },
       { kind: 'link', label: 'Privacy', onPress: openPrivacyChoices },
       { kind: 'link', label: 'Change password', onPress: openChangePassword },
       {
@@ -392,7 +401,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         hideChevron: true,
       },
     ],
-    [openChangePassword, openPrivacyChoices, signOut],
+    [openChangePassword, openPrivacyChoices, openSupport, signOut],
   );
 
   const deleteRows: ProfileRowsCardRow[] = useMemo(
@@ -414,6 +423,10 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
       </View>
     );
+  }
+
+  if (supportOpen) {
+    return <SupportScreen onBack={() => setSupportOpen(false)} />;
   }
 
   if (privacyChoicesOpen && session?.user.id) {

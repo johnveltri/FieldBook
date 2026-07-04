@@ -111,6 +111,18 @@ describe('ProfileScreen', () => {
     });
   });
 
+  it('opens Support from the account section', async () => {
+    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    await waitFor(() => {
+      expect(screen.getByText('Support')).toBeTruthy();
+    });
+    fireEvent.press(screen.getByText('Support'));
+    await waitFor(() => {
+      expect(screen.getByText('SUPPORT')).toBeTruthy();
+      expect(screen.getByText('support@fieldsolo.com')).toBeTruthy();
+    });
+  });
+
   it('opens the delete account sheet before showing the system confirmation', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const screen = render(<ProfileScreen onBack={jest.fn()} />);

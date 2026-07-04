@@ -7,3 +7,6 @@ export const LEGAL_URLS = {
   terms: 'https://fieldsolo.com/terms',
   deleteAccount: 'https://fieldsolo.com/delete-account',
 } as const;
+
+export const SUPPORT_EMAIL = 'support@fieldsolo.com';
+export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}`;
