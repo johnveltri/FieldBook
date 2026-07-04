@@ -72,6 +72,11 @@ type BottomSheetShellProps = {
    * try to position itself relative to its own sheet.
    */
   registerInGlobalStack?: boolean;
+  /**
+   * Extra cream padding below sheet content (above the safe-area inset).
+   * @default space('Spacing/12')
+   */
+  bottomPaddingExtra?: number;
 };
 
 /**
@@ -91,6 +96,7 @@ export function BottomSheetShell({
   variant = 'standard',
   autoSizeUpToFraction,
   registerInGlobalStack = true,
+  bottomPaddingExtra = space('Spacing/12'),
 }: BottomSheetShellProps) {
   const insets = useSafeAreaInsets();
   const sheetStack = useBottomSheetStackWriters();
@@ -257,12 +263,12 @@ export function BottomSheetShell({
   // own (handle area, safe-area bottom). Children own their padding when
   // `fullbleedDark`, so the only overhead there is the safe-area bottom.
   const sheetChromeHeight = isFullbleed
-    ? effectiveSafeBottom + space('Spacing/12')
+    ? effectiveSafeBottom + bottomPaddingExtra
     : space('Spacing/16') /* paddingTop */ +
       6 /* handle h */ +
       space('Spacing/16') /* handle marginBottom */ +
       effectiveSafeBottom +
-      space('Spacing/12');
+      bottomPaddingExtra;
 
   const scrollViewMaxHeight =
     maxSheetHeight != null ? Math.max(0, maxSheetHeight - sheetChromeHeight) : undefined;
@@ -308,7 +314,7 @@ export function BottomSheetShell({
           style={[
             isFullbleed ? styles.sheetFullbleed : styles.sheet,
             {
-              paddingBottom: isFullbleed ? 0 : effectiveSafeBottom + space('Spacing/12'),
+              paddingBottom: isFullbleed ? 0 : effectiveSafeBottom + bottomPaddingExtra,
               maxHeight: maxSheetHeight,
               transform: [
                 {

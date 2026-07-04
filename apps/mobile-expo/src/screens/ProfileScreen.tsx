@@ -26,6 +26,7 @@ import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import {
   ChangePasswordBottomSheet,
+  DeleteAccountBottomSheet,
   ProfileRowsCard,
   TradeMultiSelectBottomSheet,
   UpdateProfileBottomSheet,
@@ -43,6 +44,8 @@ import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
 import { useAuth } from '../context/AuthContext';
 import { analytics, changedFields, emailProperties, errorProperties } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
+import { PrivacyChoicesScreen } from './PrivacyChoicesScreen';
+import { HelpScreen } from './HelpScreen';
 import { TRADE_PRESETS, formatTradesForDisplay } from '../lib/trades';
 import {
   TOP_HEADER_MAX_WIDTH,
@@ -79,7 +82,8 @@ type ProfileFlow =
   | 'closed'
   | 'editProfile'
   | 'editProfileTrades'
-  | 'changePassword';
+  | 'changePassword'
+  | 'deleteAccount';
 
 export type ProfileScreenProps = {
   onBack: () => void;
@@ -115,6 +119,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
   // --- Profile data ---
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [privacyChoicesOpen, setPrivacyChoicesOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,10 +135,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             [p.firstName, p.lastName].every((v) => (v ?? '').trim().length > 0) &&
             (p.trades ?? []).length > 0,
           trade_count: p?.trades.length ?? 0,
-          trades: p?.trades ?? [],
           plan: 'free',
           ...emailProperties(session?.user.email),
-          email: session?.user.email ?? null,
         });
       } catch (e) {
         if (cancelled) return;
@@ -155,6 +159,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
    */
   const [editProfileMounted, setEditProfileMounted] = useState(false);
   const [changePasswordMounted, setChangePasswordMounted] = useState(false);
+  const [deleteAccountMounted, setDeleteAccountMounted] = useState(false);
   const [saving, setSaving] = useState(false);
 
   /**
@@ -197,7 +202,6 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     setFlow('editProfileTrades');
     analytics.capture('profile_trade_picker_opened', {
       current_trade_count: current.trades.length,
-      trades: current.trades,
     });
   }, []);
 
@@ -229,9 +233,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         if (session?.user.id) {
           analytics.identify(session.user.id, {
             ...emailProperties(session.user.email),
-            email: session.user.email ?? null,
             trade_count: updated.trades.length,
-            trades: updated.trades,
             profile_complete:
               [updated.firstName, updated.lastName].every((v) => (v ?? '').trim().length > 0) &&
               updated.trades.length > 0,
@@ -244,7 +246,6 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             trades: values.trades.join('|'),
           }),
           trade_count: updated.trades.length,
-          trades: updated.trades,
         });
       } catch (e) {
         analytics.capture('profile_save_failed', {
@@ -304,11 +305,18 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     [saving, updatePassword],
   );
 
-  const onDeleteAccountPress = useCallback(() => {
+  const openDeleteAccount = useCallback(() => {
     analytics.capture('account_delete_requested', { source: 'profile' });
+    setDeleteAccountMounted(true);
+    setFlow('deleteAccount');
+  }, []);
+  const closeDeleteAccount = useCallback(() => {
+    setFlow('closed');
+  }, []);
+  const onDeleteAccountSheetSubmit = useCallback(() => {
     Alert.alert(
       'Delete account?',
-      'This permanently deletes your account and all associated jobs, sessions, notes, and materials. This cannot be undone.',
+      'This permanently deletes your account and all associated data. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -319,9 +327,9 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             const { error } = await deleteAccount();
             if (error) {
               Alert.alert('Could not delete account', error.message);
+              return;
             }
-            // On success the AuthContext signs out; AuthenticatedShell will
-            // route back to SignInScreen on the next render.
+            setFlow('closed');
           },
         },
       ],
@@ -371,8 +379,20 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     [],
   );
 
+  const openPrivacyChoices = useCallback(() => {
+    setHelpOpen(false);
+    setPrivacyChoicesOpen(true);
+  }, []);
+
+  const openHelp = useCallback(() => {
+    setPrivacyChoicesOpen(false);
+    setHelpOpen(true);
+  }, []);
+
   const accountRows: ProfileRowsCardRow[] = useMemo(
     () => [
+      { kind: 'link', label: 'Help', onPress: openHelp },
+      { kind: 'link', label: 'Privacy', onPress: openPrivacyChoices },
       { kind: 'link', label: 'Change password', onPress: openChangePassword },
       {
         kind: 'link',
@@ -381,7 +401,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         hideChevron: true,
       },
     ],
-    [openChangePassword, signOut],
+    [openChangePassword, openHelp, openPrivacyChoices, signOut],
   );
 
   const deleteRows: ProfileRowsCardRow[] = useMemo(
@@ -391,10 +411,10 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         label: 'Delete account',
         icon: <ProfileTrashIcon color={color('Semantic/Status/Error/Text')} />,
         tone: 'danger',
-        onPress: onDeleteAccountPress,
+        onPress: openDeleteAccount,
       },
     ],
-    [onDeleteAccountPress],
+    [openDeleteAccount],
   );
 
   if (!fontsLoaded) {
@@ -402,6 +422,19 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
       <View style={styles.root}>
         <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
       </View>
+    );
+  }
+
+  if (helpOpen) {
+    return <HelpScreen onBack={() => setHelpOpen(false)} />;
+  }
+
+  if (privacyChoicesOpen && session?.user.id) {
+    return (
+      <PrivacyChoicesScreen
+        userId={session.user.id}
+        onBack={() => setPrivacyChoicesOpen(false)}
+      />
     );
   }
 
@@ -512,6 +545,19 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           }}
           onBack={closeChangePassword}
           onSubmit={onSubmitNewPassword}
+        />
+      ) : null}
+
+      {deleteAccountMounted ? (
+        <DeleteAccountBottomSheet
+          typography={typography}
+          visible={flow === 'deleteAccount'}
+          onClose={closeDeleteAccount}
+          onClosed={() => {
+            if (flow === 'closed') setDeleteAccountMounted(false);
+          }}
+          onBack={closeDeleteAccount}
+          onSubmit={onDeleteAccountSheetSubmit}
         />
       ) : null}
     </View>

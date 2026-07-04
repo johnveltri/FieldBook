@@ -1,11 +1,35 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import App from './App';
 
+jest.mock('@fieldsolo/api-client', () => ({
+  fetchLatestLegalAcceptanceVersions: jest.fn(async () => ({
+    privacy_policy: '2026-07-03',
+    terms: '2026-07-03',
+  })),
+  needsLegalReacceptance: jest.fn(() => false),
+}));
+
+jest.mock('./src/lib/analytics/consentSync', () => ({
+  resolveAnalyticsConsentForUser: jest.fn(async () => 'granted'),
+  syncAnalyticsConsentForUser: jest.fn(async () => undefined),
+  grantAnalyticsConsent: jest.fn(async () => undefined),
+  withdrawAnalyticsConsent: jest.fn(async () => undefined),
+}));
+
+jest.mock('./src/components/AnalyticsConsentPromptModal', () => ({
+  AnalyticsConsentPromptModal: () => null,
+}));
+
+jest.mock('./src/components/LegalReacceptanceModal', () => ({
+  LegalReacceptanceModal: () => null,
+}));
+
 jest.mock('./src/lib/supabase', () => ({
   isSupabaseConfigured: jest.fn(() => true),
+  supabase: {},
 }));
 
 jest.mock('./src/context/AuthContext', () => {
@@ -14,6 +38,8 @@ jest.mock('./src/context/AuthContext', () => {
     AuthProvider: ({ children }: { children: React.ReactNode }) => children,
     useAuth: () => ({
       loading: false,
+      signupLegalPending: false,
+      setSignupLegalPending: jest.fn(),
       session: { user: { id: 'user-77', email: 'tech@example.com' } },
     }),
   };
@@ -189,6 +215,14 @@ function openJobsTab(screen: ReturnType<typeof render>) {
   fireEvent.press(screen.getByText('ShellNavJobs'));
 }
 
+async function renderAppReady() {
+  const screen = render(<App />);
+  await waitFor(() => {
+    expect(screen.getByTestId('home-screen')).toBeTruthy();
+  });
+  return screen;
+}
+
 describe('App jobs to detail sync', () => {
   beforeEach(() => {
     homeMountCount = 0;
@@ -196,8 +230,8 @@ describe('App jobs to detail sync', () => {
     earningsMountCount = 0;
   });
 
-  it('passes selected job id and session user id into JobDetailScreen', () => {
-    const screen = render(<App />);
+  it('passes selected job id and session user id into JobDetailScreen', async () => {
+    const screen = await renderAppReady();
 
     openJobsTab(screen);
     expect(screen.getByTestId('jobs-screen')).toBeTruthy();
@@ -209,8 +243,8 @@ describe('App jobs to detail sync', () => {
     expect(screen.getByTestId('detail-props').props.children).toContain('loadKey:1');
   });
 
-  it('returns to JobsScreen when detail requests close', () => {
-    const screen = render(<App />);
+  it('returns to JobsScreen when detail requests close', async () => {
+    const screen = await renderAppReady();
 
     openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenJob'));
@@ -220,8 +254,8 @@ describe('App jobs to detail sync', () => {
     expect(screen.getByTestId('jobs-screen')).toBeTruthy();
   });
 
-  it('switches to HOME and dismisses Job Detail when the HOME tab is tapped from inside detail', () => {
-    const screen = render(<App />);
+  it('switches to HOME and dismisses Job Detail when the HOME tab is tapped from inside detail', async () => {
+    const screen = await renderAppReady();
 
     openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenJob'));
@@ -232,8 +266,8 @@ describe('App jobs to detail sync', () => {
     expect(screen.getByTestId('home-screen')).toBeTruthy();
   });
 
-  it('switches to EARNINGS and dismisses Job Detail when the EARNINGS tab is tapped from inside detail', () => {
-    const screen = render(<App />);
+  it('switches to EARNINGS and dismisses Job Detail when the EARNINGS tab is tapped from inside detail', async () => {
+    const screen = await renderAppReady();
 
     openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenJob'));
@@ -244,8 +278,8 @@ describe('App jobs to detail sync', () => {
     expect(screen.getByTestId('earnings-screen')).toBeTruthy();
   });
 
-  it('returns to JobsScreen when the JOBS tab is tapped from inside Job Detail', () => {
-    const screen = render(<App />);
+  it('returns to JobsScreen when the JOBS tab is tapped from inside Job Detail', async () => {
+    const screen = await renderAppReady();
 
     openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenJob'));
@@ -264,8 +298,8 @@ describe('App shell tab caching', () => {
     earningsMountCount = 0;
   });
 
-  it('keeps tab screens mounted when switching between HOME, JOBS, and EARNINGS', () => {
-    const screen = render(<App />);
+  it('keeps tab screens mounted when switching between HOME, JOBS, and EARNINGS', async () => {
+    const screen = await renderAppReady();
 
     expect(screen.getByTestId('home-screen')).toBeTruthy();
     expect(jobsMountCount).toBe(1);
@@ -289,8 +323,8 @@ describe('App inbox shell tab navigation', () => {
     earningsMountCount = 0;
   });
 
-  it('returns to JobsScreen when the JOBS tab is tapped from Inbox', () => {
-    const screen = render(<App />);
+  it('returns to JobsScreen when the JOBS tab is tapped from Inbox', async () => {
+    const screen = await renderAppReady();
 
     openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));
@@ -301,8 +335,8 @@ describe('App inbox shell tab navigation', () => {
     expect(screen.getByTestId('jobs-screen')).toBeTruthy();
   });
 
-  it('switches to HOME and dismisses Inbox when the HOME tab is tapped from Inbox', () => {
-    const screen = render(<App />);
+  it('switches to HOME and dismisses Inbox when the HOME tab is tapped from Inbox', async () => {
+    const screen = await renderAppReady();
 
     openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));
@@ -313,8 +347,8 @@ describe('App inbox shell tab navigation', () => {
     expect(screen.getByTestId('home-screen')).toBeTruthy();
   });
 
-  it('switches to EARNINGS and dismisses Inbox when the EARNINGS tab is tapped from Inbox', () => {
-    const screen = render(<App />);
+  it('switches to EARNINGS and dismisses Inbox when the EARNINGS tab is tapped from Inbox', async () => {
+    const screen = await renderAppReady();
 
     openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));

@@ -7,6 +7,7 @@ import {
 } from '@fieldsolo/api-client';
 
 import { analytics, errorProperties } from '../lib/analytics';
+import { clearAnalyticsConsentCache } from '../lib/analytics/consentStorage';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 export type SignUpProfileSeed = {
@@ -18,7 +19,13 @@ type AuthContextValue = {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  /** True while signup is finishing legal acceptance writes (blocks main shell). */
+  signupLegalPending: boolean;
+  setSignupLegalPending: (pending: boolean) => void;
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: AuthError | null; session: Session | null }>;
   /**
    * Creates a new auth.users row. When `profile` is provided, first / last
    * name are written to `raw_user_meta_data`, which the `handle_new_user`
@@ -30,7 +37,7 @@ type AuthContextValue = {
     email: string,
     password: string,
     profile?: SignUpProfileSeed,
-  ) => Promise<{ error: AuthError | null }>;
+  ) => Promise<{ error: AuthError | null; session: Session | null }>;
   signOut: () => Promise<void>;
   /** Wraps `auth.updateUser({ password })`. Throws on failure. */
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
@@ -46,6 +53,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signupLegalPending, setSignupLegalPending] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -82,9 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       loading,
+      signupLegalPending,
+      setSignupLegalPending,
       signIn: async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        return { error };
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        return { error, session: data.session };
       },
       signUp: async (email, password, profile) => {
         const options = profile
@@ -95,17 +105,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               },
             }
           : undefined;
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           ...(options ? { options } : {}),
         });
-        return { error };
+        return { error, session: data.session };
       },
       signOut: async () => {
-        analytics.capture('signed_out', { source: 'manual' });
+        if (analytics.isConsentGranted()) {
+          analytics.capture('signed_out', { source: 'manual' });
+        }
         await supabase.auth.signOut();
-        analytics.reset();
+        await analytics.onSignOut();
+        await clearAnalyticsConsentCache();
       },
       updatePassword: async (newPassword) => {
         try {
@@ -123,15 +136,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteAccount: async () => {
         try {
           await deleteCurrentAccount(supabase);
-          analytics.capture('account_delete_succeeded', { source: 'profile' });
+          if (analytics.isConsentGranted()) {
+            analytics.capture('account_delete_succeeded', { source: 'profile' });
+          }
           await supabase.auth.signOut();
-          analytics.reset();
+          await analytics.onSignOut();
+          await clearAnalyticsConsentCache();
           return { error: null };
         } catch (e) {
-          analytics.capture('account_delete_failed', {
-            source: 'profile',
-            ...errorProperties(e),
-          });
+          if (analytics.isConsentGranted()) {
+            analytics.capture('account_delete_failed', {
+              source: 'profile',
+              ...errorProperties(e),
+            });
+          }
           return {
             error:
               e instanceof Error
@@ -141,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [session, loading],
+    [session, loading, signupLegalPending],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

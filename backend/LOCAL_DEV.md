@@ -39,7 +39,12 @@ For **Expo** (`apps/mobile-expo`), you typically need:
 - `EXPO_PUBLIC_SUPABASE_URL` → API URL above (`http://127.0.0.1:54321`)
 - `EXPO_PUBLIC_SUPABASE_ANON_KEY` → **publishable** / anon key from CLI output
 
-See `apps/mobile-expo/.env.example` — copy to `.env` (not committed) and paste keys from `supabase status`.
+Create `apps/mobile-expo/.env` (not committed) with keys from `supabase status`:
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<publishable key from supabase status>
+```
 
 ### Expo Go (iOS + Android)
 

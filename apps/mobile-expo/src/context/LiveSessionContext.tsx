@@ -18,6 +18,7 @@ import {
 import type { ActiveLiveSession } from '@fieldsolo/shared-types';
 
 import { analytics, errorProperties } from '../lib/analytics';
+import { clearAnalyticsConsentCache } from '../lib/analytics/consentStorage';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useJobsListInvalidation } from './JobsListInvalidationContext';
@@ -157,12 +158,14 @@ export function LiveSessionProvider({ children }: LiveSessionProviderProps) {
       // the fresh database, and SUPPRESS the dev-only red box because it
       // is an expected, recoverable state.
       if (isStaleJwtError(err)) {
-        analytics.capture('stale_auth_session_detected', {
-          source_operation: 'refresh_live_session',
-          recovery_action: 'sign_out',
-          ...errorProperties(err),
-        });
-        analytics.capture('signed_out', { source: 'session_expired' });
+        if (analytics.isConsentGranted()) {
+          analytics.capture('stale_auth_session_detected', {
+            source_operation: 'refresh_live_session',
+            recovery_action: 'sign_out',
+            ...errorProperties(err),
+          });
+          analytics.capture('signed_out', { source: 'session_expired' });
+        }
         try {
           await supabase.auth.signOut();
         } catch {
@@ -170,7 +173,8 @@ export function LiveSessionProvider({ children }: LiveSessionProviderProps) {
         }
         setLiveSession(null);
         setMode('hidden');
-        analytics.reset();
+        await analytics.onSignOut();
+        await clearAnalyticsConsentCache();
         return null;
       }
       // Don't crash the app on other (network / transient) errors — just

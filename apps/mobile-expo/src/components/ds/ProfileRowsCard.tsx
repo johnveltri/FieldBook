@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
@@ -16,6 +16,7 @@ import { ProfileChevronRightIcon } from '../figma-icons/ProfileScreenIcons';
  *   - `link`        — single-line label + chevron (Change password / Log out)
  *   - `linkBadge`   — label + sublabel + status pill + chevron (Current Plan)
  *   - `linkWithIcon`— leading icon + label (Delete account)
+ *   - `toggle`      — label + optional sublabel + Switch
  */
 
 type ProfileRowFieldVariant = {
@@ -58,11 +59,21 @@ type ProfileRowLinkWithIconVariant = {
   tone?: 'default' | 'danger';
 };
 
+type ProfileRowToggleVariant = {
+  kind: 'toggle';
+  label: string;
+  sublabel?: string;
+  value: boolean;
+  onValueChange: (next: boolean) => void;
+  disabled?: boolean;
+};
+
 export type ProfileRowsCardRow =
   | ProfileRowFieldVariant
   | ProfileRowLinkVariant
   | ProfileRowLinkBadgeVariant
-  | ProfileRowLinkWithIconVariant;
+  | ProfileRowLinkWithIconVariant
+  | ProfileRowToggleVariant;
 
 type ProfileRowsCardProps = {
   typography: TextStyles;
@@ -203,29 +214,53 @@ function Row({
   }
 
   // linkWithIcon
-  const labelColor =
-    row.tone === 'danger' ? color('Semantic/Status/Error/Text') : fg.primary;
-  const interactive = !!row.onPress;
-  const Body = (
-    <View style={styles.linkIconInner}>
-      {row.icon}
-      <Text style={[typography.bodyBold, { color: labelColor }]} numberOfLines={1}>
-        {row.label}
-      </Text>
-    </View>
-  );
-  if (!interactive) {
-    return <View style={[styles.linkRow, topBorder]}>{Body}</View>;
+  if (row.kind === 'linkWithIcon') {
+    const labelColor =
+      row.tone === 'danger' ? color('Semantic/Status/Error/Text') : fg.primary;
+    const interactive = !!row.onPress;
+    const Body = (
+      <View style={styles.linkIconInner}>
+        {row.icon}
+        <Text style={[typography.bodyBold, { color: labelColor }]} numberOfLines={1}>
+          {row.label}
+        </Text>
+      </View>
+    );
+    if (!interactive) {
+      return <View style={[styles.linkRow, topBorder]}>{Body}</View>;
+    }
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={row.label}
+        onPress={row.onPress}
+        style={({ pressed }) => [styles.linkRow, topBorder, pressed && styles.pressed]}
+      >
+        {Body}
+      </Pressable>
+    );
   }
+
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={row.label}
-      onPress={row.onPress}
-      style={({ pressed }) => [styles.linkRow, topBorder, pressed && styles.pressed]}
-    >
-      {Body}
-    </Pressable>
+    <View style={[styles.toggleRow, topBorder]}>
+      <View style={styles.toggleTextCol}>
+        <Text style={[typography.bodyBold, { color: fg.primary }]}>{row.label}</Text>
+        {row.sublabel ? (
+          <Text style={[typography.bodySmall, { color: fg.secondary }]}>{row.sublabel}</Text>
+        ) : null}
+      </View>
+      <View style={styles.toggleSwitchWrap}>
+        <Switch
+          accessibilityRole="switch"
+          accessibilityLabel={row.label}
+          value={row.value}
+          onValueChange={row.onValueChange}
+          disabled={row.disabled}
+          trackColor={{ false: border.subtle, true: color('Brand/Accent') }}
+          thumbColor="#fff"
+        />
+      </View>
+    </View>
   );
 }
 
@@ -283,6 +318,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space('Spacing/8'),
+  },
+  toggleRow: {
+    paddingHorizontal: space('Spacing/16'),
+    minHeight: 70,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space('Spacing/12'),
+  },
+  toggleTextCol: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: space('Spacing/4'),
+  },
+  toggleSwitchWrap: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   pressed: {
     opacity: 0.75,

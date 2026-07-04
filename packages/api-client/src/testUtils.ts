@@ -10,6 +10,7 @@ type BuilderOptions = {
   singleResult?: QueryResult;
   maybeSingleResult?: QueryResult;
   onInsert?: (payload: unknown) => void;
+  onUpsert?: (payload: unknown) => void;
   onUpdate?: (patch: unknown) => void;
 };
 
@@ -26,6 +27,12 @@ export function makeBuilder(options: BuilderOptions = {}) {
   }
 
   builder.insert = vi.fn((payload: unknown) => {
+    options.onInsert?.(payload);
+    return builder;
+  });
+
+  builder.upsert = vi.fn((payload: unknown) => {
+    options.onUpsert?.(payload);
     options.onInsert?.(payload);
     return builder;
   });
@@ -68,6 +75,12 @@ export function makeClient(options: ClientOptions) {
 
   return {
     auth: {
+      getSession: vi.fn(async () => ({
+        data: {
+          session: options.authUserId ? { user: { id: options.authUserId } } : null,
+        },
+        error: null,
+      })),
       getUser: vi.fn(async () => ({
         data: { user: options.authUserId ? { id: options.authUserId } : null },
         error: null,

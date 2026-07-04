@@ -435,7 +435,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
           source: 'quick_actions',
           session_id: created.id,
           job_id: job.id,
-          job_short_description: job.shortDescription,
           placeholder_job: false,
         });
         setQuickActionsVisible(false);
@@ -484,13 +483,11 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         source: 'home_quick_session',
         job_id: createdJobId,
         placeholder: true,
-        job_short_description: shortDescription,
       });
       analytics.capture('live_session_started', {
         source: 'quick_actions',
         session_id: created.id,
         job_id: createdJobId,
-        job_short_description: shortDescription,
         placeholder_job: true,
       });
       setQuickActionsVisible(false);
@@ -633,8 +630,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         source: 'quick_actions',
         parent: 'job',
         job_id: job.id,
-        job_short_description: job.shortDescription,
-        customer_name: job.customerName,
       });
       if (kind === 'note') {
         setDraftBody('');
@@ -892,7 +887,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                             needs_attention_kind: kind,
                             job_id: job.id,
                             job_status: job.workStatus,
-                            job_short_description: job.shortDescription,
                           });
                           onOpenJobDetail(job.id);
                         }}
@@ -907,7 +901,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                             needs_attention_kind: kind,
                             job_id: job.id,
                             job_status: job.workStatus,
-                            job_short_description: job.shortDescription,
                           });
                           onOpenJobDetail(job.id);
                         }}
@@ -922,7 +915,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                             needs_attention_kind: kind,
                             job_id: job.id,
                             job_status: job.workStatus,
-                            job_short_description: job.shortDescription,
                           });
                           onOpenJobDetail(job.id);
                         }}
@@ -977,7 +969,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                           module: 'jump_back_in',
                           job_id: job.id,
                           job_status: job.workStatus,
-                          job_short_description: job.shortDescription,
                         });
                         onOpenJobDetail(job.id);
                       }}

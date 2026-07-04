@@ -13,6 +13,7 @@ const DEBUG_RICH_KEYS = new Set([
   'customer_name',
   'job_short_description',
   'material_description',
+  'trades',
   'error_message',
   'error_details',
   'error_hint',
