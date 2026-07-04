@@ -32,6 +32,10 @@ import {
   REQUIRED_PRIVACY_VERSION,
   REQUIRED_TERMS_VERSION,
 } from './src/lib/legal-versions';
+import {
+  cacheLegalAcceptance,
+  hasCachedLegalAcceptance,
+} from './src/lib/legalAcceptanceStorage';
 import { AnalyticsConsentPromptModal } from './src/components/AnalyticsConsentPromptModal';
 import { LegalReacceptanceModal } from './src/components/LegalReacceptanceModal';
 import { EarningsScreen, type EarningsWindow } from './src/screens/EarningsScreen';
@@ -85,16 +89,29 @@ function AuthenticatedShell() {
       try {
         const accepted = await fetchLatestLegalAcceptanceVersions(supabase);
         if (cancelled) return;
-        setLegalGate(
-          needsLegalReacceptance(accepted, {
-            privacyVersion: REQUIRED_PRIVACY_VERSION,
-            termsVersion: REQUIRED_TERMS_VERSION,
-          })
-            ? 'blocked'
-            : 'ready',
-        );
+        const requiresAcceptance = needsLegalReacceptance(accepted, {
+          privacyVersion: REQUIRED_PRIVACY_VERSION,
+          termsVersion: REQUIRED_TERMS_VERSION,
+        });
+        if (!requiresAcceptance) {
+          try {
+            await cacheLegalAcceptance({
+              userId: session.user.id,
+              privacyVersion: REQUIRED_PRIVACY_VERSION,
+              termsVersion: REQUIRED_TERMS_VERSION,
+            });
+          } catch {
+            // The server remains authoritative; local caching is best-effort.
+          }
+        }
+        if (!cancelled) setLegalGate(requiresAcceptance ? 'blocked' : 'ready');
       } catch {
-        if (!cancelled) setLegalGate('blocked');
+        const cached = await hasCachedLegalAcceptance({
+          userId: session.user.id,
+          privacyVersion: REQUIRED_PRIVACY_VERSION,
+          termsVersion: REQUIRED_TERMS_VERSION,
+        });
+        if (!cancelled) setLegalGate(cached ? 'ready' : 'blocked');
       }
     })();
 
@@ -207,14 +224,23 @@ function AuthenticatedShell() {
   }, [inboxOpen, jobDetailOpen, mainTab, profileOpen, session]);
 
   useEffect(() => {
-    if (!session) return;
+    if (
+      !session
+      || analyticsConsentGate !== 'ready'
+      || !analytics.isConsentGranted()
+    ) {
+      return;
+    }
     analytics.identify(session.user.id, {
       ...emailProperties(session.user.email),
       auth_provider: 'supabase',
     });
-  }, [session?.user.id, session?.user.email, session]);
+  }, [analyticsConsentGate, session?.user.id, session?.user.email, session]);
 
   useEffect(() => {
+    if (analyticsConsentGate !== 'ready' || !analytics.isConsentGranted()) {
+      return;
+    }
     analytics.screen(currentScreen, {
       auth_state: session ? 'authenticated' : 'anonymous',
       main_tab: mainTab,
@@ -224,6 +250,7 @@ function AuthenticatedShell() {
       has_live_session: liveSession.hasLiveSession,
     });
   }, [
+    analyticsConsentGate,
     currentScreen,
     inboxOpen,
     jobDetailOpen,
@@ -235,13 +262,19 @@ function AuthenticatedShell() {
 
   const openedTrackedRef = useRef(false);
   useEffect(() => {
-    if (openedTrackedRef.current) return;
+    if (
+      openedTrackedRef.current
+      || analyticsConsentGate !== 'ready'
+      || !analytics.isConsentGranted()
+    ) {
+      return;
+    }
     openedTrackedRef.current = true;
     analytics.capture('app_opened', {
       auth_state: session ? 'authenticated' : loading ? 'loading' : 'anonymous',
       has_live_session: liveSession.hasLiveSession,
     });
-  }, [liveSession.hasLiveSession, loading, session]);
+  }, [analyticsConsentGate, liveSession.hasLiveSession, loading, session]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
@@ -276,7 +309,14 @@ function AuthenticatedShell() {
     <View style={styles.root}>
       <LegalReacceptanceModal
         visible={legalGate === 'blocked'}
-        onAccepted={() => setLegalGate('ready')}
+        onAccepted={() => {
+          void cacheLegalAcceptance({
+            userId: session.user.id,
+            privacyVersion: REQUIRED_PRIVACY_VERSION,
+            termsVersion: REQUIRED_TERMS_VERSION,
+          }).catch(() => {});
+          setLegalGate('ready');
+        }}
       />
       <AnalyticsConsentPromptModal
         visible={legalGate === 'ready' && analyticsConsentGate === 'prompt'}

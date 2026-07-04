@@ -1,7 +1,9 @@
 # FieldSolo Mobile App Privacy Backlog
 
-**Status:** Complete on `marketing/privacy-2` — mobile privacy backlog #1–#9, Help screen, PostHog delete hook  
-**Prepared:** July 3, 2026  
+**Status:** Complete on `marketing/privacy-2` — mobile privacy backlog #1–#9, Help screen, PostHog delete hook
+
+**Prepared:** July 3, 2026
+
 **Related:** [privacy-policy.md](./privacy-policy.md), [terms.md](./terms.md), [consent-versions.md](./consent-versions.md)
 
 This document records the bidirectional audit between the FieldSolo mobile app (`apps/mobile-expo`) and the published Privacy Policy, plus the sequenced work required to align app behavior with policy commitments before store submission.

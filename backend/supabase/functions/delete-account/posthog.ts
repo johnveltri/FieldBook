@@ -8,6 +8,8 @@ export type PostHogDeletionResult =
     }
   | { status: 'failed'; detail: string };
 
+const POSTHOG_DELETE_TIMEOUT_MS = 5_000;
+
 /**
  * Queue deletion of a PostHog person (and associated events) by distinct_id.
  *
@@ -34,6 +36,7 @@ export async function queuePostHogPersonDeletion(
   try {
     const response = await fetch(url, {
       method: 'POST',
+      signal: AbortSignal.timeout(POSTHOG_DELETE_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',

@@ -33,6 +33,7 @@ jest.mock('../lib/analytics', () => ({
 }));
 
 const mockRecordSignupLegalAcceptances = jest.fn(async () => undefined);
+const mockCacheLegalAcceptance = jest.fn(async () => undefined);
 
 jest.mock('@fieldsolo/api-client', () => ({
   recordSignupLegalAcceptances: (...args: unknown[]) =>
@@ -41,6 +42,11 @@ jest.mock('@fieldsolo/api-client', () => ({
 
 jest.mock('../lib/supabase', () => ({
   supabase: {},
+}));
+
+jest.mock('../lib/legalAcceptanceStorage', () => ({
+  cacheLegalAcceptance: (...args: unknown[]) =>
+    mockCacheLegalAcceptance(...(args as [])),
 }));
 
 describe('SignInScreen', () => {
@@ -97,6 +103,11 @@ describe('SignInScreen', () => {
     await waitFor(() => {
       expect(mockSignUp).toHaveBeenCalledTimes(1);
       expect(mockRecordSignupLegalAcceptances).toHaveBeenCalledTimes(1);
+      expect(mockCacheLegalAcceptance).toHaveBeenCalledWith({
+        userId: 'user-1',
+        privacyVersion: '2026-07-03',
+        termsVersion: '2026-07-03',
+      });
     });
   });
 });

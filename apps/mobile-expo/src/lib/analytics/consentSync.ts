@@ -60,6 +60,7 @@ export async function grantAnalyticsConsent(userId: string): Promise<void> {
   await upsertAnalyticsConsentStatus(supabase, 'granted');
   await writeAnalyticsConsentCache(userId, 'granted');
   await analytics.grantConsent();
+  analytics.identify(userId);
 }
 
 export async function withdrawAnalyticsConsent(userId: string): Promise<void> {

@@ -31,6 +31,7 @@ import {
   REQUIRED_PRIVACY_VERSION,
   REQUIRED_TERMS_VERSION,
 } from '../lib/legal-versions';
+import { cacheLegalAcceptance } from '../lib/legalAcceptanceStorage';
 import { supabase } from '../lib/supabase';
 import {
   CONTENT_MAX_WIDTH,
@@ -158,8 +159,12 @@ export function SignInScreen() {
 
         setSignupLegalPending(true);
         try {
+          let acceptedUserId = signUpSession?.user.id ?? null;
           if (!signUpSession) {
-            const { error: signInErr } = await signIn(trimmed, password);
+            const { error: signInErr, session: immediateSession } = await signIn(
+              trimmed,
+              password,
+            );
             if (signInErr) {
               analytics.capture('sign_up_failed', {
                 stage: 'immediate_sign_in',
@@ -172,6 +177,7 @@ export function SignInScreen() {
               setMode('signIn');
               return;
             }
+            acceptedUserId = immediateSession?.user.id ?? null;
           }
 
           await recordSignupLegalAcceptances(supabase, {
@@ -180,6 +186,17 @@ export function SignInScreen() {
             appVersion: analyticsConfig.appVersion,
             platform: analyticsConfig.platform,
           });
+          if (acceptedUserId) {
+            try {
+              await cacheLegalAcceptance({
+                userId: acceptedUserId,
+                privacyVersion: REQUIRED_PRIVACY_VERSION,
+                termsVersion: REQUIRED_TERMS_VERSION,
+              });
+            } catch {
+              // The durable server record succeeded; local caching is best-effort.
+            }
+          }
         } catch (consentErr) {
           analytics.capture('sign_up_failed', {
             stage: 'legal_acceptance',

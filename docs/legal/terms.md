@@ -105,5 +105,6 @@ If arbitration is not enforceable for a particular claim, the exclusive jurisdic
 
 For questions about these Terms, contact:
 
-**Veltri Ventures LLC, operating FieldSolo**  
+**Veltri Ventures LLC, operating FieldSolo**
+
 [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com)

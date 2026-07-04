@@ -9,6 +9,12 @@ const mockFetchLatestLegalAcceptanceVersions = jest.fn(async () => ({
   terms: '2026-01-01',
 }));
 const mockNeedsLegalReacceptance = jest.fn(() => true);
+const mockResolveAnalyticsConsentForUser = jest.fn(async () => 'granted');
+const mockCacheLegalAcceptance = jest.fn(async () => undefined);
+const mockHasCachedLegalAcceptance = jest.fn(async () => false);
+const mockAnalyticsCapture = jest.fn();
+const mockAnalyticsIdentify = jest.fn();
+const mockAnalyticsScreen = jest.fn();
 
 jest.mock('@fieldsolo/api-client', () => ({
   fetchLatestLegalAcceptanceVersions: (...args: unknown[]) =>
@@ -18,7 +24,15 @@ jest.mock('@fieldsolo/api-client', () => ({
 }));
 
 jest.mock('./src/lib/analytics/consentSync', () => ({
-  resolveAnalyticsConsentForUser: jest.fn(async () => 'granted'),
+  resolveAnalyticsConsentForUser: (...args: unknown[]) =>
+    mockResolveAnalyticsConsentForUser(...(args as [])),
+}));
+
+jest.mock('./src/lib/legalAcceptanceStorage', () => ({
+  cacheLegalAcceptance: (...args: unknown[]) =>
+    mockCacheLegalAcceptance(...(args as [])),
+  hasCachedLegalAcceptance: (...args: unknown[]) =>
+    mockHasCachedLegalAcceptance(...(args as [])),
 }));
 
 jest.mock('./src/components/AnalyticsConsentPromptModal', () => ({
@@ -41,9 +55,9 @@ jest.mock('./src/lib/supabase', () => ({
 
 jest.mock('./src/lib/analytics', () => ({
   analytics: {
-    capture: jest.fn(),
-    identify: jest.fn(),
-    screen: jest.fn(),
+    capture: (...args: unknown[]) => mockAnalyticsCapture(...args),
+    identify: (...args: unknown[]) => mockAnalyticsIdentify(...args),
+    screen: (...args: unknown[]) => mockAnalyticsScreen(...args),
     onSignOut: jest.fn(async () => undefined),
     applyConsent: jest.fn(async () => undefined),
     isConsentGranted: jest.fn(() => true),
@@ -127,6 +141,8 @@ describe('App legal reacceptance gate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockNeedsLegalReacceptance.mockReturnValue(true);
+    mockResolveAnalyticsConsentForUser.mockResolvedValue('granted');
+    mockHasCachedLegalAcceptance.mockResolvedValue(false);
   });
 
   it('shows the reacceptance modal when required versions are not accepted', async () => {
@@ -137,5 +153,68 @@ describe('App legal reacceptance gate', () => {
     });
     expect(mockFetchLatestLegalAcceptanceVersions).toHaveBeenCalled();
     expect(mockNeedsLegalReacceptance).toHaveBeenCalled();
+  });
+
+  it('uses a current cached acceptance when the server is temporarily unavailable', async () => {
+    mockFetchLatestLegalAcceptanceVersions.mockRejectedValueOnce(
+      new Error('network unavailable'),
+    );
+    mockHasCachedLegalAcceptance.mockResolvedValueOnce(true);
+
+    const screen = render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('home-screen')).toBeTruthy();
+    });
+    expect(mockHasCachedLegalAcceptance).toHaveBeenCalledWith({
+      userId: 'user-77',
+      privacyVersion: '2026-07-03',
+      termsVersion: '2026-07-03',
+    });
+    expect(screen.queryByTestId('legal-reacceptance-modal')).toBeNull();
+  });
+
+  it('fails closed when neither the server nor a current cache can verify acceptance', async () => {
+    mockFetchLatestLegalAcceptanceVersions.mockRejectedValueOnce(
+      new Error('network unavailable'),
+    );
+
+    const screen = render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('legal-reacceptance-modal')).toBeTruthy();
+    });
+    expect(mockHasCachedLegalAcceptance).toHaveBeenCalled();
+  });
+
+  it('identifies the user after asynchronous analytics consent resolution', async () => {
+    mockNeedsLegalReacceptance.mockReturnValue(false);
+    let resolveConsent!: (value: string) => void;
+    mockResolveAnalyticsConsentForUser.mockImplementationOnce(
+      () => new Promise((resolve) => {
+        resolveConsent = resolve;
+      }),
+    );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(mockResolveAnalyticsConsentForUser).toHaveBeenCalledWith('user-77');
+    });
+    expect(mockAnalyticsIdentify).not.toHaveBeenCalled();
+
+    resolveConsent('granted');
+
+    await waitFor(() => {
+      expect(mockAnalyticsIdentify).toHaveBeenCalledWith(
+        'user-77',
+        expect.objectContaining({ auth_provider: 'supabase' }),
+      );
+      expect(mockAnalyticsScreen).toHaveBeenCalled();
+      expect(mockAnalyticsCapture).toHaveBeenCalledWith(
+        'app_opened',
+        expect.objectContaining({ auth_state: 'authenticated' }),
+      );
+    });
   });
 });
