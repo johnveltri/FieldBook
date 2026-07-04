@@ -111,14 +111,14 @@ describe('ProfileScreen', () => {
     });
   });
 
-  it('opens Support from the account section', async () => {
+  it('opens Help from the account section', async () => {
     const screen = render(<ProfileScreen onBack={jest.fn()} />);
     await waitFor(() => {
-      expect(screen.getByText('Support')).toBeTruthy();
+      expect(screen.getByText('Help')).toBeTruthy();
     });
-    fireEvent.press(screen.getByText('Support'));
+    fireEvent.press(screen.getByText('Help'));
     await waitFor(() => {
-      expect(screen.getByText('SUPPORT')).toBeTruthy();
+      expect(screen.getByText('HELP')).toBeTruthy();
       expect(screen.getByText('support@fieldsolo.com')).toBeTruthy();
     });
   });

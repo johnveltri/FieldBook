@@ -3,7 +3,7 @@ import { Linking } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
-import { SupportScreen } from './SupportScreen';
+import { HelpScreen } from './HelpScreen';
 import { SUPPORT_MAILTO } from '../lib/legal-versions';
 
 jest.mock('expo-font', () => ({
@@ -14,16 +14,16 @@ jest.mock('../components/CanvasTiledBackground', () => ({
   CanvasTiledBackground: () => null,
 }));
 
-describe('SupportScreen', () => {
+describe('HelpScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('shows support instructions and opens a mailto link', async () => {
+  it('shows help instructions and opens a mailto link', async () => {
     const openUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true as never);
-    const screen = render(<SupportScreen onBack={jest.fn()} />);
+    const screen = render(<HelpScreen onBack={jest.fn()} />);
 
-    expect(screen.getByText('SUPPORT')).toBeTruthy();
+    expect(screen.getByText('HELP')).toBeTruthy();
     expect(
       screen.getByText(/request a copy of your data/i),
     ).toBeTruthy();

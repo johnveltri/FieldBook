@@ -45,7 +45,7 @@ import { useAuth } from '../context/AuthContext';
 import { analytics, changedFields, emailProperties, errorProperties } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
 import { PrivacyChoicesScreen } from './PrivacyChoicesScreen';
-import { SupportScreen } from './SupportScreen';
+import { HelpScreen } from './HelpScreen';
 import { TRADE_PRESETS, formatTradesForDisplay } from '../lib/trades';
 import {
   TOP_HEADER_MAX_WIDTH,
@@ -120,7 +120,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [privacyChoicesOpen, setPrivacyChoicesOpen] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -380,18 +380,18 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
   );
 
   const openPrivacyChoices = useCallback(() => {
-    setSupportOpen(false);
+    setHelpOpen(false);
     setPrivacyChoicesOpen(true);
   }, []);
 
-  const openSupport = useCallback(() => {
+  const openHelp = useCallback(() => {
     setPrivacyChoicesOpen(false);
-    setSupportOpen(true);
+    setHelpOpen(true);
   }, []);
 
   const accountRows: ProfileRowsCardRow[] = useMemo(
     () => [
-      { kind: 'link', label: 'Support', onPress: openSupport },
+      { kind: 'link', label: 'Help', onPress: openHelp },
       { kind: 'link', label: 'Privacy', onPress: openPrivacyChoices },
       { kind: 'link', label: 'Change password', onPress: openChangePassword },
       {
@@ -401,7 +401,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         hideChevron: true,
       },
     ],
-    [openChangePassword, openPrivacyChoices, openSupport, signOut],
+    [openChangePassword, openHelp, openPrivacyChoices, signOut],
   );
 
   const deleteRows: ProfileRowsCardRow[] = useMemo(
@@ -425,8 +425,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     );
   }
 
-  if (supportOpen) {
-    return <SupportScreen onBack={() => setSupportOpen(false)} />;
+  if (helpOpen) {
+    return <HelpScreen onBack={() => setHelpOpen(false)} />;
   }
 
   if (privacyChoicesOpen && session?.user.id) {

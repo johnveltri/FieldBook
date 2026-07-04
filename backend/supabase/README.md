@@ -90,3 +90,13 @@ npx supabase db reset --workdir backend
 **Local (`config.toml`):** SMS signup is off (`[auth.sms]` / `enable_signup = false`); OAuth blocks like `[auth.external.apple]` stay `enabled = false`. Email signup is on under `[auth.email]`. Confirmations default to off locally (`enable_confirmations = false`) so new users can sign in immediately—turn confirmations on for production-like testing if needed.
 
 **Hosted:** In the [Supabase Dashboard](https://supabase.com/dashboard) → **Authentication** → **Providers**, disable every provider except **Email** (disable Phone, Apple, Google, and any others you do not use). Under **Email**, enable “Email” / password sign-in as required by your app.
+
+## Edge Function: `delete-account`
+
+The mobile app calls `delete-account` to remove the authenticated user. When PostHog analytics is enabled in production, set these **function secrets** (Project Settings → Edge Functions → Secrets) so account deletion also queues PostHog person/event removal:
+
+- `POSTHOG_PERSONAL_API_KEY` — personal API key with person delete scope (never ship to the client)
+- `POSTHOG_PROJECT_ID` — numeric project id from PostHog project settings
+- `POSTHOG_API_HOST` — optional; defaults to `https://us.posthog.com` (API host, not the capture/ingestion host)
+
+If the PostHog secrets are absent, account deletion still succeeds; analytics cleanup is skipped locally.

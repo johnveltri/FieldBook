@@ -1,6 +1,6 @@
 # FieldSolo Mobile App Privacy Backlog
 
-**Status:** In progress — mobile privacy backlog #1–#8 implemented on `marketing/privacy-2`; #9 tests and Support screen in flight  
+**Status:** Complete on `marketing/privacy-2` — mobile privacy backlog #1–#9, Help screen, PostHog delete hook  
 **Prepared:** July 3, 2026  
 **Related:** [privacy-policy.md](./privacy-policy.md), [terms.md](./terms.md), [consent-versions.md](./consent-versions.md)
 
@@ -32,7 +32,7 @@ This document records the bidirectional audit between the FieldSolo mobile app (
 | P1 | No in-app legal links | Policy easily available in app (store requirement) | No links on sign-in/sign-up or Profile |
 | P2 | Sensitive fields attempted at capture sites | Coarse operational error categories only | Events attach `email`, `customer_name`, `job_short_description` (stripped in prod only); `trades[]` sent without blocklist |
 | P2 | Data portability | "portability of eligible information in a usable format" | Email-only request path; no in-app export |
-| P2 | PostHog deletion on account delete | Deletion within 30 days | No PostHog deletion API call in `delete-account` flow |
+| P2 | PostHog deletion on account delete | Deletion within 30 days | `delete-account` edge function queues PostHog bulk delete when secrets are configured |
 
 ## Sequenced implementation backlog
 

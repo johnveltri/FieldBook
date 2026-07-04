@@ -24,11 +24,11 @@ import {
 
 const BACK_ICON_SIZE = 28;
 
-export type SupportScreenProps = {
+export type HelpScreenProps = {
   onBack: () => void;
 };
 
-export function SupportScreen({ onBack }: SupportScreenProps) {
+export function HelpScreen({ onBack }: HelpScreenProps) {
   const insets = useSafeAreaInsets();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
@@ -54,7 +54,7 @@ export function SupportScreen({ onBack }: SupportScreenProps) {
   const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
   const bottomNavReservedHeight = shellBottomNavOuterHeight(insets.bottom);
 
-  const openSupportEmail = useCallback(() => {
+  const openHelpEmail = useCallback(() => {
     void Linking.openURL(SUPPORT_MAILTO);
   }, []);
 
@@ -95,7 +95,7 @@ export function SupportScreen({ onBack }: SupportScreenProps) {
             >
               <TopHeaderBackIcon color={fg.secondary} size={BACK_ICON_SIZE} />
             </Pressable>
-            <Text style={[typography.displayH1, styles.title]}>SUPPORT</Text>
+            <Text style={[typography.displayH1, styles.title]}>HELP</Text>
           </View>
         </View>
 
@@ -105,11 +105,11 @@ export function SupportScreen({ onBack }: SupportScreenProps) {
             <Text
               accessibilityRole="link"
               style={styles.emailLink}
-              onPress={openSupportEmail}
+              onPress={openHelpEmail}
             >
               {SUPPORT_EMAIL}
             </Text>
-            . We will respond from your email app outside FieldSolo.
+            .
           </Text>
         </View>
       </Animated.ScrollView>
