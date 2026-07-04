@@ -10,6 +10,7 @@ type BuilderOptions = {
   singleResult?: QueryResult;
   maybeSingleResult?: QueryResult;
   onInsert?: (payload: unknown) => void;
+  onUpsert?: (payload: unknown) => void;
   onUpdate?: (patch: unknown) => void;
 };
 
@@ -26,6 +27,12 @@ export function makeBuilder(options: BuilderOptions = {}) {
   }
 
   builder.insert = vi.fn((payload: unknown) => {
+    options.onInsert?.(payload);
+    return builder;
+  });
+
+  builder.upsert = vi.fn((payload: unknown) => {
+    options.onUpsert?.(payload);
     options.onInsert?.(payload);
     return builder;
   });

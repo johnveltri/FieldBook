@@ -1,0 +1,265 @@
+import { useFonts } from 'expo-font';
+import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
+import {
+  UbuntuSansMono_400Regular,
+  UbuntuSansMono_600SemiBold,
+  UbuntuSansMono_700Bold,
+} from '@expo-google-fonts/ubuntu-sans-mono';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { color } from '@fieldsolo/design-system/lib/tokens';
+
+import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
+import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
+import { ProfileRowsCard, type ProfileRowsCardRow } from '../components/ds';
+import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
+import {
+  grantAnalyticsConsent,
+  resolveAnalyticsConsentForUser,
+  withdrawAnalyticsConsent,
+} from '../lib/analytics/consentSync';
+import { LEGAL_URLS } from '../lib/legal-versions';
+import {
+  TOP_HEADER_MAX_WIDTH,
+  bg,
+  createTextStyles,
+  fg,
+  space,
+} from '../theme/nativeTokens';
+
+const BACK_ICON_SIZE = 28;
+
+export type PrivacyChoicesScreenProps = {
+  userId: string;
+  onBack: () => void;
+};
+
+function extractErrorMessage(e: unknown, fallback: string): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === 'string' && e.length > 0) return e;
+  if (e && typeof e === 'object' && 'message' in e) {
+    const m = (e as { message?: unknown }).message;
+    if (typeof m === 'string' && m.length > 0) return m;
+  }
+  return fallback;
+}
+
+export function PrivacyChoicesScreen({ userId, onBack }: PrivacyChoicesScreenProps) {
+  const insets = useSafeAreaInsets();
+  const scrollY = useMemo(() => new Animated.Value(0), []);
+  const [scrollContentHeight, setScrollContentHeight] = useState(0);
+
+  const [fontsLoaded] = useFonts({
+    PTSerif_700Bold,
+    UbuntuSansMono_400Regular,
+    UbuntuSansMono_600SemiBold,
+    UbuntuSansMono_700Bold,
+  });
+
+  const typography = useMemo(
+    () =>
+      createTextStyles({
+        serifBold: 'PTSerif_700Bold',
+        mono: 'UbuntuSansMono_400Regular',
+        monoSemi: 'UbuntuSansMono_600SemiBold',
+        monoBold: 'UbuntuSansMono_700Bold',
+      }),
+    [],
+  );
+
+  const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
+  const bottomNavReservedHeight = shellBottomNavOuterHeight(insets.bottom);
+
+  const [loading, setLoading] = useState(true);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      try {
+        const result = await resolveAnalyticsConsentForUser(userId);
+        if (cancelled) return;
+        setAnalyticsEnabled(result === 'granted');
+      } catch {
+        if (!cancelled) setAnalyticsEnabled(false);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  const onAnalyticsToggle = useCallback(
+    async (next: boolean) => {
+      if (saving) return;
+      const previous = analyticsEnabled;
+      setAnalyticsEnabled(next);
+      setSaving(true);
+      try {
+        if (next) {
+          await grantAnalyticsConsent(userId);
+        } else {
+          await withdrawAnalyticsConsent(userId);
+        }
+      } catch (e) {
+        setAnalyticsEnabled(previous);
+        Alert.alert(
+          'Could not update preference',
+          extractErrorMessage(e, 'Please try again.'),
+        );
+      } finally {
+        setSaving(false);
+      }
+    },
+    [analyticsEnabled, saving, userId],
+  );
+
+  const openUrl = useCallback((url: string) => {
+    void Linking.openURL(url);
+  }, []);
+
+  const analyticsRows: ProfileRowsCardRow[] = useMemo(
+    () => [
+      {
+        kind: 'toggle',
+        label: 'Help improve FieldSolo',
+        value: analyticsEnabled,
+        onValueChange: (next) => void onAnalyticsToggle(next),
+        disabled: loading || saving,
+      },
+    ],
+    [analyticsEnabled, loading, onAnalyticsToggle, saving],
+  );
+
+  const legalRows: ProfileRowsCardRow[] = useMemo(
+    () => [
+      {
+        kind: 'link',
+        label: 'Privacy Policy',
+        onPress: () => openUrl(LEGAL_URLS.privacyPolicy),
+      },
+      {
+        kind: 'link',
+        label: 'Terms',
+        onPress: () => openUrl(LEGAL_URLS.terms),
+      },
+    ],
+    [openUrl],
+  );
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.root}>
+        <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.root}>
+      <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
+      <Animated.ScrollView
+        style={[styles.scroll, { paddingTop: headerTopPad }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: bottomNavReservedHeight + space('Spacing/20'),
+            flexGrow: 1,
+          },
+        ]}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+        scrollEventThrottle={16}
+        onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
+      >
+        <View style={styles.headerBand}>
+          <View style={[styles.topHeaderRow, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              onPress={onBack}
+              hitSlop={12}
+              style={({ pressed }) => [styles.backHit, pressed && styles.pressed]}
+            >
+              <TopHeaderBackIcon color={fg.secondary} size={BACK_ICON_SIZE} />
+            </Pressable>
+            <Text style={[typography.displayH1, styles.title]}>PRIVACY</Text>
+          </View>
+        </View>
+
+        <View style={[styles.bodyWrap, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+          <Text style={[typography.metricS, styles.sectionLabel]}>ANALYTICS</Text>
+          {loading ? (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator />
+            </View>
+          ) : (
+            <ProfileRowsCard typography={typography} rows={analyticsRows} />
+          )}
+
+          <Text style={[typography.metricS, styles.sectionLabel]}>LEGAL</Text>
+          <ProfileRowsCard typography={typography} rows={legalRows} />
+        </View>
+      </Animated.ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, alignItems: 'center', backgroundColor: bg.canvasWarm },
+  scroll: { flex: 1, width: '100%', backgroundColor: 'transparent', zIndex: 1 },
+  scrollContent: { alignItems: 'stretch' },
+  headerBand: { width: '100%', alignItems: 'center' },
+  topHeaderRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: space('Spacing/20'),
+    paddingTop: space('Spacing/32'),
+    paddingBottom: space('Spacing/16'),
+    gap: space('Spacing/8'),
+  },
+  backHit: {
+    width: BACK_ICON_SIZE,
+    height: BACK_ICON_SIZE,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  title: {
+    flex: 1,
+    color: fg.primary,
+  },
+  bodyWrap: {
+    alignSelf: 'center',
+    width: '100%',
+    paddingHorizontal: space('Spacing/20'),
+    paddingTop: space('Spacing/8'),
+    gap: space('Spacing/12'),
+  },
+  sectionLabel: {
+    color: color('Brand/Accent'),
+    paddingTop: space('Spacing/16'),
+    paddingBottom: space('Spacing/4'),
+  },
+  loadingRow: {
+    minHeight: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: { opacity: 0.75 },
+});

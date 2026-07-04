@@ -35,6 +35,12 @@ jest.mock('../lib/supabase', () => ({
   isSupabaseConfigured: () => true,
 }));
 
+jest.mock('../lib/analytics/consentSync', () => ({
+  resolveAnalyticsConsentForUser: jest.fn(async () => 'withdrawn'),
+  grantAnalyticsConsent: jest.fn(async () => undefined),
+  withdrawAnalyticsConsent: jest.fn(async () => undefined),
+}));
+
 type ProfileShape = {
   id: string;
   firstName: string | null;
@@ -91,6 +97,17 @@ describe('ProfileScreen', () => {
     fireEvent.press(screen.getByLabelText('EDIT'));
     await waitFor(() => {
       expect(screen.getByText('Update Profile')).toBeTruthy();
+    });
+  });
+
+  it('opens Privacy from the account section', async () => {
+    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    await waitFor(() => {
+      expect(screen.getByText('Privacy')).toBeTruthy();
+    });
+    fireEvent.press(screen.getByText('Privacy'));
+    await waitFor(() => {
+      expect(screen.getByText('PRIVACY')).toBeTruthy();
     });
   });
 

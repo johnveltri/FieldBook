@@ -7,6 +7,7 @@ import {
 } from '@fieldsolo/api-client';
 
 import { analytics, errorProperties } from '../lib/analytics';
+import { clearAnalyticsConsentCache } from '../lib/analytics/consentStorage';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 export type SignUpProfileSeed = {
@@ -112,9 +113,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error, session: data.session };
       },
       signOut: async () => {
-        analytics.capture('signed_out', { source: 'manual' });
+        if (analytics.isConsentGranted()) {
+          analytics.capture('signed_out', { source: 'manual' });
+        }
         await supabase.auth.signOut();
-        analytics.reset();
+        await analytics.onSignOut();
+        await clearAnalyticsConsentCache();
       },
       updatePassword: async (newPassword) => {
         try {
@@ -132,15 +136,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteAccount: async () => {
         try {
           await deleteCurrentAccount(supabase);
-          analytics.capture('account_delete_succeeded', { source: 'profile' });
+          if (analytics.isConsentGranted()) {
+            analytics.capture('account_delete_succeeded', { source: 'profile' });
+          }
           await supabase.auth.signOut();
-          analytics.reset();
+          await analytics.onSignOut();
+          await clearAnalyticsConsentCache();
           return { error: null };
         } catch (e) {
-          analytics.capture('account_delete_failed', {
-            source: 'profile',
-            ...errorProperties(e),
-          });
+          if (analytics.isConsentGranted()) {
+            analytics.capture('account_delete_failed', {
+              source: 'profile',
+              ...errorProperties(e),
+            });
+          }
           return {
             error:
               e instanceof Error

@@ -92,3 +92,8 @@ export {
   type LegalDocumentType,
   type RecordLegalAcceptanceInput,
 } from './consent';
+export {
+  fetchAnalyticsConsentStatus,
+  upsertAnalyticsConsentStatus,
+  type AnalyticsConsentStatus,
+} from './analyticsConsent';

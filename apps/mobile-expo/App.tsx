@@ -26,11 +26,13 @@ import {
   needsLegalReacceptance,
 } from '@fieldsolo/api-client';
 import { analytics, emailProperties } from './src/lib/analytics';
+import { resolveAnalyticsConsentForUser } from './src/lib/analytics/consentSync';
 import { isSupabaseConfigured, supabase } from './src/lib/supabase';
 import {
   REQUIRED_PRIVACY_VERSION,
   REQUIRED_TERMS_VERSION,
 } from './src/lib/legal-versions';
+import { AnalyticsConsentPromptModal } from './src/components/AnalyticsConsentPromptModal';
 import { LegalReacceptanceModal } from './src/components/LegalReacceptanceModal';
 import { EarningsScreen, type EarningsWindow } from './src/screens/EarningsScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -46,6 +48,9 @@ import { bg } from './src/theme/nativeTokens';
 function AuthenticatedShell() {
   const { session, loading, signupLegalPending } = useAuth();
   const [legalGate, setLegalGate] = useState<'loading' | 'blocked' | 'ready'>('loading');
+  const [analyticsConsentGate, setAnalyticsConsentGate] = useState<
+    'idle' | 'loading' | 'prompt' | 'ready'
+  >('idle');
   /** When true, job detail covers tab shell (HOME / JOBS / EARNINGS); X returns here. */
   const [jobDetailOpen, setJobDetailOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -97,6 +102,31 @@ function AuthenticatedShell() {
       cancelled = true;
     };
   }, [session?.user.id, signupLegalPending]);
+
+  useEffect(() => {
+    if (!session?.user.id || signupLegalPending || legalGate !== 'ready') {
+      if (!session?.user.id) setAnalyticsConsentGate('idle');
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      setAnalyticsConsentGate('loading');
+      const result = await resolveAnalyticsConsentForUser(session.user.id);
+      if (cancelled) return;
+      setAnalyticsConsentGate(result === 'missing' ? 'prompt' : 'ready');
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user.id, signupLegalPending, legalGate]);
+
+  useEffect(() => {
+    if (session) return;
+    void analytics.onSignOut();
+    setAnalyticsConsentGate('idle');
+  }, [session]);
 
   const openInbox = useCallback(() => {
     analytics.capture('inbox_opened', { source: 'jobs_header' });
@@ -226,7 +256,12 @@ function AuthenticatedShell() {
     return () => sub.remove();
   }, [liveSession.hasLiveSession, session]);
 
-  if (loading || signupLegalPending || (session && legalGate === 'loading')) {
+  if (
+    loading
+    || signupLegalPending
+    || (session && legalGate === 'loading')
+    || (session && legalGate === 'ready' && analyticsConsentGate === 'loading')
+  ) {
     return (
       <View style={[styles.root, styles.centered]}>
         <ActivityIndicator />
@@ -244,7 +279,12 @@ function AuthenticatedShell() {
         visible={legalGate === 'blocked'}
         onAccepted={() => setLegalGate('ready')}
       />
-      {legalGate === 'ready' ? (
+      <AnalyticsConsentPromptModal
+        visible={legalGate === 'ready' && analyticsConsentGate === 'prompt'}
+        userId={session.user.id}
+        onResolved={() => setAnalyticsConsentGate('ready')}
+      />
+      {legalGate === 'ready' && analyticsConsentGate === 'ready' ? (
         <>
       {jobDetailOpen ? (
         <JobDetailScreen

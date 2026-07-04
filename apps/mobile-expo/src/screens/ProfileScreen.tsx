@@ -43,6 +43,7 @@ import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
 import { useAuth } from '../context/AuthContext';
 import { analytics, changedFields, emailProperties, errorProperties } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
+import { PrivacyChoicesScreen } from './PrivacyChoicesScreen';
 import { TRADE_PRESETS, formatTradesForDisplay } from '../lib/trades';
 import {
   TOP_HEADER_MAX_WIDTH,
@@ -115,6 +116,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
   // --- Profile data ---
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [privacyChoicesOpen, setPrivacyChoicesOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -371,8 +373,13 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     [],
   );
 
+  const openPrivacyChoices = useCallback(() => {
+    setPrivacyChoicesOpen(true);
+  }, []);
+
   const accountRows: ProfileRowsCardRow[] = useMemo(
     () => [
+      { kind: 'link', label: 'Privacy', onPress: openPrivacyChoices },
       { kind: 'link', label: 'Change password', onPress: openChangePassword },
       {
         kind: 'link',
@@ -381,7 +388,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         hideChevron: true,
       },
     ],
-    [openChangePassword, signOut],
+    [openChangePassword, openPrivacyChoices, signOut],
   );
 
   const deleteRows: ProfileRowsCardRow[] = useMemo(
@@ -402,6 +409,15 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
       <View style={styles.root}>
         <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
       </View>
+    );
+  }
+
+  if (privacyChoicesOpen && session?.user.id) {
+    return (
+      <PrivacyChoicesScreen
+        userId={session.user.id}
+        onBack={() => setPrivacyChoicesOpen(false)}
+      />
     );
   }
 

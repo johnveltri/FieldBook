@@ -1,6 +1,13 @@
 export { analytics } from './client';
 export { analyticsConfig } from './config';
 export {
+  grantAnalyticsConsent,
+  syncAnalyticsConsentForUser,
+  resolveAnalyticsConsentForUser,
+  withdrawAnalyticsConsent,
+} from './consentSync';
+export type { AnalyticsConsentResolution, AnalyticsConsentStatus } from './consentSync';
+export {
   changedFields,
   durationMinutesBetween,
   emailProperties,
