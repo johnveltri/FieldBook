@@ -407,6 +407,22 @@ export function SignInScreen() {
                 {mode === 'signIn' ? 'Need an account? Sign up' : 'Have an account? Sign in'}
               </Text>
             </Pressable>
+
+            <Text style={[text.caption, styles.legalFooter, { color: fg.secondary, marginTop: gap }]}>
+              <Text
+                style={styles.consentLink}
+                onPress={() => void Linking.openURL(LEGAL_URLS.privacyPolicy)}
+              >
+                Privacy Policy
+              </Text>
+              {' · '}
+              <Text
+                style={styles.consentLink}
+                onPress={() => void Linking.openURL(LEGAL_URLS.terms)}
+              >
+                Terms
+              </Text>
+            </Text>
           </View>
         </Animated.ScrollView>
       </KeyboardAvoidingView>
@@ -473,5 +489,9 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     textDecorationLine: 'underline',
     fontWeight: '600',
+  },
+  legalFooter: {
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

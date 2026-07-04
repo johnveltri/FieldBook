@@ -34,4 +34,11 @@ describe('SignInScreen', () => {
 
     expect(getByText('FieldSolo')).toBeTruthy();
   });
+
+  it('shows privacy policy and terms links on sign in', () => {
+    const { getAllByText } = render(<SignInScreen />);
+
+    expect(getAllByText('Privacy Policy').length).toBeGreaterThan(0);
+    expect(getAllByText('Terms').length).toBeGreaterThan(0);
+  });
 });

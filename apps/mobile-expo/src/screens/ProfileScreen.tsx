@@ -26,6 +26,7 @@ import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import {
   ChangePasswordBottomSheet,
+  DeleteAccountBottomSheet,
   ProfileRowsCard,
   TradeMultiSelectBottomSheet,
   UpdateProfileBottomSheet,
@@ -80,7 +81,8 @@ type ProfileFlow =
   | 'closed'
   | 'editProfile'
   | 'editProfileTrades'
-  | 'changePassword';
+  | 'changePassword'
+  | 'deleteAccount';
 
 export type ProfileScreenProps = {
   onBack: () => void;
@@ -157,6 +159,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
    */
   const [editProfileMounted, setEditProfileMounted] = useState(false);
   const [changePasswordMounted, setChangePasswordMounted] = useState(false);
+  const [deleteAccountMounted, setDeleteAccountMounted] = useState(false);
   const [saving, setSaving] = useState(false);
 
   /**
@@ -306,11 +309,18 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     [saving, updatePassword],
   );
 
-  const onDeleteAccountPress = useCallback(() => {
+  const openDeleteAccount = useCallback(() => {
     analytics.capture('account_delete_requested', { source: 'profile' });
+    setDeleteAccountMounted(true);
+    setFlow('deleteAccount');
+  }, []);
+  const closeDeleteAccount = useCallback(() => {
+    setFlow('closed');
+  }, []);
+  const onDeleteAccountSheetSubmit = useCallback(() => {
     Alert.alert(
       'Delete account?',
-      'This permanently deletes your account and all associated jobs, sessions, notes, and materials. This cannot be undone.',
+      'This permanently deletes your account and all associated data. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -321,9 +331,9 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             const { error } = await deleteAccount();
             if (error) {
               Alert.alert('Could not delete account', error.message);
+              return;
             }
-            // On success the AuthContext signs out; AuthenticatedShell will
-            // route back to SignInScreen on the next render.
+            setFlow('closed');
           },
         },
       ],
@@ -398,10 +408,10 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         label: 'Delete account',
         icon: <ProfileTrashIcon color={color('Semantic/Status/Error/Text')} />,
         tone: 'danger',
-        onPress: onDeleteAccountPress,
+        onPress: openDeleteAccount,
       },
     ],
-    [onDeleteAccountPress],
+    [openDeleteAccount],
   );
 
   if (!fontsLoaded) {
@@ -528,6 +538,19 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           }}
           onBack={closeChangePassword}
           onSubmit={onSubmitNewPassword}
+        />
+      ) : null}
+
+      {deleteAccountMounted ? (
+        <DeleteAccountBottomSheet
+          typography={typography}
+          visible={flow === 'deleteAccount'}
+          onClose={closeDeleteAccount}
+          onClosed={() => {
+            if (flow === 'closed') setDeleteAccountMounted(false);
+          }}
+          onBack={closeDeleteAccount}
+          onSubmit={onDeleteAccountSheetSubmit}
         />
       ) : null}
     </View>
