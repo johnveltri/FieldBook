@@ -422,8 +422,6 @@ export function EarningsScreen({
                             section: section.key,
                             rank: index + 1,
                             job_id: job.id,
-                            job_short_description: job.shortDescription,
-                            customer_name: job.customerName,
                           });
                           onOpenJobDetail(job.id);
                         }}

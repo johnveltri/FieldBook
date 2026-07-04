@@ -210,7 +210,6 @@ function AuthenticatedShell() {
     if (!session) return;
     analytics.identify(session.user.id, {
       ...emailProperties(session.user.email),
-      email: session.user.email ?? null,
       auth_provider: 'supabase',
     });
   }, [session?.user.id, session?.user.email, session]);

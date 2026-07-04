@@ -133,10 +133,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             [p.firstName, p.lastName].every((v) => (v ?? '').trim().length > 0) &&
             (p.trades ?? []).length > 0,
           trade_count: p?.trades.length ?? 0,
-          trades: p?.trades ?? [],
           plan: 'free',
           ...emailProperties(session?.user.email),
-          email: session?.user.email ?? null,
         });
       } catch (e) {
         if (cancelled) return;
@@ -202,7 +200,6 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     setFlow('editProfileTrades');
     analytics.capture('profile_trade_picker_opened', {
       current_trade_count: current.trades.length,
-      trades: current.trades,
     });
   }, []);
 
@@ -234,9 +231,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         if (session?.user.id) {
           analytics.identify(session.user.id, {
             ...emailProperties(session.user.email),
-            email: session.user.email ?? null,
             trade_count: updated.trades.length,
-            trades: updated.trades,
             profile_complete:
               [updated.firstName, updated.lastName].every((v) => (v ?? '').trim().length > 0) &&
               updated.trades.length > 0,
@@ -249,7 +244,6 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             trades: values.trades.join('|'),
           }),
           trade_count: updated.trades.length,
-          trades: updated.trades,
         });
       } catch (e) {
         analytics.capture('profile_save_failed', {

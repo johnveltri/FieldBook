@@ -117,27 +117,23 @@ export function SignInScreen() {
       if (mode === 'signIn') {
         analytics.capture('sign_in_submitted', {
           ...emailProperties(trimmed),
-          email: trimmed,
           has_password: password.length > 0,
         });
         const { error: err } = await signIn(trimmed, password);
         if (err) {
           analytics.capture('sign_in_failed', {
             ...emailProperties(trimmed),
-            email: trimmed,
             ...errorProperties(err),
           });
           setError(err.message);
         } else {
           analytics.capture('sign_in_succeeded', {
             ...emailProperties(trimmed),
-            email: trimmed,
           });
         }
       } else {
         analytics.capture('sign_up_submitted', {
           ...emailProperties(trimmed),
-          email: trimmed,
           first_name_present: firstName.trim().length > 0,
           last_name_present: lastName.trim().length > 0,
         });
@@ -151,7 +147,6 @@ export function SignInScreen() {
           analytics.capture('sign_up_failed', {
             stage: 'sign_up',
             ...emailProperties(trimmed),
-            email: trimmed,
             ...errorProperties(signUpErr),
           });
           setError(signUpErr.message);
@@ -159,7 +154,6 @@ export function SignInScreen() {
         }
         analytics.capture('sign_up_succeeded', {
           ...emailProperties(trimmed),
-          email: trimmed,
         });
 
         setSignupLegalPending(true);
@@ -170,7 +164,6 @@ export function SignInScreen() {
               analytics.capture('sign_up_failed', {
                 stage: 'immediate_sign_in',
                 ...emailProperties(trimmed),
-                email: trimmed,
                 ...errorProperties(signInErr),
               });
               setError(
@@ -191,7 +184,6 @@ export function SignInScreen() {
           analytics.capture('sign_up_failed', {
             stage: 'legal_acceptance',
             ...emailProperties(trimmed),
-            email: trimmed,
             ...errorProperties(consentErr),
           });
           setError(
@@ -207,7 +199,6 @@ export function SignInScreen() {
       analytics.capture(mode === 'signIn' ? 'sign_in_failed' : 'sign_up_failed', {
         stage: mode === 'signIn' ? 'sign_in' : 'unexpected',
         ...emailProperties(trimmed),
-        email: trimmed,
         ...errorProperties(e),
       });
       setError(e instanceof Error ? e.message : 'Network request failed');

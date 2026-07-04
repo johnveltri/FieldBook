@@ -317,8 +317,6 @@ export function JobDetailScreen({
             has_sessions: j.displaySessions.length > 0,
             has_materials: j.materialBuckets.some((b) => b.items.length > 0),
             has_notes: j.noteBuckets.some((b) => b.notes.length > 0),
-            job_short_description: j.shortDescription,
-            customer_name: j.customerName,
           });
         } else {
           setJob(null);
@@ -406,8 +404,6 @@ export function JobDetailScreen({
           completeness_after:
             refreshed && jobDetailIsFinanciallyComplete(refreshed) ? 'complete' : 'incomplete',
           revenue_bucket: moneyBucket(revenueCents),
-          job_short_description: values.shortDescription,
-          customer_name: values.customerName,
         });
       } catch (e) {
         const msg =
@@ -508,7 +504,6 @@ export function JobDetailScreen({
         session_id: created.id,
         job_id: job.id,
         job_status: job.workStatus,
-        job_short_description: job.shortDescription,
         placeholder_job: false,
       });
       // eslint-disable-next-line no-console
