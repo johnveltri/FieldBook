@@ -1,7 +1,7 @@
 # FieldSolo Privacy Policy
 
-**Effective date:** July 3, 2026
-**Policy version:** 2026-07-03
+**Effective date:** July 6, 2026
+**Policy version:** 2026-07-06
 
 FieldSolo is operated by **Veltri Ventures LLC** ("FieldSolo," "we," "us," or "our"). This Privacy Policy explains how we collect, use, disclose, retain, and protect information when you use the FieldSolo mobile application, website, waitlist, and related services (collectively, the "Services").
 
@@ -16,6 +16,7 @@ We collect information you provide directly, information created while you use t
 - **Waitlist, account, and profile information:** first and last name, email address, trade selections, current software and job-tracking practices, job-source selections, account identifier, authentication information, marketing-consent status, and privacy-policy acceptance record.
 - **Job record information:** job descriptions, customer names, service addresses, job type, notes, materials, work-session dates and times, payment status, revenue, costs, collected amounts, and earnings calculations.
 - **Service-use and diagnostic information:** app interactions, app/session identifiers, device platform, app version, coarse operational error categories, and similar information needed to understand and improve reliability. If analytics is enabled, FieldSolo uses this information only after you agree to analytics collection.
+- **Website usage information:** when you visit our website, we collect anonymous usage statistics such as pages viewed, referring site or campaign, general device and browser type, and coarse location (for example, country or region).
 - **Communications and privacy requests:** information you send to us, including requests to access, correct, export, delete, or otherwise manage your data.
 
 ### Optional and future features
@@ -33,6 +34,7 @@ We use information to:
 - create and display your job records and earnings insights;
 - authenticate users, prevent fraud and abuse, troubleshoot, and enforce our terms;
 - communicate about your account, privacy requests, service changes, and support;
+- understand website traffic and improve the website;
 - measure product performance and improve features using limited analytics when you have agreed to it;
 - process content for an AI-assisted action only when you explicitly choose that action; and
 - create aggregated or de-identified statistics, benchmarks, and insights that do not reasonably identify you.
@@ -53,9 +55,11 @@ We do not sell personal information and do not share personal information for cr
 - to protect the rights, safety, property, security, and integrity of FieldSolo, users, and the public; and
 - in connection with a merger, financing, acquisition, reorganization, bankruptcy, or sale of assets, subject to this policy and applicable law.
 
-Our current primary service providers include Supabase for cloud database, authentication, and storage, and PostHog for optional product analytics. These providers may process information in the United States and other countries where they or their subprocessors operate.
+We use service providers to host the Services, operate our database and authentication systems, support the website, measure anonymous website traffic, and provide optional in-app product analytics when you have agreed to analytics collection. These providers process information on our behalf and may do so in the United States and other countries where they or their subprocessors operate.
 
 ## Analytics Choices
+
+Our website collects anonymous traffic statistics as described above. This is separate from optional in-app product analytics, which runs only after you agree to analytics collection in the app.
 
 FieldSolo uses product analytics only after you agree to analytics collection. You can withdraw analytics permission through the privacy choices described below. Withdrawal stops future analytics collection from the app and clears the app's local analytics identifier; it does not retroactively change information already processed before withdrawal.
 
