@@ -82,3 +82,18 @@ export {
   deleteCurrentAccount,
   updateCurrentUserPassword,
 } from './account';
+export {
+  recordLegalAcceptance,
+  recordReacceptanceLegalAcceptances,
+  recordSignupLegalAcceptances,
+  fetchLatestLegalAcceptanceVersions,
+  needsLegalReacceptance,
+  type LegalAcceptanceVersions,
+  type LegalDocumentType,
+  type RecordLegalAcceptanceInput,
+} from './consent';
+export {
+  fetchAnalyticsConsentStatus,
+  upsertAnalyticsConsentStatus,
+  type AnalyticsConsentStatus,
+} from './analyticsConsent';

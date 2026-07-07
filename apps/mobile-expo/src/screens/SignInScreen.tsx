@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -19,9 +20,19 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { recordSignupLegalAcceptances } from '@fieldsolo/api-client';
+
 import { useAuth } from '../context/AuthContext';
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import { analytics, emailProperties, errorProperties } from '../lib/analytics';
+import { analyticsConfig } from '../lib/analytics/config';
+import {
+  LEGAL_URLS,
+  REQUIRED_PRIVACY_VERSION,
+  REQUIRED_TERMS_VERSION,
+} from '../lib/legal-versions';
+import { cacheLegalAcceptance } from '../lib/legalAcceptanceStorage';
+import { supabase } from '../lib/supabase';
 import {
   CONTENT_MAX_WIDTH,
   createTextStyles,
@@ -33,7 +44,7 @@ import {
 export function SignInScreen() {
   const insets = useSafeAreaInsets();
   const scrollY = useMemo(() => new Animated.Value(0), []);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, setSignupLegalPending } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -41,6 +52,7 @@ export function SignInScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const previousModeRef = useRef(mode);
 
   useEffect(() => {
@@ -96,39 +108,39 @@ export function SignInScreen() {
         setError('Enter your first and last name.');
         return;
       }
+      if (!legalAccepted) {
+        setError('Agree to the Privacy Policy and Terms to create an account.');
+        return;
+      }
     }
     setBusy(true);
     try {
       if (mode === 'signIn') {
         analytics.capture('sign_in_submitted', {
           ...emailProperties(trimmed),
-          email: trimmed,
           has_password: password.length > 0,
         });
         const { error: err } = await signIn(trimmed, password);
         if (err) {
           analytics.capture('sign_in_failed', {
             ...emailProperties(trimmed),
-            email: trimmed,
             ...errorProperties(err),
           });
           setError(err.message);
         } else {
           analytics.capture('sign_in_succeeded', {
             ...emailProperties(trimmed),
-            email: trimmed,
           });
         }
       } else {
         analytics.capture('sign_up_submitted', {
           ...emailProperties(trimmed),
-          email: trimmed,
           first_name_present: firstName.trim().length > 0,
           last_name_present: lastName.trim().length > 0,
         });
         // First/last name go into raw_user_meta_data so the
         // public.handle_new_user trigger can seed the profiles row.
-        const { error: signUpErr } = await signUp(trimmed, password, {
+        const { error: signUpErr, session: signUpSession } = await signUp(trimmed, password, {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
         });
@@ -136,7 +148,6 @@ export function SignInScreen() {
           analytics.capture('sign_up_failed', {
             stage: 'sign_up',
             ...emailProperties(trimmed),
-            email: trimmed,
             ...errorProperties(signUpErr),
           });
           setError(signUpErr.message);
@@ -144,38 +155,74 @@ export function SignInScreen() {
         }
         analytics.capture('sign_up_succeeded', {
           ...emailProperties(trimmed),
-          email: trimmed,
         });
-        // In local/dev projects email confirmation may vary; attempt sign-in immediately.
-        const { error: signInErr } = await signIn(trimmed, password);
-        if (signInErr) {
+
+        setSignupLegalPending(true);
+        try {
+          let acceptedUserId = signUpSession?.user.id ?? null;
+          if (!signUpSession) {
+            const { error: signInErr, session: immediateSession } = await signIn(
+              trimmed,
+              password,
+            );
+            if (signInErr) {
+              analytics.capture('sign_up_failed', {
+                stage: 'immediate_sign_in',
+                ...emailProperties(trimmed),
+                ...errorProperties(signInErr),
+              });
+              setError(
+                'Account created. Check your email to confirm your account, then sign in.',
+              );
+              setMode('signIn');
+              return;
+            }
+            acceptedUserId = immediateSession?.user.id ?? null;
+          }
+
+          await recordSignupLegalAcceptances(supabase, {
+            privacyVersion: REQUIRED_PRIVACY_VERSION,
+            termsVersion: REQUIRED_TERMS_VERSION,
+            appVersion: analyticsConfig.appVersion,
+            platform: analyticsConfig.platform,
+          });
+          if (acceptedUserId) {
+            try {
+              await cacheLegalAcceptance({
+                userId: acceptedUserId,
+                privacyVersion: REQUIRED_PRIVACY_VERSION,
+                termsVersion: REQUIRED_TERMS_VERSION,
+              });
+            } catch {
+              // The durable server record succeeded; local caching is best-effort.
+            }
+          }
+        } catch (consentErr) {
           analytics.capture('sign_up_failed', {
-            stage: 'immediate_sign_in',
+            stage: 'legal_acceptance',
             ...emailProperties(trimmed),
-            email: trimmed,
-            ...errorProperties(signInErr),
+            ...errorProperties(consentErr),
           });
           setError(
-            `Account created. ${
-              signInErr.message || 'Sign in next to continue.'
-            }`,
+            consentErr instanceof Error
+              ? consentErr.message
+              : 'Could not save your legal acceptance. Try signing in again.',
           );
-          setMode('signIn');
-          return;
+        } finally {
+          setSignupLegalPending(false);
         }
       }
     } catch (e) {
       analytics.capture(mode === 'signIn' ? 'sign_in_failed' : 'sign_up_failed', {
         stage: mode === 'signIn' ? 'sign_in' : 'unexpected',
         ...emailProperties(trimmed),
-        email: trimmed,
         ...errorProperties(e),
       });
       setError(e instanceof Error ? e.message : 'Network request failed');
     } finally {
       setBusy(false);
     }
-  }, [email, password, firstName, lastName, mode, signIn, signUp]);
+  }, [email, password, firstName, lastName, legalAccepted, mode, setSignupLegalPending, signIn, signUp]);
 
   if (!fontsLoaded) {
     return (
@@ -301,6 +348,38 @@ export function SignInScreen() {
               <Text style={[text.caption, { color: '#b00020', marginTop: gap }]}>{error}</Text>
             ) : null}
 
+            {mode === 'signUp' ? (
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: legalAccepted }}
+                onPress={() => setLegalAccepted((value) => !value)}
+                disabled={busy}
+                style={[styles.consentRow, { marginTop: gap }]}
+              >
+                <View style={[styles.consentBox, legalAccepted && styles.consentBoxChecked]}>
+                  {legalAccepted ? (
+                    <Text style={[text.caption, styles.consentMark]}>✓</Text>
+                  ) : null}
+                </View>
+                <Text style={[text.caption, styles.consentLabel, { color: fg.secondary }]}>
+                  I agree to the{' '}
+                  <Text
+                    style={styles.consentLink}
+                    onPress={() => void Linking.openURL(LEGAL_URLS.privacyPolicy)}
+                  >
+                    Privacy Policy
+                  </Text>{' '}
+                  and{' '}
+                  <Text
+                    style={styles.consentLink}
+                    onPress={() => void Linking.openURL(LEGAL_URLS.terms)}
+                  >
+                    Terms
+                  </Text>
+                </Text>
+              </Pressable>
+            ) : null}
+
             <Pressable
               onPress={onSubmit}
               disabled={busy}
@@ -320,7 +399,13 @@ export function SignInScreen() {
 
             <Pressable
               onPress={() => {
-                setMode((m) => (m === 'signIn' ? 'signUp' : 'signIn'));
+                setMode((m) => {
+                  const next = m === 'signIn' ? 'signUp' : 'signIn';
+                  if (next === 'signUp') {
+                    setLegalAccepted(false);
+                  }
+                  return next;
+                });
                 setError(null);
               }}
               disabled={busy}
@@ -330,6 +415,22 @@ export function SignInScreen() {
                 {mode === 'signIn' ? 'Need an account? Sign up' : 'Have an account? Sign in'}
               </Text>
             </Pressable>
+
+            <Text style={[text.caption, styles.legalFooter, { color: fg.secondary, marginTop: gap }]}>
+              <Text
+                style={styles.consentLink}
+                onPress={() => void Linking.openURL(LEGAL_URLS.privacyPolicy)}
+              >
+                Privacy Policy
+              </Text>
+              {' · '}
+              <Text
+                style={styles.consentLink}
+                onPress={() => void Linking.openURL(LEGAL_URLS.terms)}
+              >
+                Terms
+              </Text>
+            </Text>
           </View>
         </Animated.ScrollView>
       </KeyboardAvoidingView>
@@ -361,5 +462,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
+  },
+  consentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  consentBox: {
+    width: 20,
+    height: 20,
+    marginTop: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.25)',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  consentBoxChecked: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#1a1a1a',
+  },
+  consentMark: {
+    color: '#fff',
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '700',
+  },
+  consentLabel: {
+    flex: 1,
+    lineHeight: 20,
+  },
+  consentLink: {
+    color: '#1a1a1a',
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  legalFooter: {
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

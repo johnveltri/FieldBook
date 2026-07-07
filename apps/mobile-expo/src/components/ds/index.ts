@@ -73,6 +73,10 @@ export {
 } from './ProfileRowsCard';
 export { ChangePasswordBottomSheet } from './ChangePasswordBottomSheet';
 export {
+  DELETE_ACCOUNT_CONFIRMATION_PHRASE,
+  DeleteAccountBottomSheet,
+} from './DeleteAccountBottomSheet';
+export {
   UpdateProfileBottomSheet,
   type UpdateProfileValues,
 } from './UpdateProfileBottomSheet';

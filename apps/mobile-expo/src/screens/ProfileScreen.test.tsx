@@ -35,6 +35,12 @@ jest.mock('../lib/supabase', () => ({
   isSupabaseConfigured: () => true,
 }));
 
+jest.mock('../lib/analytics/consentSync', () => ({
+  resolveAnalyticsConsentForUser: jest.fn(async () => 'withdrawn'),
+  grantAnalyticsConsent: jest.fn(async () => undefined),
+  withdrawAnalyticsConsent: jest.fn(async () => undefined),
+}));
+
 type ProfileShape = {
   id: string;
   firstName: string | null;
@@ -94,13 +100,43 @@ describe('ProfileScreen', () => {
     });
   });
 
-  it('shows a confirmation Alert before deleting the account', async () => {
+  it('opens Privacy from the account section', async () => {
+    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    await waitFor(() => {
+      expect(screen.getByText('Privacy')).toBeTruthy();
+    });
+    fireEvent.press(screen.getByText('Privacy'));
+    await waitFor(() => {
+      expect(screen.getByText('PRIVACY')).toBeTruthy();
+    });
+  });
+
+  it('opens Help from the account section', async () => {
+    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    await waitFor(() => {
+      expect(screen.getByText('Help')).toBeTruthy();
+    });
+    fireEvent.press(screen.getByText('Help'));
+    await waitFor(() => {
+      expect(screen.getByText('HELP')).toBeTruthy();
+      expect(screen.getByText('support@fieldsolo.com')).toBeTruthy();
+    });
+  });
+
+  it('opens the delete account sheet before showing the system confirmation', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const screen = render(<ProfileScreen onBack={jest.fn()} />);
     await waitFor(() => {
       expect(screen.getByText('Delete account')).toBeTruthy();
     });
+
     fireEvent.press(screen.getByText('Delete account'));
+    expect(alertSpy).not.toHaveBeenCalled();
+    expect(screen.getByText('Delete Account')).toBeTruthy();
+
+    fireEvent.changeText(screen.getByPlaceholderText('delete account'), 'delete account');
+    fireEvent.press(screen.getByLabelText('DELETE ACCOUNT'));
+
     expect(alertSpy).toHaveBeenCalled();
     const [title] = alertSpy.mock.calls[0];
     expect(title).toBe('Delete account?');

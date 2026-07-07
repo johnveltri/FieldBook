@@ -1,0 +1,159 @@
+import { useFonts } from 'expo-font';
+import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
+import {
+  UbuntuSansMono_400Regular,
+  UbuntuSansMono_600SemiBold,
+  UbuntuSansMono_700Bold,
+} from '@expo-google-fonts/ubuntu-sans-mono';
+import { useCallback, useMemo, useState } from 'react';
+import { Animated, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { color } from '@fieldsolo/design-system/lib/tokens';
+
+import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
+import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
+import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../lib/legal-versions';
+import {
+  TOP_HEADER_MAX_WIDTH,
+  bg,
+  createTextStyles,
+  fg,
+  space,
+} from '../theme/nativeTokens';
+
+const BACK_ICON_SIZE = 28;
+
+export type HelpScreenProps = {
+  onBack: () => void;
+};
+
+export function HelpScreen({ onBack }: HelpScreenProps) {
+  const insets = useSafeAreaInsets();
+  const scrollY = useMemo(() => new Animated.Value(0), []);
+  const [scrollContentHeight, setScrollContentHeight] = useState(0);
+
+  const [fontsLoaded] = useFonts({
+    PTSerif_700Bold,
+    UbuntuSansMono_400Regular,
+    UbuntuSansMono_600SemiBold,
+    UbuntuSansMono_700Bold,
+  });
+
+  const typography = useMemo(
+    () =>
+      createTextStyles({
+        serifBold: 'PTSerif_700Bold',
+        mono: 'UbuntuSansMono_400Regular',
+        monoSemi: 'UbuntuSansMono_600SemiBold',
+        monoBold: 'UbuntuSansMono_700Bold',
+      }),
+    [],
+  );
+
+  const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
+  const bottomNavReservedHeight = shellBottomNavOuterHeight(insets.bottom);
+
+  const openHelpEmail = useCallback(() => {
+    void Linking.openURL(SUPPORT_MAILTO);
+  }, []);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.root}>
+        <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.root}>
+      <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
+      <Animated.ScrollView
+        style={[styles.scroll, { paddingTop: headerTopPad }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: bottomNavReservedHeight + space('Spacing/20'),
+            flexGrow: 1,
+          },
+        ]}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+        scrollEventThrottle={16}
+        onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
+      >
+        <View style={styles.headerBand}>
+          <View style={[styles.topHeaderRow, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              onPress={onBack}
+              hitSlop={12}
+              style={({ pressed }) => [styles.backHit, pressed && styles.pressed]}
+            >
+              <TopHeaderBackIcon color={fg.secondary} size={BACK_ICON_SIZE} />
+            </Pressable>
+            <Text style={[typography.displayH1, styles.title]}>HELP</Text>
+          </View>
+        </View>
+
+        <View style={[styles.bodyWrap, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+          <Text style={[typography.body, styles.bodyText, { color: fg.secondary }]}>
+            For account-related help or to request a copy of your data, email us at{' '}
+            <Text
+              accessibilityRole="link"
+              style={styles.emailLink}
+              onPress={openHelpEmail}
+            >
+              {SUPPORT_EMAIL}
+            </Text>
+            .
+          </Text>
+        </View>
+      </Animated.ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, alignItems: 'center', backgroundColor: bg.canvasWarm },
+  scroll: { flex: 1, width: '100%', backgroundColor: 'transparent', zIndex: 1 },
+  scrollContent: { alignItems: 'stretch' },
+  headerBand: { width: '100%', alignItems: 'center' },
+  topHeaderRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: space('Spacing/20'),
+    paddingTop: space('Spacing/32'),
+    paddingBottom: space('Spacing/16'),
+    gap: space('Spacing/8'),
+  },
+  backHit: {
+    width: BACK_ICON_SIZE,
+    height: BACK_ICON_SIZE,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  title: {
+    flex: 1,
+    color: fg.primary,
+  },
+  bodyWrap: {
+    alignSelf: 'center',
+    width: '100%',
+    paddingHorizontal: space('Spacing/20'),
+    paddingTop: space('Spacing/8'),
+  },
+  bodyText: {
+    lineHeight: 24,
+  },
+  emailLink: {
+    color: color('Brand/Accent'),
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  pressed: { opacity: 0.75 },
+});

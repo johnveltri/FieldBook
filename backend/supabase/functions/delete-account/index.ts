@@ -4,13 +4,16 @@
 // that endpoint requires the service-role key. This function:
 //   1. Reads the caller's JWT from the Authorization header.
 //   2. Resolves the user via the anon-key client.
-//   3. Uses a service-role client to call `auth.admin.deleteUser(user.id)`.
+//   3. Best-effort: queues PostHog person/event deletion when configured.
+//   4. Uses a service-role client to call `auth.admin.deleteUser(user.id)`.
 //
 // Cascade FKs on `public.profiles` (this migration), and on `jobs` /
 // `sessions` / `notes` / `material_entries` / `attachments` /
 // `job_activity_events` (existing migrations) clean up all related rows.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+import { queuePostHogPersonDeletion } from './posthog.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -60,14 +63,22 @@ Deno.serve(async (req) => {
     );
   }
 
+  const userId = userData.user.id;
+
+  const posthogResult = await queuePostHogPersonDeletion(userId);
+  if (posthogResult.status === 'failed') {
+    console.warn(
+      '[delete-account] PostHog deletion request failed:',
+      posthogResult.detail,
+    );
+  }
+
   // Service-role client for the privileged delete.
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { error: deleteErr } = await adminClient.auth.admin.deleteUser(
-    userData.user.id,
-  );
+  const { error: deleteErr } = await adminClient.auth.admin.deleteUser(userId);
   if (deleteErr) {
     return jsonResponse(
       { error: 'delete_failed', detail: deleteErr.message },

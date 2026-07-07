@@ -21,8 +21,23 @@ import {
   useLiveSession,
 } from './src/context/LiveSessionContext';
 import type { ListJobsForCurrentUserTab } from '@fieldsolo/api-client';
+import {
+  fetchLatestLegalAcceptanceVersions,
+  needsLegalReacceptance,
+} from '@fieldsolo/api-client';
 import { analytics, emailProperties } from './src/lib/analytics';
-import { isSupabaseConfigured } from './src/lib/supabase';
+import { resolveAnalyticsConsentForUser } from './src/lib/analytics/consentSync';
+import { isSupabaseConfigured, supabase } from './src/lib/supabase';
+import {
+  REQUIRED_PRIVACY_VERSION,
+  REQUIRED_TERMS_VERSION,
+} from './src/lib/legal-versions';
+import {
+  cacheLegalAcceptance,
+  hasCachedLegalAcceptance,
+} from './src/lib/legalAcceptanceStorage';
+import { AnalyticsConsentPromptModal } from './src/components/AnalyticsConsentPromptModal';
+import { LegalReacceptanceModal } from './src/components/LegalReacceptanceModal';
 import { EarningsScreen, type EarningsWindow } from './src/screens/EarningsScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { InboxScreen } from './src/screens/InboxScreen';
@@ -35,7 +50,11 @@ import { color } from '@fieldsolo/design-system/lib/tokens';
 import { bg } from './src/theme/nativeTokens';
 
 function AuthenticatedShell() {
-  const { session, loading } = useAuth();
+  const { session, loading, signupLegalPending } = useAuth();
+  const [legalGate, setLegalGate] = useState<'loading' | 'blocked' | 'ready'>('loading');
+  const [analyticsConsentGate, setAnalyticsConsentGate] = useState<
+    'idle' | 'loading' | 'prompt' | 'ready'
+  >('idle');
   /** When true, job detail covers tab shell (HOME / JOBS / EARNINGS); X returns here. */
   const [jobDetailOpen, setJobDetailOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -57,6 +76,74 @@ function AuthenticatedShell() {
   const [inboxLoadKey, setInboxLoadKey] = useState(0);
   // Hooks must be called unconditionally — bail-out renders below still execute these.
   const liveSession = useLiveSession();
+
+  useEffect(() => {
+    if (!session || signupLegalPending) {
+      if (!session) setLegalGate('loading');
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      setLegalGate('loading');
+      try {
+        const accepted = await fetchLatestLegalAcceptanceVersions(supabase);
+        if (cancelled) return;
+        const requiresAcceptance = needsLegalReacceptance(accepted, {
+          privacyVersion: REQUIRED_PRIVACY_VERSION,
+          termsVersion: REQUIRED_TERMS_VERSION,
+        });
+        if (!requiresAcceptance) {
+          try {
+            await cacheLegalAcceptance({
+              userId: session.user.id,
+              privacyVersion: REQUIRED_PRIVACY_VERSION,
+              termsVersion: REQUIRED_TERMS_VERSION,
+            });
+          } catch {
+            // The server remains authoritative; local caching is best-effort.
+          }
+        }
+        if (!cancelled) setLegalGate(requiresAcceptance ? 'blocked' : 'ready');
+      } catch {
+        const cached = await hasCachedLegalAcceptance({
+          userId: session.user.id,
+          privacyVersion: REQUIRED_PRIVACY_VERSION,
+          termsVersion: REQUIRED_TERMS_VERSION,
+        });
+        if (!cancelled) setLegalGate(cached ? 'ready' : 'blocked');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user.id, signupLegalPending]);
+
+  useEffect(() => {
+    if (!session?.user.id || signupLegalPending || legalGate !== 'ready') {
+      if (!session?.user.id) setAnalyticsConsentGate('idle');
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      setAnalyticsConsentGate('loading');
+      const result = await resolveAnalyticsConsentForUser(session.user.id);
+      if (cancelled) return;
+      setAnalyticsConsentGate(result === 'missing' ? 'prompt' : 'ready');
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user.id, signupLegalPending, legalGate]);
+
+  useEffect(() => {
+    if (session) return;
+    void analytics.onSignOut();
+    setAnalyticsConsentGate('idle');
+  }, [session]);
 
   const openInbox = useCallback(() => {
     analytics.capture('inbox_opened', { source: 'jobs_header' });
@@ -137,15 +224,23 @@ function AuthenticatedShell() {
   }, [inboxOpen, jobDetailOpen, mainTab, profileOpen, session]);
 
   useEffect(() => {
-    if (!session) return;
+    if (
+      !session
+      || analyticsConsentGate !== 'ready'
+      || !analytics.isConsentGranted()
+    ) {
+      return;
+    }
     analytics.identify(session.user.id, {
       ...emailProperties(session.user.email),
-      email: session.user.email ?? null,
       auth_provider: 'supabase',
     });
-  }, [session?.user.id, session?.user.email, session]);
+  }, [analyticsConsentGate, session?.user.id, session?.user.email, session]);
 
   useEffect(() => {
+    if (analyticsConsentGate !== 'ready' || !analytics.isConsentGranted()) {
+      return;
+    }
     analytics.screen(currentScreen, {
       auth_state: session ? 'authenticated' : 'anonymous',
       main_tab: mainTab,
@@ -155,6 +250,7 @@ function AuthenticatedShell() {
       has_live_session: liveSession.hasLiveSession,
     });
   }, [
+    analyticsConsentGate,
     currentScreen,
     inboxOpen,
     jobDetailOpen,
@@ -166,13 +262,19 @@ function AuthenticatedShell() {
 
   const openedTrackedRef = useRef(false);
   useEffect(() => {
-    if (openedTrackedRef.current) return;
+    if (
+      openedTrackedRef.current
+      || analyticsConsentGate !== 'ready'
+      || !analytics.isConsentGranted()
+    ) {
+      return;
+    }
     openedTrackedRef.current = true;
     analytics.capture('app_opened', {
       auth_state: session ? 'authenticated' : loading ? 'loading' : 'anonymous',
       has_live_session: liveSession.hasLiveSession,
     });
-  }, [liveSession.hasLiveSession, loading, session]);
+  }, [analyticsConsentGate, liveSession.hasLiveSession, loading, session]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
@@ -186,7 +288,12 @@ function AuthenticatedShell() {
     return () => sub.remove();
   }, [liveSession.hasLiveSession, session]);
 
-  if (loading) {
+  if (
+    loading
+    || signupLegalPending
+    || (session && legalGate === 'loading')
+    || (session && legalGate === 'ready' && analyticsConsentGate === 'loading')
+  ) {
     return (
       <View style={[styles.root, styles.centered]}>
         <ActivityIndicator />
@@ -200,6 +307,24 @@ function AuthenticatedShell() {
 
   return (
     <View style={styles.root}>
+      <LegalReacceptanceModal
+        visible={legalGate === 'blocked'}
+        onAccepted={() => {
+          void cacheLegalAcceptance({
+            userId: session.user.id,
+            privacyVersion: REQUIRED_PRIVACY_VERSION,
+            termsVersion: REQUIRED_TERMS_VERSION,
+          }).catch(() => {});
+          setLegalGate('ready');
+        }}
+      />
+      <AnalyticsConsentPromptModal
+        visible={legalGate === 'ready' && analyticsConsentGate === 'prompt'}
+        userId={session.user.id}
+        onResolved={() => setAnalyticsConsentGate('ready')}
+      />
+      {legalGate === 'ready' && analyticsConsentGate === 'ready' ? (
+        <>
       {jobDetailOpen ? (
         <JobDetailScreen
           loadKey={jobDetailLoadKey}
@@ -304,6 +429,8 @@ function AuthenticatedShell() {
       )}
 
       <LiveSessionOverlay onSessionEnded={({ jobId }) => onLiveSessionEnded(jobId)} />
+        </>
+      ) : null}
     </View>
   );
 }

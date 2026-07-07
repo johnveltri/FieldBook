@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import type { AnalyticsConsentStatus } from '@fieldsolo/api-client';
+
 import { createNoopAdapter, createPostHogAdapter } from './adapters';
 import {
   ANALYTICS_SCHEMA_VERSION,
@@ -39,21 +41,50 @@ function createAdapter(config: AnalyticsConfig): AnalyticsAdapter {
 }
 
 class AnalyticsClient {
-  private adapter = createAdapter(analyticsConfig);
-  private anonymousId = makeId('anon');
-  private appSessionId = makeId('session');
+  private adapter: AnalyticsAdapter = createNoopAdapter('consent_not_granted');
+  private anonymousId: string | null = null;
+  private appSessionId: string | null = null;
   private currentScreen: AnalyticsScreenName | null = null;
   private userId: string | null = null;
-  private ready = false;
+  private consentGranted = false;
 
-  constructor(private readonly config: AnalyticsConfig) {
-    void this.loadAnonymousId();
+  constructor(private readonly config: AnalyticsConfig) {}
+
+  isConsentGranted(): boolean {
+    return this.consentGranted;
+  }
+
+  async applyConsent(status: AnalyticsConsentStatus | null): Promise<void> {
+    if (status === 'granted') {
+      await this.grantConsent();
+      return;
+    }
+    await this.disable(status === 'withdrawn');
+  }
+
+  async grantConsent(): Promise<void> {
+    if (this.consentGranted) return;
+    this.consentGranted = true;
+    this.adapter = createAdapter(this.config);
+    this.appSessionId = makeId('session');
+    await this.ensureAnonymousId();
+  }
+
+  async withdrawConsent(): Promise<void> {
+    await this.disable(true);
+  }
+
+  async onSignOut(): Promise<void> {
+    this.userId = null;
+    this.currentScreen = null;
+    await this.disable(false);
   }
 
   capture<Name extends AnalyticsEventName>(
     event: Name,
     properties: AnalyticsEventPayloads[Name] = {},
   ): void {
+    if (!this.consentGranted) return;
     const payload = this.withEnvelope(properties);
     try {
       this.adapter.capture(event, payload);
@@ -63,6 +94,7 @@ class AnalyticsClient {
   }
 
   identify(userId: string, traits: AnalyticsUserTraits = {}): void {
+    if (!this.consentGranted) return;
     this.userId = userId;
     try {
       this.adapter.identify(userId, this.clean(traits));
@@ -72,6 +104,7 @@ class AnalyticsClient {
   }
 
   reset(): void {
+    if (!this.consentGranted) return;
     this.userId = null;
     this.appSessionId = makeId('session');
     try {
@@ -82,6 +115,7 @@ class AnalyticsClient {
   }
 
   screen(name: AnalyticsScreenName, properties: AnalyticsProperties = {}): void {
+    if (!this.consentGranted) return;
     this.currentScreen = name;
     const payload = this.withEnvelope({ screen: name, ...properties });
     try {
@@ -94,6 +128,23 @@ class AnalyticsClient {
 
   getCurrentScreen(): AnalyticsScreenName | null {
     return this.currentScreen;
+  }
+
+  private async disable(clearAnonymousId: boolean): Promise<void> {
+    this.consentGranted = false;
+    this.userId = null;
+    this.appSessionId = null;
+    this.anonymousId = null;
+    this.adapter = createNoopAdapter(
+      clearAnonymousId ? 'consent_withdrawn' : 'consent_not_granted',
+    );
+    if (clearAnonymousId) {
+      try {
+        await AsyncStorage.removeItem(ANONYMOUS_ID_KEY);
+      } catch {
+        // no-op
+      }
+    }
   }
 
   private withEnvelope(properties: AnalyticsProperties): AnalyticsProperties {
@@ -117,9 +168,7 @@ class AnalyticsClient {
     return sanitizeProperties(properties, this.config.debugRichEnabled);
   }
 
-  private async loadAnonymousId(): Promise<void> {
-    if (this.ready) return;
-    this.ready = true;
+  private async ensureAnonymousId(): Promise<void> {
     try {
       await migrateStorageKey(AsyncStorage, {
         oldKey: LEGACY_FIELD_BOOK_ANALYTICS_ANONYMOUS_ID_KEY,
@@ -130,9 +179,11 @@ class AnalyticsClient {
         this.anonymousId = stored;
         return;
       }
-      await AsyncStorage.setItem(ANONYMOUS_ID_KEY, this.anonymousId);
+      const nextId = makeId('anon');
+      this.anonymousId = nextId;
+      await AsyncStorage.setItem(ANONYMOUS_ID_KEY, nextId);
     } catch {
-      // In-memory anonymous id is fine if storage is unavailable.
+      this.anonymousId = makeId('anon');
     }
   }
 }
