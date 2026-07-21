@@ -6,6 +6,10 @@ import { describe, expect, it } from "vitest";
 import { PRIVACY_POLICY_VERSION } from "@/lib/waitlist-validation";
 
 const pageSource = readFileSync(path.join(import.meta.dirname, "page.tsx"), "utf8");
+const rendererSource = readFileSync(
+  path.resolve(import.meta.dirname, "../../components/LegalDocument.tsx"),
+  "utf8",
+);
 const markdownSource = readFileSync(
   path.resolve(import.meta.dirname, "../../../../../docs/legal/privacy-policy.md"),
   "utf8",
@@ -14,24 +18,19 @@ const markdownSource = readFileSync(
 describe("website privacy policy", () => {
   it("matches the canonical policy version", () => {
     const markdownVersion = markdownSource.match(/\*\*Policy version:\*\* ([\d-]+)/)?.[1];
-    const pageVersion = pageSource.match(/const policyVersion = "([\d-]+)"/)?.[1];
 
-    expect(pageVersion).toBe(markdownVersion);
     expect(PRIVACY_POLICY_VERSION).toBe(markdownVersion);
   });
 
-  it("renders every section from the canonical Markdown policy", () => {
-    const headings = [...markdownSource.matchAll(/^#{2,3} (.+)$/gm)].map((match) => match[1]);
-
-    for (const heading of headings) {
-      expect(pageSource).toContain(`>${heading}<`);
-    }
+  it("renders the canonical Markdown policy directly", () => {
+    expect(pageSource).toContain('<LegalDocument fileName="privacy-policy.md" />');
+    expect(rendererSource).toContain("<ReactMarkdown>{content}</ReactMarkdown>");
   });
 
   it("includes waitlist collection, use, consent withdrawal, and deletion disclosures", () => {
-    expect(pageSource).toContain("Waitlist, account, and profile information");
-    expect(pageSource).toContain("operate the waitlist and send requested early-access and product updates");
-    expect(pageSource).toContain("withdrawal of waitlist marketing consent");
-    expect(pageSource).toContain("remove a waitlist record");
+    expect(markdownSource).toContain("Waitlist and marketing information");
+    expect(markdownSource).toContain("send early-access or product communications");
+    expect(markdownSource).toContain("withdrawal of marketing consent");
+    expect(markdownSource).toContain("remove your waitlist record");
   });
 });

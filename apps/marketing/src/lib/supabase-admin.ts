@@ -9,6 +9,8 @@ type WaitlistSignupInsert = {
   job_sources: string[];
   privacy_policy_version: string;
   privacy_accepted_at: string;
+  terms_version: string;
+  terms_accepted_at: string;
   marketing_consent: boolean;
 };
 

@@ -1,70 +1,67 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import styles from "./delete-account.module.css";
+import styles from "../legal.module.css";
 
 export const metadata: Metadata = {
   title: "Delete Account",
-  description: "How to delete your FieldSolo account and associated data.",
+  description: "How to request deletion of your FieldSolo account.",
 };
 
 export default function DeleteAccountPage() {
   return (
     <main className={styles.page}>
-      <article className={styles.article}>
-        <Link className={styles.back} href="/">← Back to FieldSolo</Link>
-        <p className={styles.eyebrow}>Account deletion</p>
+      <article className={styles.policy}>
+        <Link className={styles.back} href="/">
+          ← Back to FieldSolo
+        </Link>
+
         <h1>Delete your FieldSolo account</h1>
-        <p className={styles.lead}>
-          You can permanently delete your FieldSolo account and the job records, sessions, notes,
-          and materials associated with it. This action cannot be undone.
+        <p>
+          You can request permanent deletion of your FieldSolo account from the mobile app. If you
+          cannot access the app, you can request deletion by email.
         </p>
 
-        <h2>Delete in the app</h2>
-        <p>If you can access the FieldSolo mobile app, use the in-app deletion control:</p>
+        <h2>Delete your account in the app</h2>
         <ol>
           <li>Sign in to your FieldSolo account.</li>
           <li>Open <strong>Profile</strong>.</li>
-          <li>Scroll to <strong>Delete account</strong>.</li>
-          <li>Confirm deletion when prompted.</li>
+          <li>Select <strong>Delete account</strong>.</li>
+          <li>
+            Type <strong>delete account</strong> when prompted and continue.
+          </li>
+          <li>Confirm the final deletion prompt.</li>
         </ol>
         <p>
-          Deleting your account removes your profile and all associated jobs, work sessions, notes,
-          and materials from active FieldSolo systems.
+          Account deletion cannot be undone. Before deleting your account, save any records you
+          need for taxes, customer matters, licensing, insurance, disputes, or other business
+          purposes.
         </p>
 
-        <h2>What gets deleted</h2>
-        <p>When you delete your account, we delete:</p>
-        <ul>
-          <li>Your account credentials and profile information (name, email, trade selections)</li>
-          <li>All job records you created</li>
-          <li>Work sessions, notes, and materials linked to your account</li>
-        </ul>
-
-        <h2>Retention after deletion</h2>
+        <h2>If you cannot access the app</h2>
         <p>
-          We delete active account and User Content from production systems within{" "}
-          <strong>30 days</strong> of your deletion request. Encrypted backup copies are scheduled
-          to expire within <strong>90 days</strong>.
-        </p>
-        <p>
-          We may retain a limited amount of information longer when necessary for legal compliance,
-          security, fraud prevention, dispute resolution, or enforcement. Any retained information
-          is limited to what is required for that purpose.
+          Email <a href="mailto:privacy@fieldsolo.com">privacy@fieldsolo.com</a> from the email
+          address associated with your account. Use <strong>Account deletion request</strong> as
+          the subject. We may verify that you control the account before completing the request.
         </p>
 
-        <h2>Cannot access the app?</h2>
+        <h2>Deletion details and governing terms</h2>
         <p>
-          If you cannot sign in or no longer have the app installed, email us at{" "}
-          <a href="mailto:privacy@fieldsolo.com">privacy@fieldsolo.com</a> from the email address
-          associated with your account. Include &ldquo;Account deletion request&rdquo; in the
-          subject line. We may verify your identity before processing the request.
+          The <Link href="/privacy">Privacy Policy</Link> is the source of truth for what account
+          deletion removes, deletion timing, backup handling, limited retention, and your privacy
+          choices and rights.
+        </p>
+        <p>
+          The <Link href="/terms">Terms of Service</Link> is the source of truth for the effect of
+          account termination, loss of access to User Content, and obligations that may survive
+          termination.
         </p>
 
-        <p className={styles.note}>
-          For other privacy requests — access, correction, portability, or analytics withdrawal —
-          see our <Link href="/privacy">Privacy Policy</Link> or contact{" "}
-          <a href="mailto:privacy@fieldsolo.com">privacy@fieldsolo.com</a>.
+        <h2>Waitlist deletion</h2>
+        <p>
+          To remove a waitlist record, email <a href="mailto:privacy@fieldsolo.com">privacy@fieldsolo.com</a>
+          {" "}from the address used to join the waitlist. The Privacy Policy explains how waitlist
+          deletion and marketing choices are handled.
         </p>
       </article>
     </main>

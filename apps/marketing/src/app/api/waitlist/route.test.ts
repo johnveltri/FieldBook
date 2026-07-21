@@ -150,10 +150,14 @@ describe("POST /api/waitlist", () => {
       uses_software: false,
       tracking_tools: ["notes_paper_memory"],
       job_sources: ["referrals"],
-      privacy_policy_version: "2026-07-06",
+      privacy_policy_version: "2026-07-20",
       privacy_accepted_at: expect.any(String),
+      terms_version: "2026-07-20",
+      terms_accepted_at: expect.any(String),
       marketing_consent: true,
     });
+    const insertedRecord = insert.mock.calls[0]?.[0];
+    expect(insertedRecord.terms_accepted_at).toBe(insertedRecord.privacy_accepted_at);
   });
 
   it("returns 429 when the IP rate limit is exhausted", async () => {
@@ -190,10 +194,14 @@ describe("POST /api/waitlist", () => {
       uses_software: false,
       tracking_tools: ["notes_paper_memory"],
       job_sources: ["referrals"],
-      privacy_policy_version: "2026-07-06",
+      privacy_policy_version: "2026-07-20",
       privacy_accepted_at: expect.any(String),
+      terms_version: "2026-07-20",
+      terms_accepted_at: expect.any(String),
       marketing_consent: true,
     });
+    const updatedRecord = update.mock.calls[0]?.[0];
+    expect(updatedRecord.terms_accepted_at).toBe(updatedRecord.privacy_accepted_at);
     expect(eq).toHaveBeenCalledWith("email", "jane@example.com");
   });
 

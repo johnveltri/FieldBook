@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import {
   parseWaitlistPayload,
   PRIVACY_POLICY_VERSION,
+  TERMS_VERSION,
 } from "@/lib/waitlist-validation";
 
 export const runtime = "nodejs";
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
     );
   }
 
+  const acceptedAt = new Date().toISOString();
   const signupRecord = {
     first_name: payload.firstName,
     email: payload.email,
@@ -121,7 +123,9 @@ export async function POST(request: Request) {
     tracking_tools: payload.trackingTools,
     job_sources: payload.jobSources,
     privacy_policy_version: PRIVACY_POLICY_VERSION,
-    privacy_accepted_at: new Date().toISOString(),
+    privacy_accepted_at: acceptedAt,
+    terms_version: TERMS_VERSION,
+    terms_accepted_at: acceptedAt,
     marketing_consent: true,
   };
 
@@ -139,6 +143,8 @@ export async function POST(request: Request) {
           job_sources: signupRecord.job_sources,
           privacy_policy_version: signupRecord.privacy_policy_version,
           privacy_accepted_at: signupRecord.privacy_accepted_at,
+          terms_version: signupRecord.terms_version,
+          terms_accepted_at: signupRecord.terms_accepted_at,
           marketing_consent: signupRecord.marketing_consent,
         })
         .eq("email", payload.email);

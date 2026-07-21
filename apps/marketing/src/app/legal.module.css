@@ -1,0 +1,87 @@
+.page {
+  min-height: 100vh;
+  padding: 2.5rem var(--page-gutter) 4rem;
+  color: var(--ink);
+  background: #faf6f0;
+}
+
+.policy {
+  width: min(48rem, 100%);
+  margin-inline: auto;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 2rem;
+  color: var(--rust-700);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.policy h1,
+.policy h2,
+.policy h3 {
+  color: var(--navy-950);
+  line-height: 1.25;
+}
+
+.policy h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  letter-spacing: -0.025em;
+}
+
+.policy h2 {
+  margin: 2.25rem 0 0.75rem;
+  font-size: clamp(1.3rem, 3vw, 1.55rem);
+}
+
+.policy h3 {
+  margin: 1.75rem 0 0.625rem;
+  font-size: 1.125rem;
+}
+
+.policy p,
+.policy li {
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.policy p {
+  margin: 0.875rem 0;
+}
+
+.policy ul,
+.policy ol {
+  padding-left: 1.5rem;
+}
+
+.policy li + li {
+  margin-top: 0.5rem;
+}
+
+.policy a {
+  color: var(--rust-700);
+  font-weight: 700;
+}
+
+.policy blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 0.2rem solid var(--line-strong);
+}
+
+.policy blockquote > :first-child {
+  margin-top: 0;
+}
+
+.policy blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 44rem) {
+  .page {
+    padding-top: 1.5rem;
+  }
+}
