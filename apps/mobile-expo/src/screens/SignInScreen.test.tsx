@@ -105,8 +105,8 @@ describe('SignInScreen', () => {
       expect(mockRecordSignupLegalAcceptances).toHaveBeenCalledTimes(1);
       expect(mockCacheLegalAcceptance).toHaveBeenCalledWith({
         userId: 'user-1',
-        privacyVersion: '2026-07-03',
-        termsVersion: '2026-07-03',
+        privacyVersion: '2026-07-20',
+        termsVersion: '2026-07-20',
       });
     });
   });

@@ -17,7 +17,8 @@
     "motion": "^12.0.0",
     "next": "^16.1.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
