@@ -284,6 +284,8 @@ export function BottomSheetShell({
         stackingElevated ? styles.overlayElevated : styles.overlayFlat,
       ]}
       pointerEvents={visible ? 'box-none' : 'none'}
+      accessibilityElementsHidden={!visible}
+      importantForAccessibility={visible ? 'yes' : 'no-hide-descendants'}
     >
       {/* Scrim sits in its OWN absolutely-positioned layer so it covers
           the full screen (including the area behind the keyboard) — keeps

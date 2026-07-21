@@ -2,6 +2,9 @@
   "name": "fieldsolo",
   "private": true,
   "version": "0.0.0",
+  "engines": {
+    "node": ">=22.13.0 <23"
+  },
   "workspaces": [
     "packages/*",
     "apps/*"
