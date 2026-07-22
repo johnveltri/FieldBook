@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+  "observation": "Read-only Figma plugin sessions alternated on whether top-level node 1921:4031 was present on page 8:233. The node was never a target of a write. The canonical baseline remains the first captured manifest.",
+  "affectedNodeId": "1921:4031",
+  "affectedPageId": "8:233",
+  "policy": "Require repeated matching reads before and after canvas writes; never repair or mutate a protected page in response to an inconsistent read."
+}
