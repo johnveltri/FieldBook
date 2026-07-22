@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="fieldsolo-source-commit" content="50822e52f3c1b1e3ba758e02a875d624d2983024">
+  <meta name="fieldsolo-reviewed-at" content="2026-07-21">
+  <meta name="fieldsolo-product-version" content="2026.07.21">
+  <title>FieldSolo Current Product — 2026-07-21</title>
+  <style>
+    :root { color-scheme: light; --ink:#1c1a17; --muted:#68645c; --paper:#faf7ee; --card:#fff; --line:#d5cebd; --blue:#194776; --green:#1f7549; --gold:#9a6818; --red:#a42c27; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    header, main, footer { width:min(1180px, calc(100% - 32px)); margin-inline:auto; }
+    header { padding:52px 0 24px; }
+    h1, h2, h3, h4 { font-family:Georgia, "Times New Roman", serif; line-height:1.12; margin:0 0 12px; }
+    h1 { font-size:clamp(34px, 6vw, 62px); }
+    h2 { font-size:32px; margin-top:44px; }
+    h3 { font-size:23px; }
+    h4 { font-size:18px; }
+    p { margin:0 0 14px; }
+    a { color:var(--blue); text-underline-offset:3px; }
+    nav { display:flex; flex-wrap:wrap; gap:8px; padding:16px 0 28px; }
+    nav a, .badge { border:1px solid var(--line); border-radius:999px; background:var(--card); padding:6px 11px; text-decoration:none; font-size:12px; font-weight:700; }
+    .meta, .notice, article, .panel, table, dl, pre { border:1px solid var(--line); border-radius:14px; background:var(--card); }
+    .meta, .notice, article, .panel { padding:20px; }
+    .meta { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+    .meta dt, dt { color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+    .meta dd, dd { margin:3px 0 10px; }
+    .notice { border-left:6px solid var(--green); margin:18px 0; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(285px,1fr)); gap:16px; }
+    article { scroll-margin-top:20px; }
+    article[data-status="shipped"] { border-top:5px solid var(--green); }
+    section[data-status="approved-not-shipped"] .notice { border-left-color:var(--gold); }
+    section[data-status="exploring"] .notice { border-left-color:var(--blue); }
+    .kicker { color:var(--blue); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    ul, ol { padding-left:22px; }
+    li { margin:5px 0; }
+    table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; margin:14px 0 24px; }
+    th, td { padding:12px; border-bottom:1px solid var(--line); vertical-align:top; text-align:left; }
+    th { background:#f1ecdf; font-size:11px; letter-spacing:.05em; text-transform:uppercase; }
+    tr:last-child td { border-bottom:0; }
+    code { background:#f1ecdf; border-radius:5px; padding:2px 5px; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; padding:18px; font-size:12px; background:#151a20; color:#dce7f3; }
+    .status-list { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+    .status-shipped { color:var(--green); }
+    .status-approved { color:var(--gold); }
+    .status-exploring { color:var(--blue); }
+    .danger { color:var(--red); }
+    footer { padding:40px 0 70px; color:var(--muted); }
+    @media (max-width:700px) { th:nth-child(n+4), td:nth-child(n+4) { display:none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="kicker">Canonical product source · shipped behavior only</p>
+    <h1>FieldSolo current product</h1>
+    <p>Reviewed 2026-07-21 at source commit <code>50822e52f3c1b1e3ba758e02a875d624d2983024</code>.</p>
+    <nav aria-label="Document sections">
+      <a href="#purpose">Purpose</a>
+      <a href="#navigation">Navigation</a>
+      <a href="#status-shipped">Shipped screens</a>
+      <a href="#capabilities">Capabilities</a>
+      <a href="#entities">Entities and rules</a>
+      <a href="#privacy-and-safety">Privacy and destructive actions</a>
+      <a href="#visual-references">Visual references</a>
+      <a href="#fieldsolo-product-index">JSON index</a>
+    </nav>
+    <dl class="meta">
+      <div><dt>Product version</dt><dd>2026.07.21</dd></div>
+      <div><dt>Review date</dt><dd>2026-07-21</dd></div>
+      <div><dt>Source revision</dt><dd>50822e52f3c1b1e3ba758e02a875d624d2983024</dd></div>
+      <div><dt>Maintained Figma page</dt><dd><a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2022-4069">07 Current App — Maintained</a></dd></div>
+    </dl>
+    <aside class="notice">
+      <strong>Interpretation rule:</strong> Only elements marked <code>data-status="shipped"</code> describe current functionality. Approved-but-unshipped and exploring material are deliberately separated below.
+    </aside>
+  </header>
+
+  <main>
+    <section id="purpose">
+      <h2>Purpose, audience, and boundaries</h2>
+      <div class="grid">
+        <div class="panel">
+          <h3>Purpose</h3>
+          <p>FieldSolo helps an individual skilled-trade operator rapidly capture job activity, recall what happened, complete the job record, and understand earnings without maintaining a heavyweight field-service system.</p>
+        </div>
+        <div class="panel">
+          <h3>Primary audience</h3>
+          <p>Solo tradespeople and independent service operators who need a reliable personal record of jobs, time, notes, materials, payment state, and profitability.</p>
+        </div>
+        <div class="panel">
+          <h3>Current non-goals</h3>
+          <ul>
+            <li>No quoting, estimates, invoices, payment processing, dispatch, scheduling, routing, team management, or customer portal.</li>
+            <li>No promise of offline-first synchronization.</li>
+            <li>No claim that exploring Figma experiments are available in the app.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="navigation" data-status="shipped">
+      <h2>Navigation and screen hierarchy</h2>
+      <ol>
+        <li>Anonymous users see <a href="#screen-sign-in">Sign in / Sign up</a>.</li>
+        <li>Authenticated users must pass the <a href="#state-legal-reacceptance">legal-version gate</a> and, when unresolved, the <a href="#state-analytics-consent">analytics choice</a>.</li>
+        <li>The persistent main shell contains <a href="#screen-home">Home</a>, <a href="#screen-jobs">Jobs</a>, and <a href="#screen-earnings">Earnings</a>.</li>
+        <li><a href="#screen-job-detail">Job Detail</a> and <a href="#state-inbox-notes">Inbox</a> cover the shell but preserve the selected destination tab.</li>
+        <li><a href="#screen-profile">Profile</a> stacks over Home; <a href="#state-help">Help</a> and <a href="#state-privacy">Privacy</a> are secondary Profile screens.</li>
+        <li>An active live session is represented globally by <a href="#state-live-session">Live Session</a> UI.</li>
+      </ol>
+    </section>
+
+    <section id="status-shipped" data-status="shipped">
+      <h2>Shipped screens</h2>
+      <div class="grid">
+        <article id="screen-sign-in" data-screen-id="sign-in" data-status="shipped">
+          <p class="kicker">Anonymous entry</p>
+          <h3>Sign in and sign up</h3>
+          <dl><dt>Entry</dt><dd>No authenticated Supabase session.</dd><dt>Actions</dt><dd>Email/password sign in; switch to account creation; enter first/last name; accept Privacy Policy and Terms for signup.</dd><dt>Constraints</dt><dd>Signup is blocked until legal acceptance is checked and persisted.</dd></dl>
+          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/SignInScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-2">Figma node 2025:2</a></p>
+        </article>
+        <article id="screen-home" data-screen-id="home" data-status="shipped">
+          <p class="kicker">Main tab</p>
+          <h3>Home</h3>
+          <dl><dt>Purpose</dt><dd>Fast capture, current work, and attention queue.</dd><dt>Actions</dt><dd>Open Profile, Earnings, or Job Detail; start a live session; quick-capture a note or material to Inbox or a selected job.</dd><dt>States</dt><dd>Weekly net snapshot, recent jobs, incomplete jobs, work needing completion review, pending payment, loading, error, empty.</dd></dl>
+          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/HomeScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-19">Figma node 2025:19</a></p>
+        </article>
+        <article id="screen-jobs" data-screen-id="jobs" data-status="shipped">
+          <p class="kicker">Main tab</p>
+          <h3>Jobs</h3>
+          <dl><dt>Purpose</dt><dd>Searchable, paginated job list.</dd><dt>Actions</dt><dd>Switch All/Open/Paid; search by job or customer; open Inbox; create a blank job; open Job Detail.</dd><dt>Grouping</dt><dd>All/Paid use recency sections. Open groups incomplete, in-progress, and completed-but-unpaid jobs.</dd></dl>
+          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/JobsScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-216">Figma node 2025:216</a></p>
+        </article>
+        <article id="screen-earnings" data-screen-id="earnings" data-status="shipped">
+          <p class="kicker">Main tab</p>
+          <h3>Earnings</h3>
+          <dl><dt>Windows</dt><dd>Past week (7 days), month (30 days), or year (365 days).</dd><dt>Measures</dt><dd>Net earnings, revenue, materials, hours, job count, and net per hour.</dd><dt>Actions</dt><dd>Open ranked jobs; jump from outstanding payments to the Jobs Open tab.</dd></dl>
+          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/EarningsScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-313">Figma node 2025:313</a></p>
+        </article>
+        <article id="screen-job-detail" data-screen-id="job-detail" data-status="shipped">
+          <p class="kicker">Shell-covering screen</p>
+          <h3>Job Detail</h3>
+          <dl><dt>Data</dt><dd>Job identity, customer, address, category, work/payment status, earnings, time, sessions, notes, and materials.</dd><dt>Actions</dt><dd>Edit job; change work status; create/edit/delete sessions, notes, and materials; assign items to sessions; start or manage live work; delete job.</dd><dt>Constraints</dt><dd>Material rows require description and nonzero quantity; units support presets and custom values.</dd></dl>
+          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/JobDetailScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-561">Figma node 2025:561</a></p>
+        </article>
+        <article id="screen-profile" data-screen-id="profile" data-status="shipped">
+          <p class="kicker">Home overlay</p>
+          <h3>Profile</h3>
+          <dl><dt>Data</dt><dd>Name, email, trade selections, and current free plan label.</dd><dt>Actions</dt><dd>Edit profile/trades, change password, open Privacy, open Help, log out, or begin permanent account deletion.</dd><dt>Nested screens</dt><dd>Privacy and Help replace Profile until Back is selected.</dd></dl>
+          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/ProfileScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-958">Figma node 2025:958</a></p>
+        </article>
+      </div>
+
+      <h3 id="states">Shipped secondary screens and states</h3>
+      <div class="grid">
+        <article id="state-jobs-open" data-state-id="jobs-open" data-status="shipped"><h4>Jobs — Open</h4><p>Incomplete, in-progress, and unpaid completed jobs. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-977">Figma 2028:977</a></p></article>
+        <article id="state-jobs-paid" data-state-id="jobs-paid" data-status="shipped"><h4>Jobs — Paid</h4><p>Paid jobs grouped by recency. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1152">Figma 2028:1152</a></p></article>
+        <article id="state-inbox-notes" data-state-id="inbox-notes" data-status="shipped"><h4>Inbox — Notes</h4><p>Unassigned notes grouped by recency; selecting one opens job assignment. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1274">Figma 2028:1274</a></p></article>
+        <article id="state-inbox-materials" data-state-id="inbox-materials" data-status="shipped"><h4>Inbox — Materials</h4><p>Unassigned materials grouped by recency; selecting one opens job assignment. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1443">Figma 2028:1443</a></p></article>
+        <article id="state-help" data-state-id="help" data-status="shipped"><h4>Help</h4><p>Explains account/data-copy support and opens the support email link. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1576">Figma 2028:1576</a></p></article>
+        <article id="state-privacy" data-state-id="privacy" data-status="shipped"><h4>Privacy Choices</h4><p>Reads and changes optional analytics consent and links to the Privacy Policy and Terms. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1582">Figma 2028:1582</a></p></article>
+        <article id="state-analytics-consent" data-state-id="analytics-consent" data-status="shipped"><h4>Analytics consent</h4><p>Blocks the authenticated shell until the user chooses Allow analytics or No thanks. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1596">Figma 2028:1596</a></p></article>
+        <article id="state-legal-reacceptance" data-state-id="legal-reacceptance" data-status="shipped"><h4>Legal reacceptance</h4><p>Fails closed when current Privacy/Terms acceptance cannot be verified and records acceptance before continuing. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1606">Figma 2028:1606</a></p></article>
+        <article id="state-delete-account" data-state-id="delete-account" data-status="shipped"><h4>Delete account</h4><p class="danger">Requires the exact confirmation phrase, then a system confirmation, before permanent account deletion. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1614">Figma 2028:1614</a></p></article>
+        <article id="state-live-session" data-state-id="live-session" data-status="shipped"><h4>Active live session</h4><p>Global minimized bar and editing flow for an in-progress session; a live session can be ended, adjusted, or deleted. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1625">Figma 2028:1625</a></p></article>
+      </div>
+    </section>
+
+    <section id="capabilities" data-status="shipped">
+      <h2>Shipped capability matrix</h2>
+      <table>
+        <thead><tr><th>Capability</th><th>Entry point</th><th>Action and data effect</th><th>Constraints / states</th></tr></thead>
+        <tbody>
+          <tr data-capability-id="auth.sign-in" data-status="shipped"><td>Sign in</td><td>Sign In</td><td>Creates a Supabase email/password session.</td><td>Errors remain on the form.</td></tr>
+          <tr data-capability-id="auth.sign-up" data-status="shipped"><td>Create account</td><td>Sign In mode switch</td><td>Creates account/profile context and records legal acceptance.</td><td>First/last name, email, password, and legal checkbox.</td></tr>
+          <tr data-capability-id="legal.accept" data-status="shipped"><td>Accept current legal versions</td><td>Signup or legal gate</td><td>Persists Privacy and Terms versions/timestamps; local cache is best-effort.</td><td>Server verification remains authoritative; gate fails closed.</td></tr>
+          <tr data-capability-id="analytics.choose" data-status="shipped"><td>Choose analytics</td><td>First authenticated run or Privacy</td><td>Grants or withdraws optional analytics and updates client activation.</td><td>Analytics are off before consent; failed writes revert UI.</td></tr>
+          <tr data-capability-id="home.review" data-status="shipped"><td>Review current work</td><td>Home</td><td>Loads weekly net, recent work, incomplete jobs, completion review, and pending payment.</td><td>Paginated attention data; loading/error/empty states.</td></tr>
+          <tr data-capability-id="capture.quick" data-status="shipped"><td>Quick capture</td><td>Home quick actions</td><td>Creates a note or material in Inbox or attaches it to a selected job/session.</td><td>Job chooser paginates through all available jobs.</td></tr>
+          <tr data-capability-id="session.live" data-status="shipped"><td>Live session</td><td>Home / global overlay</td><td>Creates an in-progress session, maintains a timer, and can end, adjust, or delete it.</td><td>May create a placeholder job; failed start cleans it up unless refresh confirms success.</td></tr>
+          <tr data-capability-id="jobs.browse" data-status="shipped"><td>Browse/search jobs</td><td>Jobs</td><td>Loads paginated All/Open/Paid lists and debounced search.</td><td>Search hides tabs while focused; explicit empty/error/loading states.</td></tr>
+          <tr data-capability-id="jobs.create" data-status="shipped"><td>Create job</td><td>Jobs FAB</td><td>Creates a blank job and opens Job Detail with edit sheet.</td><td>FAB is suppressed when the live-session bar occupies its slot.</td></tr>
+          <tr data-capability-id="jobs.update" data-status="shipped"><td>Edit job and status</td><td>Job Detail</td><td>Updates identity/economic fields, no-materials confirmation, and work status.</td><td>Work and payment status are separate.</td></tr>
+          <tr data-capability-id="jobs.delete" data-status="shipped"><td>Delete job</td><td>Job Detail</td><td>Deletes the job after confirmation and returns to the shell.</td><td>Destructive and explicitly confirmed.</td></tr>
+          <tr data-capability-id="sessions.manage" data-status="shipped"><td>Manage sessions</td><td>Job Detail</td><td>Create manual sessions; edit times; delete; attach notes/materials.</td><td>In-progress sessions are excluded from completed cards but available to assignment.</td></tr>
+          <tr data-capability-id="notes.manage" data-status="shipped"><td>Manage notes</td><td>Job Detail / Home / Inbox</td><td>Create, update, soft-delete, and attach notes to jobs/sessions.</td><td>Unassigned notes remain in Inbox.</td></tr>
+          <tr data-capability-id="materials.manage" data-status="shipped"><td>Manage materials</td><td>Job Detail / Home / Inbox</td><td>Create, update, soft-delete, price, quantify, and attach materials.</td><td>Description and nonzero quantity required; preset/custom unit.</td></tr>
+          <tr data-capability-id="inbox.assign" data-status="shipped"><td>Assign Inbox item</td><td>Inbox item</td><td>Updates an unassigned note/material with a selected job and removes it from Inbox.</td><td>Notes and materials have separate tabs.</td></tr>
+          <tr data-capability-id="earnings.review" data-status="shipped"><td>Review earnings</td><td>Earnings</td><td>Aggregates job economics for 7/30/365-day windows and lists ranked jobs.</td><td>Only completed jobs in the selected work window contribute.</td></tr>
+          <tr data-capability-id="profile.manage" data-status="shipped"><td>Manage profile/account</td><td>Profile</td><td>Edit name/trades, change password, log out, open Help/Privacy.</td><td>Profile save upserts when an older user lacks a profile row.</td></tr>
+          <tr data-capability-id="account.delete" data-status="shipped"><td>Delete account</td><td>Profile</td><td>Calls the delete-account Edge Function, clears the session, and reports failures.</td><td>Exact phrase plus system confirmation; permanent.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="entities" data-status="shipped">
+      <h2>Entities, statuses, and business rules</h2>
+      <table>
+        <thead><tr><th>Entity</th><th>Status / rule</th><th>Meaning</th><th>Relationships</th></tr></thead>
+        <tbody>
+          <tr data-entity="job" data-rule-id="job-work-status"><td>Job</td><td>notStarted, inProgress, completed, onHold, cancelled; derived paid</td><td>Work status describes operational progress. Paid is presented when payment is paid.</td><td>Owns sessions, notes, and materials.</td></tr>
+          <tr data-entity="job" data-rule-id="job-payment-status"><td>Job payment</td><td>pending or paid</td><td>Completed jobs with null/pending payment appear in pending-payment attention and Open.</td><td>Separate from work status.</td></tr>
+          <tr data-entity="job" data-rule-id="job-financial-completeness"><td>Job completeness</td><td>Derived</td><td>Missing description, revenue, materials/no-materials confirmation, or sessions produces incomplete attention.</td><td>Drives Home and Jobs Open grouping.</td></tr>
+          <tr data-entity="session" data-rule-id="session-state"><td>Session</td><td>in progress or ended</td><td><code>endedAt=null</code> means active/in progress; ended sessions have duration and display labels.</td><td>Belongs to one job; may own note/material attachments.</td></tr>
+          <tr data-entity="note" data-rule-id="note-parent"><td>Note</td><td>Inbox, job-scoped, or session-scoped</td><td>Unassigned note has no job; assignment attaches it to a job. Delete is soft-delete.</td><td>Optional job/session parent.</td></tr>
+          <tr data-entity="material" data-rule-id="material-cost"><td>Material</td><td>Inbox, job-scoped, or session-scoped</td><td>Total cost derives from quantity and unit cost; delete is soft-delete.</td><td>Optional job/session parent; contributes to earnings.</td></tr>
+          <tr data-entity="legal-acceptance" data-rule-id="legal-version"><td>Legal acceptance</td><td>Versioned</td><td>Current Privacy and Terms versions must be verified for authenticated use.</td><td>Belongs to a user.</td></tr>
+          <tr data-entity="analytics-consent" data-rule-id="analytics-opt-in"><td>Analytics consent</td><td>granted or withdrawn</td><td>Missing consent triggers a choice; withdrawn prevents capture/identify/screen emission.</td><td>Belongs to a user.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="privacy-and-safety" data-status="shipped">
+      <h2>Authentication, consent, privacy, and destructive actions</h2>
+      <div class="grid">
+        <div class="panel"><h3>Authentication</h3><p>Supabase email/password authentication controls access. Local migration preserves prior Fieldbook auth storage only when the FieldSolo key does not already exist.</p></div>
+        <div class="panel"><h3>Legal acceptance</h3><p>Signup and reacceptance persist versioned Privacy/Terms acceptance. A current server record is authoritative; a current user/version-specific cache can bridge temporary server failure.</p></div>
+        <div class="panel"><h3>Analytics</h3><p>Optional analytics do not activate before consent. Granting activates identify/events; withdrawal clears the persisted anonymous identifier and stops events.</p></div>
+        <div class="panel"><h3>Permanent account deletion</h3><p class="danger">Profile requires the phrase <code>delete account</code>, then a system confirmation. The delete-account Edge Function permanently removes the account and associated data.</p></div>
+        <div class="panel"><h3>Record deletion</h3><p>Job, session, note, and material deletion require explicit user action. Notes and materials use soft deletion; the active live-session delete path deletes the session record.</p></div>
+        <div class="panel"><h3>Release constraints</h3><p>Production validation rejects a local backend and rich analytics debugging. Analytics provider configuration does not override the consent gate.</p></div>
+      </div>
+    </section>
+
+    <section id="visual-references">
+      <h2>Visual and source references</h2>
+      <ul>
+        <li><a href="chatgpt/fieldsolo-core-screens.png">Core-screen atlas PNG</a></li>
+        <li><a href="chatgpt/fieldsolo-states-and-overlays.png">States-and-overlays atlas PNG</a></li>
+        <li><a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2022-4068">Figma archive index</a></li>
+        <li><a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2022-4069">Figma maintained current app</a></li>
+        <li><a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2022-4070">Figma experiments</a></li>
+        <li><a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2022-4071">Figma design system next</a></li>
+        <li><a href="https://github.com/johnveltri/fieldsolo/tree/main/apps/mobile-expo">Expo source</a></li>
+      </ul>
+    </section>
+
+    <section id="status-approved" data-status="approved-not-shipped">
+      <h2>Approved but not shipped</h2>
+      <aside class="notice">No approved-but-unshipped capabilities are recorded in this product source as of 2026-07-21. An approved experiment is not current functionality until implementation and this source are updated together.</aside>
+    </section>
+
+    <section id="status-exploring" data-status="exploring">
+      <h2>Exploring</h2>
+      <aside class="notice">Experiments live on Figma page 08 and disposable prototype branches. They are explicitly excluded from current functionality and from the shipped capability index below.</aside>
+    </section>
+
+    <section id="machine-index">
+      <h2>Machine-readable product index</h2>
+      <p>This visible JSON mirrors the shipped screen and capability identifiers above so extraction does not depend on preserving HTML attributes.</p>
+      <pre id="fieldsolo-product-index">{
+  "schemaVersion": 1,
+  "productVersion": "2026.07.21",
+  "sourceCommit": "50822e52f3c1b1e3ba758e02a875d624d2983024",
+  "reviewedAt": "2026-07-21",
+  "statusRule": "Only shipped is current functionality.",
+  "screens": [
+    {"id":"sign-in","status":"shipped","parent":null,"capabilities":["auth.sign-in","auth.sign-up","legal.accept"]},
+    {"id":"home","status":"shipped","parent":"authenticated-shell","capabilities":["home.review","capture.quick","session.live"]},
+    {"id":"jobs","status":"shipped","parent":"authenticated-shell","capabilities":["jobs.browse","jobs.create"]},
+    {"id":"jobs-open","status":"shipped","parent":"jobs","capabilities":["jobs.browse"]},
+    {"id":"jobs-paid","status":"shipped","parent":"jobs","capabilities":["jobs.browse"]},
+    {"id":"earnings","status":"shipped","parent":"authenticated-shell","capabilities":["earnings.review"]},
+    {"id":"job-detail","status":"shipped","parent":"authenticated-shell","capabilities":["jobs.update","jobs.delete","sessions.manage","notes.manage","materials.manage"]},
+    {"id":"profile","status":"shipped","parent":"home","capabilities":["profile.manage","account.delete"]},
+    {"id":"inbox-notes","status":"shipped","parent":"jobs","capabilities":["inbox.assign"]},
+    {"id":"inbox-materials","status":"shipped","parent":"jobs","capabilities":["inbox.assign"]},
+    {"id":"help","status":"shipped","parent":"profile","capabilities":["profile.manage"]},
+    {"id":"privacy","status":"shipped","parent":"profile","capabilities":["analytics.choose"]},
+    {"id":"analytics-consent","status":"shipped","parent":"authenticated-shell","capabilities":["analytics.choose"]},
+    {"id":"legal-reacceptance","status":"shipped","parent":"authenticated-shell","capabilities":["legal.accept"]},
+    {"id":"delete-account","status":"shipped","parent":"profile","capabilities":["account.delete"]},
+    {"id":"live-session","status":"shipped","parent":"authenticated-shell","capabilities":["session.live"]}
+  ],
+  "capabilities": [
+    {"id":"auth.sign-in","status":"shipped","screen":"sign-in"},
+    {"id":"auth.sign-up","status":"shipped","screen":"sign-in"},
+    {"id":"legal.accept","status":"shipped","screen":"sign-in"},
+    {"id":"analytics.choose","status":"shipped","screen":"privacy"},
+    {"id":"home.review","status":"shipped","screen":"home"},
+    {"id":"capture.quick","status":"shipped","screen":"home"},
+    {"id":"session.live","status":"shipped","screen":"home"},
+    {"id":"jobs.browse","status":"shipped","screen":"jobs"},
+    {"id":"jobs.create","status":"shipped","screen":"jobs"},
+    {"id":"jobs.update","status":"shipped","screen":"job-detail"},
+    {"id":"jobs.delete","status":"shipped","screen":"job-detail"},
+    {"id":"sessions.manage","status":"shipped","screen":"job-detail"},
+    {"id":"notes.manage","status":"shipped","screen":"job-detail"},
+    {"id":"materials.manage","status":"shipped","screen":"job-detail"},
+    {"id":"inbox.assign","status":"shipped","screen":"inbox-notes"},
+    {"id":"earnings.review","status":"shipped","screen":"earnings"},
+    {"id":"profile.manage","status":"shipped","screen":"profile"},
+    {"id":"account.delete","status":"shipped","screen":"profile"}
+  ],
+  "visualReferences": {
+    "coreScreens":"fieldsolo-core-screens.png",
+    "statesAndOverlays":"fieldsolo-states-and-overlays.png",
+    "figmaMaintainedPageId":"2022:4069"
+  }
+}</pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>Canonical source: <code>docs/product/current-product.html</code>. Update the review date, source commit, Figma map, visible sections, and JSON index together.</p>
+  </footer>
+</body>
+</html>

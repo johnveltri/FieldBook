@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+  "verifiedAt": "2026-07-21",
+  "checkpointTitle": "Archive baseline — 2026-07-21",
+  "allChecksPassed": true,
+  "protectedPages": [
+    {
+      "ok": true,
+      "pageId": "6:2",
+      "pageName": "01 Raw Imports",
+      "order": 0,
+      "topLevelCount": 68,
+      "componentCount": 0,
+      "issues": []
+    },
+    {
+      "ok": true,
+      "pageId": "8:232",
+      "pageName": "02 Design System",
+      "order": 1,
+      "topLevelCount": 6,
+      "componentCount": 175,
+      "issues": []
+    },
+    {
+      "ok": true,
+      "pageId": "8:233",
+      "pageName": "03 Screens",
+      "order": 2,
+      "topLevelCount": 14,
+      "componentCount": 1,
+      "issues": []
+    },
+    {
+      "ok": true,
+      "pageId": "1956:2",
+      "pageName": "04 Marketing Website",
+      "order": 3,
+      "topLevelCount": 6,
+      "componentCount": 0,
+      "issues": []
+    },
+    {
+      "ok": true,
+      "pageId": "1967:69",
+      "pageName": "05 Screenshots",
+      "order": 4,
+      "topLevelCount": 1,
+      "componentCount": 0,
+      "issues": []
+    }
+  ],
+  "assets": {
+    "ok": true,
+    "issues": [],
+    "variableCollectionCount": 4,
+    "styleCount": 41
+  },
+  "appendedPages": {
+    "ok": true,
+    "issues": [],
+    "pages": [
+      {
+        "id": "2022:4068",
+        "name": "06 Archive Index — 2026-07-21",
+        "order": 5,
+        "topLevelCount": 3,
+        "descendantCount": 41,
+        "componentCount": 0
+      },
+      {
+        "id": "2022:4069",
+        "name": "07 Current App — Maintained",
+        "order": 6,
+        "topLevelCount": 3,
+        "descendantCount": 1538,
+        "componentCount": 0
+      },
+      {
+        "id": "2022:4070",
+        "name": "08 Experiments",
+        "order": 7,
+        "topLevelCount": 5,
+        "descendantCount": 42,
+        "componentCount": 0
+      },
+      {
+        "id": "2022:4071",
+        "name": "09 Design System — Next",
+        "order": 8,
+        "topLevelCount": 4,
+        "descendantCount": 16,
+        "componentCount": 0
+      }
+    ],
+    "canonicalScreenIds": [
+      "earnings",
+      "home",
+      "job-detail",
+      "jobs",
+      "profile",
+      "sign-in"
+    ],
+    "stateIds": [
+      "analytics-consent",
+      "delete-account",
+      "help",
+      "inbox-materials",
+      "inbox-notes",
+      "jobs-open",
+      "jobs-paid",
+      "legal-reacceptance",
+      "live-session",
+      "privacy"
+    ]
+  },
+  "createdNodeManifest": "docs/product/figma/created-nodes-2026-07-21.json",
+  "notes": [
+    "Protected pages were verified with one current-page read per page to avoid Figma lazy-loading omissions.",
+    "No components or component sets were created on pages 06–09.",
+    "Dev Resource API was unavailable in the host runtime; visible SOURCE/SPEC hyperlinks and shared plugin metadata were added to maintained wrappers."
+  ]
+}

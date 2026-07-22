@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FieldSolo Disposable Prototyping Workflow</title><style>body{max-width:900px;margin:40px auto;padding:0 20px;font:16px/1.6 system-ui;color:#1c1a17}code,pre{font-family:ui-monospace,monospace}pre{padding:16px;background:#f3efe4;overflow:auto}h1,h2{font-family:Georgia,serif}</style></head>
+<body>
+  <h1>Disposable prototyping workflow</h1>
+  <p>This workflow evaluates product design in the real Expo architecture without changing the implementation branch or production data.</p>
+  <ol>
+    <li>Create <code>prototype/&lt;feature-slug&gt;</code> from a clean, current <code>main</code> and add a worktree under <code>/tmp/fieldsolo-prototypes/&lt;feature-slug&gt;</code>.</li>
+    <li>Reuse real navigation, tokens, and components. Put branch-only data behind fixtures or mock adapters; production writes must be disabled.</li>
+    <li>Compare alternatives on Expo Web and a physical phone. Record the exact viewport/device and test scenario.</li>
+    <li>Copy finalists into Figma page <strong>08 Experiments</strong> as new nodes named <code>YYYY-MM-DD / feature-slug / variant</code>.</li>
+    <li>Move the label from Exploring to Finalist, Approved, or Rejected. Never move or edit archive content.</li>
+    <li>Record the decision in <code>docs/product/decisions/</code> using the template.</li>
+    <li>Remove the disposable worktree and branch after the decision is safely recorded.</li>
+    <li>Implement the winner afresh from the decision note and maintained Figma node; do not merge prototype shortcuts.</li>
+  </ol>
+  <h2>Worktree commands</h2>
+  <pre>git fetch origin
+git worktree add -b prototype/&lt;feature-slug&gt; /tmp/fieldsolo-prototypes/&lt;feature-slug&gt; origin/main
+
+# compare variants, then record the decision
+
+git worktree remove /tmp/fieldsolo-prototypes/&lt;feature-slug&gt;
+git branch -d prototype/&lt;feature-slug&gt;</pre>
+  <h2>Prototype safety gates</h2>
+  <ul>
+    <li>No production credentials, write-capable adapters, migrations, or analytics emission.</li>
+    <li>Fixtures are obviously labeled and live only on the prototype branch.</li>
+    <li>Approval means design approval, not shipped functionality.</li>
+    <li>Figma Make is optional for unconstrained web concepts; it is not the Expo implementation baseline.</li>
+  </ul>
+</body>
+</html>

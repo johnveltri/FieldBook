@@ -1,0 +1,16 @@
+Treat only content marked data-status="shipped" in fieldsolo-current-product.html as current FieldSolo functionality.
+
+For product-state answers, report the fieldsolo-source-commit and fieldsolo-reviewed-at values from the HTML.
+
+Distinguish:
+- Figma pages 01–05: immutable historical archive.
+- Figma page 07: maintained current app.
+- Figma page 08: experiments, not shipped functionality.
+- Figma page 09: next-generation design-system work, not shipped unless the HTML says otherwise.
+
+Use fieldsolo-core-screens.png for visual questions about canonical screens.
+Use fieldsolo-states-and-overlays.png for visual questions about alternate states, secondary screens, consent gates, and destructive actions.
+
+When the visible prose and fieldsolo-product-index disagree, flag the conflict and do not infer that an experiment is shipped.
+
+When asked whether a feature exists, cite its capability ID and linked screen/state from the HTML. State clearly when the feature is absent from the shipped capability index.

@@ -1,0 +1,1925 @@
+{
+  "schemaVersion": 1,
+  "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+  "fileUrl": "https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Field-Book-App---gig-work-for-skilled-trade",
+  "capturedAt": "2026-07-21T23:01:47.674Z",
+  "captureMethod": "Per protected page: set current page once, then enumerate top-level children and local component descendants.",
+  "sourceCommit": "50822e52f3c1b1e3ba758e02a875d624d2983024",
+  "captureCorrections": [
+    {
+      "recordedAt": "2026-07-21",
+      "pageId": "8:232",
+      "nodeId": "216:11660",
+      "reason": "Pre-existing Radius Styles frame was omitted by a lazy non-current-page root read and confirmed by the authoritative current-page read."
+    },
+    {
+      "recordedAt": "2026-07-21",
+      "pageId": "8:233",
+      "nodeId": "1921:4031",
+      "reason": "Pre-existing node observed in the read-only screen inspection before the version-history checkpoint and first canvas write; initially omitted by an inconsistent Figma snapshot."
+    },
+    {
+      "recordedAt": "2026-07-21",
+      "pageId": "1956:2",
+      "nodeId": "1956:3",
+      "reason": "Pre-existing Marketing website design frame was omitted by a lazy non-current-page root read and confirmed by the authoritative current-page read."
+    }
+  ],
+  "protectedPageIds": [
+    "6:2",
+    "8:232",
+    "8:233",
+    "1956:2",
+    "1967:69"
+  ],
+  "pages": [
+    {
+      "id": "6:2",
+      "name": "01 Raw Imports",
+      "order": 0,
+      "topLevelChildren": [
+        {
+          "id": "11:2",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 0
+        },
+        {
+          "id": "11:231",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 1
+        },
+        {
+          "id": "10:882",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 2
+        },
+        {
+          "id": "10:236",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 3
+        },
+        {
+          "id": "10:534",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 4
+        },
+        {
+          "id": "10:699",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 5
+        },
+        {
+          "id": "10:1048",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 6
+        },
+        {
+          "id": "10:1342",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 7
+        },
+        {
+          "id": "10:1649",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 8
+        },
+        {
+          "id": "10:1944",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 9
+        },
+        {
+          "id": "10:2264",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 10
+        },
+        {
+          "id": "10:2600",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 11
+        },
+        {
+          "id": "10:2935",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 12
+        },
+        {
+          "id": "10:3195",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 13
+        },
+        {
+          "id": "10:3505",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 14
+        },
+        {
+          "id": "10:3771",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 15
+        },
+        {
+          "id": "10:4078",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 16
+        },
+        {
+          "id": "10:4347",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 17
+        },
+        {
+          "id": "10:4618",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 18
+        },
+        {
+          "id": "10:4925",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 19
+        },
+        {
+          "id": "10:5195",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 20
+        },
+        {
+          "id": "10:5469",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 21
+        },
+        {
+          "id": "10:5776",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 22
+        },
+        {
+          "id": "10:6046",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 23
+        },
+        {
+          "id": "10:6325",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 24
+        },
+        {
+          "id": "10:6631",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 25
+        },
+        {
+          "id": "10:6906",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 26
+        },
+        {
+          "id": "10:7312",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 27
+        },
+        {
+          "id": "10:7718",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 28
+        },
+        {
+          "id": "10:8148",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 29
+        },
+        {
+          "id": "10:8583",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 30
+        },
+        {
+          "id": "10:8693",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 31
+        },
+        {
+          "id": "10:8758",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 32
+        },
+        {
+          "id": "10:8823",
+          "name": "image 1",
+          "type": "RECTANGLE",
+          "order": 33
+        },
+        {
+          "id": "10:8825",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 34
+        },
+        {
+          "id": "10:8919",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 35
+        },
+        {
+          "id": "10:9120",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 36
+        },
+        {
+          "id": "10:9352",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 37
+        },
+        {
+          "id": "790:145",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 38
+        },
+        {
+          "id": "12:9771",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 39
+        },
+        {
+          "id": "231:97",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 40
+        },
+        {
+          "id": "231:585",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 41
+        },
+        {
+          "id": "370:453",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 42
+        },
+        {
+          "id": "370:1046",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 43
+        },
+        {
+          "id": "370:1708",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 44
+        },
+        {
+          "id": "370:1928",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 45
+        },
+        {
+          "id": "452:2925",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 46
+        },
+        {
+          "id": "452:3419",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 47
+        },
+        {
+          "id": "452:3969",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 48
+        },
+        {
+          "id": "452:4492",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 49
+        },
+        {
+          "id": "452:5051",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 50
+        },
+        {
+          "id": "452:5620",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 51
+        },
+        {
+          "id": "452:6254",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 52
+        },
+        {
+          "id": "452:6834",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 53
+        },
+        {
+          "id": "452:7388",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 54
+        },
+        {
+          "id": "452:7972",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 55
+        },
+        {
+          "id": "452:8564",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 56
+        },
+        {
+          "id": "452:9134",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 57
+        },
+        {
+          "id": "452:9716",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 58
+        },
+        {
+          "id": "452:10301",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 59
+        },
+        {
+          "id": "452:10887",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 60
+        },
+        {
+          "id": "452:11473",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 61
+        },
+        {
+          "id": "452:12068",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 62
+        },
+        {
+          "id": "452:12676",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 63
+        },
+        {
+          "id": "452:13332",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 64
+        },
+        {
+          "id": "452:13970",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 65
+        },
+        {
+          "id": "790:143",
+          "name": "image 2",
+          "type": "RECTANGLE",
+          "order": 66
+        },
+        {
+          "id": "1945:673",
+          "name": "image 3",
+          "type": "RECTANGLE",
+          "order": 67
+        }
+      ]
+    },
+    {
+      "id": "8:232",
+      "name": "02 Design System",
+      "order": 1,
+      "topLevelChildren": [
+        {
+          "id": "216:11663",
+          "name": "Components",
+          "type": "FRAME",
+          "order": 0
+        },
+        {
+          "id": "216:11660",
+          "name": "Radius Styles",
+          "type": "FRAME",
+          "order": 1
+        },
+        {
+          "id": "215:11552",
+          "name": "Spacing Styles",
+          "type": "FRAME",
+          "order": 2
+        },
+        {
+          "id": "12:10250",
+          "name": "Text Styles",
+          "type": "FRAME",
+          "order": 3
+        },
+        {
+          "id": "12:9730",
+          "name": "Color Styles",
+          "type": "FRAME",
+          "order": 4
+        },
+        {
+          "id": "786:13",
+          "name": "Extra Components",
+          "type": "FRAME",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "id": "8:233",
+      "name": "03 Screens",
+      "order": 2,
+      "topLevelChildren": [
+        {
+          "id": "1075:563",
+          "name": "Earnings / Default",
+          "type": "FRAME",
+          "order": 0
+        },
+        {
+          "id": "1836:1875",
+          "name": "Job Detail",
+          "type": "COMPONENT",
+          "order": 1
+        },
+        {
+          "id": "1015:280",
+          "name": "Jobs / Open",
+          "type": "FRAME",
+          "order": 2
+        },
+        {
+          "id": "1022:764",
+          "name": "Jobs / Paid",
+          "type": "FRAME",
+          "order": 3
+        },
+        {
+          "id": "811:617",
+          "name": "Jobs / Default",
+          "type": "FRAME",
+          "order": 4
+        },
+        {
+          "id": "1853:1472",
+          "name": "Jobs / Default",
+          "type": "FRAME",
+          "order": 5
+        },
+        {
+          "id": "12:9727",
+          "name": "Profile",
+          "type": "FRAME",
+          "order": 6
+        },
+        {
+          "id": "1940:1276",
+          "name": "Inbox",
+          "type": "FRAME",
+          "order": 7
+        },
+        {
+          "id": "1940:2332",
+          "name": "Inbox",
+          "type": "FRAME",
+          "order": 8
+        },
+        {
+          "id": "1921:4318",
+          "name": "Home / Default",
+          "type": "FRAME",
+          "order": 9
+        },
+        {
+          "id": "1931:1579",
+          "name": "Home / Default",
+          "type": "FRAME",
+          "order": 10
+        },
+        {
+          "id": "810:201",
+          "name": "iPhone 16",
+          "type": "FRAME",
+          "order": 11
+        },
+        {
+          "id": "1921:4031",
+          "name": "Container",
+          "type": "FRAME",
+          "order": 12
+        },
+        {
+          "id": "1937:1789",
+          "name": "16",
+          "type": "TEXT",
+          "order": 13
+        }
+      ]
+    },
+    {
+      "id": "1956:2",
+      "name": "04 Marketing Website",
+      "order": 3,
+      "topLevelChildren": [
+        {
+          "id": "1956:3",
+          "name": "Marketing website design",
+          "type": "FRAME",
+          "order": 0
+        },
+        {
+          "id": "1996:6714",
+          "name": "iPhone 17 Mockup",
+          "type": "GROUP",
+          "order": 1
+        },
+        {
+          "id": "1996:6793",
+          "name": "iPhone 17 Mockup",
+          "type": "GROUP",
+          "order": 2
+        },
+        {
+          "id": "1996:6886",
+          "name": "iPhone 17 Mockup — Jobs / Open",
+          "type": "GROUP",
+          "order": 3
+        },
+        {
+          "id": "1996:7043",
+          "name": "iPhone 17 Mockup — Earnings / Bottom",
+          "type": "GROUP",
+          "order": 4
+        },
+        {
+          "id": "1996:7155",
+          "name": "iPhone 17 Mockup — Earnings / Top",
+          "type": "GROUP",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "id": "1967:69",
+      "name": "05 Screenshots",
+      "order": 4,
+      "topLevelChildren": [
+        {
+          "id": "1967:136",
+          "name": "Frame 1",
+          "type": "FRAME",
+          "order": 0
+        }
+      ]
+    }
+  ],
+  "components": [
+    {
+      "id": "1022:456",
+      "name": "Layout=StackedInProgress",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1022:468",
+      "name": "Layout=StackedUnpaid",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1075:1946",
+      "name": "Property 1=Default",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1075:1947",
+      "name": "Property 1=Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1075:1948",
+      "name": "Bottom Sheet: Choose Job",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1075:1949",
+      "name": "Property 1=Note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1075:2030",
+      "name": "Property 1=Material",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1185:156",
+      "name": "Property 1=Photo",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1185:216",
+      "name": "Property 1=File",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1185:285",
+      "name": "Property 1=Voice Memo",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1185:377",
+      "name": "Property 1=New Attachment for Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1279:349",
+      "name": "Property 1=New Quick Note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1279:351",
+      "name": "Note",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1279:377",
+      "name": "Property 1=New Session Note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1279:378",
+      "name": "Property 1=Edit Job Note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1279:379",
+      "name": "Property 1=Edit Session Note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1279:380",
+      "name": "Property 1=Add to Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1279:381",
+      "name": "Bottom Sheet: Choose Session",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1279:423",
+      "name": "Property 1=Remove/Edit From Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1283:350",
+      "name": "Property 1=New Quick Material",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1283:351",
+      "name": "Material",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1283:352",
+      "name": "Property 1=New Job Material",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1283:389",
+      "name": "Property 1=New Session Material",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1283:426",
+      "name": "Add Job Material",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1284:576",
+      "name": "Property 1=Collapsed",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1284:577",
+      "name": "View Session",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1284:578",
+      "name": "Property 1=Expanded Empty",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1284:726",
+      "name": "Property 1=Edit Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1284:789",
+      "name": "Edit Job, Session",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1285:465",
+      "name": "Property 1=Expanded Attachments",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1286:602",
+      "name": "Property 1=New Session Type",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1286:701",
+      "name": "Property 1=Edit Job Empty",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1286:754",
+      "name": "Property 1=Edit Job",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1286:816",
+      "name": "Property 1=No Metrics",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:1544",
+      "name": "Property 1=Open Header",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:1545",
+      "name": "live-session",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:1561",
+      "name": "Property 1=Minimized",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:1562",
+      "name": "Property 1=Button Primary Note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:1563",
+      "name": "Button",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:1566",
+      "name": "Property 1=Button Primary+Delete Note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:1567",
+      "name": "Property 1=Button XL",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:431",
+      "name": "Property 1=Notes Multi Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:432",
+      "name": "View Notes",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:537",
+      "name": "Property 1=Notes Same Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:586",
+      "name": "Property 1=Notes Single Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:618",
+      "name": "View Materials",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:668",
+      "name": "Property 1=Materials Multi Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:721",
+      "name": "Materials Same Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1287:755",
+      "name": "Property 1=Materials Single Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1808:1148",
+      "name": "Property 1=Button Primary Material",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1808:1151",
+      "name": "Property 1=Button Primary Job/Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1808:1154",
+      "name": "Property 1=Button Primary+Delete Material",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1808:1161",
+      "name": "Property 1=Button Primary+Delete Job/Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1836:1875",
+      "name": "Job Detail",
+      "type": "COMPONENT",
+      "pageId": "8:233"
+    },
+    {
+      "id": "1836:2011",
+      "name": "Property 1=Button Primary+MORE",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1836:2829",
+      "name": "Property 1=Header without card",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1874:1677",
+      "name": "Property 1=New Note....",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1882:1708",
+      "name": "Property 1=Variant6",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1882:1781",
+      "name": "Dropdown Modal",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1897:3091",
+      "name": "Property 1=Live Session Bottom Sheet",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1897:3369",
+      "name": "Property 1=In-Live Expanded",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1897:3757",
+      "name": "Property 1=Edit Live Session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1904:3838",
+      "name": "Property 1=Button Primary green+MORE",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1904:3847",
+      "name": "Property 1=Button Primary blue+MORE",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1904:3856",
+      "name": "Property 1=Button Primary dark+MORE",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1904:3865",
+      "name": "Property 1=Button Primary white+MORE",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1920:3960",
+      "name": "Bottom Sheet: Quick Capture",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1920:3961",
+      "name": "Property 1=mvp",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1922:1691",
+      "name": "Property 1=profile-fields",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1922:1692",
+      "name": "profile",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1922:1693",
+      "name": "Property 1=profile-delete",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1924:1589",
+      "name": "Property 1=profile-link",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1924:2083",
+      "name": "Property 1=Change Password",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1924:2211",
+      "name": "Property 1=Update Profile",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1937:1775",
+      "name": "Property 1=Worked not complete",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1937:1801",
+      "name": "Property 1=Variant11",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1940:1924",
+      "name": "Property 1=page-tabs-two",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1940:2559",
+      "name": "Property 1=Inbox note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "1940:2590",
+      "name": "Property 1=Add to Job",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "223:11743",
+      "name": "Selection=Default",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "225:12089",
+      "name": "Bottom Nav",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "225:12090",
+      "name": "Selection=Home",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "225:12140",
+      "name": "Selection=Jobs",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "225:12165",
+      "name": "Selection=Earnings",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "229:84",
+      "name": "Property 1=Title + Profile",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "231:817",
+      "name": "Top Header",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "231:818",
+      "name": "Property 1=Title + Back",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "231:827",
+      "name": "Property 1=Title Only",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "231:841",
+      "name": "Property 1=Title + Back + Subtitle",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "231:858",
+      "name": "Property 1=X (Close &Edit)",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "236:879",
+      "name": "Property 1=Title + Inbox",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1161",
+      "name": "Metric Card",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1162",
+      "name": "Sections=Default",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1236",
+      "name": "Sections=Primary Secondary",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1273",
+      "name": "Sections=Primary only",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1310",
+      "name": "Sections=Secondary only",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1362",
+      "name": "Sections=Tertiary Only",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1399",
+      "name": "Sections=Tertiary Only (Job)",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1457",
+      "name": "Sections=Default (Clean)",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1548",
+      "name": "Layout=Default (3 lines)",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1549",
+      "name": "Job Summary Card",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1550",
+      "name": "Layout=2 Lines",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "258:1578",
+      "name": "Layout=Negative",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "371:2178",
+      "name": "Layout=Icon Title + Button",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "371:2179",
+      "name": "Section Header",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "443:2241",
+      "name": "Layout=Title only",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "443:2253",
+      "name": "Layout=StackIncomplete",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "452:2739",
+      "name": "Kind=Start session",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "452:2740",
+      "name": "Action Tile",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "452:2741",
+      "name": "Kind=New note",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "452:2763",
+      "name": "Kind=Add photo",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "452:2779",
+      "name": "Kind=Voice memo",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "452:2798",
+      "name": "Kind=Upload file",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "452:2815",
+      "name": "Kind=New material",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:107",
+      "name": "Property 1=Variant13",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:121",
+      "name": "Property 1=No Logo",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:124",
+      "name": "Property 1=With Subheading",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:133",
+      "name": "Property 1=Variant7",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:139",
+      "name": "Property 1=Variant8",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:145",
+      "name": "Property 1=Variant14",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:24",
+      "name": "OLD - Section Header",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:25",
+      "name": "Layout=Jump back in",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:31",
+      "name": "Property 1=No Button",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:38",
+      "name": "Layout= Icon Title + Button Edit",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:49",
+      "name": "Property 1=Button Add",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:60",
+      "name": "Property 1=Variant9",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:70",
+      "name": "Property 1=Variant10",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:84",
+      "name": "Property 1=Variant11",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "600:95",
+      "name": "Property 1=Variant12",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "604:35",
+      "name": "Primary-Secondary Buttons",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "604:36",
+      "name": "Layout=Inline, Primary=Success",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "604:46",
+      "name": "Layout=Block, Primary=Success",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "604:51",
+      "name": "Layout=Block, Primary=Info",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "604:62",
+      "name": "Layout=Block, Primary=Warning",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "604:73",
+      "name": "Layout=Block, Primary=Neutral",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "604:80",
+      "name": "Layout=Block, Primary=Outline",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "613:2",
+      "name": "Style=Icon",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "613:3",
+      "name": "Style=Extended",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "613:4",
+      "name": "Floating Action Button",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:142",
+      "name": "status-pill",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:143",
+      "name": "Status pill",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:144",
+      "name": "status-pill",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:153",
+      "name": "status-pill",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:155",
+      "name": "status-pill",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:157",
+      "name": "status-pill",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:159",
+      "name": "status-pill",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:161",
+      "name": "Job Card",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:162",
+      "name": "Property 1=No job category",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "622:199",
+      "name": "Property 1=Empty State",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "661:2",
+      "name": "Property 1=Default",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "786:106",
+      "name": "Property 1=Ranked Job w/ Metric",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "786:15",
+      "name": "Property 1=Default",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "786:16",
+      "name": "Inbox Icon",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "786:17",
+      "name": "Property 1=No Notifications",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "786:27",
+      "name": "Property 1=Unsorted Captures",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "786:28",
+      "name": "Row Card",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "786:29",
+      "name": "Property 1=Incomplete Job",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "786:55",
+      "name": "Property 1=Pending Payment",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "787:37",
+      "name": "Property 1=Simple Job",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "787:38",
+      "name": "Property 1=Quick Action Default",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "787:55",
+      "name": "Property 1=Activity Card",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "787:73",
+      "name": "Property 1=Empty Card",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "787:97",
+      "name": "Property 1=Empty w/ Button",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "790:260",
+      "name": "Property 1=Default",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "790:261",
+      "name": "search-bar",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "790:292",
+      "name": "Property 1=Focus",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "790:304",
+      "name": "Property 1=Empty State Results",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "806:19",
+      "name": "page-tabs-tab-4",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "806:20",
+      "name": "page-tabs",
+      "type": "COMPONENT_SET",
+      "pageId": "8:232"
+    },
+    {
+      "id": "806:21",
+      "name": "page-tabs-tab-5",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "806:28",
+      "name": "page-tabs-tab-3",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "806:35",
+      "name": "page-tabs-tab-2",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "806:42",
+      "name": "page-tabs-tab-1",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "806:50",
+      "name": "page-tabs-tab-0",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "810:374",
+      "name": "Layout=Secondary text",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    },
+    {
+      "id": "810:612",
+      "name": "Layout=Icon Title",
+      "type": "COMPONENT",
+      "pageId": "8:232"
+    }
+  ],
+  "variableCollections": [
+    {
+      "id": "VariableCollectionId:446:2435",
+      "name": "Color Styles"
+    },
+    {
+      "id": "VariableCollectionId:466:2",
+      "name": "Spacing"
+    },
+    {
+      "id": "VariableCollectionId:467:2",
+      "name": "Radius"
+    },
+    {
+      "id": "VariableCollectionId:472:2",
+      "name": "Typography"
+    }
+  ],
+  "styles": [
+    {
+      "id": "S:01ace8175e2bdfe062f9ef9d7105e91ae06c60e0,",
+      "name": "Typography/Metric-S",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:0285685122791d6b52ea3b2c8485214c872d752c,",
+      "name": "Semantic/Activity/Material",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:03142af851516e250d2b1fa10019e0d12c2caec3,",
+      "name": "Brand/Accent",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:0d75081c7f82aab3e813229bc9910e58647bd30c,",
+      "name": "Typography/Body",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:0ebe8e50ed66f64cd6358cd2327d3d10aa31af33,",
+      "name": "Typography/Metric",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:193f113a48e563ea1645632de5f1efb679376317,",
+      "name": "Decorative/NotebookLineRed",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:2c1c07d4ec18f47e2e2fa8453d055901a2ff66d8,",
+      "name": "Foundation/Text/Primary-White",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:2d322b85bd6f998deb53b35c26b3bc0d87afd8c6,",
+      "name": "Semantic/Status/Info/BG",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:319b740241540c52e529146f4163bfe25bb948aa,",
+      "name": "Brand/Primary BG",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:37310daa9ea4312ca6d29250da70b893bad99dbf,",
+      "name": "Semantic/Status/Warning/Text",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:3c12bf5b78345110d1c8a3a4443138c8cfd9c6cd,",
+      "name": "Semantic/Status/Warning/BG",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:416efc21895fe02ff9bf45f466ea02aefc168bf9,",
+      "name": "Foundation/Background/Default",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:4490ae11d0d0a53cc2c87bfff1868215c1cec796,",
+      "name": "Foundation/Surface/Subtle",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:4522473d517bcc5a4721fc79f86ff848845dd1b7,",
+      "name": "Foundation/Border/Default",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:5c5669de6f326f8c0dacf0bb866c2cee77280949,",
+      "name": "Semantic/Activity/Note",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:6211c8330cd663e0bbf6f23812c62cfee3b5b767,",
+      "name": "Typography/Title-H3",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:66b7a1f18ab72e86e563ceafd50ec69de6096e70,",
+      "name": "Semantic/Activity/Attachment",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:6a78f1f06d7bb514e26c41fa7db9fdc6d0c21dea,",
+      "name": "Brand/Primary Stroke",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:7930241b3ab674ade095d1e77ee812dce3965930,",
+      "name": "Semantic/Activity/Photo",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:79aa49e2f9d64f1abc5723b014dd17638cc723bb,",
+      "name": "Typography/Display-H1",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:7af9bc0565854ba09e7daac6a446cc15e28b85a6,",
+      "name": "Semantic/Status/Neutral/Text",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:8418cac0dd0491cf7f980ab336ef3b4d6de69aa1,",
+      "name": "Semantic/Status/Success/Text",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:95544dc599f50739cef65db6d45cbd00fa0b3e8e,",
+      "name": "Typography/Metric-XL",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:9fa82837da4965f5530f737799249fa47d14829d,",
+      "name": "Brand/Primary",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:a37221055b1069eb6c971fb760b36ff004d75ea8,",
+      "name": "Typography/LABEL",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:ac618426114e5d3977a6acae3e202d92963cf244,",
+      "name": "Decorative/NotebookLineBlue",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:ad2b6e4a26898d05c57c2fdd8be1690f92156793,",
+      "name": "Foundation/Text/Primary",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:b28fadf4f298d5b30255317149c61a275f23e8fb,",
+      "name": "Semantic/Status/Error/Text",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:b54a857b8c6b02c9328af972b130574584a020d9,",
+      "name": "Foundation/Text/Secondary",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:bb6f8aedefd8ec8754bb43068685486e0dc5ee4f,",
+      "name": "Foundation/Surface/Default",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:c54805bf44bda8f8e3d9f8f41fb9b3d4aeefda86,",
+      "name": "Semantic/Status/Paused/Text",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:c9f369263098e83f43d91b1edbf9f092d7964ddb,",
+      "name": "Semantic/Activity/Voice",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:d1559f0f45cd9002bb64effd805f8764f70d5aad,",
+      "name": "Semantic/Status/Paused/BG",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:d26e5c51ed99f5e42308924bdec988bd796d37a5,",
+      "name": "Typography/Heading-H2",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:d436de9097b73bd2fec45f504d62f6f3ac6bf0fc,",
+      "name": "Semantic/Status/Success/BG",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:e10823ac05b056c1391e8d70534e35b7c168fcb7,",
+      "name": "Semantic/Status/Info/Text",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:ea8d90dbdd51387592fc3d3449c75d8cdc7ecd7f,",
+      "name": "Typography/Body Bold",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:ed633fe27975a717888bcf58b035085a599581d5,",
+      "name": "Semantic/Status/Error/BG",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:f105169f28636e99f004c16679c4def883ca3b5c,",
+      "name": "Semantic/Status/Neutral/BG",
+      "type": "PAINT"
+    },
+    {
+      "id": "S:f321618ea065a15262c9b4ba83c7efa0ba00670d,",
+      "name": "Typography/Body-Small",
+      "type": "TEXT"
+    },
+    {
+      "id": "S:fbc51554272958e74f6293fa661e5821fde5f218,",
+      "name": "Brand/PrimaryHover",
+      "type": "PAINT"
+    }
+  ]
+}

@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+  "fileUrl": "https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade",
+  "reviewedAt": "2026-07-21",
+  "sourceCommit": "50822e52f3c1b1e3ba758e02a875d624d2983024",
+  "baselineManifest": "docs/product/figma/archive-baseline-2026-07-21.json",
+  "devResourceStatus": "Figma host runtime does not expose addDevResourceAsync; maintained wrappers contain visible SOURCE and SPEC hyperlinks plus shared plugin metadata.",
+  "pages": [
+    {
+      "id": "2022:4068",
+      "name": "06 Archive Index — 2026-07-21",
+      "purpose": "archive-index"
+    },
+    {
+      "id": "2022:4069",
+      "name": "07 Current App — Maintained",
+      "purpose": "maintained-current"
+    },
+    {
+      "id": "2022:4070",
+      "name": "08 Experiments",
+      "purpose": "experiments"
+    },
+    {
+      "id": "2022:4071",
+      "name": "09 Design System — Next",
+      "purpose": "design-system-next"
+    }
+  ],
+  "mappings": [
+    {
+      "id": "screen.sign-in",
+      "kind": "screen",
+      "sourcePath": "apps/mobile-expo/src/screens/SignInScreen.tsx",
+      "specPath": "docs/product/current-product.html#screen-sign-in",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2025:2",
+        "visualNodeId": "2025:4",
+        "archiveSourceNodeId": null
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "source-reconstruction"
+    },
+    {
+      "id": "screen.home",
+      "kind": "screen",
+      "sourcePath": "apps/mobile-expo/src/screens/HomeScreen.tsx",
+      "specPath": "docs/product/current-product.html#screen-home",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2025:19",
+        "visualNodeId": "2025:21",
+        "archiveSourceNodeId": "1931:1579"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "screen.jobs",
+      "kind": "screen",
+      "sourcePath": "apps/mobile-expo/src/screens/JobsScreen.tsx",
+      "specPath": "docs/product/current-product.html#screen-jobs",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2025:216",
+        "visualNodeId": "2025:218",
+        "archiveSourceNodeId": "1853:1472"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "screen.earnings",
+      "kind": "screen",
+      "sourcePath": "apps/mobile-expo/src/screens/EarningsScreen.tsx",
+      "specPath": "docs/product/current-product.html#screen-earnings",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2025:313",
+        "visualNodeId": "2025:315",
+        "archiveSourceNodeId": "1075:563"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "screen.job-detail",
+      "kind": "screen",
+      "sourcePath": "apps/mobile-expo/src/screens/JobDetailScreen.tsx",
+      "specPath": "docs/product/current-product.html#screen-job-detail",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2025:561",
+        "visualNodeId": "2025:563",
+        "archiveSourceNodeId": "1836:1875"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "screen.profile",
+      "kind": "screen",
+      "sourcePath": "apps/mobile-expo/src/screens/ProfileScreen.tsx",
+      "specPath": "docs/product/current-product.html#screen-profile",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2025:958",
+        "visualNodeId": "2025:960",
+        "archiveSourceNodeId": "12:9727"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "state.jobs-open",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/screens/JobsScreen.tsx",
+      "specPath": "docs/product/current-product.html#state-jobs-open",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:977",
+        "visualNodeId": "2028:979",
+        "archiveSourceNodeId": "1015:280"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "state.jobs-paid",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/screens/JobsScreen.tsx",
+      "specPath": "docs/product/current-product.html#state-jobs-paid",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1152",
+        "visualNodeId": "2028:1154",
+        "archiveSourceNodeId": "1022:764"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "state.inbox-notes",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/screens/InboxScreen.tsx",
+      "specPath": "docs/product/current-product.html#state-inbox-notes",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1274",
+        "visualNodeId": "2028:1276",
+        "archiveSourceNodeId": "1940:1276"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "state.inbox-materials",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/screens/InboxScreen.tsx",
+      "specPath": "docs/product/current-product.html#state-inbox-materials",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1443",
+        "visualNodeId": "2028:1445",
+        "archiveSourceNodeId": "1940:2332"
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "archive-copy"
+    },
+    {
+      "id": "state.help",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/screens/HelpScreen.tsx",
+      "specPath": "docs/product/current-product.html#state-help",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1576",
+        "visualNodeId": "2028:1578",
+        "archiveSourceNodeId": null
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "source-reconstruction"
+    },
+    {
+      "id": "state.privacy",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/screens/PrivacyChoicesScreen.tsx",
+      "specPath": "docs/product/current-product.html#state-privacy",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1582",
+        "visualNodeId": "2028:1584",
+        "archiveSourceNodeId": null
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "source-reconstruction"
+    },
+    {
+      "id": "state.analytics-consent",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/components/AnalyticsConsentPromptModal.tsx",
+      "specPath": "docs/product/current-product.html#state-analytics-consent",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1596",
+        "visualNodeId": "2028:1598",
+        "archiveSourceNodeId": null
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "source-reconstruction"
+    },
+    {
+      "id": "state.legal-reacceptance",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/components/LegalReacceptanceModal.tsx",
+      "specPath": "docs/product/current-product.html#state-legal-reacceptance",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1606",
+        "visualNodeId": "2028:1608",
+        "archiveSourceNodeId": null
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "source-reconstruction"
+    },
+    {
+      "id": "state.delete-account",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/components/ds/DeleteAccountBottomSheet.tsx",
+      "specPath": "docs/product/current-product.html#state-delete-account",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1614",
+        "visualNodeId": "2028:1616",
+        "archiveSourceNodeId": null
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "source-reconstruction"
+    },
+    {
+      "id": "state.live-session",
+      "kind": "state",
+      "sourcePath": "apps/mobile-expo/src/components/LiveSessionOverlay.tsx",
+      "specPath": "docs/product/current-product.html#state-live-session",
+      "figma": {
+        "fileKey": "TdvsllfeXrnkvBqR4qb3fn",
+        "pageId": "2022:4069",
+        "nodeId": "2028:1625",
+        "visualNodeId": "2028:1627",
+        "archiveSourceNodeId": null
+      },
+      "status": "shipped",
+      "lifecycleStatus": "maintained",
+      "lastReviewed": "2026-07-21",
+      "visualSource": "source-reconstruction"
+    }
+  ]
+}
