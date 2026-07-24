@@ -34,15 +34,15 @@ import {
 import { cacheLegalAcceptance } from '../lib/legalAcceptanceStorage';
 import { supabase } from '../lib/supabase';
 import {
-  CONTENT_MAX_WIDTH,
   createTextStyles,
   fg,
-  padScreenHorizontal,
   space,
 } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 
 export function SignInScreen() {
   const insets = useSafeAreaInsets();
+  const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const { signIn, signUp, setSignupLegalPending } = useAuth();
   const [email, setEmail] = useState('');
@@ -233,7 +233,6 @@ export function SignInScreen() {
     );
   }
 
-  const horizontal = padScreenHorizontal();
   const gap = space('Spacing/20');
 
   return (
@@ -254,12 +253,12 @@ export function SignInScreen() {
             {
               paddingTop: insets.top + gap,
               paddingBottom: insets.bottom + gap,
-              paddingHorizontal: horizontal,
             },
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={[styles.card, { maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center', width: '100%' }]}>
+          <View style={columnStyle}>
+          <View style={styles.card}>
             <Text style={[text.title, { color: fg.primary, marginBottom: gap }]}>FieldSolo</Text>
             <Text style={[text.body, { color: fg.secondary, marginBottom: gap }]}>
               Sign in with email and password
@@ -432,6 +431,7 @@ export function SignInScreen() {
               </Text>
             </Text>
           </View>
+          </View>
         </Animated.ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -444,6 +444,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', zIndex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center' },
   card: {
+    width: '100%',
     padding: space('Spacing/24'),
     borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.92)',

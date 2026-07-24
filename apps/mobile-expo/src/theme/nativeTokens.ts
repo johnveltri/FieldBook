@@ -1,5 +1,9 @@
 import type { TextStyle, ViewStyle } from 'react-native';
 import {
+  CONTENT_COLUMN_MAX_WIDTH,
+  contentColumnMetrics,
+} from '@fieldsolo/design-system/lib/responsiveLayout';
+import {
   color,
   radius,
   space,
@@ -7,11 +11,41 @@ import {
   type TypographyTokenName,
 } from '@fieldsolo/design-system/lib/tokens';
 
-/** Matches design-system `TopHeader` max width (`231:817`). */
+export {
+  CONTENT_COLUMN_MAX_WIDTH,
+  CONTENT_GUTTER_COMPACT,
+  CONTENT_GUTTER_DEFAULT,
+  COMPACT_WIDTH_BREAKPOINT,
+  FAB_SIZE,
+  FAB_CONTENT_GAP,
+  contentColumnMetrics,
+  contentGutter,
+  fabRightInset,
+  scrollBottomInsetForFab,
+} from '@fieldsolo/design-system/lib/responsiveLayout';
+
+/**
+ * @deprecated Legacy phone header cap. Prefer {@link contentColumnStyleRn} /
+ * {@link CONTENT_COLUMN_MAX_WIDTH} — remaining screens still import this during migration.
+ */
 export const TOP_HEADER_MAX_WIDTH = 393;
 
-/** Matches `JobSummaryCard` / list cards (`353` max in DS). */
+/**
+ * @deprecated Legacy phone card cap. Prefer {@link contentColumnStyleRn} /
+ * {@link CONTENT_COLUMN_MAX_WIDTH} — remaining screens still import this during migration.
+ */
 export const CONTENT_MAX_WIDTH = 353;
+
+/** RN styles for the shared responsive content column. */
+export function contentColumnStyleRn(windowWidth: number): ViewStyle {
+  const { gutter } = contentColumnMetrics(windowWidth);
+  return {
+    width: '100%',
+    maxWidth: CONTENT_COLUMN_MAX_WIDTH,
+    alignSelf: 'center',
+    paddingHorizontal: gutter,
+  };
+}
 
 export const bg = {
   canvas: color('Foundation/Background/Default'),

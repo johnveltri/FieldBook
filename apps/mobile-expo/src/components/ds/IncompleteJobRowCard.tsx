@@ -31,17 +31,10 @@ export function IncompleteJobRowCard({
     >
       <View style={styles.main}>
         <View style={styles.titleStack}>
-          <Text style={[typography.bodyBold, styles.title]} numberOfLines={1}>
-            {title}
-          </Text>
+          <Text style={[typography.bodyBold, styles.title]}>{title}</Text>
           <View style={styles.missingRow}>
             <Text style={[typography.bodySmall, styles.missingPrefix]}>Missing:</Text>
-            <Text
-              style={[typography.bodySmall, styles.missingDetail]}
-              numberOfLines={1}
-            >
-              {missingLine}
-            </Text>
+            <Text style={[typography.bodySmall, styles.missingDetail]}>{missingLine}</Text>
           </View>
         </View>
       </View>
@@ -55,7 +48,6 @@ export function IncompleteJobRowCard({
 const styles = StyleSheet.create({
   row: {
     width: '100%',
-    maxWidth: 353,
     minHeight: 74,
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,7 +2,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailWorkStatus } from '@fieldsolo/shared-types';
 
-import { CONTENT_MAX_WIDTH } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { JobDetailStatusPill } from './JobDetailStatusPill';
 
@@ -28,9 +27,7 @@ export function JobDetailJobHeader({
     <View style={styles.jobCardShell}>
       <View style={styles.jobCardContent}>
         <View style={styles.jobTitlePillRow}>
-          <Text style={[typography.headingH2, styles.jobTitleFlex]} numberOfLines={3}>
-            {title}
-          </Text>
+          <Text style={[typography.headingH2, styles.jobTitleFlex]}>{title}</Text>
           <View style={styles.statusPillAlign}>
             <JobDetailStatusPill kind={workStatus} typography={typography} />
           </View>
@@ -51,7 +48,6 @@ export function JobDetailJobHeader({
 const styles = StyleSheet.create({
   jobCardShell: {
     width: '100%',
-    maxWidth: CONTENT_MAX_WIDTH,
     borderRadius: radius('Radius/16'),
   },
   jobCardContent: {

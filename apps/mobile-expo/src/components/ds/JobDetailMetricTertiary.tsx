@@ -5,7 +5,6 @@ import type { JobDetailViewModel } from '@fieldsolo/shared-types';
 import {
   bg,
   border,
-  CONTENT_MAX_WIDTH,
   fg,
 } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
@@ -20,14 +19,11 @@ export function JobDetailMetricTertiary({
   const success = color('Semantic/Financial/Positive');
 
   return (
-    <View style={[styles.metricCard, { maxWidth: CONTENT_MAX_WIDTH }]}>
+    <View style={styles.metricCard}>
       <View style={styles.metricTertiaryRow}>
         <View style={styles.metricColEqual}>
           <Text style={typography.jobDetailMetricColumnLabel}>TIME</Text>
-          <Text
-            style={[typography.metric, styles.metricValueCentered, { textTransform: 'none' }]}
-            numberOfLines={2}
-          >
+          <Text style={[typography.metric, styles.metricValueCentered, { textTransform: 'none' }]}>
             {metrics.timeLabel}
           </Text>
         </View>
@@ -36,7 +32,6 @@ export function JobDetailMetricTertiary({
           <View style={styles.netHrValue}>
             <Text
               style={[typography.metric, { color: success, textAlign: 'center', textTransform: 'none' }]}
-              numberOfLines={2}
             >
               {`$ ${metrics.netPerHrDisplay}`}
             </Text>
@@ -44,10 +39,7 @@ export function JobDetailMetricTertiary({
         </View>
         <View style={styles.metricColEqual}>
           <Text style={typography.jobDetailMetricColumnLabel}>SESSIONS</Text>
-          <Text
-            style={[typography.metric, styles.metricValueCentered, { textTransform: 'none' }]}
-            numberOfLines={2}
-          >
+          <Text style={[typography.metric, styles.metricValueCentered, { textTransform: 'none' }]}>
             {String(metrics.sessionCount)}
           </Text>
         </View>

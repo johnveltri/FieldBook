@@ -38,18 +38,12 @@ export function OutstandingPaymentCard({
           </Text>
         </View>
         <View style={styles.titleStack}>
-          <Text style={[typography.bodyBold, { color: fg.primary }]} numberOfLines={1}>
-            Outstanding
-          </Text>
-          <Text style={[typography.bodySmall, { color: warningText }]} numberOfLines={1}>
-            Jobs pending payment
-          </Text>
+          <Text style={[typography.bodyBold, { color: fg.primary }]}>Outstanding</Text>
+          <Text style={[typography.bodySmall, { color: warningText }]}>Jobs pending payment</Text>
         </View>
       </View>
       <View style={styles.trailing}>
-        <Text style={[typography.metric, { color: warningText, textTransform: 'none' }]} numberOfLines={1}>
-          {amount}
-        </Text>
+        <Text style={[typography.metric, { color: warningText, textTransform: 'none' }]}>{amount}</Text>
       </View>
     </Pressable>
   );
@@ -58,7 +52,6 @@ export function OutstandingPaymentCard({
 const styles = StyleSheet.create({
   row: {
     width: '100%',
-    maxWidth: 353,
     minHeight: 74,
     flexDirection: 'row',
     alignItems: 'center',
@@ -80,13 +73,14 @@ const styles = StyleSheet.create({
     marginRight: space('Spacing/12'),
   },
   badge: {
-    width: 40,
-    height: 40,
+    minWidth: 40,
+    minHeight: 40,
     borderRadius: radius('Radius/Full'),
     backgroundColor: color('Semantic/Status/Warning/Text'),
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    paddingHorizontal: space('Spacing/4'),
   },
   badgeText: {
     textAlign: 'center',

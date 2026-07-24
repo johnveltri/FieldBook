@@ -30,6 +30,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -73,14 +74,15 @@ import {
 } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
-  CONTENT_MAX_WIDTH,
-  TOP_HEADER_MAX_WIDTH,
+  FAB_SIZE,
   bg,
   cardShadowRn,
   createTextStyles,
   fg,
+  scrollBottomInsetForFab,
   space,
 } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 
 const OPEN_TAB_PAGE_SIZE = 20;
 const NEEDS_ATTENTION_PREVIEW_MAX = 10;
@@ -212,6 +214,9 @@ function formatCaptureError(e: unknown): string {
 
 export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
+  const { columnStyle, fabRight } = useContentColumn();
+  const { fontScale } = useWindowDimensions();
+  const brandTitle = fontScale > 1.6 ? 'FIELD\nSOLO' : 'FIELDSOLO';
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const hasLiveSession = useHasLiveSession();
   const { startLiveSession, refresh: refreshLiveSession } = useLiveSession();
@@ -773,9 +778,8 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
   );
 
   const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
-  /** Clear FAB (56px) from bottom of shell main + small gap; avoid stacking full nav-height padding in the inner scroll. */
-  const HOME_FAB_DIAMETER = 56;
-  const scrollBottomPad = fabBottomOffset(insets) + HOME_FAB_DIAMETER + space('Spacing/12');
+  /** Clear FAB from bottom of shell main + small gap. */
+  const scrollBottomPad = scrollBottomInsetForFab(fabBottomOffset(insets), FAB_SIZE);
 
   const needNeedsAttentionExpand = needsAttentionRows.length > NEEDS_ATTENTION_PREVIEW_MAX;
   const shownNeedsAttentionRows =
@@ -796,7 +800,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
       <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
       <View
         pointerEvents="none"
-        style={[styles.safeAreaTopAccentWrap, { top: 0, maxWidth: TOP_HEADER_MAX_WIDTH }]}
+        style={[styles.safeAreaTopAccentWrap, { top: 0 }, columnStyle]}
       >
         <View style={styles.topAccent} />
       </View>
@@ -817,22 +821,23 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={color('Brand/Primary')} />
         }
       >
-        <View style={styles.headerBand}>
-          <View style={styles.topHeader}>
-            <Text style={typography.displayH1}>FIELDSOLO</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Profile"
-              onPress={onOpenProfile}
-              hitSlop={12}
-              style={({ pressed }) => [styles.profileHit, pressed && styles.pressed]}
-            >
-              <TopHeaderProfileIcon color={fg.primary} size={20} />
-            </Pressable>
+        <View style={columnStyle}>
+          <View style={styles.headerBand}>
+            <View style={styles.topHeader}>
+              <Text style={[typography.displayH1, styles.brandTitle]}>{brandTitle}</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Profile"
+                onPress={onOpenProfile}
+                hitSlop={12}
+                style={({ pressed }) => [styles.profileHit, pressed && styles.pressed]}
+              >
+                <TopHeaderProfileIcon color={fg.primary} size={20} />
+              </Pressable>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.modulesColumn}>
+          <View style={styles.modulesColumn}>
           {homeLoading ? (
             <ActivityIndicator
               color={color('Brand/Primary')}
@@ -854,6 +859,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                 subtitle="Completed jobs worked in the past 7 days"
                 tone="neutral"
                 typography={typography}
+                contentInset={0}
               />
               <MetricSnapshotCard
                 label="NET EARNINGS"
@@ -872,6 +878,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                 tone="accent"
                 typography={typography}
                 leadingIcon={<HomeNeedsAttentionIcon color={color('Brand/Accent')} />}
+                contentInset={0}
               />
               <View style={styles.needsAttentionBlock}>
                 {shownNeedsAttentionRows.map(({ kind, job }) => (
@@ -956,6 +963,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                 tone="neutral"
                 typography={typography}
                 leadingIcon={<HomeJumpBackInIcon color={fg.secondary} />}
+                contentInset={0}
               />
               <View style={styles.jumpBackList}>
                 {recentJobsDetail.map((job) => (
@@ -978,11 +986,12 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
               </View>
             </>
           ) : null}
+          </View>
         </View>
       </Animated.ScrollView>
 
       {hasLiveSession || quickActionsVisible ? null : (
-        <View style={[styles.fabWrap, { bottom: fabBottomOffset(insets) }]}>
+        <View style={[styles.fabWrap, { bottom: fabBottomOffset(insets), right: fabRight }]}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Quick capture"
@@ -1208,23 +1217,18 @@ const styles = StyleSheet.create({
   },
   modulesColumn: {
     width: '100%',
-    maxWidth: TOP_HEADER_MAX_WIDTH,
-    alignSelf: 'center',
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   homeError: {
     textAlign: 'center',
     marginBottom: space('Spacing/12'),
-    maxWidth: CONTENT_MAX_WIDTH,
   },
   needsAttentionBlock: {
     width: '100%',
-    maxWidth: CONTENT_MAX_WIDTH,
     gap: space('Spacing/8'),
   },
   needsAttentionRowWrap: {
     width: '100%',
-    alignItems: 'center',
   },
   needsAttentionFooter: {
     flexDirection: 'row',
@@ -1236,7 +1240,6 @@ const styles = StyleSheet.create({
   chevronUp: { transform: [{ rotate: '180deg' }] },
   jumpBackList: {
     width: '100%',
-    maxWidth: CONTENT_MAX_WIDTH,
     gap: space('Spacing/8'),
   },
   jumpBackRowWrap: {
@@ -1244,30 +1247,34 @@ const styles = StyleSheet.create({
   },
   topHeader: {
     width: '100%',
-    maxWidth: TOP_HEADER_MAX_WIDTH,
-    alignSelf: 'center',
-    paddingHorizontal: space('Spacing/20'),
+    // Horizontal inset comes from the shared responsive content column.
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    gap: space('Spacing/12'),
+  },
+  brandTitle: {
+    flex: 1,
+    minWidth: 0,
   },
   profileHit: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   pressed: { opacity: 0.75 },
   fabWrap: {
     position: 'absolute',
-    right: space('Spacing/24'),
     zIndex: 20,
   },
   fabCircle: {
-    width: 56,
-    height: 56,
+    width: FAB_SIZE,
+    height: FAB_SIZE,
     borderRadius: radius('Radius/Full'),
     backgroundColor: color('Brand/Primary'),
     alignItems: 'center',

@@ -56,14 +56,13 @@ import {
   type RecencyBucket,
 } from '../lib/timeBuckets';
 import {
-  CONTENT_MAX_WIDTH,
-  TOP_HEADER_MAX_WIDTH,
   bg,
   cardShadowRn,
   createTextStyles,
   fg,
   space,
 } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 
 type InboxTab = 'notes' | 'materials';
 
@@ -128,6 +127,7 @@ function groupByRecency<T extends { createdAt: string }>(
  */
 export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: InboxScreenProps) {
   const insets = useSafeAreaInsets();
+  const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const { invalidateJobsList } = useJobsListInvalidation();
 
@@ -363,10 +363,11 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
           width: '100%',
           paddingTop: Math.max(0, insets.top - space('Spacing/6')),
           paddingBottom: space('Spacing/20') + bottomNavReservedHeight,
-          alignItems: 'center',
+          alignItems: 'stretch',
         }}
       >
-        <View style={[styles.topHeader, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+        <View style={columnStyle}>
+        <View style={styles.topHeader}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Back"
@@ -379,7 +380,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
           <Text style={typography.displayH1}>INBOX</Text>
         </View>
 
-        <View style={[styles.tabsWrap, { maxWidth: CONTENT_MAX_WIDTH }]}>
+        <View style={styles.tabsWrap}>
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ selected: activeTab === 'notes' }}
@@ -436,7 +437,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
             {error}
           </Text>
         ) : activeEmpty ? (
-          <View style={[styles.emptyWrap, { maxWidth: CONTENT_MAX_WIDTH }]}>
+          <View style={styles.emptyWrap}>
             <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
               {activeTab === 'notes'
                 ? 'All caught up! No unassigned notes.'
@@ -456,6 +457,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
                   title={RECENCY_BUCKET_TITLE[group.bucket]}
                   tone="accent"
                   typography={typography}
+                  contentInset={0}
                 />
                 <ViewNotesBuckets
                   buckets={[bucket]}
@@ -478,6 +480,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
                   title={RECENCY_BUCKET_TITLE[group.bucket]}
                   tone="accent"
                   typography={typography}
+                  contentInset={0}
                 />
                 <ViewMaterialsBuckets
                   buckets={[bucket]}
@@ -488,6 +491,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
             );
           })
         )}
+        </View>
       </Animated.ScrollView>
 
       {/* Fixed in the column (not overlaid) so tab taps reach the nav on Android. */}
@@ -513,7 +517,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, width: '100%', backgroundColor: 'transparent', zIndex: 1 },
   topHeader: {
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/16'),
     paddingBottom: space('Spacing/8'),
     flexDirection: 'row',
@@ -542,14 +546,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: bg.surfaceWhite,
     borderRadius: radius('Radius/Full'),
-    height: 36,
+    minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
     ...cardShadowRn,
   },
   tabIdle: {
     flex: 1,
-    height: 36,
+    minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -558,17 +562,16 @@ const styles = StyleSheet.create({
   },
   groupWrap: {
     width: '100%',
-    maxWidth: TOP_HEADER_MAX_WIDTH,
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   inlineError: {
     textAlign: 'center',
     marginTop: space('Spacing/32'),
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
   },
   emptyWrap: {
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/40'),
   },
   pressed: { opacity: 0.75 },

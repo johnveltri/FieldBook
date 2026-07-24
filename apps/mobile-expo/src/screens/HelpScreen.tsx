@@ -15,12 +15,12 @@ import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../lib/legal-versions';
 import {
-  TOP_HEADER_MAX_WIDTH,
   bg,
   createTextStyles,
   fg,
   space,
 } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 
 const BACK_ICON_SIZE = 28;
 
@@ -30,6 +30,7 @@ export type HelpScreenProps = {
 
 export function HelpScreen({ onBack }: HelpScreenProps) {
   const insets = useSafeAreaInsets();
+  const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
 
@@ -84,8 +85,8 @@ export function HelpScreen({ onBack }: HelpScreenProps) {
         scrollEventThrottle={16}
         onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
       >
-        <View style={styles.headerBand}>
-          <View style={[styles.topHeaderRow, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+        <View style={columnStyle}>
+          <View style={styles.topHeaderRow}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Back"
@@ -97,20 +98,20 @@ export function HelpScreen({ onBack }: HelpScreenProps) {
             </Pressable>
             <Text style={[typography.displayH1, styles.title]}>HELP</Text>
           </View>
-        </View>
 
-        <View style={[styles.bodyWrap, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
-          <Text style={[typography.body, styles.bodyText, { color: fg.secondary }]}>
-            For account-related help or to request a copy of your data, email us at{' '}
-            <Text
-              accessibilityRole="link"
-              style={styles.emailLink}
-              onPress={openHelpEmail}
-            >
-              {SUPPORT_EMAIL}
+          <View style={styles.bodyWrap}>
+            <Text style={[typography.body, styles.bodyText, { color: fg.secondary }]}>
+              For account-related help or to request a copy of your data, email us at{' '}
+              <Text
+                accessibilityRole="link"
+                style={styles.emailLink}
+                onPress={openHelpEmail}
+              >
+                {SUPPORT_EMAIL}
+              </Text>
+              .
             </Text>
-            .
-          </Text>
+          </View>
         </View>
       </Animated.ScrollView>
     </View>
@@ -121,12 +122,11 @@ const styles = StyleSheet.create({
   root: { flex: 1, alignItems: 'center', backgroundColor: bg.canvasWarm },
   scroll: { flex: 1, width: '100%', backgroundColor: 'transparent', zIndex: 1 },
   scrollContent: { alignItems: 'stretch' },
-  headerBand: { width: '100%', alignItems: 'center' },
   topHeaderRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
     gap: space('Spacing/8'),
@@ -142,9 +142,8 @@ const styles = StyleSheet.create({
     color: fg.primary,
   },
   bodyWrap: {
-    alignSelf: 'center',
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/8'),
   },
   bodyText: {

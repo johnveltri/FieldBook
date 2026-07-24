@@ -4,8 +4,7 @@
  * **Layout:** Full-screen `CanvasTiledBackground` → `ScrollView` (transparent so the lined canvas shows in gutters)
  * → optional fixed `BottomNavJobs` pinned to the bottom (outside the scroll so it stays visible).
  *
- * **Width:** Content uses `CONTENT_MAX_WIDTH` / `TOP_HEADER_MAX_WIDTH` so phones scale edge-to-edge (minus padding)
- * while wide layouts cap at the Figma frame (~393pt).
+ * **Width:** Content uses the shared responsive content column (16/20 pt gutters, 640 pt large-screen cap).
  *
  * **Typography:** `createTextStyles` maps `typography.json` roles to loaded Expo fonts (see `nativeTokens.ts`).
  * **Money:** `formatUsdCombined` in `lib/formatUsd.ts` + `JobDetailSummaryCard` use DS color tokens for tones.
@@ -111,8 +110,6 @@ import {
 } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
-  CONTENT_MAX_WIDTH,
-  TOP_HEADER_MAX_WIDTH,
   bg,
   border,
   cardShadowRn,
@@ -121,6 +118,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import type { TextStyles } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 import type { EditJobBottomSheetValues } from '../components/ds/EditJobBottomSheet';
 
 /** Vertical gap between stacked blocks in the main column (`Spacing/20` = 16 + 4). */
@@ -179,6 +177,7 @@ export function JobDetailScreen({
 }: JobDetailScreenProps = {}) {
   /** Top safe area (status bar); bottom inset used for scroll padding + nav. */
   const insets = useSafeAreaInsets();
+  const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   /**
    * Height of the scrollable content, reported via the scrollview's
@@ -1466,7 +1465,8 @@ export function JobDetailScreen({
           <View
             style={[
               styles.topHeader,
-              { maxWidth: TOP_HEADER_MAX_WIDTH, paddingTop: headerTopPad + space('Spacing/32') },
+              columnStyle,
+              { paddingTop: headerTopPad + space('Spacing/32') },
             ]}
           >
             <View style={styles.topHeaderRow}>
@@ -1481,7 +1481,7 @@ export function JobDetailScreen({
             </View>
           </View>
         ) : null}
-        <View style={styles.errorBody}>
+        <View style={[styles.errorBody, columnStyle]}>
           {__DEV__ ? (
             <Text
               style={[
@@ -1541,10 +1541,11 @@ export function JobDetailScreen({
             insets.top - space('Spacing/6') - space('Spacing/12'),
           ),
           paddingBottom: space('Spacing/20') + bottomNavReservedHeight,
-          alignItems: 'center',
+          alignItems: 'stretch',
         }}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={columnStyle}>
         {__DEV__ && supabaseReady ? (
           <Text
             style={[
@@ -1553,7 +1554,6 @@ export function JobDetailScreen({
                 color: fg.muted,
                 alignSelf: 'center',
                 marginBottom: space('Spacing/8'),
-                paddingHorizontal: space('Spacing/20'),
                 textAlign: 'center',
               },
             ]}
@@ -1562,7 +1562,7 @@ export function JobDetailScreen({
           </Text>
         ) : null}
         {/* `TopHeader` variant `X (Close &Edit)` (`231:858`) */}
-        <View style={[styles.topHeader, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+        <View style={styles.topHeader}>
           <View style={styles.topHeaderRow}>
             <Pressable
               accessibilityRole="button"
@@ -1586,7 +1586,7 @@ export function JobDetailScreen({
           </View>
         </View>
 
-        {/* Main column: horizontal padding + vertical gap; width caps at DS max (see `styles.slot`). */}
+        {/* Main column: job header, summary, CTAs, metric card. */}
         <View style={styles.slot}>
           <JobDetailJobHeader
             title={job.shortDescription}
@@ -1619,7 +1619,7 @@ export function JobDetailScreen({
           showAdd
           onAddPress={openSessionChooser}
         />
-        <View style={[styles.sessionList, { maxWidth: CONTENT_MAX_WIDTH }]}>
+        <View style={styles.sessionList}>
           {visibleSessions.length === 0 ? (
             <SectionEmptyStateCard message="No sessions recorded." typography={typography} />
           ) : (
@@ -1692,6 +1692,7 @@ export function JobDetailScreen({
             onNotePress={openEditNote}
           />
         )}
+        </View>
       </Animated.ScrollView>
 
       {/* Shared bottom nav — JOBS is the active tab here. Tapping HOME /
@@ -1953,7 +1954,7 @@ function SectionEmptyStateCard({
   typography: TextStyles;
 }) {
   return (
-    <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+    <View style={styles.viewCardOuter}>
       <View style={[styles.viewCardBorder, cardShadowRn, styles.sectionEmptyCardPad]}>
         <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>{message}</Text>
       </View>
@@ -1972,7 +1973,7 @@ function MaterialsEmptyStateCard({
 }) {
   const ctaColor = color('Semantic/Status/Success/Text');
   return (
-    <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+    <View style={styles.viewCardOuter}>
       <View style={[styles.viewCardBorder, cardShadowRn, styles.materialsEmptyCardPad]}>
         <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
           No materials recorded.
@@ -2008,7 +2009,7 @@ function MaterialsConfirmedNoUseCard({
 }) {
   const ok = color('Semantic/Status/Success/Text');
   return (
-    <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+    <View style={styles.viewCardOuter}>
       <View style={[styles.viewCardBorder, cardShadowRn, styles.materialsEmptyCardPad]}>
         <Text style={[typography.bodyBold, { color: ok, textAlign: 'center' }]}>
           ✓ No materials used
@@ -2056,11 +2057,11 @@ function SectionHeaderFigma({
   onAddPress?: () => void;
 }) {
   return (
-    <View style={[styles.sectionHeader, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+    <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderLead}>
         {icon}
         <View style={styles.sectionHeaderTitleWrap}>
-          <Text style={typography.metricS} numberOfLines={1}>
+          <Text style={typography.metricS}>
             {title}
           </Text>
         </View>
@@ -2135,7 +2136,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingBottom: space('Spacing/12'),
   },
   closeCircle: {
@@ -2150,23 +2151,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space('Spacing/8'),
-    height: space('Spacing/24'),
+    minHeight: space('Spacing/24'),
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/4'),
     borderRadius: radius('Radius/Full'),
     backgroundColor: color('Semantic/Status/Error/BG'),
   },
 
-  /** Padded column for the “hero” block: job header, summary, CTAs, metric card — width responsive, max DS width. */
+  /** Hero block: job header, summary, CTAs, metric card — width from parent column. */
   slot: {
     width: '100%',
-    maxWidth: TOP_HEADER_MAX_WIDTH,
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     gap: SLOT_GAP,
     alignItems: 'center',
   },
 
-  /** Full-bleed section title + optional ADD — slightly tighter vertical rhythm. */
+  /** Section title + optional ADD — horizontal inset from parent column. */
   sectionHeader: {
     width: '100%',
     flexDirection: 'row',
@@ -2174,7 +2174,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: space('Spacing/24'),
     paddingBottom: space('Spacing/12'),
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
   },
   sectionHeaderLead: {
     flexDirection: 'row',
@@ -2192,8 +2192,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: color('Semantic/Status/Error/BG'),
     borderRadius: radius('Radius/Full'),
-    height: space('Spacing/24'),
+    minHeight: space('Spacing/24'),
     paddingHorizontal: space('Spacing/12'),
+    paddingVertical: space('Spacing/4'),
     gap: space('Spacing/8'),
   },
 

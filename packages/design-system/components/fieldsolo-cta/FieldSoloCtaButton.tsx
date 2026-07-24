@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { CONTENT_COLUMN_MAX_WIDTH } from '../../lib/responsiveLayout';
 import {
   color,
   shadowFromColor,
@@ -163,7 +164,7 @@ export function FieldSoloCtaButton({
     paddingRight: 100,
     boxSizing: 'border-box',
     width: '100%',
-    maxWidth: 343,
+    maxWidth: CONTENT_COLUMN_MAX_WIDTH,
   };
 
   if (variant === 'brandPrimaryXl') {
@@ -201,7 +202,7 @@ export function FieldSoloCtaButton({
           alignItems: 'flex-start',
           gap: 18,
           width: '100%',
-          maxWidth: 343,
+          maxWidth: CONTENT_COLUMN_MAX_WIDTH,
           boxSizing: 'border-box',
           paddingLeft: 1,
           paddingRight: 1,
@@ -304,7 +305,7 @@ export function FieldSoloCtaButton({
         alignItems: 'stretch',
         gap: 18,
         width: '100%',
-        maxWidth: 343,
+        maxWidth: CONTENT_COLUMN_MAX_WIDTH,
         boxSizing: 'border-box',
         overflow: 'hidden',
         ...style,

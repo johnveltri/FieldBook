@@ -8,7 +8,6 @@ import {
 } from 'react';
 import {
   Animated,
-  Dimensions,
   Easing,
   Keyboard,
   KeyboardAvoidingView,
@@ -16,10 +15,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   type LayoutChangeEvent,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CONTENT_COLUMN_MAX_WIDTH, contentGutter } from '@fieldsolo/design-system/lib/responsiveLayout';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { useBottomSheetStackWriters } from '../../context/BottomSheetStackContext';
@@ -99,6 +100,8 @@ export function BottomSheetShell({
   bottomPaddingExtra = space('Spacing/12'),
 }: BottomSheetShellProps) {
   const insets = useSafeAreaInsets();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const sheetGutter = contentGutter(windowWidth);
   const sheetStack = useBottomSheetStackWriters();
   const sheetId = useId();
   // Keep `onClose` in a ref so re-registering the sheet (when the prop
@@ -113,7 +116,6 @@ export function BottomSheetShell({
   // sheet would still poke up above the bottom edge and visually cover the
   // footer / safe-area primary button of any sheet rendered below it in the
   // sibling stack.
-  const windowHeight = Dimensions.get('window').height;
   const hiddenOffset = windowHeight;
   const translateY = useRef(new Animated.Value(hiddenOffset)).current;
   const scrimOpacity = useRef(new Animated.Value(0)).current;
@@ -214,11 +216,10 @@ export function BottomSheetShell({
     (e: LayoutChangeEvent) => {
       if (!sheetStack || !registerInGlobalStack || !visible) return;
       const measuredHeight = e.nativeEvent.layout.height;
-      const measuredWindowHeight = Dimensions.get('window').height;
-      const topY = Math.max(0, measuredWindowHeight - measuredHeight);
+      const topY = Math.max(0, windowHeight - measuredHeight);
       sheetStack.setSheetTop(sheetId, topY);
     },
-    [registerInGlobalStack, sheetId, sheetStack, visible],
+    [registerInGlobalStack, sheetId, sheetStack, visible, windowHeight],
   );
 
   // We let `KeyboardAvoidingView` (below) actually push the sheet up; this
@@ -315,6 +316,7 @@ export function BottomSheetShell({
           onLayout={handleSheetLayout}
           style={[
             isFullbleed ? styles.sheetFullbleed : styles.sheet,
+            !isFullbleed ? { paddingHorizontal: sheetGutter } : null,
             {
               paddingBottom: isFullbleed ? 0 : effectiveSafeBottom + bottomPaddingExtra,
               maxHeight: maxSheetHeight,
@@ -390,7 +392,7 @@ const styles = StyleSheet.create({
     borderTopColor: border.subtle,
     backgroundColor: bg.canvasWarm,
     paddingTop: space('Spacing/16'),
-    paddingHorizontal: space('Spacing/24'),
+    // Horizontal inset comes from the shared responsive gutter at runtime.
   },
   /**
    * Fullbleed variant: caller owns ALL visual chrome (top corners, header
@@ -415,7 +417,7 @@ const styles = StyleSheet.create({
   content: {
     width: '100%',
     alignSelf: 'center',
-    maxWidth: 343,
+    maxWidth: CONTENT_COLUMN_MAX_WIDTH,
   },
   contentContainer: {
     alignItems: 'center',

@@ -7,7 +7,7 @@ import {
 } from '@expo-google-fonts/ubuntu-sans-mono';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PixelRatio, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color as dsColor } from '@fieldsolo/design-system/lib/tokens';
 
@@ -35,8 +35,13 @@ function shellBottomNavBottomPadding(insetsBottom: number): number {
 }
 
 /** Matches `ShellBottomNav` outer height (main content bottom → screen bottom). */
-export function shellBottomNavOuterHeight(insetsBottom: number): number {
-  return 1 + space('Spacing/64') + shellBottomNavBottomPadding(insetsBottom);
+export function shellBottomNavOuterHeight(
+  insetsBottom: number,
+  fontScale: number = PixelRatio.getFontScale(),
+): number {
+  // Grow with Dynamic Type so scroll/FAB clearance tracks taller tab labels.
+  const scale = Math.max(1, Math.min(fontScale, 2.25));
+  return 1 + space('Spacing/64') * scale + shellBottomNavBottomPadding(insetsBottom);
 }
 
 type Typography = ReturnType<typeof createTextStyles>;
@@ -44,12 +49,15 @@ type Typography = ReturnType<typeof createTextStyles>;
 function BottomNavTabCell({
   selected,
   label,
+  accessibilityName,
   icon,
   typography,
   onPress,
 }: {
   selected: boolean;
   label: string;
+  /** Spoken name when the visible label is abbreviated (e.g. EARN → Earnings). */
+  accessibilityName?: string;
   icon: ReactNode;
   typography: Typography;
   onPress: () => void;
@@ -58,7 +66,7 @@ function BottomNavTabCell({
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected }}
-      accessibilityLabel={`${label} tab`}
+      accessibilityLabel={`${accessibilityName ?? label} tab`}
       onPress={onPress}
       style={({ pressed }) => [
         styles.bottomNavTabCell,
@@ -74,9 +82,15 @@ function BottomNavTabCell({
       <View style={styles.bottomNavTabContent}>
         <View style={styles.bottomNavIconSlot}>{icon}</View>
         <Text
+          numberOfLines={1}
           style={[
             typography.labelCaps,
-            { color: selected ? dsColor('Brand/Primary') : fg.primary, textAlign: 'center' },
+            {
+              color: selected ? dsColor('Brand/Primary') : fg.primary,
+              textAlign: 'center',
+              flexShrink: 1,
+              minWidth: 0,
+            },
           ]}
         >
           {label}
@@ -93,6 +107,7 @@ export type ShellBottomNavProps = {
 
 export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,
     UbuntuSansMono_400Regular,
@@ -117,6 +132,8 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
 
   const stripPad = space('Spacing/8');
   const bottomPadding = shellBottomNavBottomPadding(insets.bottom);
+  // At accessibility sizes, full "EARNINGS" mid-wraps in a 1/3-width tab; keep large type with a short label.
+  const earningsLabel = fontScale > 1.9 ? 'EARN' : 'EARNINGS';
   const homeStroke = selected === 'home' ? dsColor('Brand/Primary') : fg.primary;
   const jobsStroke = selected === 'jobs' ? dsColor('Brand/Primary') : fg.primary;
   const earningsStroke = selected === 'earnings' ? dsColor('Brand/Primary') : fg.primary;
@@ -148,7 +165,8 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
         />
         <BottomNavTabCell
           selected={selected === 'earnings'}
-          label="EARNINGS"
+          label={earningsLabel}
+          accessibilityName="Earnings"
           typography={typography}
           onPress={() => onSelect('earnings')}
           icon={<BottomNavIconEarnings color={earningsStroke} />}
@@ -191,6 +209,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space('Spacing/2'),
     padding: space('Spacing/12'),
+    width: '100%',
+    minWidth: 0,
   },
   bottomNavIconSlot: {
     alignItems: 'center',

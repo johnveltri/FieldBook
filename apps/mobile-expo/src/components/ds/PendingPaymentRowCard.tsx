@@ -27,14 +27,10 @@ export function PendingPaymentRowCard({
     >
       <View style={styles.main}>
         <View style={styles.titleStack}>
-          <Text style={[typography.bodyBold, styles.title]} numberOfLines={1}>
-            {title}
-          </Text>
+          <Text style={[typography.bodyBold, styles.title]}>{title}</Text>
           <View style={styles.detailRow}>
             <Text style={[typography.bodySmall, styles.detailText]}>Completed:</Text>
-            <Text style={[typography.bodySmall, styles.detailText]} numberOfLines={1}>
-              Pending payment
-            </Text>
+            <Text style={[typography.bodySmall, styles.detailText]}>Pending payment</Text>
           </View>
         </View>
       </View>
@@ -48,7 +44,6 @@ export function PendingPaymentRowCard({
 const styles = StyleSheet.create({
   row: {
     width: '100%',
-    maxWidth: 353,
     minHeight: 74,
     flexDirection: 'row',
     alignItems: 'center',
@@ -75,7 +70,7 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'nowrap',
+    flexWrap: 'wrap',
     gap: space('Spacing/4'),
   },
   detailText: {
