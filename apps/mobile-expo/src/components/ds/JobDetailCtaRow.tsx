@@ -1,9 +1,10 @@
 import type { ReactElement } from 'react';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailWorkStatus } from '@fieldsolo/shared-types';
 
+import { dynamicTypeTextStyle } from '../../theme/dynamicTypeText';
 import { bg, border } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { jobDetailCtaConfig } from './jobDetailCtaConfig';
@@ -25,7 +26,12 @@ export function JobDetailCtaRow({
   primaryDisabled?: boolean;
   moreDisabled?: boolean;
 }) {
+  const { fontScale } = useWindowDimensions();
   const cta = useMemo(() => jobDetailCtaConfig(workStatus), [workStatus]);
+  const ctaLabelType = dynamicTypeTextStyle(typography.ctaPrimaryLabel, fontScale, {
+    letterSpacingUntilScale: 99,
+    padRatio: 0.12,
+  });
 
   const ctaShadow: ViewStyle = useMemo(
     () =>
@@ -59,7 +65,7 @@ export function JobDetailCtaRow({
           ctaShadow,
         ]}
       >
-        <Text style={[typography.ctaPrimaryLabel, { color: cta.labelColor, textAlign: 'center' }]}>
+        <Text style={[ctaLabelType, { color: cta.labelColor, textAlign: 'center' }]}>
           {cta.label}
         </Text>
       </Pressable>

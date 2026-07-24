@@ -169,7 +169,7 @@ describe('HomeScreen quick session', () => {
       />,
     );
 
-    expect(screen.getByText('FIELDSOLO')).toBeTruthy();
+    expect(screen.getByText(/FIELD\s*SOLO/)).toBeTruthy();
   });
 
   it('cleans up the temporary quick-session job when starting the live session fails', async () => {

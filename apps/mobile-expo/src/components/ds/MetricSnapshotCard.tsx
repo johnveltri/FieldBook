@@ -1,7 +1,11 @@
-import { Pressable, StyleSheet, Text, View, type TextStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { color, colorWithAlpha, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
+import {
+  dynamicTypeLineMinHeight,
+  dynamicTypeTextStyle,
+} from '../../theme/dynamicTypeText';
 import { bg, cardShadowRn, type TextStyles } from '../../theme/nativeTokens';
 
 export type MetricSnapshotCardProps = {
@@ -23,26 +27,56 @@ export function MetricSnapshotCard({
   typography,
   onPress,
 }: MetricSnapshotCardProps) {
+  const { fontScale } = useWindowDimensions();
   const valueColor =
     valueTone === 'success' ? color('Semantic/Status/Success/Text') : color('Foundation/Text/Primary');
 
-  // Metric-XL uses 100% lineHeight which clips mono-bold glyphs; also drop it so
-  // adjustsFontSizeToFit can shrink wide currency strings at accessibility sizes.
-  const { lineHeight: _ignoredLineHeight, ...metricType } = typography.metricXL as TextStyle;
+  const labelSize = typography.labelCaps.fontSize ?? 12;
+  const metricMaxScale = 2.35;
+  const labelStyle = dynamicTypeTextStyle(typography.labelCaps, fontScale, {
+    padRatio: 0.1,
+    maxScale: metricMaxScale,
+  });
+  const valueSize = typography.metricXL.fontSize ?? 42;
+  const valueStyle = dynamicTypeTextStyle(typography.metricXL, fontScale, {
+    letterSpacingUntilScale: 99,
+    padRatio: 0.06,
+    maxScale: metricMaxScale,
+  });
+  const cardPad = fontScale > 1.6 ? space('Spacing/16') : space('Spacing/32');
 
   const inner = (
     <View style={styles.primary}>
-      <Text style={[typography.labelCaps, styles.label, { color: color('Foundation/Text/Secondary') }]}>
-        {label}
-      </Text>
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={0.55}
-        numberOfLines={1}
-        style={[metricType, styles.value, { color: valueColor }]}
+      <View
+        style={{
+          minHeight: dynamicTypeLineMinHeight(labelSize, fontScale, 1.7, metricMaxScale),
+          justifyContent: 'center',
+          width: '100%',
+        }}
       >
-        {value}
-      </Text>
+        <Text
+          style={[labelStyle, styles.label, { color: color('Foundation/Text/Secondary') }]}
+          maxFontSizeMultiplier={metricMaxScale}
+        >
+          {label}
+        </Text>
+      </View>
+      <View
+        style={{
+          minHeight: dynamicTypeLineMinHeight(valueSize, fontScale, 1.25, metricMaxScale),
+          width: '100%',
+        }}
+      >
+        <Text
+          adjustsFontSizeToFit
+          minimumFontScale={0.55}
+          numberOfLines={1}
+          maxFontSizeMultiplier={metricMaxScale}
+          style={[valueStyle, styles.value, { color: valueColor }]}
+        >
+          {value}
+        </Text>
+      </View>
     </View>
   );
 
@@ -52,7 +86,7 @@ export function MetricSnapshotCard({
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`${label} ${value}`}
-        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+        style={({ pressed }) => [styles.card, { padding: cardPad }, pressed && styles.pressed]}
       >
         {inner}
       </Pressable>
@@ -60,7 +94,11 @@ export function MetricSnapshotCard({
   }
 
   return (
-    <View style={styles.card} accessibilityRole="summary" accessibilityLabel={`${label} ${value}`}>
+    <View
+      style={[styles.card, { padding: cardPad }]}
+      accessibilityRole="summary"
+      accessibilityLabel={`${label} ${value}`}
+    >
       {inner}
     </View>
   );
@@ -73,13 +111,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colorWithAlpha('Foundation/Border/Default', 0.1),
     borderRadius: radius('Radius/24'),
-    padding: space('Spacing/32'),
+    // padding applied dynamically for Dynamic Type
     overflow: 'visible',
     ...cardShadowRn,
   },
   primary: {
     alignItems: 'center',
-    gap: space('Spacing/4'),
+    gap: space('Spacing/8'),
     width: '100%',
     overflow: 'visible',
   },
@@ -89,8 +127,6 @@ const styles = StyleSheet.create({
   value: {
     textAlign: 'center',
     width: '100%',
-    // Breathing room so adjustsFontSizeToFit glyphs aren't flush with the card edge.
-    paddingVertical: space('Spacing/4'),
   },
   pressed: { opacity: 0.75 },
 });

@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
   },
   inputShell: {
-    minHeight: 38,
+    minHeight: 44,
     borderWidth: 1,
     borderColor: border.subtle,
     borderRadius: radius('Radius/8'),

@@ -16,6 +16,7 @@ import {
   BottomNavIconHome,
   BottomNavIconJobs,
 } from '../bottom-nav/BottomNavTabIcons';
+import { dynamicTypeTextStyle } from '../../theme/dynamicTypeText';
 import {
   bg,
   border,
@@ -39,8 +40,8 @@ export function shellBottomNavOuterHeight(
   insetsBottom: number,
   fontScale: number = PixelRatio.getFontScale(),
 ): number {
-  // Grow with Dynamic Type so scroll/FAB clearance tracks taller tab labels.
-  const scale = Math.max(1, Math.min(fontScale, 2.25));
+  // Grow with Dynamic Type, but cap so chrome doesn’t consume the content pane at XXXL.
+  const scale = Math.max(1, Math.min(fontScale, 1.75));
   return 1 + space('Spacing/64') * scale + shellBottomNavBottomPadding(insetsBottom);
 }
 
@@ -53,6 +54,8 @@ function BottomNavTabCell({
   icon,
   typography,
   onPress,
+  minHeight,
+  fontScale,
 }: {
   selected: boolean;
   label: string;
@@ -61,7 +64,13 @@ function BottomNavTabCell({
   icon: ReactNode;
   typography: Typography;
   onPress: () => void;
+  minHeight: number;
+  fontScale: number;
 }) {
+  const labelStyle = dynamicTypeTextStyle(typography.labelCaps, fontScale, {
+    padRatio: 0.06,
+    maxScale: 1.75,
+  });
   return (
     <Pressable
       accessibilityRole="tab"
@@ -70,7 +79,7 @@ function BottomNavTabCell({
       onPress={onPress}
       style={({ pressed }) => [
         styles.bottomNavTabCell,
-        { justifyContent: selected ? 'space-between' : 'flex-end' },
+        { minHeight, justifyContent: selected ? 'space-between' : 'flex-end' },
         pressed && styles.pressed,
       ]}
     >
@@ -83,13 +92,17 @@ function BottomNavTabCell({
         <View style={styles.bottomNavIconSlot}>{icon}</View>
         <Text
           numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+          maxFontSizeMultiplier={1.75}
           style={[
-            typography.labelCaps,
+            labelStyle,
             {
               color: selected ? dsColor('Brand/Primary') : fg.primary,
               textAlign: 'center',
               flexShrink: 1,
               minWidth: 0,
+              width: '100%',
             },
           ]}
         >
@@ -108,6 +121,8 @@ export type ShellBottomNavProps = {
 export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
+  const navTypeScale = Math.max(1, Math.min(fontScale, 1.75));
+  const tabMinHeight = Math.round(space('Spacing/64') * navTypeScale);
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,
     UbuntuSansMono_400Regular,
@@ -148,13 +163,15 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
         },
       ]}
     >
-      <View style={styles.bottomNavInner}>
+      <View style={[styles.bottomNavInner, { minHeight: tabMinHeight }]}>
         <BottomNavTabCell
           selected={selected === 'home'}
           label="HOME"
           typography={typography}
           onPress={() => onSelect('home')}
           icon={<BottomNavIconHome color={homeStroke} />}
+          minHeight={tabMinHeight}
+          fontScale={fontScale}
         />
         <BottomNavTabCell
           selected={selected === 'jobs'}
@@ -162,6 +179,8 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
           typography={typography}
           onPress={() => onSelect('jobs')}
           icon={<BottomNavIconJobs color={jobsStroke} />}
+          minHeight={tabMinHeight}
+          fontScale={fontScale}
         />
         <BottomNavTabCell
           selected={selected === 'earnings'}
@@ -170,6 +189,8 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
           typography={typography}
           onPress={() => onSelect('earnings')}
           icon={<BottomNavIconEarnings color={earningsStroke} />}
+          minHeight={tabMinHeight}
+          fontScale={fontScale}
         />
       </View>
     </View>
@@ -187,13 +208,11 @@ const styles = StyleSheet.create({
   bottomNavInner: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    minHeight: space('Spacing/64'),
     width: '100%',
   },
   bottomNavTabCell: {
     flex: 1,
     minWidth: 0,
-    minHeight: space('Spacing/64'),
   },
   bottomNavIndicatorWrap: {
     alignItems: 'center',

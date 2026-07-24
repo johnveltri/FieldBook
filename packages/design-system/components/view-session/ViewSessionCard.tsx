@@ -317,10 +317,8 @@ export function ViewSessionCard({
         </span>
         <span
           style={{
-            fontFamily: bodyBold.fontFamily,
-            fontSize: 8.5,
+            ...typographyBodySmallStyle(),
             fontWeight: 700,
-            lineHeight: '12px',
             color: fg,
             textTransform: 'none',
           }}

@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     marginBottom: space('Spacing/8'),
   },
   inputShell: {
-    minHeight: 38,
+    minHeight: 44,
     borderWidth: 1,
     borderColor: border.subtle,
     borderRadius: 8,

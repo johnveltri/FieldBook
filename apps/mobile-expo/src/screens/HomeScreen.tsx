@@ -37,6 +37,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import {
+  dynamicTypeLineMinHeight,
+  dynamicTypeTextStyle,
+} from '../theme/dynamicTypeText';
+import {
   ChooseJobBottomSheet,
   ChooseSessionBottomSheet,
   DropdownBottomSheet,
@@ -62,7 +66,6 @@ import { HomeJumpBackInIcon, HomeNeedsAttentionIcon } from '../components/figma-
 import { JobDetailIconViewSessionChevron } from '../components/figma-icons/JobDetailScreenIcons';
 import { JobsFabPlusIcon } from '../components/figma-icons/JobsScreenIcons';
 import { TopHeaderProfileIcon } from '../components/figma-icons/TopHeaderIcons';
-import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { useHasLiveSession, useLiveSession } from '../context/LiveSessionContext';
 import {
@@ -276,6 +279,22 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         monoBold: 'UbuntuSansMono_700Bold',
       }),
     [],
+  );
+
+  // Brand is decorative chrome — cap growth so XXXL still leaves room for snapshot content.
+  const brandMaxScale = 1.85;
+  const brandDisplay = typography.displayH1;
+  const brandTitleStyle = dynamicTypeTextStyle(brandDisplay, fontScale, {
+    letterSpacingUntilScale: 99,
+    padRatio: 0.08,
+    maxScale: brandMaxScale,
+  });
+  const brandLineCount = brandTitle.includes('\n') ? 2 : 1;
+  const brandMinHeight = dynamicTypeLineMinHeight(
+    brandDisplay?.fontSize ?? 32,
+    fontScale,
+    1.4 * brandLineCount,
+    brandMaxScale,
   );
 
   const needsAttentionRows = useMemo(() => {
@@ -779,7 +798,12 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
 
   const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
   /** Clear FAB from bottom of shell main + small gap. */
-  const scrollBottomPad = scrollBottomInsetForFab(fabBottomOffset(insets), FAB_SIZE);
+  // shellMain sits above ShellBottomNav (sibling) — FAB offset must not subtract nav height
+  // (nav grows with Dynamic Type and used to collapse scroll clearance into negatives).
+  const fabBottom = fabBottomOffset();
+  const scrollBottomPad =
+    scrollBottomInsetForFab(fabBottom, FAB_SIZE) +
+    (fontScale > 1.6 ? space('Spacing/24') * Math.min(fontScale, 2.25) : 0);
 
   const needNeedsAttentionExpand = needsAttentionRows.length > NEEDS_ATTENTION_PREVIEW_MAX;
   const shownNeedsAttentionRows =
@@ -824,7 +848,14 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         <View style={columnStyle}>
           <View style={styles.headerBand}>
             <View style={styles.topHeader}>
-              <Text style={[typography.displayH1, styles.brandTitle]}>{brandTitle}</Text>
+              <View style={[styles.brandTitle, { minHeight: brandMinHeight }]}>
+                <Text
+                  style={[brandTitleStyle, styles.brandTitleText]}
+                  maxFontSizeMultiplier={brandMaxScale}
+                >
+                  {brandTitle}
+                </Text>
+              </View>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Profile"
@@ -991,7 +1022,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
       </Animated.ScrollView>
 
       {hasLiveSession || quickActionsVisible ? null : (
-        <View style={[styles.fabWrap, { bottom: fabBottomOffset(insets), right: fabRight }]}>
+        <View style={[styles.fabWrap, { bottom: fabBottom, right: fabRight }]}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Quick capture"
@@ -1181,14 +1212,9 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
   );
 }
 
-function fabBottomOffset(insets: { bottom: number }): number {
-  return (
-    space('Spacing/8') +
-    insets.bottom +
-    64 +
-    space('Spacing/12') -
-    shellBottomNavOuterHeight(insets.bottom)
-  );
+/** Gap from shellMain bottom to FAB — nav is a sibling below, not an overlay. */
+function fabBottomOffset(): number {
+  return space('Spacing/8') + space('Spacing/32') + space('Spacing/4');
 }
 
 const styles = StyleSheet.create({
@@ -1214,10 +1240,12 @@ const styles = StyleSheet.create({
   headerBand: {
     width: '100%',
     alignItems: 'center',
+    overflow: 'visible',
   },
   modulesColumn: {
     width: '100%',
     alignItems: 'stretch',
+    overflow: 'visible',
   },
   homeError: {
     textAlign: 'center',
@@ -1259,10 +1287,15 @@ const styles = StyleSheet.create({
   brandTitle: {
     flex: 1,
     minWidth: 0,
+    overflow: 'visible',
+    justifyContent: 'center',
+  },
+  brandTitleText: {
+    width: '100%',
   },
   profileHit: {
-    width: 40,
-    height: 40,
+    minWidth: 44,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,

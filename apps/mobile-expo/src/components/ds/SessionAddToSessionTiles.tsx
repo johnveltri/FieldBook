@@ -74,7 +74,9 @@ export function SessionAddToSessionTiles({
           const inner = (
             <>
               {tileIcon(kind, tileTint(kind))}
-              <Text style={[styles.tileLabel, { color: fg.primary }]}>{TILE_LABEL[kind]}</Text>
+              <Text style={[styles.tileLabel, typography.pillCompact, { color: fg.primary }]}>
+                {TILE_LABEL[kind]}
+              </Text>
             </>
           );
           if (interactive) {
@@ -125,9 +127,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tileLabel: {
-    fontSize: 8.5,
-    fontWeight: '700',
-    lineHeight: 12,
+    textTransform: 'none',
   },
   pressed: { opacity: 0.75 },
 });

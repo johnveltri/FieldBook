@@ -280,7 +280,7 @@ export function SignInScreen() {
                   autoCapitalize="words"
                   autoCorrect={false}
                   placeholder="Alex"
-                  placeholderTextColor={fg.muted}
+                  placeholderTextColor={fg.secondary}
                   style={[styles.input, text.body, { color: fg.primary }]}
                   editable={!busy}
                 />
@@ -302,7 +302,7 @@ export function SignInScreen() {
                   autoCapitalize="words"
                   autoCorrect={false}
                   placeholder="Builder"
-                  placeholderTextColor={fg.muted}
+                  placeholderTextColor={fg.secondary}
                   style={[styles.input, text.body, { color: fg.primary }]}
                   editable={!busy}
                 />
@@ -320,7 +320,7 @@ export function SignInScreen() {
               autoCorrect={false}
               keyboardType="email-address"
               placeholder="you@example.com"
-              placeholderTextColor={fg.muted}
+              placeholderTextColor={fg.secondary}
               style={[styles.input, text.body, { color: fg.primary }]}
               editable={!busy}
             />
@@ -338,7 +338,7 @@ export function SignInScreen() {
               onChangeText={setPassword}
               secureTextEntry
               placeholder="••••••••"
-              placeholderTextColor={fg.muted}
+              placeholderTextColor={fg.secondary}
               style={[styles.input, text.body, { color: fg.primary }]}
               editable={!busy}
             />

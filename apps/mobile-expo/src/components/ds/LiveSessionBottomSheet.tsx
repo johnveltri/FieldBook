@@ -109,7 +109,7 @@ export function LiveSessionBottomSheet({
             accessibilityLabel="Minimize live session"
             onPress={onMinimize}
             style={({ pressed }) => [styles.back, pressed && styles.pressed]}
-            hitSlop={8}
+            hitSlop={12}
           >
             <SessionSheetBackIcon color={color('Foundation/Surface/White')} />
             <Text style={[typography.bodyBold, styles.backLabel]}>Back</Text>
@@ -236,6 +236,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space('Spacing/4'),
     alignSelf: 'flex-start',
+    minHeight: 44,
+    paddingRight: space('Spacing/8'),
   },
   backLabel: {
     color: color('Foundation/Surface/White'),
