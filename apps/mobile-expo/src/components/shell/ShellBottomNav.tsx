@@ -7,7 +7,7 @@ import {
 } from '@expo-google-fonts/ubuntu-sans-mono';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { PixelRatio, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PixelRatio, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color as dsColor } from '@fieldsolo/design-system/lib/tokens';
 
@@ -49,12 +49,15 @@ type Typography = ReturnType<typeof createTextStyles>;
 function BottomNavTabCell({
   selected,
   label,
+  accessibilityName,
   icon,
   typography,
   onPress,
 }: {
   selected: boolean;
   label: string;
+  /** Spoken name when the visible label is abbreviated (e.g. EARN → Earnings). */
+  accessibilityName?: string;
   icon: ReactNode;
   typography: Typography;
   onPress: () => void;
@@ -63,7 +66,7 @@ function BottomNavTabCell({
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected }}
-      accessibilityLabel={`${label} tab`}
+      accessibilityLabel={`${accessibilityName ?? label} tab`}
       onPress={onPress}
       style={({ pressed }) => [
         styles.bottomNavTabCell,
@@ -79,7 +82,7 @@ function BottomNavTabCell({
       <View style={styles.bottomNavTabContent}>
         <View style={styles.bottomNavIconSlot}>{icon}</View>
         <Text
-          numberOfLines={2}
+          numberOfLines={1}
           style={[
             typography.labelCaps,
             {
@@ -104,6 +107,7 @@ export type ShellBottomNavProps = {
 
 export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,
     UbuntuSansMono_400Regular,
@@ -128,6 +132,8 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
 
   const stripPad = space('Spacing/8');
   const bottomPadding = shellBottomNavBottomPadding(insets.bottom);
+  // At accessibility sizes, full "EARNINGS" mid-wraps in a 1/3-width tab; keep large type with a short label.
+  const earningsLabel = fontScale > 1.9 ? 'EARN' : 'EARNINGS';
   const homeStroke = selected === 'home' ? dsColor('Brand/Primary') : fg.primary;
   const jobsStroke = selected === 'jobs' ? dsColor('Brand/Primary') : fg.primary;
   const earningsStroke = selected === 'earnings' ? dsColor('Brand/Primary') : fg.primary;
@@ -159,7 +165,8 @@ export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
         />
         <BottomNavTabCell
           selected={selected === 'earnings'}
-          label="EARNINGS"
+          label={earningsLabel}
+          accessibilityName="Earnings"
           typography={typography}
           onPress={() => onSelect('earnings')}
           icon={<BottomNavIconEarnings color={earningsStroke} />}
