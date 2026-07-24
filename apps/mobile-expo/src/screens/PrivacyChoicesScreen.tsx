@@ -30,12 +30,12 @@ import {
 } from '../lib/analytics/consentSync';
 import { LEGAL_URLS } from '../lib/legal-versions';
 import {
-  TOP_HEADER_MAX_WIDTH,
   bg,
   createTextStyles,
   fg,
   space,
 } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 
 const BACK_ICON_SIZE = 28;
 
@@ -56,6 +56,7 @@ function extractErrorMessage(e: unknown, fallback: string): string {
 
 export function PrivacyChoicesScreen({ userId, onBack }: PrivacyChoicesScreenProps) {
   const insets = useSafeAreaInsets();
+  const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
 
@@ -187,8 +188,8 @@ export function PrivacyChoicesScreen({ userId, onBack }: PrivacyChoicesScreenPro
         scrollEventThrottle={16}
         onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
       >
-        <View style={styles.headerBand}>
-          <View style={[styles.topHeaderRow, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+        <View style={columnStyle}>
+          <View style={styles.topHeaderRow}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Back"
@@ -200,20 +201,20 @@ export function PrivacyChoicesScreen({ userId, onBack }: PrivacyChoicesScreenPro
             </Pressable>
             <Text style={[typography.displayH1, styles.title]}>PRIVACY</Text>
           </View>
-        </View>
 
-        <View style={[styles.bodyWrap, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
-          <Text style={[typography.metricS, styles.sectionLabel]}>ANALYTICS</Text>
-          {loading ? (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator />
-            </View>
-          ) : (
-            <ProfileRowsCard typography={typography} rows={analyticsRows} />
-          )}
+          <View style={styles.bodyWrap}>
+            <Text style={[typography.metricS, styles.sectionLabel]}>ANALYTICS</Text>
+            {loading ? (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator />
+              </View>
+            ) : (
+              <ProfileRowsCard typography={typography} rows={analyticsRows} />
+            )}
 
-          <Text style={[typography.metricS, styles.sectionLabel]}>LEGAL</Text>
-          <ProfileRowsCard typography={typography} rows={legalRows} />
+            <Text style={[typography.metricS, styles.sectionLabel]}>LEGAL</Text>
+            <ProfileRowsCard typography={typography} rows={legalRows} />
+          </View>
         </View>
       </Animated.ScrollView>
     </View>
@@ -224,12 +225,11 @@ const styles = StyleSheet.create({
   root: { flex: 1, alignItems: 'center', backgroundColor: bg.canvasWarm },
   scroll: { flex: 1, width: '100%', backgroundColor: 'transparent', zIndex: 1 },
   scrollContent: { alignItems: 'stretch' },
-  headerBand: { width: '100%', alignItems: 'center' },
   topHeaderRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
     gap: space('Spacing/8'),
@@ -245,9 +245,8 @@ const styles = StyleSheet.create({
     color: fg.primary,
   },
   bodyWrap: {
-    alignSelf: 'center',
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/8'),
     gap: space('Spacing/12'),
   },

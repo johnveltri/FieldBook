@@ -27,14 +27,13 @@ import { useJobsListInvalidation } from '../context/JobsListInvalidationContext'
 import { analytics, errorProperties, moneyBucket } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
-  CONTENT_MAX_WIDTH,
-  TOP_HEADER_MAX_WIDTH,
   bg,
   cardShadowRn,
   createTextStyles,
   fg,
   space,
 } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 
 export type EarningsWindow = 'week' | 'month' | 'year';
 
@@ -129,6 +128,7 @@ export function EarningsScreen({
   onOpenJobsOpenTab,
 }: EarningsScreenProps) {
   const insets = useSafeAreaInsets();
+  const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
   const { version } = useJobsListInvalidation();
@@ -294,7 +294,7 @@ export function EarningsScreen({
       <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
       <View
         pointerEvents="none"
-        style={[styles.safeAreaTopAccentWrap, { top: 0, maxWidth: TOP_HEADER_MAX_WIDTH }]}
+        style={[styles.safeAreaTopAccentWrap, { top: 0 }, columnStyle]}
       >
         <View style={styles.topAccent} />
       </View>
@@ -313,14 +313,12 @@ export function EarningsScreen({
         scrollEventThrottle={16}
         onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
       >
-        <View style={styles.headerBand}>
-          <View style={[styles.titleOnlyRow, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+        <View style={columnStyle}>
+          <View style={styles.titleOnlyRow}>
             <Text style={typography.displayH1}>EARNINGS</Text>
           </View>
-        </View>
 
-        <View style={styles.bandCentered}>
-          <View style={[styles.tabsWrap, { maxWidth: CONTENT_MAX_WIDTH }]}>
+          <View style={styles.tabsWrap}>
             {WINDOW_ORDER.map((w) => {
               const selected = w === window;
               return (
@@ -347,92 +345,98 @@ export function EarningsScreen({
               );
             })}
           </View>
-        </View>
 
-        {loading ? (
-          <View style={styles.centerState}>
-            <ActivityIndicator color={color('Brand/Primary')} />
-            <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/12') }]}>
-              Loading earnings…
-            </Text>
-          </View>
-        ) : loadError ? (
-          <View style={styles.centerState}>
-            <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
-              {loadError}
-            </Text>
-          </View>
-        ) : (
-          <>
-            <SectionHeader
-              title={config.snapshotTitle}
-              subtitle={config.snapshotSubtitle}
-              tone="neutral"
-              typography={typography}
-            />
-            <View style={styles.cardBand}>
-              <EarningsSnapshotCard
-                netEarnings={formatUsd(snapshot.netEarningsCents)}
-                revenue={formatUsd(snapshot.revenueCents)}
-                materials={formatUsd(snapshot.materialsCents)}
-                time={`${snapshot.totalHours.toFixed(1)}h`}
-                netPerHr={formatNetPerHr(snapshot.netPerHrCents)}
-                jobs={String(snapshot.jobCount)}
-                typography={typography}
-              />
+          {loading ? (
+            <View style={styles.centerState}>
+              <ActivityIndicator color={color('Brand/Primary')} />
+              <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/12') }]}>
+                Loading earnings…
+              </Text>
             </View>
-
-            {outstanding.count > 0 ? (
-              <View style={[styles.cardBand, styles.cardBandTopGap]}>
-                <OutstandingPaymentCard
-                  count={outstanding.count}
-                  amount={formatUsd(outstanding.revenueCents)}
+          ) : loadError ? (
+            <View style={styles.centerState}>
+              <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+                {loadError}
+              </Text>
+            </View>
+          ) : (
+            <>
+              <SectionHeader
+                title={config.snapshotTitle}
+                subtitle={config.snapshotSubtitle}
+                tone="neutral"
+                typography={typography}
+                contentInset={0}
+              />
+              <View style={styles.cardBand}>
+                <EarningsSnapshotCard
+                  netEarnings={formatUsd(snapshot.netEarningsCents)}
+                  revenue={formatUsd(snapshot.revenueCents)}
+                  materials={formatUsd(snapshot.materialsCents)}
+                  time={`${snapshot.totalHours.toFixed(1)}h`}
+                  netPerHr={formatNetPerHr(snapshot.netPerHrCents)}
+                  jobs={String(snapshot.jobCount)}
                   typography={typography}
-                  onPress={() => {
-                    analytics.capture('outstanding_payment_card_pressed', {
-                      outstanding_count: outstanding.count,
-                      outstanding_value_bucket: moneyBucket(outstanding.revenueCents),
-                    });
-                    onOpenJobsOpenTab();
-                  }}
                 />
               </View>
-            ) : null}
 
-            {rankedSections.map((section) => (
-              <View key={section.key} style={styles.sectionGroup}>
-                <SectionHeader title={section.title} tone="accent" typography={typography} />
-                {section.rows.length === 0 ? (
-                  <View style={styles.cardBand}>
-                    <Text style={[typography.body, { color: fg.secondary }]}>
-                      No jobs in this period.
-                    </Text>
-                  </View>
-                ) : (
-                  section.rows.map(({ job, value }, index) => (
-                    <View key={job.id} style={styles.cardBand}>
-                      <RankedJobRowCard
-                        rank={index + 1}
-                        title={job.shortDescription || 'Untitled Job'}
-                        subtitle={job.customerName}
-                        value={value}
-                        typography={typography}
-                        onPress={() => {
-                          analytics.capture('earnings_ranked_job_pressed', {
-                            section: section.key,
-                            rank: index + 1,
-                            job_id: job.id,
-                          });
-                          onOpenJobDetail(job.id);
-                        }}
-                      />
+              {outstanding.count > 0 ? (
+                <View style={[styles.cardBand, styles.cardBandTopGap]}>
+                  <OutstandingPaymentCard
+                    count={outstanding.count}
+                    amount={formatUsd(outstanding.revenueCents)}
+                    typography={typography}
+                    onPress={() => {
+                      analytics.capture('outstanding_payment_card_pressed', {
+                        outstanding_count: outstanding.count,
+                        outstanding_value_bucket: moneyBucket(outstanding.revenueCents),
+                      });
+                      onOpenJobsOpenTab();
+                    }}
+                  />
+                </View>
+              ) : null}
+
+              {rankedSections.map((section) => (
+                <View key={section.key} style={styles.sectionGroup}>
+                  <SectionHeader
+                    title={section.title}
+                    tone="accent"
+                    typography={typography}
+                    contentInset={0}
+                  />
+                  {section.rows.length === 0 ? (
+                    <View style={styles.cardBand}>
+                      <Text style={[typography.body, { color: fg.secondary }]}>
+                        No jobs in this period.
+                      </Text>
                     </View>
-                  ))
-                )}
-              </View>
-            ))}
-          </>
-        )}
+                  ) : (
+                    section.rows.map(({ job, value }, index) => (
+                      <View key={job.id} style={styles.cardBand}>
+                        <RankedJobRowCard
+                          rank={index + 1}
+                          title={job.shortDescription || 'Untitled Job'}
+                          subtitle={job.customerName}
+                          value={value}
+                          typography={typography}
+                          onPress={() => {
+                            analytics.capture('earnings_ranked_job_pressed', {
+                              section: section.key,
+                              rank: index + 1,
+                              job_id: job.id,
+                            });
+                            onOpenJobDetail(job.id);
+                          }}
+                        />
+                      </View>
+                    ))
+                  )}
+                </View>
+              ))}
+            </>
+          )}
+        </View>
       </Animated.ScrollView>
     </View>
   );
@@ -442,7 +446,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, alignItems: 'center', backgroundColor: bg.canvasWarm },
   scroll: { flex: 1, width: '100%', backgroundColor: 'transparent', zIndex: 1 },
   scrollContent: {
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   safeAreaTopAccentWrap: {
     position: 'absolute',
@@ -455,22 +459,13 @@ const styles = StyleSheet.create({
     height: 6,
     backgroundColor: color('Brand/Accent'),
   },
-  headerBand: {
-    width: '100%',
-    alignItems: 'center',
-  },
   titleOnlyRow: {
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
     minHeight: 48,
     justifyContent: 'center',
-  },
-  bandCentered: {
-    width: '100%',
-    alignItems: 'center',
-    paddingHorizontal: space('Spacing/20'),
   },
   tabsWrap: {
     width: '100%',
@@ -485,14 +480,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: bg.surfaceWhite,
     borderRadius: radius('Radius/Full'),
-    height: 36,
+    minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
     ...cardShadowRn,
   },
   tabIdle: {
     flex: 1,
-    height: 36,
+    minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -501,10 +496,8 @@ const styles = StyleSheet.create({
   },
   cardBand: {
     width: '100%',
-    maxWidth: TOP_HEADER_MAX_WIDTH,
-    alignSelf: 'center',
-    alignItems: 'center',
-    paddingHorizontal: space('Spacing/20'),
+    alignItems: 'stretch',
+    paddingHorizontal: 0,
     marginBottom: space('Spacing/12'),
   },
   cardBandTopGap: {
@@ -512,14 +505,14 @@ const styles = StyleSheet.create({
   },
   sectionGroup: {
     width: '100%',
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   centerState: {
     width: '100%',
     minHeight: 220,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
   },
   pressed: { opacity: 0.75 },
 });

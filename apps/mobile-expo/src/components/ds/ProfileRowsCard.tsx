@@ -117,9 +117,7 @@ function Row({
     return (
       <View style={[styles.fieldRow, topBorder]}>
         <Text style={[typography.bodySmall, { color: fg.secondary }]}>{row.label}</Text>
-        <Text style={[typography.body, { color: fg.primary }]} numberOfLines={2}>
-          {row.value}
-        </Text>
+        <Text style={[typography.body, { color: fg.primary }]}>{row.value}</Text>
       </View>
     );
   }
@@ -132,7 +130,7 @@ function Row({
     const interactive = !!row.onPress;
     const Body = (
       <View style={styles.linkRowInner}>
-        <Text style={[typography.bodyBold, { color: labelColor }]} numberOfLines={1}>
+        <Text style={[typography.bodyBold, { color: labelColor, flex: 1, minWidth: 0 }]}>
           {row.label}
         </Text>
         {!row.hideChevron ? (
@@ -162,13 +160,9 @@ function Row({
     const Body = (
       <View style={styles.linkBadgeInner}>
         <View style={styles.linkBadgeLeftCol}>
-          <Text style={[typography.bodyBold, { color: fg.primary }]} numberOfLines={1}>
-            {row.label}
-          </Text>
+          <Text style={[typography.bodyBold, { color: fg.primary }]}>{row.label}</Text>
           {row.sublabel ? (
-            <Text style={[typography.bodySmall, { color: fg.secondary }]} numberOfLines={1}>
-              {row.sublabel}
-            </Text>
+            <Text style={[typography.bodySmall, { color: fg.secondary }]}>{row.sublabel}</Text>
           ) : null}
         </View>
         {row.badge ? (
@@ -221,7 +215,7 @@ function Row({
     const Body = (
       <View style={styles.linkIconInner}>
         {row.icon}
-        <Text style={[typography.bodyBold, { color: labelColor }]} numberOfLines={1}>
+        <Text style={[typography.bodyBold, { color: labelColor, flex: 1, minWidth: 0 }]}>
           {row.label}
         </Text>
       </View>

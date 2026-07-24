@@ -44,24 +44,17 @@ export function EarningsSnapshotCard({
     >
       <View style={styles.primary}>
         <Text style={[typography.labelHeadingSecondary, styles.center]}>NET EARNINGS</Text>
-        <Text style={[typography.metricXL, styles.center, { color: success }]} numberOfLines={1}>
-          {netEarnings}
-        </Text>
+        <Text style={[typography.metricXL, styles.center, { color: success }]}>{netEarnings}</Text>
       </View>
 
       <View style={styles.row}>
         <View style={styles.colStart}>
           <Text style={typography.labelHeadingSecondary}>REVENUE</Text>
-          <Text style={[typography.metric, { color: fg.primary, textTransform: 'none' }]} numberOfLines={1}>
-            {revenue}
-          </Text>
+          <Text style={[typography.metric, { color: fg.primary, textTransform: 'none' }]}>{revenue}</Text>
         </View>
         <View style={styles.colEnd}>
           <Text style={[typography.labelHeadingSecondary, styles.alignRight]}>MATERIALS</Text>
-          <Text
-            style={[typography.metric, styles.alignRight, { color: brand, textTransform: 'none' }]}
-            numberOfLines={1}
-          >
+          <Text style={[typography.metric, styles.alignRight, { color: brand, textTransform: 'none' }]}>
             {materials}
           </Text>
         </View>
@@ -70,25 +63,17 @@ export function EarningsSnapshotCard({
       <View style={styles.row}>
         <View style={styles.colStart}>
           <Text style={typography.labelHeadingSecondary}>TIME</Text>
-          <Text style={[typography.metric, { color: fg.primary, textTransform: 'none' }]} numberOfLines={1}>
-            {time}
-          </Text>
+          <Text style={[typography.metric, { color: fg.primary, textTransform: 'none' }]}>{time}</Text>
         </View>
         <View style={styles.colCenter}>
           <Text style={[typography.labelHeadingSecondary, styles.center]}>NET/HR</Text>
-          <Text
-            style={[typography.metric, styles.center, { color: success, textTransform: 'none' }]}
-            numberOfLines={1}
-          >
+          <Text style={[typography.metric, styles.center, { color: success, textTransform: 'none' }]}>
             {netPerHr}
           </Text>
         </View>
         <View style={styles.colEnd}>
           <Text style={[typography.labelHeadingSecondary, styles.alignRight]}>JOBS</Text>
-          <Text
-            style={[typography.metric, styles.alignRight, { color: fg.primary, textTransform: 'none' }]}
-            numberOfLines={1}
-          >
+          <Text style={[typography.metric, styles.alignRight, { color: fg.primary, textTransform: 'none' }]}>
             {jobs}
           </Text>
         </View>
@@ -100,7 +85,6 @@ export function EarningsSnapshotCard({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    maxWidth: 353,
     backgroundColor: bg.surfaceWhite,
     borderWidth: 1,
     borderColor: colorWithAlpha('Foundation/Border/Default', 0.1),

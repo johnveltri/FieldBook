@@ -48,7 +48,6 @@ import { PrivacyChoicesScreen } from './PrivacyChoicesScreen';
 import { HelpScreen } from './HelpScreen';
 import { TRADE_PRESETS, formatTradesForDisplay } from '../lib/trades';
 import {
-  TOP_HEADER_MAX_WIDTH,
   bg,
   createTextStyles,
   fg,
@@ -56,6 +55,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import type { TextStyles } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 
 /** Page back control — scale up Figma `231:837` (24×24 artboard). */
 const PROFILE_BACK_ICON_SIZE = 28;
@@ -91,6 +91,7 @@ export type ProfileScreenProps = {
 
 export function ProfileScreen({ onBack }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
+  const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
   const { signOut, session, updatePassword, deleteAccount } = useAuth();
@@ -456,8 +457,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         scrollEventThrottle={16}
         onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
       >
-        <View style={styles.headerBand}>
-          <View style={[styles.topHeaderRow, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+        <View style={columnStyle}>
+          <View style={styles.topHeaderRow}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Back"
@@ -469,37 +470,37 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             </Pressable>
             <Text style={[typography.displayH1, styles.profileTitle]}>PROFILE</Text>
           </View>
-        </View>
 
-        <View style={[styles.bodyWrap, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
-          <ProfileSectionHeader
-            typography={typography}
-            title="PERSONAL INFO"
-            icon={<ProfilePersonalInfoIcon color={color('Brand/Accent')} />}
-            actionLabel="EDIT"
-            actionIcon={
-              <ProfileEditPencilIcon color={color('Semantic/Status/Error/Text')} />
-            }
-            onActionPress={openEditProfile}
-          />
-          <ProfileRowsCard typography={typography} rows={personalInfoRows} />
+          <View style={styles.bodyWrap}>
+            <ProfileSectionHeader
+              typography={typography}
+              title="PERSONAL INFO"
+              icon={<ProfilePersonalInfoIcon color={color('Brand/Accent')} />}
+              actionLabel="EDIT"
+              actionIcon={
+                <ProfileEditPencilIcon color={color('Semantic/Status/Error/Text')} />
+              }
+              onActionPress={openEditProfile}
+            />
+            <ProfileRowsCard typography={typography} rows={personalInfoRows} />
 
-          <ProfileSectionHeader
-            typography={typography}
-            title="PLAN"
-            icon={<ProfilePlanIcon color={color('Brand/Accent')} />}
-          />
-          <ProfileRowsCard typography={typography} rows={planRows} />
+            <ProfileSectionHeader
+              typography={typography}
+              title="PLAN"
+              icon={<ProfilePlanIcon color={color('Brand/Accent')} />}
+            />
+            <ProfileRowsCard typography={typography} rows={planRows} />
 
-          <ProfileSectionHeader
-            typography={typography}
-            title="ACCOUNT"
-            icon={<ProfileAccountIcon color={color('Brand/Accent')} />}
-          />
-          <ProfileRowsCard typography={typography} rows={accountRows} />
+            <ProfileSectionHeader
+              typography={typography}
+              title="ACCOUNT"
+              icon={<ProfileAccountIcon color={color('Brand/Accent')} />}
+            />
+            <ProfileRowsCard typography={typography} rows={accountRows} />
 
-          <View style={styles.deleteSpacer} />
-          <ProfileRowsCard typography={typography} rows={deleteRows} />
+            <View style={styles.deleteSpacer} />
+            <ProfileRowsCard typography={typography} rows={deleteRows} />
+          </View>
         </View>
       </Animated.ScrollView>
 
@@ -586,9 +587,7 @@ function ProfileSectionHeader({
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderLead}>
         {icon}
-        <Text style={typography.metricS} numberOfLines={1}>
-          {title}
-        </Text>
+        <Text style={typography.metricS}>{title}</Text>
       </View>
       {actionLabel ? (
         <Pressable
@@ -618,16 +617,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     alignItems: 'stretch',
   },
-  headerBand: {
-    width: '100%',
-    alignItems: 'center',
-  },
   /** Title + Back — no accent strip (`231:817` variant `Title + Back`). */
   topHeaderRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
     gap: space('Spacing/8'),
@@ -643,9 +638,8 @@ const styles = StyleSheet.create({
     color: fg.primary,
   },
   bodyWrap: {
-    alignSelf: 'center',
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/8'),
     gap: space('Spacing/12'),
   },
@@ -661,12 +655,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space('Spacing/8'),
+    flex: 1,
+    minWidth: 0,
   },
   actionPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space('Spacing/8'),
-    height: space('Spacing/24'),
+    minHeight: space('Spacing/24'),
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/4'),
     borderRadius: radius('Radius/Full'),
