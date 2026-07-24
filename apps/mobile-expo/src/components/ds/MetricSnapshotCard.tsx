@@ -75,6 +75,8 @@ const styles = StyleSheet.create({
   },
   value: {
     textAlign: 'center',
+    // Token lineHeight (1.25×) clips custom Metric-XL glyphs at large Dynamic Type sizes.
+    lineHeight: undefined,
   },
   pressed: { opacity: 0.75 },
 });

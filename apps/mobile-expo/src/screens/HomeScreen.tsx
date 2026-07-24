@@ -30,6 +30,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -214,6 +215,8 @@ function formatCaptureError(e: unknown): string {
 export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { columnStyle, fabRight } = useContentColumn();
+  const { fontScale } = useWindowDimensions();
+  const brandTitle = fontScale > 1.6 ? 'FIELD\nSOLO' : 'FIELDSOLO';
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const hasLiveSession = useHasLiveSession();
   const { startLiveSession, refresh: refreshLiveSession } = useLiveSession();
@@ -821,7 +824,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         <View style={columnStyle}>
           <View style={styles.headerBand}>
             <View style={styles.topHeader}>
-              <Text style={typography.displayH1}>FIELDSOLO</Text>
+              <Text style={[typography.displayH1, styles.brandTitle]}>{brandTitle}</Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Profile"
@@ -1249,14 +1252,20 @@ const styles = StyleSheet.create({
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    gap: space('Spacing/12'),
+  },
+  brandTitle: {
+    flex: 1,
+    minWidth: 0,
   },
   profileHit: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   pressed: { opacity: 0.75 },
   fabWrap: {
