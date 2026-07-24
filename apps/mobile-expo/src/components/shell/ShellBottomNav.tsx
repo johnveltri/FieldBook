@@ -40,8 +40,8 @@ export function shellBottomNavOuterHeight(
   insetsBottom: number,
   fontScale: number = PixelRatio.getFontScale(),
 ): number {
-  // Grow with Dynamic Type, but cap so chrome doesn’t consume the content pane at XXXL.
-  const scale = Math.max(1, Math.min(fontScale, 1.75));
+  // Grow with Dynamic Type so reserved scroll inset tracks actual tab chrome.
+  const scale = Math.max(1, fontScale);
   return 1 + space('Spacing/64') * scale + shellBottomNavBottomPadding(insetsBottom);
 }
 
@@ -69,7 +69,6 @@ function BottomNavTabCell({
 }) {
   const labelStyle = dynamicTypeTextStyle(typography.labelCaps, fontScale, {
     padRatio: 0.06,
-    maxScale: 1.75,
   });
   return (
     <Pressable
@@ -91,10 +90,6 @@ function BottomNavTabCell({
       <View style={styles.bottomNavTabContent}>
         <View style={styles.bottomNavIconSlot}>{icon}</View>
         <Text
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.7}
-          maxFontSizeMultiplier={1.75}
           style={[
             labelStyle,
             {
@@ -121,7 +116,7 @@ export type ShellBottomNavProps = {
 export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
-  const navTypeScale = Math.max(1, Math.min(fontScale, 1.75));
+  const navTypeScale = Math.max(1, fontScale);
   const tabMinHeight = Math.round(space('Spacing/64') * navTypeScale);
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,

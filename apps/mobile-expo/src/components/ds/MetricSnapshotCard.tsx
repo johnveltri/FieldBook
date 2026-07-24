@@ -32,16 +32,13 @@ export function MetricSnapshotCard({
     valueTone === 'success' ? color('Semantic/Status/Success/Text') : color('Foundation/Text/Primary');
 
   const labelSize = typography.labelCaps.fontSize ?? 12;
-  const metricMaxScale = 2.35;
   const labelStyle = dynamicTypeTextStyle(typography.labelCaps, fontScale, {
     padRatio: 0.1,
-    maxScale: metricMaxScale,
   });
   const valueSize = typography.metricXL.fontSize ?? 42;
   const valueStyle = dynamicTypeTextStyle(typography.metricXL, fontScale, {
     letterSpacingUntilScale: 99,
     padRatio: 0.06,
-    maxScale: metricMaxScale,
   });
   const cardPad = fontScale > 1.6 ? space('Spacing/16') : space('Spacing/32');
 
@@ -49,21 +46,18 @@ export function MetricSnapshotCard({
     <View style={styles.primary}>
       <View
         style={{
-          minHeight: dynamicTypeLineMinHeight(labelSize, fontScale, 1.7, metricMaxScale),
+          minHeight: dynamicTypeLineMinHeight(labelSize, fontScale, 1.7),
           justifyContent: 'center',
           width: '100%',
         }}
       >
-        <Text
-          style={[labelStyle, styles.label, { color: color('Foundation/Text/Secondary') }]}
-          maxFontSizeMultiplier={metricMaxScale}
-        >
+        <Text style={[labelStyle, styles.label, { color: color('Foundation/Text/Secondary') }]}>
           {label}
         </Text>
       </View>
       <View
         style={{
-          minHeight: dynamicTypeLineMinHeight(valueSize, fontScale, 1.25, metricMaxScale),
+          minHeight: dynamicTypeLineMinHeight(valueSize, fontScale, 1.25),
           width: '100%',
         }}
       >
@@ -71,7 +65,6 @@ export function MetricSnapshotCard({
           adjustsFontSizeToFit
           minimumFontScale={0.55}
           numberOfLines={1}
-          maxFontSizeMultiplier={metricMaxScale}
           style={[valueStyle, styles.value, { color: valueColor }]}
         >
           {value}

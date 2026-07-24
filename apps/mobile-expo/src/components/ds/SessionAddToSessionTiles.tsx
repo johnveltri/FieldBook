@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
-import { bg, border, fg } from '../../theme/nativeTokens';
+import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import {
   SessionCaptureTileMaterialIcon,
@@ -116,6 +116,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   tile: {
+    ...cardShadowRn,
     width: 73.75,
     height: 56,
     borderRadius: radius('Radius/12'),

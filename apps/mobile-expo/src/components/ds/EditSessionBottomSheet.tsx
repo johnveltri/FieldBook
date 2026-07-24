@@ -19,6 +19,7 @@ import {
   SessionSheetBackIcon,
 } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
 
 export type EditSessionBottomSheetValues = {
@@ -203,9 +204,8 @@ export function EditSessionBottomSheet({
 
         <View style={styles.header}>
           <SessionEditClockIcon color={color('Semantic/Status/Error/Text')} />
-          <Text
+          <Text {...screenHeaderA11y()}
             style={[typography.titleH3, { color: fg.primary }]}
-            numberOfLines={1}
           >
             {title}
           </Text>
@@ -297,7 +297,7 @@ function FieldShell({
         pressed && styles.pressed,
       ]}
     >
-      <Text style={[typography.body, { color: fg.primary }]} numberOfLines={1}>
+      <Text style={[typography.body, { color: fg.primary }]}>
         {value}
       </Text>
     </Pressable>

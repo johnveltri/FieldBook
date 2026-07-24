@@ -10,7 +10,7 @@ import Svg, { Path } from 'react-native-svg';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 // radius() still used for pill (Radius/Full).
 
-import { bg, border, fg } from '../../theme/nativeTokens';
+import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import {
   JobDetailIconSectionAdd,
@@ -19,6 +19,7 @@ import {
   SessionSheetBackIcon,
 } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
 
 export type EditMaterialBottomSheetValues = {
@@ -193,8 +194,7 @@ export function EditMaterialBottomSheet({
   ]);
 
   const materialGreen = color('Semantic/Activity/Material');
-  const errorText = color('Semantic/Status/Error/Text');
-  const errorBg = color('Semantic/Status/Error/BG');
+  const labelColor = fg.primary;
 
   const cents = parseCentsFromText(priceText);
   const qty = parseQuantityFromText(qtyText);
@@ -240,9 +240,8 @@ export function EditMaterialBottomSheet({
           <View style={styles.headerIcon}>
             <JobDetailIconSectionMaterials color={materialGreen} />
           </View>
-          <Text
+          <Text {...screenHeaderA11y()}
             style={[typography.titleH3, styles.headerTitle, { color: fg.primary }]}
-            numberOfLines={1}
           >
             {title}
           </Text>
@@ -251,14 +250,10 @@ export function EditMaterialBottomSheet({
               accessibilityRole="button"
               accessibilityLabel="Attach to job"
               onPress={() => onJobPillPress(currentDraft())}
-              style={({ pressed }) => [
-                styles.sessionPill,
-                { backgroundColor: errorBg },
-                pressed && styles.pressed,
-              ]}
+              style={({ pressed }) => [styles.sessionButton, pressed && styles.pressed]}
             >
-              <JobDetailIconSectionAdd color={errorText} />
-              <Text style={[typography.bodySmall, { color: errorText }]}>JOB</Text>
+              <JobDetailIconSectionAdd color={labelColor} />
+              <Text style={[typography.pillCompact, { color: labelColor }]}>JOB</Text>
             </Pressable>
           ) : showSessionPill ? (
             <Pressable
@@ -266,18 +261,14 @@ export function EditMaterialBottomSheet({
               accessibilityLabel={assignedSession ? 'Edit session' : 'Attach to session'}
               onPress={() => onSessionPillPress?.(currentDraft())}
               disabled={!onSessionPillPress}
-              style={({ pressed }) => [
-                styles.sessionPill,
-                { backgroundColor: errorBg },
-                pressed && styles.pressed,
-              ]}
+              style={({ pressed }) => [styles.sessionButton, pressed && styles.pressed]}
             >
               {assignedSession ? (
-                <SessionCardEditPencilIcon color={errorText} size={12} />
+                <SessionCardEditPencilIcon color={labelColor} size={12} />
               ) : (
-                <JobDetailIconSectionAdd color={errorText} />
+                <JobDetailIconSectionAdd color={labelColor} />
               )}
-              <Text style={[typography.bodySmall, { color: errorText }]}>SESSION</Text>
+              <Text style={[typography.pillCompact, { color: labelColor }]}>SESSION</Text>
             </Pressable>
           ) : null}
         </View>
@@ -333,7 +324,6 @@ export function EditMaterialBottomSheet({
           >
             <Text
               style={[typography.body, { color: fg.primary }]}
-              numberOfLines={1}
             >
               {currentUnit || 'ea'}
             </Text>
@@ -380,15 +370,18 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  sessionPill: {
+  sessionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: space('Spacing/8'),
-    height: space('Spacing/24'),
+    minHeight: 44,
+    minWidth: 44,
     paddingHorizontal: space('Spacing/12'),
-    paddingVertical: space('Spacing/4'),
-    borderRadius: radius('Radius/Full'),
+    paddingVertical: space('Spacing/8'),
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.surfaceWhite,
+    ...cardShadowRn,
   },
   subtitle: {
     color: fg.secondary,

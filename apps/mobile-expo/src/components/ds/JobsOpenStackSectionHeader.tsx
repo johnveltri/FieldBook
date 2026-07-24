@@ -11,9 +11,9 @@ const COPY: Record<
   JobsOpenSectionKind,
   { titlePrefix: string; subtitle: string }
 > = {
-  incomplete: { titlePrefix: 'INCOMPLETE', subtitle: 'Missing key info' },
-  inProgress: { titlePrefix: 'IN PROGRESS', subtitle: 'Active work underway' },
-  unpaid: { titlePrefix: 'UNPAID', subtitle: 'Completed but not paid' },
+  incomplete: { titlePrefix: 'Incomplete', subtitle: 'Missing key info' },
+  inProgress: { titlePrefix: 'In Progress', subtitle: 'Active work underway' },
+  unpaid: { titlePrefix: 'Unpaid', subtitle: 'Completed but not paid' },
 };
 
 const TITLE_COLORS: Record<JobsOpenSectionKind, string> = {
@@ -96,7 +96,7 @@ export function JobsOpenStackSectionHeader({
     >
       <View style={styles.headingRow}>
         <View style={styles.leadingSlot}>{leading}</View>
-        <Text style={[typography.metricS, styles.title, { color: titleColor }]}>{titleLine}</Text>
+        <Text style={[typography.titleH3, styles.title, { color: titleColor }]}>{titleLine}</Text>
       </View>
       <View style={styles.subtitleBlock}>
         <Text style={[typography.bodySmall, { color: titleColor }]}>{subtitle}</Text>
@@ -108,8 +108,8 @@ export function JobsOpenStackSectionHeader({
 const styles = StyleSheet.create({
   root: {
     width: '100%',
-    paddingTop: space('Spacing/36'),
-    paddingBottom: space('Spacing/16'),
+    paddingTop: space('Spacing/16'),
+    paddingBottom: space('Spacing/12'),
     gap: 4,
   },
   headingRow: {

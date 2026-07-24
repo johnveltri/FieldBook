@@ -49,6 +49,7 @@ import { HelpScreen } from './HelpScreen';
 import { TRADE_PRESETS, formatTradesForDisplay } from '../lib/trades';
 import {
   bg,
+  cardShadowRn,
   createTextStyles,
   fg,
   radius,
@@ -56,6 +57,7 @@ import {
 } from '../theme/nativeTokens';
 import type { TextStyles } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
+import { screenHeaderA11y } from '../lib/accessibility';
 
 /** Page back control — scale up Figma `231:837` (24×24 artboard). */
 const PROFILE_BACK_ICON_SIZE = 28;
@@ -468,17 +470,19 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             >
               <TopHeaderBackIcon color={fg.secondary} size={PROFILE_BACK_ICON_SIZE} />
             </Pressable>
-            <Text style={[typography.displayH1, styles.profileTitle]}>PROFILE</Text>
+            <Text {...screenHeaderA11y()} style={[typography.displayH1, styles.profileTitle]}>
+              PROFILE
+            </Text>
           </View>
 
           <View style={styles.bodyWrap}>
             <ProfileSectionHeader
               typography={typography}
-              title="PERSONAL INFO"
+              title="Personal Info"
               icon={<ProfilePersonalInfoIcon color={color('Brand/Accent')} />}
               actionLabel="EDIT"
               actionIcon={
-                <ProfileEditPencilIcon color={color('Semantic/Status/Error/Text')} />
+                <ProfileEditPencilIcon color={fg.primary} />
               }
               onActionPress={openEditProfile}
             />
@@ -486,14 +490,14 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
 
             <ProfileSectionHeader
               typography={typography}
-              title="PLAN"
+              title="Plan"
               icon={<ProfilePlanIcon color={color('Brand/Accent')} />}
             />
             <ProfileRowsCard typography={typography} rows={planRows} />
 
             <ProfileSectionHeader
               typography={typography}
-              title="ACCOUNT"
+              title="Account"
               icon={<ProfileAccountIcon color={color('Brand/Accent')} />}
             />
             <ProfileRowsCard typography={typography} rows={accountRows} />
@@ -581,13 +585,12 @@ function ProfileSectionHeader({
   actionIcon?: React.ReactNode;
   onActionPress?: () => void;
 }) {
-  const errorBg = color('Semantic/Status/Error/BG');
-  const errorText = color('Semantic/Status/Error/Text');
+  const labelColor = fg.primary;
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderLead}>
         {icon}
-        <Text style={typography.metricS}>{title}</Text>
+        <Text style={typography.titleH3}>{title}</Text>
       </View>
       {actionLabel ? (
         <Pressable
@@ -595,14 +598,10 @@ function ProfileSectionHeader({
           accessibilityLabel={actionLabel}
           onPress={onActionPress}
           disabled={!onActionPress}
-          style={({ pressed }) => [
-            styles.actionPill,
-            { backgroundColor: errorBg },
-            pressed && styles.pressed,
-          ]}
+          style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
         >
           {actionIcon}
-          <Text style={[typography.bodySmall, { color: errorText }]}>
+          <Text style={[typography.bodySmall, { color: labelColor }]}>
             {actionLabel}
           </Text>
         </Pressable>
@@ -658,14 +657,18 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  actionPill: {
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: space('Spacing/8'),
-    minHeight: space('Spacing/24'),
+    minHeight: 44,
+    minWidth: 44,
     paddingHorizontal: space('Spacing/12'),
-    paddingVertical: space('Spacing/4'),
-    borderRadius: radius('Radius/Full'),
+    paddingVertical: space('Spacing/8'),
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.surfaceWhite,
+    ...cardShadowRn,
   },
   deleteSpacer: {
     height: space('Spacing/4'),

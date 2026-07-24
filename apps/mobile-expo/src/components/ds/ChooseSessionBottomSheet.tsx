@@ -5,6 +5,7 @@ import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { SessionSheetBackIcon } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 
 export type ChooseSessionBottomSheetSession = {
   id: string;
@@ -79,9 +80,8 @@ export function ChooseSessionBottomSheet({
           <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
         </Pressable>
 
-        <Text
+        <Text {...screenHeaderA11y()}
           style={[typography.titleH3, styles.title, { color: fg.primary }]}
-          numberOfLines={1}
         >
           {title}
         </Text>
@@ -131,13 +131,11 @@ function SessionRow({
       <View style={styles.rowTextStack}>
         <Text
           style={[typography.bodyBold, { color: fg.primary }]}
-          numberOfLines={1}
         >
           {session.dateLabel}
         </Text>
         <Text
           style={[typography.bodySmall, { color: fg.secondary }]}
-          numberOfLines={1}
         >
           {session.timeRangeLabel}
         </Text>
@@ -169,10 +167,10 @@ function RemoveFromSessionRow({
       ]}
     >
       <View style={styles.rowTextStack}>
-        <Text style={[typography.bodyBold, { color: errorText }]} numberOfLines={1}>
+        <Text style={[typography.bodyBold, { color: errorText }]}>
           Remove From Session
         </Text>
-        <Text style={[typography.bodySmall, { color: fg.secondary }]} numberOfLines={1}>
+        <Text style={[typography.bodySmall, { color: fg.secondary }]}>
           Save as unassigned — assign to a session later
         </Text>
       </View>

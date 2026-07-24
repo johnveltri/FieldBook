@@ -74,14 +74,12 @@ export function SessionAttachmentList({
               </View>
               <Text
                 style={[typography.bodySmall, styles.titleCell, { color: fg.primary }]}
-                numberOfLines={1}
               >
                 {item.title}
               </Text>
               {item.kind === 'material' ? (
                 <Text
                   style={[typography.bodySmall, styles.priceCell, { color: fg.primary }]}
-                  numberOfLines={1}
                 >
                   {item.priceLabel}
                 </Text>

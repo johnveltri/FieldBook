@@ -33,12 +33,9 @@ import {
 } from '../lib/legal-versions';
 import { cacheLegalAcceptance } from '../lib/legalAcceptanceStorage';
 import { supabase } from '../lib/supabase';
-import {
-  createTextStyles,
-  fg,
-  space,
-} from '../theme/nativeTokens';
+import { cardShadowRn, createTextStyles, fg, space } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
+import { announceAccessibilityMessage, screenHeaderA11y } from '../lib/accessibility';
 
 export function SignInScreen() {
   const insets = useSafeAreaInsets();
@@ -58,6 +55,10 @@ export function SignInScreen() {
   useEffect(() => {
     analytics.capture('auth_screen_viewed', { mode });
   }, [mode]);
+
+  useEffect(() => {
+    announceAccessibilityMessage(error);
+  }, [error]);
 
   useEffect(() => {
     if (previousModeRef.current === mode) return;
@@ -259,9 +260,13 @@ export function SignInScreen() {
         >
           <View style={columnStyle}>
           <View style={styles.card}>
-            <Text style={[text.title, { color: fg.primary, marginBottom: gap }]}>FieldSolo</Text>
+            <Text {...screenHeaderA11y('FieldSolo')} style={[text.title, { color: fg.primary, marginBottom: gap }]}>
+              FieldSolo
+            </Text>
             <Text style={[text.body, { color: fg.secondary, marginBottom: gap }]}>
-              Sign in with email and password
+              {mode === 'signUp'
+                ? 'Create an account with email and password'
+                : 'Sign in with email and password'}
             </Text>
 
             {mode === 'signUp' ? (
@@ -350,6 +355,7 @@ export function SignInScreen() {
             {mode === 'signUp' ? (
               <Pressable
                 accessibilityRole="checkbox"
+                accessibilityLabel="I agree to the Privacy Policy and Terms"
                 accessibilityState={{ checked: legalAccepted }}
                 onPress={() => setLegalAccepted((value) => !value)}
                 disabled={busy}
@@ -457,6 +463,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   primaryButton: {
+    ...cardShadowRn,
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
     paddingVertical: 14,

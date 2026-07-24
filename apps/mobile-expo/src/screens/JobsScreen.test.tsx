@@ -186,7 +186,7 @@ describe('JobsScreen', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/TODAY|PAST WEEK|PAST MONTH|OLDER/)).toBeTruthy();
+      expect(screen.getByText(/Today|Past Week|Past Month|Older/)).toBeTruthy();
       expect(screen.getByText('Paid job')).toBeTruthy();
     });
   });

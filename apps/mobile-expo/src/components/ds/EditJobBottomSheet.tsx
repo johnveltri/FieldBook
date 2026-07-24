@@ -14,6 +14,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { BottomSheetShell } from './BottomSheetShell';
 import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
+import { screenHeaderA11y } from '../../lib/accessibility';
 
 export type EditJobBottomSheetValues = {
   shortDescription: string;
@@ -92,7 +93,12 @@ export function EditJobBottomSheet({
   }, [v.customerName, v.shortDescription, v.revenue, v.serviceAddress, visible]);
 
   return (
-    <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
+    <BottomSheetShell
+      visible={visible}
+      onClose={onClose}
+      onClosed={onClosed}
+      accessibilityTitle="Edit Job"
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
@@ -107,7 +113,9 @@ export function EditJobBottomSheet({
           <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
         </Pressable>
 
-        <Text style={[typography.titleH3, { color: fg.primary }]}>Edit Job</Text>
+        <Text {...screenHeaderA11y()} style={[typography.titleH3, { color: fg.primary }]}>
+          Edit Job
+        </Text>
 
         <View style={styles.fields}>
           <InputShell>

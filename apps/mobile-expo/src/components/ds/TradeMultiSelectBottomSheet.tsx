@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
-import { bg, border, fg } from '../../theme/nativeTokens';
+import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import {
   ProfileCheckIcon,
@@ -19,6 +19,7 @@ import {
 } from '../figma-icons/ProfileScreenIcons';
 import { SessionSheetBackIcon } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 import type { TradePreset } from '../../lib/trades';
 
 type TradeMultiSelectBottomSheetProps = {
@@ -130,9 +131,8 @@ export function TradeMultiSelectBottomSheet({
           <View style={styles.headerIcon}>
             <ProfilePersonalInfoIcon color={color('Brand/Accent')} />
           </View>
-          <Text
+          <Text {...screenHeaderA11y()}
             style={[typography.titleH3, styles.headerTitle, { color: fg.primary }]}
-            numberOfLines={1}
           >
             Trades
           </Text>
@@ -163,7 +163,6 @@ export function TradeMultiSelectBottomSheet({
                     typography.body,
                     { color: fg.primary, flex: 1, minWidth: 0 },
                   ]}
-                  numberOfLines={1}
                 >
                   {opt.label}
                 </Text>
@@ -317,10 +316,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   applyBtn: {
+    ...cardShadowRn,
     width: 70,
-    height: space('Spacing/24'),
+    minHeight: 44,
+    minWidth: 44,
     paddingHorizontal: space('Spacing/12'),
-    paddingVertical: space('Spacing/4'),
+    paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/Full'),
     alignItems: 'center',
     justifyContent: 'center',
@@ -351,10 +352,7 @@ const styles = StyleSheet.create({
     borderRadius: radius('Radius/12'),
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 1,
+    ...cardShadowRn,
   },
   primaryLabel: {
     color: color('Foundation/Surface/White'),

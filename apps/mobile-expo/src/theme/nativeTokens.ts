@@ -24,18 +24,6 @@ export {
   scrollBottomInsetForFab,
 } from '@fieldsolo/design-system/lib/responsiveLayout';
 
-/**
- * @deprecated Legacy phone header cap. Prefer {@link contentColumnStyleRn} /
- * {@link CONTENT_COLUMN_MAX_WIDTH} — remaining screens still import this during migration.
- */
-export const TOP_HEADER_MAX_WIDTH = 393;
-
-/**
- * @deprecated Legacy phone card cap. Prefer {@link contentColumnStyleRn} /
- * {@link CONTENT_COLUMN_MAX_WIDTH} — remaining screens still import this during migration.
- */
-export const CONTENT_MAX_WIDTH = 353;
-
 /** RN styles for the shared responsive content column. */
 export function contentColumnStyleRn(windowWidth: number): ViewStyle {
   const { gutter } = contentColumnMetrics(windowWidth);
@@ -170,7 +158,7 @@ export function createTextStyles(f: LoadedFonts) {
   return {
     displayH1: t('Typography/Display-H1'),
     titleH3: t('Typography/Title-H3'),
-    headingH2: t('Typography/JobDetail/Title'),
+    headingH2: t('Typography/Heading-H2'),
     body: t('Typography/Body'),
     bodySecondary: { ...t('Typography/Body'), color: fg.secondary },
     bodyBold: t('Typography/Body-Bold'),
@@ -187,6 +175,8 @@ export function createTextStyles(f: LoadedFonts) {
     jobDetailNetAmount: t('Typography/JobDetail/NetAmount'),
     ctaPrimaryLabel: t('Typography/CTA/PrimaryLabel'),
     pillCompact: t('Typography/Pill/Compact'),
+    /** `Typography/Metric-S` — block / tile button labels (16 SemiBold). */
+    metricSLabel: t('Typography/Metric-S'),
     /** `Typography/LABEL` — status pills; pair with `color` from semantic status tokens (all-caps in UI). */
     statusPillLabel: t('Typography/LABEL'),
   };

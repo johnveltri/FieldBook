@@ -3,11 +3,12 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
-import { bg, border, fg } from '../../theme/nativeTokens';
+import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { SessionSheetBackIcon } from '../figma-icons/JobDetailScreenIcons';
 import { ProfilePersonalInfoIcon } from '../figma-icons/ProfileScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 import { formatTradesForDisplay } from '../../lib/trades';
 
 export type UpdateProfileValues = {
@@ -128,9 +129,8 @@ export function UpdateProfileBottomSheet({
           <View style={styles.headerIcon}>
             <ProfilePersonalInfoIcon color={color('Brand/Accent')} />
           </View>
-          <Text
+          <Text {...screenHeaderA11y()}
             style={[typography.titleH3, styles.headerTitle, { color: fg.primary }]}
-            numberOfLines={1}
           >
             Update Profile
           </Text>
@@ -284,10 +284,7 @@ const styles = StyleSheet.create({
     borderRadius: radius('Radius/12'),
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 1,
+    ...cardShadowRn,
   },
   primaryDisabled: {
     opacity: 0.45,

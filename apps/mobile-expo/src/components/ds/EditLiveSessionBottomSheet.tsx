@@ -19,6 +19,7 @@ import {
   SessionSheetBackIcon,
 } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
 
 export type EditLiveSessionSavePayload =
@@ -229,7 +230,7 @@ export function EditLiveSessionBottomSheet({
 
         <View style={styles.header}>
           <SessionEditClockIcon color={color('Semantic/Status/Error/Text')} />
-          <Text style={[typography.titleH3, { color: fg.primary }]} numberOfLines={1}>
+          <Text {...screenHeaderA11y()} style={[typography.titleH3, { color: fg.primary }]}>
             Edit Live Session
           </Text>
         </View>
@@ -347,7 +348,6 @@ function FieldShell({
     >
       <Text
         style={[typography.body, { color: placeholder ? fg.secondary : fg.primary }]}
-        numberOfLines={1}
       >
         {value}
       </Text>

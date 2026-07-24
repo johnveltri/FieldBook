@@ -86,6 +86,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
+import { screenHeaderA11y } from '../lib/accessibility';
 
 const OPEN_TAB_PAGE_SIZE = 20;
 const NEEDS_ATTENTION_PREVIEW_MAX = 10;
@@ -281,20 +282,16 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
     [],
   );
 
-  // Brand is decorative chrome — cap growth so XXXL still leaves room for snapshot content.
-  const brandMaxScale = 1.85;
   const brandDisplay = typography.displayH1;
   const brandTitleStyle = dynamicTypeTextStyle(brandDisplay, fontScale, {
     letterSpacingUntilScale: 99,
     padRatio: 0.08,
-    maxScale: brandMaxScale,
   });
   const brandLineCount = brandTitle.includes('\n') ? 2 : 1;
   const brandMinHeight = dynamicTypeLineMinHeight(
     brandDisplay?.fontSize ?? 32,
     fontScale,
     1.4 * brandLineCount,
-    brandMaxScale,
   );
 
   const needsAttentionRows = useMemo(() => {
@@ -850,8 +847,8 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
             <View style={styles.topHeader}>
               <View style={[styles.brandTitle, { minHeight: brandMinHeight }]}>
                 <Text
+                  {...screenHeaderA11y('FieldSolo')}
                   style={[brandTitleStyle, styles.brandTitleText]}
-                  maxFontSizeMultiplier={brandMaxScale}
                 >
                   {brandTitle}
                 </Text>
@@ -860,7 +857,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                 accessibilityRole="button"
                 accessibilityLabel="Profile"
                 onPress={onOpenProfile}
-                hitSlop={12}
                 style={({ pressed }) => [styles.profileHit, pressed && styles.pressed]}
               >
                 <TopHeaderProfileIcon color={fg.primary} size={20} />
@@ -886,7 +882,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
           {!homeLoading ? (
             <>
               <SectionHeader
-                title="WEEKLY SNAPSHOT"
+                title="Weekly Snapshot"
                 subtitle="Completed jobs worked in the past 7 days"
                 tone="neutral"
                 typography={typography}
@@ -905,7 +901,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
           {needsAttentionRows.length > 0 ? (
             <>
               <SectionHeader
-                title="NEEDS ATTENTION"
+                title="Needs Attention"
                 tone="accent"
                 typography={typography}
                 leadingIcon={<HomeNeedsAttentionIcon color={color('Brand/Accent')} />}
@@ -990,7 +986,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
           {recentJobsDetail.length > 0 ? (
             <>
               <SectionHeader
-                title="JUMP BACK IN"
+                title="Jump Back In"
                 tone="neutral"
                 typography={typography}
                 leadingIcon={<HomeJumpBackInIcon color={fg.secondary} />}
@@ -1278,7 +1274,7 @@ const styles = StyleSheet.create({
     // Horizontal inset comes from the shared responsive content column.
     paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
-    paddingBottom: space('Spacing/16'),
+    paddingBottom: space('Spacing/8'),
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
@@ -1299,6 +1295,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.surfaceWhite,
+    ...cardShadowRn,
   },
   pressed: { opacity: 0.75 },
   fabWrap: {

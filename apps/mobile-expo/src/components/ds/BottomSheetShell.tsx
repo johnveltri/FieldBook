@@ -24,6 +24,7 @@ import { CONTENT_COLUMN_MAX_WIDTH, contentGutter } from '@fieldsolo/design-syste
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { useBottomSheetStackWriters } from '../../context/BottomSheetStackContext';
+import { announceAccessibilityMessage } from '../../lib/accessibility';
 import { bg, border } from '../../theme/nativeTokens';
 
 const absoluteFill = {
@@ -78,6 +79,10 @@ type BottomSheetShellProps = {
    * @default space('Spacing/12')
    */
   bottomPaddingExtra?: number;
+  /**
+   * When the sheet opens, announced to VoiceOver / TalkBack (e.g. sheet title).
+   */
+  accessibilityTitle?: string;
 };
 
 /**
@@ -98,6 +103,7 @@ export function BottomSheetShell({
   autoSizeUpToFraction,
   registerInGlobalStack = true,
   bottomPaddingExtra = space('Spacing/12'),
+  accessibilityTitle,
 }: BottomSheetShellProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -184,6 +190,14 @@ export function BottomSheetShell({
       }
     });
   }, [hiddenOffset, onClosed, scrimOpacity, translateY, visible]);
+
+  const prevVisibleRef = useRef(visible);
+  useEffect(() => {
+    if (visible && !prevVisibleRef.current) {
+      announceAccessibilityMessage(accessibilityTitle);
+    }
+    prevVisibleRef.current = visible;
+  }, [accessibilityTitle, visible]);
 
   useEffect(() => {
     Animated.timing(forcedOffset, {
@@ -280,11 +294,13 @@ export function BottomSheetShell({
   // taps via the inactive sheet's scrim Pressable.
   return (
     <View
+      testID="bottom-sheet-overlay"
       style={[
         styles.overlay,
         stackingElevated ? styles.overlayElevated : styles.overlayFlat,
       ]}
       pointerEvents={visible ? 'box-none' : 'none'}
+      accessibilityViewIsModal={visible}
       accessibilityElementsHidden={!visible}
       importantForAccessibility={visible ? 'yes' : 'no-hide-descendants'}
     >

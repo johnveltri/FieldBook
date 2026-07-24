@@ -24,4 +24,14 @@ describe('BottomSheetShell accessibility', () => {
     expect(screen.getAllByLabelText('Close bottom sheet')).toHaveLength(1);
     expect(screen.getByText('Visible sheet content')).toBeTruthy();
   });
+
+  it('marks the overlay as a modal while visible', () => {
+    render(
+      <BottomSheetShell visible accessibilityTitle="Edit Job" onClose={jest.fn()}>
+        <Text>Visible sheet content</Text>
+      </BottomSheetShell>,
+    );
+
+    expect(screen.getByTestId('bottom-sheet-overlay').props.accessibilityViewIsModal).toBe(true);
+  });
 });

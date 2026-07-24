@@ -14,7 +14,7 @@ import {
   withdrawAnalyticsConsent,
 } from '../lib/analytics/consentSync';
 import { LEGAL_URLS } from '../lib/legal-versions';
-import { fg, space } from '../theme/nativeTokens';
+import { cardShadowRn, fg, space } from '../theme/nativeTokens';
 
 type AnalyticsConsentPromptModalProps = {
   visible: boolean;
@@ -181,6 +181,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   primaryButton: {
+    ...cardShadowRn,
     marginTop: space('Spacing/8'),
     backgroundColor: '#1a1a1a',
     borderRadius: 8,

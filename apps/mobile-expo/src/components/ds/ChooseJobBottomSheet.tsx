@@ -5,6 +5,7 @@ import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { SessionSheetBackIcon } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 
 export type ChooseJobBottomSheetJob = {
   id: string;
@@ -66,9 +67,8 @@ export function ChooseJobBottomSheet({
           <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
         </Pressable>
 
-        <Text
+        <Text {...screenHeaderA11y()}
           style={[typography.titleH3, styles.title, { color: fg.primary }]}
-          numberOfLines={1}
         >
           Add to Job
         </Text>
@@ -108,10 +108,10 @@ export function ChooseJobBottomSheet({
                 style={({ pressed }) => [styles.row, pressed && !busy ? styles.pressed : null]}
               >
                 <View style={styles.rowTextStack}>
-                  <Text style={[typography.bodyBold, { color: fg.primary }]} numberOfLines={1}>
+                  <Text style={[typography.bodyBold, { color: fg.primary }]}>
                     {job.shortDescription.trim() || 'Untitled Job'}
                   </Text>
-                  <Text style={[typography.bodySmall, { color: fg.secondary }]} numberOfLines={1}>
+                  <Text style={[typography.bodySmall, { color: fg.secondary }]}>
                     {(job.customerName ?? '').trim() || 'No customer'}
                   </Text>
                 </View>
