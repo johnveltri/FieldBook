@@ -1,0 +1,44 @@
+---
+description: Hard-won RN Dynamic Type clipping + Android card shadow fixes (P1 a11y)
+globs: apps/mobile-expo/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Dynamic Type + Android card shadows
+
+## Mid-glyph clipping at Accessibility XXXL
+
+**Cause:** RN scales `fontSize` with Dynamic Type / fontScale but does **not** scale absolute token `lineHeight`. Custom fonts (Ubuntu Mono / PT Serif) clip at the line box.
+
+**Fix:** Use `dynamicTypeTextStyle` / `dynamicTypeLineMinHeight` from `apps/mobile-expo/src/theme/dynamicTypeText.ts`:
+
+- Multiply token `lineHeight` by `fontScale` (optionally capped via `maxScale`)
+- Drop `letterSpacing` above ~1.35×
+- Add light vertical padding so glyphs aren’t flush to the clip edge
+- Pair with matching `maxFontSizeMultiplier` on `<Text>`
+- At high scale, tighten chrome padding (`fontScale > 1.6`) and allow brand wrap (`FIELD\nSOLO`)
+
+Do **not** rely on omitting `lineHeight` alone — RN ignores `undefined` inconsistently; scale it explicitly.
+
+## Content buried under bottom nav / FAB
+
+**Cause:** FAB / scroll inset math that subtracts a Dynamic-Type–grown `shellBottomNavOuterHeight` collapses bottom pad when the nav is a **sibling** of `shellMain` (overlay), not inside the scroll column.
+
+**Fix:**
+
+- Keep FAB bottom offset a **fixed** gap above the nav (don’t subtract a fontScale-inflated nav height into the content inset)
+- Grow scroll bottom padding separately above `fontScale > 1.6`
+- Cap nav chrome scale (~1.75×) with `adjustsFontSizeToFit` / shorter labels when needed
+
+## Android cards look harsher than iOS
+
+**Cause:** Android Material `elevation` ignores iOS `shadowOpacity` / radius. `elevation: 2` reads as a grey slab on CanvasWarm.
+
+**Fix:** `cardShadowRn` in `apps/mobile-expo/src/theme/nativeTokens.ts` is `Platform.select`:
+
+- **iOS:** keep soft ambient (`shadowOpacity: 0.05`, radius 2)
+- **Android:** `elevation: 1` + ambient `shadowColor` — do not bump elevation to “match” iOS shadow props
+
+## Verify
+
+Re-check Home at iOS Accessibility XXXL and Android default after text/shadow/layout changes; mid-glyph clips and under-nav burial are easy to regress.

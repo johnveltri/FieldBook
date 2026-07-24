@@ -801,15 +801,11 @@ export function JobsScreen({
 
   const bottomNavReservedHeight = shellBottomNavOuterHeight(insets.bottom);
   const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
-  const fabBottomOffset =
-    space('Spacing/8') +
-    insets.bottom +
-    64 +
-    space('Spacing/12') -
-    shellBottomNavOuterHeight(insets.bottom);
+  // shellMain sits above ShellBottomNav — do not subtract nav height from FAB offset.
+  const fabBottom = space('Spacing/8') + space('Spacing/32') + space('Spacing/4');
   const scrollBottomPad = suppressFab
     ? bottomNavReservedHeight + space('Spacing/20')
-    : scrollBottomInsetForFab(fabBottomOffset, FAB_SIZE);
+    : scrollBottomInsetForFab(fabBottom, FAB_SIZE);
 
   return (
     <View style={styles.root}>
@@ -846,7 +842,7 @@ export function JobsScreen({
       />
 
       {suppressFab ? null : (
-        <View style={[styles.fabWrap, { bottom: fabBottomOffset, right: fabRight }]}>
+        <View style={[styles.fabWrap, { bottom: fabBottom, right: fabRight }]}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Create new job"
@@ -910,8 +906,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   inboxWrap: {
-    width: 40,
-    height: 40,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -966,7 +962,10 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   searchClearButton: {
-    padding: 5,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: radius('Radius/Full'),
     backgroundColor: colorWithAlpha('Foundation/Text/Primary', 0.1),
   },
@@ -1003,14 +1002,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: bg.surfaceWhite,
     borderRadius: radius('Radius/Full'),
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
     ...cardShadowRn,
   },
   tabIdle: {
     flex: 1,
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },

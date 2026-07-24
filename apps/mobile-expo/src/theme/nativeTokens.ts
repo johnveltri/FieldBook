@@ -1,4 +1,4 @@
-import type { TextStyle, ViewStyle } from 'react-native';
+import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 import {
   CONTENT_COLUMN_MAX_WIDTH,
   contentColumnMetrics,
@@ -66,14 +66,33 @@ export const border = {
   default: color('Foundation/Border/Default'),
 } as const;
 
-/** Maps `Shadow/Card/Default` — RN elevation; color from `Foundation/Shadow/Ambient`. */
-export const cardShadowRn: ViewStyle = {
-  shadowColor: color('Foundation/Shadow/Ambient'),
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.05,
-  shadowRadius: 2,
-  elevation: 2,
-};
+/**
+ * Maps `Shadow/Card/Default` (`0px 1px 2px rgba(0,0,0,0.05)`).
+ *
+ * iOS uses shadow* props. Android Material `elevation` ignores opacity/radius and
+ * elevation:2 reads as a harsh grey slab on CanvasWarm — keep a softer lift
+ * (elevation 1 + ambient shadowColor on API 28+) without changing iOS.
+ */
+export const cardShadowRn: ViewStyle = Platform.select<ViewStyle>({
+  ios: {
+    shadowColor: color('Foundation/Shadow/Ambient'),
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  android: {
+    shadowColor: color('Foundation/Shadow/Ambient'),
+    // Soft warm-paper lift; elevation 2+ is too strong vs iOS 5% ambient.
+    elevation: 1,
+  },
+  default: {
+    shadowColor: color('Foundation/Shadow/Ambient'),
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+})!;
 
 export const shadowNoneRn: ViewStyle = {
   shadowOpacity: 0,
@@ -156,14 +175,14 @@ export function createTextStyles(f: LoadedFonts) {
     bodySecondary: { ...t('Typography/Body'), color: fg.secondary },
     bodyBold: t('Typography/Body-Bold'),
     bodySmall: t('Typography/Body-Small'),
-    labelCaps: t('Typography/LABEL', fg.muted),
+    labelCaps: t('Typography/LABEL'),
     labelHeadingSecondary: t('Typography/LABEL', fg.secondary),
     metric: t('Typography/Metric'),
     metricXL: t('Typography/Metric-XL'),
     metricS: t('Typography/Section/MetricS-Dense', color('Brand/Accent')),
     sessionTimeRange: t('Typography/Session/TimeRange', fg.secondary),
     jobDetailSubtitle: t('Typography/JobDetail/Subtitle', fg.secondary),
-    jobDetailCategoryLabel: t('Typography/JobDetail/CategoryLabel', bg.canvasWarm),
+    jobDetailCategoryLabel: t('Typography/JobDetail/CategoryLabel', fg.secondary),
     jobDetailMetricColumnLabel: t('Typography/JobDetail/MetricColumnLabel', fg.secondary),
     jobDetailNetAmount: t('Typography/JobDetail/NetAmount'),
     ctaPrimaryLabel: t('Typography/CTA/PrimaryLabel'),

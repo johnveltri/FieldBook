@@ -1,8 +1,12 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { color } from '@fieldsolo/design-system/lib/tokens';
 
+import {
+  dynamicTypeLineMinHeight,
+  dynamicTypeTextStyle,
+} from '../../theme/dynamicTypeText';
 import { fg, space, type TextStyles } from '../../theme/nativeTokens';
 
 export type SectionHeaderTone = 'neutral' | 'accent';
@@ -31,23 +35,53 @@ export function SectionHeader({
   typography,
   contentInset = space('Spacing/20'),
 }: SectionHeaderProps) {
+  const { fontScale } = useWindowDimensions();
   const titleColor = tone === 'accent' ? color('Brand/Accent') : fg.secondary;
+  const titleSize = typography.metricS.fontSize ?? 12;
+  // Cap chrome type so XXXL still leaves room for the first content card above the fold.
+  const headerMaxScale = 2.15;
+  const titleStyle = dynamicTypeTextStyle(typography.metricS, fontScale, {
+    padRatio: 0.1,
+    maxScale: headerMaxScale,
+  });
+  const subtitleStyle = dynamicTypeTextStyle(typography.bodySmall, fontScale, {
+    letterSpacingUntilScale: 99,
+    padRatio: 0.08,
+    maxScale: headerMaxScale,
+  });
+  const padTop = fontScale > 1.6 ? space('Spacing/16') : space('Spacing/36');
+  const padBottom = fontScale > 1.6 ? space('Spacing/8') : space('Spacing/16');
 
   return (
     <View
-      style={[styles.root, { paddingHorizontal: contentInset }]}
+      style={[
+        styles.root,
+        { paddingHorizontal: contentInset, paddingTop: padTop, paddingBottom: padBottom },
+      ]}
       accessibilityRole="header"
       accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
     >
       <View style={styles.headingRow}>
         {leadingIcon != null ? <View style={styles.leadingSlot}>{leadingIcon}</View> : null}
-        <Text style={[typography.metricS, { color: titleColor }, styles.titleFlex]} numberOfLines={2}>
-          {title}
-        </Text>
+        <View
+          style={[
+            styles.titleFlex,
+            { minHeight: dynamicTypeLineMinHeight(titleSize, fontScale, 1.75, headerMaxScale) },
+          ]}
+        >
+          <Text style={[titleStyle, { color: titleColor }]} maxFontSizeMultiplier={headerMaxScale}>
+            {title}
+          </Text>
+        </View>
       </View>
       {subtitle != null && subtitle !== '' ? (
         <View style={[styles.subtitleBlock, leadingIcon != null && styles.subtitleWithIcon]}>
-          <Text style={[typography.bodySmall, { color: fg.secondary }]}>{subtitle}</Text>
+          <Text
+            style={[subtitleStyle, { color: fg.secondary }]}
+            maxFontSizeMultiplier={headerMaxScale}
+          >
+            {subtitle}
+          </Text>
         </View>
       ) : null}
     </View>
@@ -57,25 +91,29 @@ export function SectionHeader({
 const styles = StyleSheet.create({
   root: {
     width: '100%',
-    paddingTop: space('Spacing/36'),
-    paddingBottom: space('Spacing/16'),
     gap: 4,
+    overflow: 'visible',
   },
   headingRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: space('Spacing/8'),
     width: '100%',
+    overflow: 'visible',
   },
   leadingSlot: {
     width: 16,
     height: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 4,
   },
   titleFlex: {
     flex: 1,
     minWidth: 0,
+    justifyContent: 'center',
+    overflow: 'visible',
   },
   subtitleBlock: {
     paddingVertical: 1,

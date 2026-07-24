@@ -628,8 +628,8 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
   },
   backHit: {
-    width: PROFILE_BACK_ICON_SIZE,
-    height: PROFILE_BACK_ICON_SIZE,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },

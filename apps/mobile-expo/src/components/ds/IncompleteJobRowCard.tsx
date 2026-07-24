@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
+import { dynamicTypeTextStyle } from '../../theme/dynamicTypeText';
 import { cardShadowRn, type TextStyles } from '../../theme/nativeTokens';
 
 export type IncompleteJobRowCardProps = {
@@ -20,7 +21,16 @@ export function IncompleteJobRowCard({
   typography,
   onPress,
 }: IncompleteJobRowCardProps) {
+  const { fontScale } = useWindowDimensions();
   const missingLine = missingFields.length > 0 ? missingFields.join(', ') : '—';
+  const titleType = dynamicTypeTextStyle(typography.bodyBold, fontScale, {
+    letterSpacingUntilScale: 99,
+    padRatio: 0.1,
+  });
+  const bodyType = dynamicTypeTextStyle(typography.bodySmall, fontScale, {
+    letterSpacingUntilScale: 99,
+    padRatio: 0.08,
+  });
 
   return (
     <Pressable
@@ -31,15 +41,19 @@ export function IncompleteJobRowCard({
     >
       <View style={styles.main}>
         <View style={styles.titleStack}>
-          <Text style={[typography.bodyBold, styles.title]}>{title}</Text>
+          <Text style={[titleType, styles.title]} numberOfLines={fontScale > 1.6 ? 3 : 2}>
+            {title}
+          </Text>
           <View style={styles.missingRow}>
-            <Text style={[typography.bodySmall, styles.missingPrefix]}>Missing:</Text>
-            <Text style={[typography.bodySmall, styles.missingDetail]}>{missingLine}</Text>
+            <Text style={[bodyType, styles.missingPrefix]}>Missing:</Text>
+            <Text style={[bodyType, styles.missingDetail]} numberOfLines={fontScale > 1.6 ? 4 : 3}>
+              {missingLine}
+            </Text>
           </View>
         </View>
       </View>
       <View style={styles.trailing}>
-        <Text style={[typography.bodyBold, styles.fixLink]}>Fix →</Text>
+        <Text style={[titleType, styles.fixLink]}>Fix →</Text>
       </View>
     </Pressable>
   );
@@ -50,7 +64,7 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 74,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: space('Spacing/20'),
     paddingVertical: space('Spacing/16'),
@@ -58,6 +72,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: color('Semantic/Status/Warning/Stroke'),
     borderRadius: radius('Radius/16'),
+    overflow: 'visible',
     ...cardShadowRn,
   },
   main: {
@@ -67,13 +82,16 @@ const styles = StyleSheet.create({
   },
   titleStack: {
     gap: space('Spacing/4'),
+    minWidth: 0,
   },
   title: {
     color: color('Foundation/Text/Primary'),
+    flexShrink: 1,
+    minWidth: 0,
   },
   missingRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexWrap: 'wrap',
     gap: space('Spacing/4'),
   },
@@ -88,7 +106,8 @@ const styles = StyleSheet.create({
   trailing: {
     flexShrink: 0,
     alignItems: 'flex-end',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 2,
   },
   fixLink: {
     color: color('Semantic/Status/Error/Text'),

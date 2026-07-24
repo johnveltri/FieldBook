@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   customShell: {
     flex: 1,
     minWidth: 0,
-    height: 38,
+    minHeight: 44,
     borderWidth: 1,
     borderColor: border.subtle,
     borderRadius: 8,

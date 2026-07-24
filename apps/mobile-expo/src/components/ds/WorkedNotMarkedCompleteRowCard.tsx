@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 74,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: space('Spacing/20'),
     paddingVertical: space('Spacing/16'),
@@ -60,9 +60,12 @@ const styles = StyleSheet.create({
   },
   titleStack: {
     gap: space('Spacing/4'),
+    minWidth: 0,
   },
   title: {
     color: color('Foundation/Text/Primary'),
+    flexShrink: 1,
+    minWidth: 0,
   },
   subtitle: {
     color: color('Semantic/Status/Info/Text'),
@@ -70,7 +73,8 @@ const styles = StyleSheet.create({
   trailing: {
     flexShrink: 0,
     alignItems: 'flex-end',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 2,
   },
   reviewLink: {
     color: color('Semantic/Status/Info/Text'),
