@@ -27,12 +27,8 @@ export function WorkedNotMarkedCompleteRowCard({
     >
       <View style={styles.main}>
         <View style={styles.titleStack}>
-          <Text style={[typography.bodyBold, styles.title]} numberOfLines={1}>
-            {title}
-          </Text>
-          <Text style={[typography.bodySmall, styles.subtitle]} numberOfLines={1}>
-            Worked: Not marked complete
-          </Text>
+          <Text style={[typography.bodyBold, styles.title]}>{title}</Text>
+          <Text style={[typography.bodySmall, styles.subtitle]}>Worked: Not marked complete</Text>
         </View>
       </View>
       <View style={styles.trailing}>
@@ -45,7 +41,6 @@ export function WorkedNotMarkedCompleteRowCard({
 const styles = StyleSheet.create({
   row: {
     width: '100%',
-    maxWidth: 353,
     minHeight: 74,
     flexDirection: 'row',
     alignItems: 'center',

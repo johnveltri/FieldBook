@@ -58,7 +58,6 @@ export function MetricSnapshotCard({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    maxWidth: 353,
     backgroundColor: bg.surfaceWhite,
     borderWidth: 1,
     borderColor: colorWithAlpha('Foundation/Border/Default', 0.1),
