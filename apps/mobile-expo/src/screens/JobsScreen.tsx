@@ -49,15 +49,16 @@ import {
   type RecencyBucket,
 } from '../lib/timeBuckets';
 import {
-  CONTENT_MAX_WIDTH,
-  TOP_HEADER_MAX_WIDTH,
+  FAB_SIZE,
   bg,
   border,
   cardShadowRn,
   createTextStyles,
   fg,
+  scrollBottomInsetForFab,
   space,
 } from '../theme/nativeTokens';
+import { useContentColumn } from '../theme/useContentColumn';
 
 const PAGE_SIZE = 20;
 
@@ -167,6 +168,7 @@ function buildOpenFlatRows(jobs: ListJobsForCurrentUserItem[]): JobsFlatRow[] {
 
 function JobsLoadingSkeleton({ typography }: { typography: Typography }) {
   const pulse = useRef(new Animated.Value(0.4)).current;
+  const { columnStyle } = useContentColumn();
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
@@ -187,7 +189,7 @@ function JobsLoadingSkeleton({ typography }: { typography: Typography }) {
   }, [pulse]);
 
   return (
-    <View style={styles.skeletonWrap} accessibilityLabel="Loading jobs">
+    <View style={[styles.skeletonWrap, columnStyle]} accessibilityLabel="Loading jobs">
       {[0, 1, 2].map((i) => (
         <Animated.View
           key={i}
@@ -215,6 +217,7 @@ export function JobsScreen({
   onJobsListTabChange,
 }: JobsScreenProps) {
   const insets = useSafeAreaInsets();
+  const { columnStyle, fabRight } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const { version } = useJobsListInvalidation();
   const [fontsLoaded] = useFonts({
@@ -519,7 +522,7 @@ export function JobsScreen({
         if (item.mode === 'recency') {
           return (
             <View style={styles.listRowBand}>
-              <View style={[styles.sectionHeader, styles.listRowInner, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+              <View style={[styles.sectionHeader, styles.listRowInner, columnStyle]}>
                 <Text style={typography.metricS}>{item.title}</Text>
               </View>
             </View>
@@ -527,11 +530,12 @@ export function JobsScreen({
         }
         return (
           <View style={styles.listRowBand}>
-            <View style={[styles.listRowInner, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+            <View style={[styles.listRowInner, columnStyle]}>
               <JobsOpenStackSectionHeader
                 kind={item.openKind}
                 count={item.count}
                 typography={typography}
+                contentInset={0}
               />
             </View>
           </View>
@@ -539,7 +543,7 @@ export function JobsScreen({
       }
       return (
         <View style={styles.listRowBand}>
-          <View style={[styles.jobRowWrap, styles.listRowInner, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+          <View style={[styles.jobRowWrap, styles.listRowInner, columnStyle]}>
             <JobCard
               job={item.job}
               onPress={() => onOpenJobDetail(item.job.id)}
@@ -550,13 +554,14 @@ export function JobsScreen({
         </View>
       );
     },
-    [onOpenJobDetail, typography],
+    [columnStyle, onOpenJobDetail, typography],
   );
 
   const listHeader = useMemo(
     () => (
       <View style={styles.listHeaderBand}>
-        <View style={[styles.topHeader, { maxWidth: TOP_HEADER_MAX_WIDTH }]}>
+        <View style={columnStyle}>
+        <View style={styles.topHeader}>
           <Text style={typography.displayH1}>JOBS</Text>
           <Pressable
             accessibilityRole="button"
@@ -576,7 +581,7 @@ export function JobsScreen({
           </Pressable>
         </View>
 
-        <View style={[styles.searchBarOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+        <View style={styles.searchBarOuter}>
           <View style={[styles.searchBar, searchFocused && styles.searchBarFocused]}>
             <View style={styles.searchIconSlot} pointerEvents="none">
               <JobsSearchIcon color={fg.secondary} />
@@ -611,7 +616,7 @@ export function JobsScreen({
         </View>
 
         {searchFocused && debouncedSearch.trim() === '' ? (
-          <View style={[styles.searchEmptyPanel, { maxWidth: CONTENT_MAX_WIDTH }]}>
+          <View style={styles.searchEmptyPanel}>
             <View style={styles.searchEmptyInner}>
               <View style={styles.searchEmptyIconWrap}>
                 <JobsSearchIcon color={fg.secondary} size={32} />
@@ -624,7 +629,7 @@ export function JobsScreen({
         ) : null}
 
         {searchFocused ? null : (
-          <View style={[styles.tabsWrap, { maxWidth: CONTENT_MAX_WIDTH }]}>
+          <View style={styles.tabsWrap}>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: activeTab === 'all' }}
@@ -684,10 +689,12 @@ export function JobsScreen({
             </Pressable>
           </View>
         )}
+        </View>
       </View>
     ),
     [
       activeTab,
+      columnStyle,
       debouncedSearch,
       exitSearch,
       inboxCount,
@@ -800,16 +807,16 @@ export function JobsScreen({
     64 +
     space('Spacing/12') -
     shellBottomNavOuterHeight(insets.bottom);
+  const scrollBottomPad = suppressFab
+    ? bottomNavReservedHeight + space('Spacing/20')
+    : scrollBottomInsetForFab(fabBottomOffset, FAB_SIZE);
 
   return (
     <View style={styles.root}>
       <CanvasTiledBackground scrollY={scrollY} contentHeight={listContentHeight} />
       <View
         pointerEvents="none"
-        style={[
-          styles.safeAreaTopAccentWrap,
-          { top: 0, maxWidth: TOP_HEADER_MAX_WIDTH },
-        ]}
+        style={[styles.safeAreaTopAccentWrap, { top: 0 }, columnStyle]}
       >
         <View style={styles.topAccent} />
       </View>
@@ -824,9 +831,7 @@ export function JobsScreen({
         contentContainerStyle={[
           styles.flatListContent,
           {
-            paddingBottom: suppressFab
-              ? bottomNavReservedHeight + space('Spacing/20')
-              : fabBottomOffset + 56 + space('Spacing/12'),
+            paddingBottom: scrollBottomPad,
             flexGrow: 1,
           },
         ]}
@@ -841,12 +846,7 @@ export function JobsScreen({
       />
 
       {suppressFab ? null : (
-        <View
-          style={[
-            styles.fabWrap,
-            { bottom: fabBottomOffset },
-          ]}
-        >
+        <View style={[styles.fabWrap, { bottom: fabBottomOffset, right: fabRight }]}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Create new job"
@@ -901,7 +901,8 @@ const styles = StyleSheet.create({
   },
   topHeader: {
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    // Horizontal inset comes from the shared responsive content column.
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
     flexDirection: 'row',
@@ -1002,14 +1003,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: bg.surfaceWhite,
     borderRadius: radius('Radius/Full'),
-    height: 36,
+    minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
     ...cardShadowRn,
   },
   tabIdle: {
     flex: 1,
-    height: 36,
+    minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1018,13 +1019,13 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/36'),
     paddingBottom: space('Spacing/16'),
   },
   jobRowWrap: {
     width: '100%',
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     marginBottom: space('Spacing/12'),
   },
   listFooter: {
@@ -1034,8 +1035,7 @@ const styles = StyleSheet.create({
   },
   skeletonWrap: {
     width: '100%',
-    maxWidth: TOP_HEADER_MAX_WIDTH,
-    paddingHorizontal: space('Spacing/20'),
+    paddingHorizontal: 0,
     paddingTop: space('Spacing/24'),
     alignItems: 'center',
     minHeight: 220,
@@ -1059,17 +1059,17 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.75 },
   fabWrap: {
     position: 'absolute',
-    right: space('Spacing/24'),
     zIndex: 20,
   },
   fabContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space('Spacing/8'),
-    height: 56,
+    minHeight: FAB_SIZE,
     borderRadius: radius('Radius/Full'),
     backgroundColor: color('Brand/Primary'),
     paddingHorizontal: 21,
+    paddingVertical: space('Spacing/12'),
     ...cardShadowRn,
     shadowOpacity: 0.25,
     shadowRadius: 8,

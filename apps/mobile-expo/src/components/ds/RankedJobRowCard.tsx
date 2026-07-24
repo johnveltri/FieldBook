@@ -44,20 +44,14 @@ export function RankedJobRowCard({
           </Text>
         </View>
         <View style={styles.titleStack}>
-          <Text style={[typography.bodyBold, { color: fg.primary }]} numberOfLines={1}>
-            {title}
-          </Text>
+          <Text style={[typography.bodyBold, { color: fg.primary }]}>{title}</Text>
           {subtitle != null && subtitle !== '' ? (
-            <Text style={[typography.bodySmall, { color: fg.secondary }]} numberOfLines={1}>
-              {subtitle}
-            </Text>
+            <Text style={[typography.bodySmall, { color: fg.secondary }]}>{subtitle}</Text>
           ) : null}
         </View>
       </View>
       <View style={styles.trailing}>
-        <Text style={[typography.bodyBold, { color: success }]} numberOfLines={1}>
-          {value}
-        </Text>
+        <Text style={[typography.bodyBold, { color: success }]}>{value}</Text>
       </View>
     </Pressable>
   );
@@ -66,7 +60,6 @@ export function RankedJobRowCard({
 const styles = StyleSheet.create({
   row: {
     width: '100%',
-    maxWidth: 353,
     minHeight: 74,
     flexDirection: 'row',
     alignItems: 'center',
