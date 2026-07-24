@@ -6,7 +6,7 @@ import {
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
+import { Alert, Animated, Easing, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -71,6 +71,7 @@ type LiveSessionOverlayProps = {
  */
 export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const sheetStackWriters = useBottomSheetStackWriters();
   const topmostSheet = useTopmostBottomSheet();
   const {
@@ -691,10 +692,9 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
   const stackTopY = topmostSheet?.topY ?? null;
   const liftDelta = useMemo(() => {
     if (stackTopY == null) return 0;
-    const windowH = Dimensions.get('window').height;
-    const liftedBottom = Math.max(0, windowH - stackTopY) + space('Spacing/12');
+    const liftedBottom = Math.max(0, windowHeight - stackTopY) + space('Spacing/12');
     return Math.max(0, liftedBottom - fabSlotBottom);
-  }, [stackTopY, fabSlotBottom]);
+  }, [stackTopY, fabSlotBottom, windowHeight]);
 
   const liftAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
