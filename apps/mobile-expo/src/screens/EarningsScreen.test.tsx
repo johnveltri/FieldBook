@@ -126,7 +126,7 @@ describe('EarningsScreen', () => {
     const { screen, onOpenJobsOpenTab, onOpenJobDetail } = renderHarness();
 
     await waitFor(() => {
-      expect(screen.getByText('WEEKLY SNAPSHOT')).toBeTruthy();
+      expect(screen.getByText('Weekly Snapshot')).toBeTruthy();
     });
 
     expect(mockGetEarningsSnapshotForCurrentUser).toHaveBeenCalledWith(
@@ -161,7 +161,7 @@ describe('EarningsScreen', () => {
     const { screen } = renderHarness();
 
     await waitFor(() => {
-      expect(screen.getByText('WEEKLY SNAPSHOT')).toBeTruthy();
+      expect(screen.getByText('Weekly Snapshot')).toBeTruthy();
     });
 
     expect(screen.queryByText('Outstanding')).toBeNull();
@@ -186,7 +186,7 @@ describe('EarningsScreen', () => {
         { windowDays: 30 },
       );
     });
-    expect(screen.getByText('MONTHLY SNAPSHOT')).toBeTruthy();
+    expect(screen.getByText('Monthly Snapshot')).toBeTruthy();
     expect(screen.getByText('$1,230.00')).toBeTruthy();
   });
 });

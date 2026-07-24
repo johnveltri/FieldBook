@@ -36,21 +36,19 @@ export function SectionHeader({
   contentInset = space('Spacing/20'),
 }: SectionHeaderProps) {
   const { fontScale } = useWindowDimensions();
-  const titleColor = tone === 'accent' ? color('Brand/Accent') : fg.secondary;
-  const titleSize = typography.metricS.fontSize ?? 12;
-  // Cap chrome type so XXXL still leaves room for the first content card above the fold.
-  const headerMaxScale = 2.15;
-  const titleStyle = dynamicTypeTextStyle(typography.metricS, fontScale, {
+  const titleColor = tone === 'accent' ? color('Brand/Accent') : fg.primary;
+  const titleSize = typography.titleH3.fontSize ?? 20;
+  // Title-H3 (PT Serif 20) for section headers — follows OS Dynamic Type uncapped.
+  const titleStyle = dynamicTypeTextStyle(typography.titleH3, fontScale, {
     padRatio: 0.1,
-    maxScale: headerMaxScale,
   });
   const subtitleStyle = dynamicTypeTextStyle(typography.bodySmall, fontScale, {
     letterSpacingUntilScale: 99,
     padRatio: 0.08,
-    maxScale: headerMaxScale,
   });
-  const padTop = fontScale > 1.6 ? space('Spacing/16') : space('Spacing/36');
-  const padBottom = fontScale > 1.6 ? space('Spacing/8') : space('Spacing/16');
+  // Tighter than the old 36pt chrome gap — Title-H3 reads as content, not a sparse label.
+  const padTop = fontScale > 1.6 ? space('Spacing/12') : space('Spacing/16');
+  const padBottom = fontScale > 1.6 ? space('Spacing/8') : space('Spacing/12');
 
   return (
     <View
@@ -66,22 +64,15 @@ export function SectionHeader({
         <View
           style={[
             styles.titleFlex,
-            { minHeight: dynamicTypeLineMinHeight(titleSize, fontScale, 1.75, headerMaxScale) },
+            { minHeight: dynamicTypeLineMinHeight(titleSize, fontScale, 1.2) },
           ]}
         >
-          <Text style={[titleStyle, { color: titleColor }]} maxFontSizeMultiplier={headerMaxScale}>
-            {title}
-          </Text>
+          <Text style={[titleStyle, { color: titleColor }]}>{title}</Text>
         </View>
       </View>
       {subtitle != null && subtitle !== '' ? (
         <View style={[styles.subtitleBlock, leadingIcon != null && styles.subtitleWithIcon]}>
-          <Text
-            style={[subtitleStyle, { color: fg.secondary }]}
-            maxFontSizeMultiplier={headerMaxScale}
-          >
-            {subtitle}
-          </Text>
+          <Text style={[subtitleStyle, { color: fg.secondary }]}>{subtitle}</Text>
         </View>
       ) : null}
     </View>
@@ -107,7 +98,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',
-    marginTop: 4,
+    marginTop: 6,
   },
   titleFlex: {
     flex: 1,

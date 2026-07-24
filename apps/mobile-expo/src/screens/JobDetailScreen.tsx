@@ -1466,7 +1466,7 @@ export function JobDetailScreen({
             style={[
               styles.topHeader,
               columnStyle,
-              { paddingTop: headerTopPad + space('Spacing/32') },
+              { paddingTop: headerTopPad + space('Spacing/8') },
             ]}
           >
             <View style={styles.topHeaderRow}>
@@ -1576,10 +1576,10 @@ export function JobDetailScreen({
               accessibilityRole="button"
               accessibilityLabel="Edit job"
               onPress={onEdit}
-              style={({ pressed }) => [styles.editPill, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
             >
-              <JobDetailIconTopEdit color={color('Semantic/Action/Primary')} />
-              <Text style={[typography.pillCompact, { color: color('Semantic/Status/Error/Text') }]}>
+              <JobDetailIconTopEdit color={fg.primary} />
+              <Text style={[typography.pillCompact, styles.actionButtonLabel]}>
                 EDIT
               </Text>
             </Pressable>
@@ -1611,9 +1611,9 @@ export function JobDetailScreen({
           <JobDetailMetricTertiary metrics={job.metrics} typography={typography} />
         </View>
 
-        {/* Section headers are full-bleed within max width; ADD uses error-tint pill like Figma. */}
+        {/* Section headers are full-bleed within max width; ADD uses a compact primary button. */}
         <SectionHeaderFigma
-          title="SESSIONS"
+          title="Sessions"
           icon={<JobDetailIconSectionSessions color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
@@ -1648,7 +1648,7 @@ export function JobDetailScreen({
         </View>
 
         <SectionHeaderFigma
-          title="MATERIALS"
+          title="Materials"
           icon={<JobDetailIconSectionMaterials color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
@@ -1677,7 +1677,7 @@ export function JobDetailScreen({
         )}
 
         <SectionHeaderFigma
-          title="NOTES"
+          title="Notes"
           icon={<JobDetailIconSectionNotes color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
@@ -1971,7 +1971,7 @@ function MaterialsEmptyStateCard({
   onConfirmNoMaterials: () => void;
   confirmDisabled?: boolean;
 }) {
-  const ctaColor = color('Semantic/Status/Success/Text');
+  const ctaColor = color('Foundation/Surface/White');
   return (
     <View style={styles.viewCardOuter}>
       <View style={[styles.viewCardBorder, cardShadowRn, styles.materialsEmptyCardPad]}>
@@ -1989,7 +1989,7 @@ function MaterialsEmptyStateCard({
             confirmDisabled ? { opacity: 0.5 } : null,
           ]}
         >
-          <Text style={[typography.labelCaps, { color: ctaColor, textAlign: 'center' }]}>
+          <Text style={[typography.metricSLabel, styles.materialsConfirmCtaLabel, { color: ctaColor }]}>
             CONFIRM NO MATERIALS USED
           </Text>
         </Pressable>
@@ -2042,7 +2042,7 @@ function MaterialsConfirmedNoUseCard({
 
 // --- Section header (Figma `371:2179` Row) ---
 
-/** Leading icon + Metric-S title; optional trailing ADD pill when `showAdd` is true. */
+/** Leading icon + section title; optional trailing ADD button when `showAdd` is true. */
 function SectionHeaderFigma({
   title,
   icon,
@@ -2061,7 +2061,7 @@ function SectionHeaderFigma({
       <View style={styles.sectionHeaderLead}>
         {icon}
         <View style={styles.sectionHeaderTitleWrap}>
-          <Text style={typography.metricS}>
+          <Text style={typography.titleH3}>
             {title}
           </Text>
         </View>
@@ -2072,10 +2072,10 @@ function SectionHeaderFigma({
           accessibilityLabel={`Add ${title}`}
           onPress={onAddPress}
           disabled={!onAddPress}
-          style={({ pressed }) => [styles.addPill, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}
         >
-          <JobDetailIconSectionAdd color={color('Semantic/Status/Error/Text')} />
-          <Text style={[typography.pillCompact, { color: color('Semantic/Status/Error/Text') }]}>
+          <JobDetailIconSectionAdd color={fg.primary} />
+          <Text style={[typography.pillCompact, styles.actionButtonLabel]}>
             ADD
           </Text>
         </Pressable>
@@ -2130,14 +2130,15 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
     backgroundColor: 'transparent',
-    paddingTop: space('Spacing/32'),
+    // Safe-area inset is already applied via ScrollView paddingTop — keep this tight.
+    paddingTop: space('Spacing/8'),
   },
   topHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 0,
-    paddingBottom: space('Spacing/12'),
+    paddingBottom: space('Spacing/8'),
   },
   closeCircle: {
     width: space('Spacing/32'),
@@ -2147,15 +2148,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  editPill: {
+  editButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: space('Spacing/8'),
-    minHeight: space('Spacing/24'),
+    minHeight: 44,
+    minWidth: 44,
     paddingHorizontal: space('Spacing/12'),
-    paddingVertical: space('Spacing/4'),
-    borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Semantic/Status/Error/BG'),
+    paddingVertical: space('Spacing/8'),
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.surfaceWhite,
+    ...cardShadowRn,
+  },
+  actionButtonLabel: {
+    color: fg.primary,
   },
 
   /** Hero block: job header, summary, CTAs, metric card — width from parent column. */
@@ -2187,15 +2194,18 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  addPill: {
+  addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: color('Semantic/Status/Error/BG'),
-    borderRadius: radius('Radius/Full'),
-    minHeight: space('Spacing/24'),
-    paddingHorizontal: space('Spacing/12'),
-    paddingVertical: space('Spacing/4'),
+    justifyContent: 'center',
     gap: space('Spacing/8'),
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: space('Spacing/12'),
+    paddingVertical: space('Spacing/8'),
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.surfaceWhite,
+    ...cardShadowRn,
   },
 
   /** Column wrapper for the Sessions list — caps to DS content width. */
@@ -2215,13 +2225,18 @@ const styles = StyleSheet.create({
     gap: space('Spacing/16'),
   },
   materialsConfirmCta: {
+    ...cardShadowRn,
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 44,
     paddingVertical: space('Spacing/12'),
     paddingHorizontal: space('Spacing/16'),
-    borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Semantic/Status/Success/BG'),
+    borderRadius: radius('Radius/12'),
+    backgroundColor: color('Semantic/Status/Success/Text'),
+  },
+  materialsConfirmCtaLabel: {
+    textAlign: 'center',
   },
 
   /** Vertical breathing room around materials/notes cards (Figma `py-[9px]`). */

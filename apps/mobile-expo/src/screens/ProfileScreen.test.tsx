@@ -70,9 +70,9 @@ describe('ProfileScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('Alex Builder')).toBeTruthy();
     });
-    expect(screen.getByText('PERSONAL INFO')).toBeTruthy();
-    expect(screen.getByText('PLAN')).toBeTruthy();
-    expect(screen.getByText('ACCOUNT')).toBeTruthy();
+    expect(screen.getByText('Personal Info')).toBeTruthy();
+    expect(screen.getByText('Plan')).toBeTruthy();
+    expect(screen.getByText('Account')).toBeTruthy();
     expect(screen.getByText('tech@example.com')).toBeTruthy();
     expect(screen.getByText('Plumbing, Handyman')).toBeTruthy();
   });
@@ -92,7 +92,7 @@ describe('ProfileScreen', () => {
     mockFetchProfile.mockResolvedValueOnce(null);
     const screen = render(<ProfileScreen onBack={jest.fn()} />);
     await waitFor(() => {
-      expect(screen.getByText('PERSONAL INFO')).toBeTruthy();
+      expect(screen.getByText('Personal Info')).toBeTruthy();
     });
     fireEvent.press(screen.getByLabelText('EDIT'));
     await waitFor(() => {

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailSessionAttachment } from '@fieldsolo/shared-types';
 
+import { cardShadowRn } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import {
   LiveSessionActiveDotIcon,
@@ -281,8 +282,9 @@ const styles = StyleSheet.create({
     gap: space('Spacing/12'),
   },
   // END SESSION button — Figma `1287:1567` "Button XL" (Brand/Primary,
-  // py=24 px=24, radius=12, shadow tinted by Semantic/Activity/Note).
+  // py=24 px=24, radius=12) with soft card lift.
   endButton: {
+    ...cardShadowRn,
     width: '100%',
     backgroundColor: color('Brand/Primary'),
     borderRadius: radius('Radius/12'),
@@ -290,11 +292,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space('Spacing/24'),
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: color('Semantic/Activity/Note'),
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.5,
-    shadowRadius: 2,
-    elevation: 2,
   },
   endButtonLabel: {
     fontFamily: 'UbuntuSansMono_700Bold',

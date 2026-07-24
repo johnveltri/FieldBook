@@ -7,7 +7,7 @@ import {
 } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailSession } from '@fieldsolo/shared-types';
 
-import { bg, border, fg } from '../../theme/nativeTokens';
+import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { JobDetailIconViewSessionChevron, SessionCardEditPencilIcon } from '../figma-icons/JobDetailScreenIcons';
 import { SessionAddToSessionTiles } from './SessionAddToSessionTiles';
@@ -70,13 +70,13 @@ export function SessionCard({
               accessibilityRole="button"
               accessibilityLabel="Edit session"
               onPress={onEditPress}
-              style={({ pressed }) => [styles.editPill, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
             >
-              <SessionCardEditPencilIcon color={color('Semantic/Status/Error/Text')} />
+              <SessionCardEditPencilIcon color={fg.primary} />
               <Text
                 style={[
                   typography.bodySmall,
-                  { color: color('Semantic/Status/Error/Text') },
+                  styles.editButtonLabel,
                 ]}
               >
                 EDIT
@@ -144,15 +144,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: space('Spacing/16'),
   },
-  editPill: {
+  editButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: space('Spacing/8'),
-    height: space('Spacing/24'),
+    minHeight: 44,
+    minWidth: 44,
     paddingHorizontal: space('Spacing/12'),
-    paddingVertical: space('Spacing/4'),
-    borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Semantic/Status/Error/BG'),
+    paddingVertical: space('Spacing/8'),
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.surfaceWhite,
+    ...cardShadowRn,
+  },
+  editButtonLabel: {
+    color: fg.primary,
   },
   pressed: {
     opacity: 0.75,

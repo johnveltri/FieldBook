@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
-import { bg, border } from '../../theme/nativeTokens';
+import { bg, border, cardShadowRn } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 
 type SheetPrimaryDeleteActionsProps = {
@@ -80,10 +80,7 @@ const styles = StyleSheet.create({
     borderRadius: radius('Radius/12'),
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 1,
+    ...cardShadowRn,
   },
   primaryDisabled: {
     opacity: 0.45,
@@ -95,11 +92,10 @@ const styles = StyleSheet.create({
     width: space('Spacing/50'),
     minHeight: space('Spacing/50'),
     borderRadius: radius('Radius/12'),
-    borderWidth: 1,
-    borderColor: border.subtle,
     backgroundColor: bg.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    ...cardShadowRn,
   },
   pressed: {
     opacity: 0.8,

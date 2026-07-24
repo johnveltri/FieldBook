@@ -155,7 +155,7 @@ describe('InboxScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('Buy a new gasket')).toBeTruthy();
     });
-    expect(screen.getByText('TODAY')).toBeTruthy();
+    expect(screen.getByText('Today')).toBeTruthy();
     expect(screen.getByText('Notes')).toBeTruthy();
 
     fireEvent.press(screen.getByText('Buy a new gasket'));

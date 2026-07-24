@@ -170,6 +170,9 @@ describe('HomeScreen quick session', () => {
     );
 
     expect(screen.getByText(/FIELD\s*SOLO/)).toBeTruthy();
+    const title = screen.getByText(/FIELD\s*SOLO/);
+    expect(title.props.accessibilityRole).toBe('header');
+    expect(title.props.accessibilityLabel).toBe('FieldSolo');
   });
 
   it('cleans up the temporary quick-session job when starting the live session fails', async () => {
@@ -360,11 +363,11 @@ describe('HomeScreen quick session', () => {
       { limit: 3 },
     );
     expect(screen.getByText('Completed jobs worked in the past 7 days')).toBeTruthy();
-    expect(screen.getByText('NEEDS ATTENTION')).toBeTruthy();
-    expect(screen.getByText('Description, Revenue, Materials, Sessions')).toBeTruthy();
+    expect(screen.getByText('Needs Attention')).toBeTruthy();
+    expect(screen.getByText('Missing: Description, Revenue, Materials, Sessions')).toBeTruthy();
     expect(screen.getByText('10 of 11 jobs')).toBeTruthy();
     expect(screen.queryByText('Wire outlet')).toBeNull();
-    expect(screen.getByText('JUMP BACK IN')).toBeTruthy();
+    expect(screen.getByText('Jump Back In')).toBeTruthy();
     expect(screen.getByText('Replace ceiling fan')).toBeTruthy();
 
     fireEvent.press(screen.getByText('10 of 11 jobs'));

@@ -462,7 +462,7 @@ describe('JobDetailScreen manual session and note flows', () => {
       expect(apiClient.fetchJobDetail).toHaveBeenCalledWith({}, 'job-1');
     });
 
-    fireEvent.press(screen.getByLabelText('Add SESSIONS'));
+    fireEvent.press(screen.getByLabelText('Add Sessions'));
     fireEvent.press(screen.getByText('Log Past Session'));
     fireEvent.press(screen.getByText('Save Session'));
 
@@ -512,10 +512,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Add NOTES')).toBeTruthy();
+      expect(screen.getByLabelText('Add Notes')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByLabelText('Add NOTES'));
+    fireEvent.press(screen.getByLabelText('Add Notes'));
     fireEvent.press(screen.getByText('Save Note'));
 
     await waitFor(() => {
@@ -531,10 +531,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Add NOTES')).toBeTruthy();
+      expect(screen.getByLabelText('Add Notes')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByLabelText('Add NOTES'));
+    fireEvent.press(screen.getByLabelText('Add Notes'));
     fireEvent.press(screen.getByText('Open Session Picker'));
     fireEvent.press(screen.getByText('Pick sess-1'));
     fireEvent.press(screen.getByText('Save Note'));
@@ -638,7 +638,7 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
     expect(screen.queryByText('Edit session sess-progress')).toBeNull();
 
-    fireEvent.press(screen.getByLabelText('Add NOTES'));
+    fireEvent.press(screen.getByLabelText('Add Notes'));
     fireEvent.press(screen.getByText('Open Session Picker'));
     expect(screen.getByText('Pick sess-1')).toBeTruthy();
     expect(screen.getByText('Pick sess-progress')).toBeTruthy();
@@ -672,10 +672,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Add MATERIALS')).toBeTruthy();
+      expect(screen.getByLabelText('Add Materials')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByLabelText('Add MATERIALS'));
+    fireEvent.press(screen.getByLabelText('Add Materials'));
     fireEvent.press(screen.getByText('Save Material'));
 
     await waitFor(() => {
@@ -694,10 +694,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Add MATERIALS')).toBeTruthy();
+      expect(screen.getByLabelText('Add Materials')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByLabelText('Add MATERIALS'));
+    fireEvent.press(screen.getByLabelText('Add Materials'));
     fireEvent.press(screen.getByText('Open Material Session Picker'));
     fireEvent.press(screen.getByText('Pick sess-1'));
     fireEvent.press(screen.getByText('Save Material'));
@@ -741,10 +741,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Add MATERIALS')).toBeTruthy();
+      expect(screen.getByLabelText('Add Materials')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByLabelText('Add MATERIALS'));
+    fireEvent.press(screen.getByLabelText('Add Materials'));
     // Default unit prefill.
     expect(screen.getByText('Unit ea')).toBeTruthy();
     fireEvent.press(screen.getByText('Open Unit Picker'));
@@ -774,10 +774,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Add MATERIALS')).toBeTruthy();
+      expect(screen.getByLabelText('Add Materials')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByLabelText('Add MATERIALS'));
+    fireEvent.press(screen.getByLabelText('Add Materials'));
     // Initial blanks from openAddMaterial.
     expect(screen.getByText('Description ')).toBeTruthy();
     expect(screen.getByText('Unit Cost Cents 0')).toBeTruthy();

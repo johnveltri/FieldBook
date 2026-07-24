@@ -21,6 +21,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
+import { screenHeaderA11y } from '../lib/accessibility';
 
 const BACK_ICON_SIZE = 28;
 
@@ -96,11 +97,13 @@ export function HelpScreen({ onBack }: HelpScreenProps) {
             >
               <TopHeaderBackIcon color={fg.secondary} size={BACK_ICON_SIZE} />
             </Pressable>
-            <Text style={[typography.displayH1, styles.title]}>HELP</Text>
+            <Text {...screenHeaderA11y()} style={[typography.displayH1, styles.title]}>
+              HELP
+            </Text>
           </View>
 
           <View style={styles.bodyWrap}>
-            <Text style={[typography.body, styles.bodyText, { color: fg.secondary }]}>
+            <Text style={[typography.body, styles.bodyText, { color: fg.primary }]}>
               For account-related help or to request a copy of your data, email us at{' '}
               <Text
                 accessibilityRole="link"

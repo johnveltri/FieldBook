@@ -63,6 +63,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
+import { screenHeaderA11y } from '../lib/accessibility';
 
 type InboxTab = 'notes' | 'materials';
 
@@ -377,7 +378,9 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
           >
             <SessionSheetBackIcon color={fg.primary} />
           </Pressable>
-          <Text style={typography.displayH1}>INBOX</Text>
+          <Text {...screenHeaderA11y()} style={typography.displayH1}>
+            INBOX
+          </Text>
         </View>
 
         <View style={styles.tabsWrap}>
@@ -438,7 +441,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
           </Text>
         ) : activeEmpty ? (
           <View style={styles.emptyWrap}>
-            <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+            <Text style={[typography.body, { color: fg.primary, textAlign: 'center' }]}>
               {activeTab === 'notes'
                 ? 'All caught up! No unassigned notes.'
                 : 'All caught up! No unassigned materials.'}

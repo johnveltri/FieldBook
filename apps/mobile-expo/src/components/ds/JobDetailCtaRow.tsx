@@ -1,11 +1,11 @@
 import type { ReactElement } from 'react';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailWorkStatus } from '@fieldsolo/shared-types';
 
 import { dynamicTypeTextStyle } from '../../theme/dynamicTypeText';
-import { bg, border } from '../../theme/nativeTokens';
+import { bg, cardShadowRn } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { jobDetailCtaConfig } from './jobDetailCtaConfig';
 
@@ -33,20 +33,6 @@ export function JobDetailCtaRow({
     padRatio: 0.12,
   });
 
-  const ctaShadow: ViewStyle = useMemo(
-    () =>
-      cta.shadowOpacity > 0
-        ? {
-            shadowColor: cta.shadowColor,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: cta.shadowOpacity,
-            shadowRadius: 2,
-            elevation: cta.borderWidth ? 1 : 2,
-          }
-        : { elevation: 0 },
-    [cta.shadowColor, cta.shadowOpacity, cta.borderWidth],
-  );
-
   return (
     <View style={styles.ctaRow}>
       <Pressable
@@ -62,7 +48,6 @@ export function JobDetailCtaRow({
             borderWidth: cta.borderWidth ?? 0,
             borderColor: cta.borderColor ?? 'transparent',
           },
-          ctaShadow,
         ]}
       >
         <Text style={[ctaLabelType, { color: cta.labelColor, textAlign: 'center' }]}>
@@ -71,6 +56,8 @@ export function JobDetailCtaRow({
       </Pressable>
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel="Change job status"
+        accessibilityState={{ disabled: moreDisabled }}
         disabled={moreDisabled}
         onPress={onMorePress}
         style={({ pressed }) => [
@@ -93,6 +80,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   ctaPrimary: {
+    ...cardShadowRn,
     flex: 1,
     minWidth: 0,
     minHeight: space('Spacing/50'),
@@ -107,11 +95,10 @@ const styles = StyleSheet.create({
     width: space('Spacing/50'),
     minHeight: space('Spacing/50'),
     borderRadius: radius('Radius/12'),
-    borderWidth: 1,
-    borderColor: border.subtle,
     backgroundColor: bg.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    ...cardShadowRn,
   },
   pressed: { opacity: 0.75 },
 });

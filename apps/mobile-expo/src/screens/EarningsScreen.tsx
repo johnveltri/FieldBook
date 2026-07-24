@@ -34,6 +34,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
+import { screenHeaderA11y } from '../lib/accessibility';
 
 export type EarningsWindow = 'week' | 'month' | 'year';
 
@@ -57,19 +58,19 @@ const WINDOW_CONFIG: Record<EarningsWindow, WindowConfig> = {
   week: {
     tabLabel: 'PAST WEEK',
     windowDays: 7,
-    snapshotTitle: 'WEEKLY SNAPSHOT',
+    snapshotTitle: 'Weekly Snapshot',
     snapshotSubtitle: 'Completed jobs worked in the past 7 days',
   },
   month: {
     tabLabel: 'PAST MONTH',
     windowDays: 30,
-    snapshotTitle: 'MONTHLY SNAPSHOT',
+    snapshotTitle: 'Monthly Snapshot',
     snapshotSubtitle: 'Completed jobs worked in the past 30 days',
   },
   year: {
     tabLabel: 'PAST YEAR',
     windowDays: 365,
-    snapshotTitle: 'ANNUAL SNAPSHOT',
+    snapshotTitle: 'Annual Snapshot',
     snapshotSubtitle: 'Completed jobs worked in the past 365 days',
   },
 };
@@ -271,8 +272,8 @@ export function EarningsScreen({
       list.map((job) => ({ job, value: formatNetPerHr(job.netPerHrCents) }));
 
     return [
-      { key: 'highest', title: 'HIGHEST EARNINGS (NET)', rows: earningsRows(byNetDesc) },
-      { key: 'lowest', title: 'LOWEST EARNINGS (NET)', rows: earningsRows(byNetAsc) },
+      { key: 'highest', title: 'Highest Earnings (Net)', rows: earningsRows(byNetDesc) },
+      { key: 'lowest', title: 'Lowest Earnings (Net)', rows: earningsRows(byNetAsc) },
       { key: 'most', title: 'MOST PROFITABLE (NET/HR)', rows: profitRows(byHrDesc) },
       { key: 'least', title: 'LEAST PROFITABLE (NET/HR)', rows: profitRows(byHrAsc) },
     ];
@@ -315,7 +316,9 @@ export function EarningsScreen({
       >
         <View style={columnStyle}>
           <View style={styles.titleOnlyRow}>
-            <Text style={typography.displayH1}>EARNINGS</Text>
+            <Text {...screenHeaderA11y()} style={typography.displayH1}>
+              EARNINGS
+            </Text>
           </View>
 
           <View style={styles.tabsWrap}>
@@ -349,13 +352,13 @@ export function EarningsScreen({
           {loading ? (
             <View style={styles.centerState}>
               <ActivityIndicator color={color('Brand/Primary')} />
-              <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/12') }]}>
+              <Text style={[typography.body, { color: fg.primary, marginTop: space('Spacing/12') }]}>
                 Loading earnings…
               </Text>
             </View>
           ) : loadError ? (
             <View style={styles.centerState}>
-              <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+              <Text style={[typography.body, { color: fg.primary, textAlign: 'center' }]}>
                 {loadError}
               </Text>
             </View>
@@ -407,7 +410,7 @@ export function EarningsScreen({
                   />
                   {section.rows.length === 0 ? (
                     <View style={styles.cardBand}>
-                      <Text style={[typography.body, { color: fg.secondary }]}>
+                      <Text style={[typography.body, { color: fg.primary }]}>
                         No jobs in this period.
                       </Text>
                     </View>

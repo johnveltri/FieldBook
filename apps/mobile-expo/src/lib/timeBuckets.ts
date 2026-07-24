@@ -40,10 +40,10 @@ export function recencyBucket(
 }
 
 export const RECENCY_BUCKET_TITLE: Record<RecencyBucket, string> = {
-  today: 'TODAY',
-  pastWeek: 'PAST WEEK',
-  pastMonth: 'PAST MONTH',
-  older: 'OLDER',
+  today: 'Today',
+  pastWeek: 'Past Week',
+  pastMonth: 'Past Month',
+  older: 'Older',
 };
 
 export const RECENCY_BUCKET_ORDER: RecencyBucket[] = [

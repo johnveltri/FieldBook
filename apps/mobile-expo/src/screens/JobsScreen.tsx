@@ -59,6 +59,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
+import { screenHeaderA11y } from '../lib/accessibility';
 
 const PAGE_SIZE = 20;
 
@@ -202,7 +203,7 @@ function JobsLoadingSkeleton({ typography }: { typography: Typography }) {
         />
       ))}
       <ActivityIndicator color={color('Brand/Primary')} style={{ marginTop: space('Spacing/24') }} />
-      <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/12') }]}>
+      <Text style={[typography.body, { color: fg.primary, marginTop: space('Spacing/12') }]}>
         Loading jobs…
       </Text>
     </View>
@@ -523,7 +524,7 @@ export function JobsScreen({
           return (
             <View style={styles.listRowBand}>
               <View style={[styles.sectionHeader, styles.listRowInner, columnStyle]}>
-                <Text style={typography.metricS}>{item.title}</Text>
+                <Text style={typography.titleH3}>{item.title}</Text>
               </View>
             </View>
           );
@@ -562,12 +563,13 @@ export function JobsScreen({
       <View style={styles.listHeaderBand}>
         <View style={columnStyle}>
         <View style={styles.topHeader}>
-          <Text style={typography.displayH1}>JOBS</Text>
+          <Text {...screenHeaderA11y()} style={typography.displayH1}>
+            JOBS
+          </Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Inbox${inboxCount > 0 ? `, ${inboxCount} unassigned` : ''}`}
             onPress={onOpenInbox}
-            hitSlop={12}
             style={({ pressed }) => [styles.inboxWrap, pressed && styles.pressed]}
           >
             <JobsInboxIcon color={fg.primary} />
@@ -589,6 +591,7 @@ export function JobsScreen({
             <TextInput
               ref={searchInputRef}
               testID="jobs-search-input"
+              accessibilityLabel="Search jobs"
               value={searchQuery}
               onChangeText={setSearchQuery}
               onFocus={onSearchFocus}
@@ -714,7 +717,7 @@ export function JobsScreen({
     if (loadError) {
       return (
         <View style={styles.centerState}>
-          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+          <Text style={[typography.body, { color: fg.primary, textAlign: 'center' }]}>
             {loadError}
           </Text>
         </View>
@@ -726,7 +729,7 @@ export function JobsScreen({
     if (searchFocused && debouncedSearch.trim() !== '' && jobs.length === 0) {
       return (
         <View style={styles.centerState}>
-          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+          <Text style={[typography.body, { color: fg.primary, textAlign: 'center' }]}>
             No matching jobs.
           </Text>
         </View>
@@ -735,7 +738,7 @@ export function JobsScreen({
     if (activeTab === 'open' && jobs.length === 0) {
       return (
         <View style={styles.centerState}>
-          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+          <Text style={[typography.body, { color: fg.primary, textAlign: 'center' }]}>
             All caught up! No open jobs.
           </Text>
         </View>
@@ -744,7 +747,7 @@ export function JobsScreen({
     if (activeTab === 'paid' && jobs.length === 0) {
       return (
         <View style={styles.centerState}>
-          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+          <Text style={[typography.body, { color: fg.primary, textAlign: 'center' }]}>
             No paid jobs yet.
           </Text>
         </View>
@@ -753,7 +756,7 @@ export function JobsScreen({
     if (activeTab === 'open' && jobs.length > 0 && flatData.length === 0) {
       return (
         <View style={styles.centerState}>
-          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+          <Text style={[typography.body, { color: fg.primary, textAlign: 'center' }]}>
             No jobs in Incomplete, In Progress, or Unpaid right now.
           </Text>
         </View>
@@ -761,7 +764,7 @@ export function JobsScreen({
     }
     return (
       <View style={styles.centerState}>
-        <Text style={[typography.body, { color: fg.secondary }]}>No jobs yet.</Text>
+        <Text style={[typography.body, { color: fg.primary }]}>No jobs yet.</Text>
       </View>
     );
   }, [
@@ -782,7 +785,7 @@ export function JobsScreen({
     return (
       <View style={[styles.listFooter, styles.listRowBand]}>
         {showPageError ? (
-          <Text style={[typography.body, { color: fg.secondary, textAlign: 'center', marginBottom: space('Spacing/12') }]}>
+          <Text style={[typography.body, { color: fg.primary, textAlign: 'center', marginBottom: space('Spacing/12') }]}>
             {loadError}
           </Text>
         ) : null}
@@ -911,11 +914,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.surfaceWhite,
+    ...cardShadowRn,
   },
   inboxBadge: {
     position: 'absolute',
-    top: 2,
-    right: 1,
+    top: -2,
+    right: -2,
     minWidth: 16,
     height: 16,
     borderRadius: radius('Radius/Full'),
@@ -1019,8 +1025,8 @@ const styles = StyleSheet.create({
   sectionHeader: {
     width: '100%',
     paddingHorizontal: 0,
-    paddingTop: space('Spacing/36'),
-    paddingBottom: space('Spacing/16'),
+    paddingTop: space('Spacing/16'),
+    paddingBottom: space('Spacing/12'),
   },
   jobRowWrap: {
     width: '100%',

@@ -54,6 +54,26 @@ describe('SignInScreen', () => {
     jest.clearAllMocks();
   });
 
+  it('shows sign-in instructions in sign-in mode', () => {
+    const { getByText } = render(<SignInScreen />);
+
+    expect(getByText('Sign in with email and password')).toBeTruthy();
+  });
+
+  it('shows sign-up instructions in sign-up mode', () => {
+    const screen = render(<SignInScreen />);
+
+    fireEvent.press(screen.getByText('Need an account? Sign up'));
+
+    expect(screen.getByText('Create an account with email and password')).toBeTruthy();
+  });
+
+  it('marks the brand title as an accessibility header', () => {
+    const { getByText } = render(<SignInScreen />);
+
+    expect(getByText('FieldSolo').props.accessibilityRole).toBe('header');
+  });
+
   it('renders the FieldSolo brand name', () => {
     const { getByText } = render(<SignInScreen />);
 

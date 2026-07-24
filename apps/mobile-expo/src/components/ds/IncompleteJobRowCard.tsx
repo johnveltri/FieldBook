@@ -44,12 +44,9 @@ export function IncompleteJobRowCard({
           <Text style={[titleType, styles.title]} numberOfLines={fontScale > 1.6 ? 3 : 2}>
             {title}
           </Text>
-          <View style={styles.missingRow}>
-            <Text style={[bodyType, styles.missingPrefix]}>Missing:</Text>
-            <Text style={[bodyType, styles.missingDetail]} numberOfLines={fontScale > 1.6 ? 4 : 3}>
-              {missingLine}
-            </Text>
-          </View>
+          <Text style={[bodyType, styles.missingText]} numberOfLines={fontScale > 1.6 ? 5 : 4}>
+            {`Missing: ${missingLine}`}
+          </Text>
         </View>
       </View>
       <View style={styles.trailing}>
@@ -89,17 +86,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
   },
-  missingRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap',
-    gap: space('Spacing/4'),
-  },
-  missingPrefix: {
-    color: color('Semantic/Status/Error/Text'),
-  },
-  missingDetail: {
-    flex: 1,
+  missingText: {
     minWidth: 0,
     color: color('Semantic/Status/Error/Text'),
   },

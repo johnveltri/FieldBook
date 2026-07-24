@@ -17,8 +17,9 @@ import {
   QuickCaptureNewNoteIcon,
   QuickCaptureStartSessionIcon,
 } from '../figma-icons/QuickActionsSheetIcons';
-import { bg, border, fg } from '../../theme/nativeTokens';
+import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
+import { screenHeaderA11y } from '../../lib/accessibility';
 import { BottomSheetShell } from './BottomSheetShell';
 
 export type QuickActionsRecentJob = {
@@ -83,8 +84,22 @@ export function QuickActionsBottomSheet({
   onSelectJobForCapture,
   onCreateQuickCapture,
 }: QuickActionsBottomSheetProps) {
+  const sheetAccessibilityTitle =
+    step === 'quickCapture'
+      ? 'Quick Capture'
+      : step === 'chooseJob'
+        ? 'Start session'
+        : step === 'noteCapture'
+          ? 'New note'
+          : 'New material';
+
   return (
-    <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
+    <BottomSheetShell
+      visible={visible}
+      onClose={onClose}
+      onClosed={onClosed}
+      accessibilityTitle={sheetAccessibilityTitle}
+    >
       <View style={styles.stack}>
         {step === 'quickCapture' ? (
           <QuickCaptureStepContent
@@ -127,7 +142,10 @@ function QuickCaptureStepContent({
 }) {
   return (
     <View style={styles.quickBody}>
-      <Text style={[typography.titleH3, styles.quickTitle, { color: fg.primary }]}>
+      <Text
+        {...screenHeaderA11y()}
+        style={[typography.headingH2, styles.quickTitle, { color: fg.primary }]}
+      >
         Quick Capture
       </Text>
       <View style={styles.tileRow}>
@@ -135,24 +153,24 @@ function QuickCaptureStepContent({
           typography={typography}
           iconCircleColor={color('Semantic/Status/Error/Text')}
           icon={<QuickCaptureStartSessionIcon color={bg.surfaceWhite} size={20} />}
-          line1="START"
-          line2="SESSION"
+          label="SESSION"
+          accessibilityLabel="Start session"
           onPress={onStartSessionPress}
         />
         <QuickCaptureTile
           typography={typography}
           iconCircleColor={color('Semantic/Activity/Note')}
           icon={<QuickCaptureNewNoteIcon color={bg.surfaceWhite} size={20} />}
-          line1="NEW"
-          line2="NOTE"
+          label="NOTE"
+          accessibilityLabel="New note"
           onPress={onNewNotePress}
         />
         <QuickCaptureTile
           typography={typography}
           iconCircleColor={color('Semantic/Activity/Material')}
           icon={<QuickCaptureNewMaterialIcon color={bg.surfaceWhite} size={20} />}
-          line1="NEW"
-          line2="MATERIAL"
+          label="MATERIAL"
+          accessibilityLabel="New material"
           onPress={onNewMaterialPress}
         />
       </View>
@@ -164,16 +182,16 @@ function QuickCaptureTile({
   typography,
   iconCircleColor,
   icon,
-  line1,
-  line2,
+  label,
+  accessibilityLabel,
   onPress,
   disabled,
 }: {
   typography: TextStyles;
   iconCircleColor: string;
   icon: ReactNode;
-  line1: string;
-  line2: string;
+  label: string;
+  accessibilityLabel: string;
   onPress?: () => void;
   disabled?: boolean;
 }) {
@@ -181,32 +199,19 @@ function QuickCaptureTile({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       onPress={inactive ? undefined : onPress}
       disabled={inactive}
-      style={({ pressed }) => [
-        styles.tile,
-        {
-          borderColor: border.default,
-        },
-        pressed && !inactive ? styles.pressed : null,
-      ]}
+      style={({ pressed }) => [styles.tile, pressed && !inactive ? styles.pressed : null]}
     >
       <View style={[styles.tileIconCircle, { backgroundColor: iconCircleColor }]}>{icon}</View>
-      <View style={styles.tileLabelCol}>
-        <Text
-          style={[typography.bodySmall, styles.tileLabelLine, { color: fg.primary }]}
-          numberOfLines={1}
-        >
-          {line1}
-        </Text>
-        <Text
-          style={[typography.bodySmall, styles.tileLabelLine, { color: fg.primary }]}
-          numberOfLines={1}
-        >
-          {line2}
-        </Text>
-      </View>
+      <Text
+        style={[typography.metricSLabel, styles.tileLabel, { color: fg.primary }]}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -314,7 +319,7 @@ function AttachChooserStepContent({
         <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
       </Pressable>
 
-      <Text style={[typography.titleH3, styles.chooseTitle, { color: fg.primary }]}>
+      <Text {...screenHeaderA11y()} style={[typography.titleH3, styles.chooseTitle, { color: fg.primary }]}>
         {cfg.title}
       </Text>
 
@@ -335,7 +340,7 @@ function AttachChooserStepContent({
       >
         <View style={styles.primaryRowLeading}>{cfg.icon}</View>
         <View style={styles.primaryRowTextStack}>
-          <Text style={[typography.bodyBold, { color: fg.muted }]} numberOfLines={1}>
+          <Text style={[typography.bodyBold, { color: fg.muted }]}>
             {cfg.primaryLabel}
           </Text>
           <Text style={[typography.bodySmall, { color: fg.muted }]} numberOfLines={2}>
@@ -394,10 +399,10 @@ function AttachChooserStepContent({
               ]}
             >
               <View style={styles.jobRowTextStack}>
-                <Text style={[typography.bodyBold, { color: fg.primary }]} numberOfLines={1}>
+                <Text style={[typography.bodyBold, { color: fg.primary }]}>
                   {job.shortDescription}
                 </Text>
-                <Text style={[typography.bodySmall, { color: fg.secondary }]} numberOfLines={1}>
+                <Text style={[typography.bodySmall, { color: fg.secondary }]}>
                   {(job.customerName ?? '').trim() || 'No customer'}
                 </Text>
               </View>
@@ -420,6 +425,7 @@ const styles = StyleSheet.create({
   },
   quickTitle: {
     textAlign: 'center',
+    textTransform: 'none',
   },
   tileRow: {
     flexDirection: 'row',
@@ -427,20 +433,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   tile: {
+    ...cardShadowRn,
     flex: 1,
     minWidth: 0,
-    height: 112,
+    minHeight: 112,
     borderRadius: radius('Radius/16'),
-    borderWidth: 1,
     backgroundColor: bg.surfaceWhite,
     alignItems: 'center',
-    paddingTop: space('Spacing/16'),
+    justifyContent: 'center',
+    paddingVertical: space('Spacing/16'),
     paddingHorizontal: space('Spacing/4'),
-    shadowColor: color('Foundation/Text/Primary'),
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: space('Spacing/8'),
   },
   tileIconCircle: {
     width: space('Spacing/40'),
@@ -448,16 +451,9 @@ const styles = StyleSheet.create({
     borderRadius: radius('Radius/Full'),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: space('Spacing/8'),
   },
-  tileLabelCol: {
-    alignItems: 'center',
-    gap: 3,
-    maxWidth: '100%',
-  },
-  tileLabelLine: {
+  tileLabel: {
     textAlign: 'center',
-    textTransform: 'uppercase',
   },
   chooseBody: {
     width: '100%',

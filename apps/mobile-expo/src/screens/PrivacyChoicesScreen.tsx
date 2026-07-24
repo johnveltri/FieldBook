@@ -36,6 +36,7 @@ import {
   space,
 } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
+import { screenHeaderA11y } from '../lib/accessibility';
 
 const BACK_ICON_SIZE = 28;
 
@@ -199,7 +200,9 @@ export function PrivacyChoicesScreen({ userId, onBack }: PrivacyChoicesScreenPro
             >
               <TopHeaderBackIcon color={fg.secondary} size={BACK_ICON_SIZE} />
             </Pressable>
-            <Text style={[typography.displayH1, styles.title]}>PRIVACY</Text>
+            <Text {...screenHeaderA11y()} style={[typography.displayH1, styles.title]}>
+              PRIVACY
+            </Text>
           </View>
 
           <View style={styles.bodyWrap}>

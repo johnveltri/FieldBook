@@ -3,6 +3,7 @@ import { radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailWorkStatus } from '@fieldsolo/shared-types';
 
 import type { TextStyles } from '../../theme/nativeTokens';
+import { screenHeaderA11y } from '../../lib/accessibility';
 import { JobDetailStatusPill } from './JobDetailStatusPill';
 
 export function JobDetailJobHeader({
@@ -27,7 +28,14 @@ export function JobDetailJobHeader({
     <View style={styles.jobCardShell}>
       <View style={styles.jobCardContent}>
         <View style={styles.jobTitlePillRow}>
-          <Text style={[typography.headingH2, styles.jobTitleFlex]}>{title}</Text>
+          <View style={styles.jobTitleWrap}>
+            <Text
+              {...screenHeaderA11y(title)}
+              style={[typography.displayH1, styles.jobTitle]}
+            >
+              {title}
+            </Text>
+          </View>
           <View style={styles.statusPillAlign}>
             <JobDetailStatusPill kind={workStatus} typography={typography} />
           </View>
@@ -51,7 +59,8 @@ const styles = StyleSheet.create({
     borderRadius: radius('Radius/16'),
   },
   jobCardContent: {
-    paddingVertical: space('Spacing/16'),
+    paddingTop: space('Spacing/8'),
+    paddingBottom: space('Spacing/12'),
     gap: space('Spacing/8'),
   },
   jobTitlePillRow: {
@@ -60,12 +69,18 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
     width: '100%',
   },
-  jobTitleFlex: {
+  jobTitleWrap: {
     flex: 1,
+    flexShrink: 1,
     minWidth: 0,
   },
+  jobTitle: {
+    // Display-H1 is uppercase by default; job titles are sentence case.
+    textTransform: 'none',
+  },
   statusPillAlign: {
-    marginTop: space('Spacing/3'),
+    marginTop: space('Spacing/6'),
     flexShrink: 0,
+    flexGrow: 0,
   },
 });

@@ -18,7 +18,7 @@ import {
   REQUIRED_TERMS_VERSION,
 } from '../lib/legal-versions';
 import { supabase } from '../lib/supabase';
-import { fg, space } from '../theme/nativeTokens';
+import { cardShadowRn, fg, space } from '../theme/nativeTokens';
 
 type LegalReacceptanceModalProps = {
   visible: boolean;
@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   button: {
+    ...cardShadowRn,
     marginTop: space('Spacing/8'),
     backgroundColor: '#1a1a1a',
     borderRadius: 8,

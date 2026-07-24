@@ -11,10 +11,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
-import { bg, border, fg } from '../../theme/nativeTokens';
+import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { SessionSheetBackIcon } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 
 export type DropdownBottomSheetOption = {
   /** Unique id — for preset rows this is typically the same as the value. */
@@ -137,9 +138,8 @@ export function DropdownBottomSheet({
         </Pressable>
 
         {title ? (
-          <Text
+          <Text {...screenHeaderA11y()}
             style={[typography.titleH3, styles.title, { color: fg.primary }]}
-            numberOfLines={1}
           >
             {title}
           </Text>
@@ -164,7 +164,6 @@ export function DropdownBottomSheet({
             >
               <Text
                 style={[typography.body, { color: fg.primary }]}
-                numberOfLines={1}
               >
                 {opt.label}
               </Text>
@@ -274,10 +273,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   applyBtn: {
+    ...cardShadowRn,
     width: 70,
-    height: space('Spacing/24'),
+    minHeight: 44,
+    minWidth: 44,
     paddingHorizontal: space('Spacing/12'),
-    paddingVertical: space('Spacing/4'),
+    paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/Full'),
     alignItems: 'center',
     justifyContent: 'center',

@@ -9,6 +9,7 @@ import {
   SessionSheetBackIcon,
 } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { screenHeaderA11y } from '../../lib/accessibility';
 
 type NewSessionBottomSheetProps = {
   typography: TextStyles;
@@ -45,7 +46,7 @@ export function NewSessionBottomSheet({
           <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
         </Pressable>
 
-        <Text style={[typography.titleH3, styles.title, { color: fg.primary }]}>
+        <Text {...screenHeaderA11y()} style={[typography.titleH3, styles.title, { color: fg.primary }]}>
           New Session
         </Text>
 
@@ -120,13 +121,11 @@ function RowCardTile({
       <View style={styles.rowTextStack}>
         <Text
           style={[typography.bodyBold, { color: textColor }]}
-          numberOfLines={1}
         >
           {title}
         </Text>
         <Text
           style={[typography.bodySmall, { color: subtitleColor }]}
-          numberOfLines={1}
         >
           {subtitle}
         </Text>
