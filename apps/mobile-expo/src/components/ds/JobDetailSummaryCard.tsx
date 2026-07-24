@@ -6,7 +6,6 @@ import { formatUsdCombined } from '../../lib/formatUsd';
 import {
   bg,
   border,
-  CONTENT_MAX_WIDTH,
   fg,
 } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
@@ -65,7 +64,6 @@ export function JobDetailSummaryCard({
 const styles = StyleSheet.create({
   cardOuter: {
     width: '100%',
-    maxWidth: CONTENT_MAX_WIDTH,
     backgroundColor: bg.surface,
     borderRadius: radius('Radius/16'),
     borderWidth: 1,

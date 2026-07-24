@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import { radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailWorkStatus } from '@fieldsolo/shared-types';
 
-import { bg, border, CONTENT_MAX_WIDTH } from '../../theme/nativeTokens';
+import { bg, border } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { jobDetailCtaConfig } from './jobDetailCtaConfig';
 
@@ -59,7 +59,7 @@ export function JobDetailCtaRow({
           ctaShadow,
         ]}
       >
-        <Text numberOfLines={1} style={[typography.ctaPrimaryLabel, { color: cta.labelColor }]}>
+        <Text style={[typography.ctaPrimaryLabel, { color: cta.labelColor, textAlign: 'center' }]}>
           {cta.label}
         </Text>
       </Pressable>
@@ -85,21 +85,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space('Spacing/12'),
     width: '100%',
-    maxWidth: CONTENT_MAX_WIDTH,
   },
   ctaPrimary: {
     flex: 1,
     minWidth: 0,
-    height: space('Spacing/50'),
+    minHeight: space('Spacing/50'),
     borderRadius: radius('Radius/12'),
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: space('Spacing/16'),
+    paddingVertical: space('Spacing/12'),
   },
   ctaMore: {
     flexShrink: 0,
     width: space('Spacing/50'),
-    height: space('Spacing/50'),
+    minHeight: space('Spacing/50'),
     borderRadius: radius('Radius/12'),
     borderWidth: 1,
     borderColor: border.subtle,

@@ -5,7 +5,7 @@ import type {
 } from '@fieldsolo/shared-types';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
-import { bg, border, fg, CONTENT_MAX_WIDTH } from '../../theme/nativeTokens';
+import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { JobDetailIconViewNote } from '../figma-icons/JobDetailScreenIcons';
 
@@ -40,7 +40,7 @@ export function ViewMaterialsBuckets({
   }
 
   return (
-    <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+    <View style={styles.viewCardOuter}>
       <View style={styles.viewCardBorder}>
         {buckets.map((bucket, bi) => (
           <View
@@ -112,7 +112,7 @@ export function ViewNotesBuckets({
 
   const noteIcon = color('Semantic/Activity/Note');
   return (
-    <View style={[styles.viewCardOuter, { maxWidth: CONTENT_MAX_WIDTH }]}>
+    <View style={styles.viewCardOuter}>
       <View style={styles.viewCardBorder}>
         {buckets.map((bucket, bi) => (
           <View
@@ -173,10 +173,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bucketHeader: {
-    height: space('Spacing/32'),
+    minHeight: space('Spacing/32'),
     justifyContent: 'center',
     backgroundColor: bg.canvasWarm,
     paddingHorizontal: space('Spacing/16'),
+    paddingVertical: space('Spacing/8'),
   },
   bucketHeaderFirst: {
     borderTopLeftRadius: radius('Radius/16'),
