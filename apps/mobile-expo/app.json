@@ -5,11 +5,15 @@
     "scheme": "fieldsolo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/brand/fieldsolo-solo-notch-light.png",
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.veltriventures.fieldsolo",
       "supportsTablet": true,
+      "icon": {
+        "light": "./assets/brand/fieldsolo-solo-notch-light.png",
+        "dark": "./assets/brand/fieldsolo-solo-notch-dark.png"
+      },
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -17,8 +21,9 @@
     "android": {
       "package": "com.veltriventures.fieldsolo",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/brand/fieldsolo-solo-notch-light.png",
+        "monochromeImage": "./assets/brand/fieldsolo-solo-notch-monochrome.png",
+        "backgroundColor": "#FAF6F0"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -31,9 +36,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
+          "image": "./assets/brand/fieldsolo-solo-notch-light.png",
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#FAF6F0"
         }
       ],
       "expo-status-bar"
