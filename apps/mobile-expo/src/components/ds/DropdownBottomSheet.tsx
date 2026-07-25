@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -145,11 +144,7 @@ export function DropdownBottomSheet({
           </Text>
         ) : null}
 
-        <ScrollView
-          style={styles.listScroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.listScroll}>
           {options.map((opt, i) => (
             <Pressable
               key={opt.id}
@@ -206,7 +201,7 @@ export function DropdownBottomSheet({
               </Pressable>
             </View>
           ) : null}
-        </ScrollView>
+        </View>
       </View>
     </BottomSheetShell>
   );

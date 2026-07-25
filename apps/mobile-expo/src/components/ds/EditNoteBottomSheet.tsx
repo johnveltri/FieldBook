@@ -108,7 +108,7 @@ export function EditNoteBottomSheet({
 
   const canSave = body.trim().length > 0;
   const noteOrange = color('Semantic/Activity/Note');
-  const labelColor = fg.primary;
+  const onDark = bg.canvasWarm;
   const showSessionPill = canAttachSession || assignedSession !== null;
 
   return (
@@ -145,8 +145,8 @@ export function EditNoteBottomSheet({
               onPress={() => onJobPillPress({ body })}
               style={({ pressed }) => [styles.sessionButton, pressed && styles.pressed]}
             >
-              <JobDetailIconSectionAdd color={labelColor} />
-              <Text style={[typography.pillCompact, { color: labelColor }]}>JOB</Text>
+              <JobDetailIconSectionAdd color={onDark} />
+              <Text style={[typography.pillCompact, { color: onDark }]}>JOB</Text>
             </Pressable>
           ) : showSessionPill ? (
             <Pressable
@@ -157,11 +157,11 @@ export function EditNoteBottomSheet({
               style={({ pressed }) => [styles.sessionButton, pressed && styles.pressed]}
             >
               {assignedSession ? (
-                <SessionCardEditPencilIcon color={labelColor} size={12} />
+                <SessionCardEditPencilIcon color={onDark} size={12} />
               ) : (
-                <JobDetailIconSectionAdd color={labelColor} />
+                <JobDetailIconSectionAdd color={onDark} />
               )}
-              <Text style={[typography.pillCompact, { color: labelColor }]}>SESSION</Text>
+              <Text style={[typography.pillCompact, { color: onDark }]}>SESSION</Text>
             </Pressable>
           ) : null}
         </View>
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/12'),
-    backgroundColor: bg.surfaceWhite,
+    backgroundColor: fg.primary,
     ...cardShadowRn,
   },
   subtitle: {

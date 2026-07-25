@@ -50,9 +50,9 @@ export function ViewMaterialsBuckets({
             {hideBucketHeaders ? null : (
               <View style={[styles.bucketHeader, bi === 0 && styles.bucketHeaderFirst]}>
                 {bucket.kind === 'unassigned' ? (
-                  <Text style={typography.labelHeadingSecondary}>UNASSIGNED</Text>
+                  <Text style={[typography.labelHeadingSecondary, styles.bucketHeaderText]}>UNASSIGNED</Text>
                 ) : (
-                  <Text style={typography.labelHeadingSecondary}>
+                  <Text style={[typography.labelHeadingSecondary, styles.bucketHeaderText]}>
                     {bucketSessionHeaderTitle(bucket.sessionDateLabel)}
                   </Text>
                 )}
@@ -122,9 +122,9 @@ export function ViewNotesBuckets({
             {hideBucketHeaders ? null : (
               <View style={[styles.bucketHeader, bi === 0 && styles.bucketHeaderFirst]}>
                 {bucket.kind === 'unassigned' ? (
-                  <Text style={typography.labelHeadingSecondary}>UNASSIGNED</Text>
+                  <Text style={[typography.labelHeadingSecondary, styles.bucketHeaderText]}>UNASSIGNED</Text>
                 ) : (
-                  <Text style={typography.labelHeadingSecondary}>
+                  <Text style={[typography.labelHeadingSecondary, styles.bucketHeaderText]}>
                     {bucketSessionHeaderTitle(bucket.sessionDateLabel)}
                   </Text>
                 )}
@@ -175,9 +175,14 @@ const styles = StyleSheet.create({
   bucketHeader: {
     minHeight: space('Spacing/32'),
     justifyContent: 'center',
-    backgroundColor: bg.canvasWarm,
+    backgroundColor: bg.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: border.subtle,
     paddingHorizontal: space('Spacing/16'),
     paddingVertical: space('Spacing/8'),
+  },
+  bucketHeaderText: {
+    color: fg.primary,
   },
   bucketHeaderFirst: {
     borderTopLeftRadius: radius('Radius/16'),

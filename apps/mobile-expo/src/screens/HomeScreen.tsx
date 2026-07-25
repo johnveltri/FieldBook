@@ -26,8 +26,10 @@ import {
   Alert,
   Animated,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -36,6 +38,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
+import { ScrollFriendlyPressable } from '../components/ScrollFriendlyPressable';
 import {
   dynamicTypeLineMinHeight,
   dynamicTypeTextStyle,
@@ -46,13 +49,13 @@ import {
   DropdownBottomSheet,
   EditMaterialBottomSheet,
   EditNoteBottomSheet,
-  IncompleteJobRowCard,
+  JOBS_OPEN_SECTION_KINDS,
   JobCard,
+  JobsOpenSummaryCard,
   MetricSnapshotCard,
-  PendingPaymentRowCard,
   QuickActionsBottomSheet,
   SectionHeader,
-  WorkedNotMarkedCompleteRowCard,
+  type JobsOpenSectionKind,
   type ChooseJobBottomSheetJob,
   type ChooseSessionBottomSheetSession,
   type DropdownBottomSheetOption,
@@ -63,7 +66,6 @@ import {
   type QuickCaptureKind,
 } from '../components/ds';
 import { HomeJumpBackInIcon, HomeNeedsAttentionIcon } from '../components/figma-icons/HomeSectionIcons';
-import { JobDetailIconViewSessionChevron } from '../components/figma-icons/JobDetailScreenIcons';
 import { JobsFabPlusIcon } from '../components/figma-icons/JobsScreenIcons';
 import { TopHeaderProfileIcon } from '../components/figma-icons/TopHeaderIcons';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
@@ -76,6 +78,7 @@ import {
   textLengthBucket,
 } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { bucketOpenTabJobs } from '../lib/openJobsBuckets';
 import {
   FAB_SIZE,
   bg,
@@ -88,43 +91,8 @@ import {
 import { useContentColumn } from '../theme/useContentColumn';
 import { screenHeaderA11y } from '../lib/accessibility';
 
-const OPEN_TAB_PAGE_SIZE = 20;
-const NEEDS_ATTENTION_PREVIEW_MAX = 10;
+const OPEN_TAB_PAGE_SIZE = 100;
 const CAPTURE_JOBS_PAGE_SIZE = 100;
-
-const HOME_PILL_TO_MISSING: Record<string, string> = {
-  'NO SHORT DESCRIPTION': 'Description',
-  'NO REVENUE': 'Revenue',
-  'NO MATERIALS': 'Materials',
-  'NO SESSIONS': 'Sessions',
-};
-
-function incompletePillsFor(job: ListJobsForCurrentUserItem): string[] {
-  const pills: string[] = [];
-  const desc = job.shortDescription.trim();
-  if (desc === '' || desc === 'Untitled Job') pills.push('NO SHORT DESCRIPTION');
-  if (job.revenueCents == null || job.revenueCents === 0) pills.push('NO REVENUE');
-  if (!job.hasMaterials && !job.noMaterialsConfirmed) pills.push('NO MATERIALS');
-  if (!job.hasSessions) pills.push('NO SESSIONS');
-  return pills;
-}
-
-function missingFieldsLabelsForHome(job: ListJobsForCurrentUserItem): string[] {
-  return incompletePillsFor(job).map((p) => HOME_PILL_TO_MISSING[p] ?? p);
-}
-
-/** Financially complete in-progress jobs with work that still need to be marked complete. */
-function needsReviewMarkComplete(job: ListJobsForCurrentUserItem): boolean {
-  if (!job.isFinanciallyComplete || job.lastWorkedAt == null) return false;
-  return job.workStatus === 'inProgress';
-}
-
-function needsReviewPayment(job: ListJobsForCurrentUserItem): boolean {
-  return (
-    job.workStatus === 'completed' &&
-    (job.jobPaymentState == null || job.jobPaymentState === 'pending')
-  );
-}
 
 function formatWeeklyUsd(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -140,6 +108,8 @@ export type HomeScreenProps = {
   onOpenJobDetail: (jobId?: string, options?: { initialEditOpen?: boolean }) => void;
   /** Navigate to the Earnings tab (Past Week) — fired by the weekly snapshot card. */
   onOpenEarnings: () => void;
+  /** Navigate to Jobs → Open and scroll to the matching stack section. */
+  onOpenJobsOpenTab: (section: JobsOpenSectionKind) => void;
 };
 
 function formatLiveSessionJobTitle(now: Date): string {
@@ -216,12 +186,19 @@ function formatCaptureError(e: unknown): string {
   return String(e);
 }
 
-export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: HomeScreenProps) {
+export function HomeScreen({
+  onOpenProfile,
+  onOpenJobDetail,
+  onOpenEarnings,
+  onOpenJobsOpenTab,
+}: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { columnStyle, fabRight } = useContentColumn();
   const { fontScale } = useWindowDimensions();
   const brandTitle = fontScale > 1.6 ? 'FIELD\nSOLO' : 'FIELDSOLO';
   const scrollY = useMemo(() => new Animated.Value(0), []);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollOffsetRef = useRef(0);
   const hasLiveSession = useHasLiveSession();
   const { startLiveSession, refresh: refreshLiveSession } = useLiveSession();
   const { invalidateJobsList, version } = useJobsListInvalidation();
@@ -260,7 +237,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
   const [weeklyNetCents, setWeeklyNetCents] = useState(0);
   const [openTabJobsPage, setOpenTabJobsPage] = useState<ListJobsForCurrentUserItem[]>([]);
   const [recentJobsDetail, setRecentJobsDetail] = useState<ListJobsForCurrentUserItem[]>([]);
-  const [needsAttentionExpanded, setNeedsAttentionExpanded] = useState(false);
   /** Lined canvas height — same pattern as JobDetail (`CanvasTiledBackground` + `onContentSizeChange`). */
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
 
@@ -294,18 +270,19 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
     1.4 * brandLineCount,
   );
 
-  const needsAttentionRows = useMemo(() => {
-    const incomplete = openTabJobsPage
-      .filter((j) => !j.isFinanciallyComplete)
-      .map((j) => ({ kind: 'incomplete' as const, job: j }));
-    const review = openTabJobsPage
-      .filter(needsReviewMarkComplete)
-      .map((j) => ({ kind: 'review' as const, job: j }));
-    const payment = openTabJobsPage
-      .filter(needsReviewPayment)
-      .map((j) => ({ kind: 'payment' as const, job: j }));
-    return [...incomplete, ...review, ...payment];
-  }, [openTabJobsPage]);
+  const openTabJobBuckets = useMemo(
+    () => bucketOpenTabJobs(openTabJobsPage),
+    [openTabJobsPage],
+  );
+
+  const needsAttentionSummaries = useMemo(
+    () =>
+      JOBS_OPEN_SECTION_KINDS.filter((kind) => openTabJobBuckets[kind].length > 0).map((kind) => ({
+        kind,
+        count: openTabJobBuckets[kind].length,
+      })),
+    [openTabJobBuckets],
+  );
 
   const runHomeFetch = useCallback(async (isCancelled: () => boolean) => {
     const startedAt = Date.now();
@@ -337,12 +314,15 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         setWeeklyNetCents(weekly.netEarningsCents);
         setOpenTabJobsPage(openPage.items);
         setRecentJobsDetail(recent);
+        const buckets = bucketOpenTabJobs(openPage.items);
         analytics.capture('home_loaded', {
           weekly_net_bucket: moneyBucket(weekly.netEarningsCents),
           weekly_earnings_available: true,
           jump_back_in_count: recent.length,
-          needs_attention_count: openPage.items.length,
-          pending_payment_count: openPage.items.filter(needsReviewPayment).length,
+          needs_attention_count: buckets.incomplete.length + buckets.inProgress.length + buckets.unpaid.length,
+          open_incomplete_count: buckets.incomplete.length,
+          open_in_progress_count: buckets.inProgress.length,
+          open_unpaid_count: buckets.unpaid.length,
           load_duration_ms: Date.now() - startedAt,
         });
       }
@@ -377,10 +357,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
       alive = false;
     };
   }, [version, runHomeFetch]);
-
-  useEffect(() => {
-    setNeedsAttentionExpanded(false);
-  }, [version]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -802,12 +778,6 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
     scrollBottomInsetForFab(fabBottom, FAB_SIZE) +
     (fontScale > 1.6 ? space('Spacing/24') * Math.min(fontScale, 2.25) : 0);
 
-  const needNeedsAttentionExpand = needsAttentionRows.length > NEEDS_ATTENTION_PREVIEW_MAX;
-  const shownNeedsAttentionRows =
-    !needNeedsAttentionExpand || needsAttentionExpanded
-      ? needsAttentionRows
-      : needsAttentionRows.slice(0, NEEDS_ATTENTION_PREVIEW_MAX);
-
   if (!fontsLoaded) {
     return (
       <View style={styles.root}>
@@ -826,6 +796,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         <View style={styles.topAccent} />
       </View>
       <Animated.ScrollView
+        ref={scrollRef}
         style={[styles.scroll, { paddingTop: headerTopPad }]}
         contentContainerStyle={[
           styles.scrollContent,
@@ -836,6 +807,9 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
           useNativeDriver: true,
+          listener: (event: { nativeEvent: { contentOffset: { y: number } } }) => {
+            scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+          },
         })}
         scrollEventThrottle={16}
         refreshControl={
@@ -898,7 +872,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
             </>
           ) : null}
 
-          {needsAttentionRows.length > 0 ? (
+          {needsAttentionSummaries.length > 0 ? (
             <>
               <SectionHeader
                 title="Needs Attention"
@@ -908,77 +882,26 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
                 contentInset={0}
               />
               <View style={styles.needsAttentionBlock}>
-                {shownNeedsAttentionRows.map(({ kind, job }) => (
-                  <View key={`${kind}-${job.id}`} style={styles.needsAttentionRowWrap}>
-                    {kind === 'incomplete' ? (
-                      <IncompleteJobRowCard
-                        title={job.shortDescription.trim() || 'Untitled Job'}
-                        missingFields={missingFieldsLabelsForHome(job)}
-                        typography={typography}
-                        onPress={() => {
-                          analytics.capture('home_job_card_pressed', {
-                            module: 'needs_attention',
-                            needs_attention_kind: kind,
-                            job_id: job.id,
-                            job_status: job.workStatus,
-                          });
-                          onOpenJobDetail(job.id);
-                        }}
-                      />
-                    ) : kind === 'review' ? (
-                      <WorkedNotMarkedCompleteRowCard
-                        title={job.shortDescription.trim() || 'Untitled Job'}
-                        typography={typography}
-                        onPress={() => {
-                          analytics.capture('home_job_card_pressed', {
-                            module: 'needs_attention',
-                            needs_attention_kind: kind,
-                            job_id: job.id,
-                            job_status: job.workStatus,
-                          });
-                          onOpenJobDetail(job.id);
-                        }}
-                      />
-                    ) : (
-                      <PendingPaymentRowCard
-                        title={job.shortDescription.trim() || 'Untitled Job'}
-                        typography={typography}
-                        onPress={() => {
-                          analytics.capture('home_job_card_pressed', {
-                            module: 'pending_payment',
-                            needs_attention_kind: kind,
-                            job_id: job.id,
-                            job_status: job.workStatus,
-                          });
-                          onOpenJobDetail(job.id);
-                        }}
-                      />
-                    )}
+                {needsAttentionSummaries.map(({ kind, count }) => (
+                  <View key={kind} style={styles.needsAttentionRowWrap}>
+                    <JobsOpenSummaryCard
+                      kind={kind}
+                      count={count}
+                      typography={typography}
+                      onPress={() => {
+                        analytics.capture('home_needs_attention_summary_pressed', {
+                          open_section: kind,
+                          job_count: count,
+                        });
+                        analytics.capture('home_jobs_open_pressed', {
+                          source: 'needs_attention',
+                          open_section: kind,
+                        });
+                        onOpenJobsOpenTab(kind);
+                      }}
+                    />
                   </View>
                 ))}
-                {needNeedsAttentionExpand ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={needsAttentionExpanded ? 'Show fewer jobs' : 'Show all jobs'}
-                    onPress={() => {
-                      const nextExpanded = !needsAttentionExpanded;
-                      analytics.capture('home_needs_attention_expanded', {
-                        expanded: nextExpanded,
-                        visible_count: shownNeedsAttentionRows.length,
-                        total_count: needsAttentionRows.length,
-                      });
-                      setNeedsAttentionExpanded(nextExpanded);
-                    }}
-                    style={({ pressed }) => [styles.needsAttentionFooter, pressed && styles.pressed]}
-                  >
-                    <Text style={[typography.bodySmall, { color: fg.secondary }]}>
-                      {shownNeedsAttentionRows.length} of {needsAttentionRows.length} jobs
-                    </Text>
-                    <View style={needsAttentionExpanded ? styles.chevronUp : undefined}>
-                      <JobDetailIconViewSessionChevron color={fg.secondary} />
-                    </View>
-                  </Pressable>
-                ) : null}
               </View>
             </>
           ) : null}
@@ -1019,14 +942,19 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
 
       {hasLiveSession || quickActionsVisible ? null : (
         <View style={[styles.fabWrap, { bottom: fabBottom, right: fabRight }]}>
-          <Pressable
+          <ScrollFriendlyPressable
             accessibilityRole="button"
             accessibilityLabel="Quick capture"
             onPress={openQuickActions}
+            onScrollDelta={(dy) => {
+              const next = Math.max(0, scrollOffsetRef.current - dy);
+              scrollOffsetRef.current = next;
+              scrollRef.current?.scrollTo({ y: next, animated: false });
+            }}
             style={({ pressed }) => [styles.fabCircle, pressed && styles.pressed]}
           >
             <JobsFabPlusIcon color={bg.canvasWarm} size={28} />
-          </Pressable>
+          </ScrollFriendlyPressable>
         </View>
       )}
 
@@ -1035,6 +963,7 @@ export function HomeScreen({ onOpenProfile, onOpenJobDetail, onOpenEarnings }: H
         transparent
         animationType="none"
         statusBarTranslucent
+        navigationBarTranslucent={Platform.OS === 'android'}
         onRequestClose={closeQuickActions}
       >
         <View style={styles.modalHost}>
@@ -1249,25 +1178,17 @@ const styles = StyleSheet.create({
   },
   needsAttentionBlock: {
     width: '100%',
-    gap: space('Spacing/8'),
   },
   needsAttentionRowWrap: {
     width: '100%',
+    marginBottom: space('Spacing/12'),
   },
-  needsAttentionFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space('Spacing/8'),
-    paddingVertical: space('Spacing/8'),
-  },
-  chevronUp: { transform: [{ rotate: '180deg' }] },
   jumpBackList: {
     width: '100%',
-    gap: space('Spacing/8'),
   },
   jumpBackRowWrap: {
     width: '100%',
+    marginBottom: space('Spacing/12'),
   },
   topHeader: {
     width: '100%',

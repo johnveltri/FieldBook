@@ -3,6 +3,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,
+  BackHandler,
+  Modal,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -10,12 +13,18 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import type { JobsOpenSectionKind } from './src/components/ds';
 import { LiveSessionOverlay } from './src/components/LiveSessionOverlay';
 import { ShellBottomNav, type ShellMainTab } from './src/components/shell/ShellBottomNav';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { BottomSheetStackProvider } from './src/context/BottomSheetStackContext';
-import { JobsListInvalidationProvider } from './src/context/JobsListInvalidationContext';
+import {
+  BottomSheetStackProvider,
+  useBottomSheetStackWriters,
+  useTopmostBottomSheet,
+} from './src/context/BottomSheetStackContext';
+import { JobsListInvalidationProvider, useJobsListInvalidation } from './src/context/JobsListInvalidationContext';
 import {
   LiveSessionProvider,
   useLiveSession,
@@ -45,6 +54,7 @@ import { JobsScreen } from './src/screens/JobsScreen';
 import { JobDetailScreen } from './src/screens/JobDetailScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
+import { OverlaySlideHost } from './src/navigation/OverlaySlideHost';
 import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { bg } from './src/theme/nativeTokens';
@@ -57,6 +67,13 @@ function AuthenticatedShell() {
   >('idle');
   /** When true, job detail covers tab shell (HOME / JOBS / EARNINGS); X returns here. */
   const [jobDetailOpen, setJobDetailOpen] = useState(false);
+  /** Android: keep host mounted through exit animation (Modal is iOS-only for detail). */
+  const [jobDetailMounted, setJobDetailMounted] = useState(false);
+  /** Skip Modal/host exit slide when Job Detail already animated off-screen via swipe. */
+  const [jobDetailModalAnimation, setJobDetailModalAnimation] = useState<'slide' | 'none'>('slide');
+  const [jobDetailExitAnimated, setJobDetailExitAnimated] = useState(true);
+  /** Prevents overscroll/X from re-enabling Modal slide after a swipe dismiss starts. */
+  const jobDetailSwipeClosingRef = useRef(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [jobDetailEntrySource, setJobDetailEntrySource] = useState<string>('unknown');
   /** True when opening detail from "New job" FAB — JobDetailScreen auto-opens the edit sheet. */
@@ -65,17 +82,33 @@ function AuthenticatedShell() {
   const [jobDetailLoadKey, setJobDetailLoadKey] = useState(0);
   /** Persisted while Job Detail is open so closing returns to the same Jobs tab. */
   const [jobsListTab, setJobsListTab] = useState<ListJobsForCurrentUserTab>('all');
+  /** When set, Jobs → Open scrolls to this stack section after navigation. */
+  const [jobsOpenScrollTarget, setJobsOpenScrollTarget] = useState<JobsOpenSectionKind | null>(
+    null,
+  );
+  const [jobsOpenScrollNonce, setJobsOpenScrollNonce] = useState(0);
   /** Earnings page time window; lifted so Home can land on "Past Week". */
   const [earningsWindow, setEarningsWindow] = useState<EarningsWindow>('week');
   const [mainTab, setMainTab] = useState<ShellMainTab>('home');
   /** Profile is stacked over Home while staying on the HOME bottom-nav tab. */
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profileMounted, setProfileMounted] = useState(false);
+  useEffect(() => {
+    if (profileOpen) setProfileMounted(true);
+  }, [profileOpen]);
   /** Inbox covers the shell (like Job Detail); opened from the Jobs header icon. */
   const [inboxOpen, setInboxOpen] = useState(false);
+  const [inboxMounted, setInboxMounted] = useState(false);
+  useEffect(() => {
+    if (inboxOpen) setInboxMounted(true);
+  }, [inboxOpen]);
   /** Bump on each Inbox open so it refetches its unassigned captures. */
   const [inboxLoadKey, setInboxLoadKey] = useState(0);
   // Hooks must be called unconditionally — bail-out renders below still execute these.
   const liveSession = useLiveSession();
+  const { invalidateJobsList } = useJobsListInvalidation();
+  const sheetStackWriters = useBottomSheetStackWriters();
+  const topmostSheet = useTopmostBottomSheet();
 
   useEffect(() => {
     if (!session || signupLegalPending) {
@@ -145,11 +178,104 @@ function AuthenticatedShell() {
     setAnalyticsConsentGate('idle');
   }, [session]);
 
+  const navigateToJobsOpenSection = useCallback((section: JobsOpenSectionKind) => {
+    setJobsListTab('open');
+    setMainTab('jobs');
+    setJobsOpenScrollTarget(section);
+    setJobsOpenScrollNonce((n) => n + 1);
+  }, []);
+
+  const clearJobsOpenScrollTarget = useCallback(() => {
+    setJobsOpenScrollTarget(null);
+  }, []);
+
   const openInbox = useCallback(() => {
     analytics.capture('inbox_opened', { source: 'jobs_header' });
     setInboxLoadKey((k) => k + 1);
     setInboxOpen(true);
   }, []);
+
+  const closeJobDetail = useCallback((options?: { animated?: boolean }) => {
+    const animated = options?.animated !== false;
+    // Swipe path already owns the exit animation — don't let a late call
+    // re-enable a second slide.
+    if (jobDetailSwipeClosingRef.current && animated) {
+      return;
+    }
+    if (!animated) {
+      jobDetailSwipeClosingRef.current = true;
+    }
+    analytics.capture('job_detail_closed', { destination: mainTab });
+    setJobDetailInitialEditOpen(false);
+    invalidateJobsList();
+    if (Platform.OS === 'android') {
+      setJobDetailExitAnimated(animated);
+      setJobDetailOpen(false);
+      return;
+    }
+    if (!animated) {
+      setJobDetailModalAnimation('none');
+      requestAnimationFrame(() => {
+        setJobDetailOpen(false);
+      });
+      return;
+    }
+    setJobDetailModalAnimation('slide');
+    setJobDetailOpen(false);
+  }, [invalidateJobsList, mainTab]);
+
+  /** Arm parent close guards as soon as swipe commit starts (before exit anim ends). */
+  const onJobDetailSwipeDismissStart = useCallback(() => {
+    jobDetailSwipeClosingRef.current = true;
+    if (Platform.OS === 'android') {
+      setJobDetailExitAnimated(false);
+    } else {
+      setJobDetailModalAnimation('none');
+    }
+  }, []);
+
+  const onJobDetailSwipeDismissCancel = useCallback(() => {
+    jobDetailSwipeClosingRef.current = false;
+    setJobDetailExitAnimated(true);
+    setJobDetailModalAnimation('slide');
+  }, []);
+
+  const openJobDetail = useCallback(
+    (
+      jobId: string | null | undefined,
+      options?: { initialEditOpen?: boolean; entrySource?: string },
+    ) => {
+      if (options?.entrySource) setJobDetailEntrySource(options.entrySource);
+      jobDetailSwipeClosingRef.current = false;
+      setSelectedJobId(jobId ?? null);
+      setJobDetailInitialEditOpen(options?.initialEditOpen ?? false);
+      setJobDetailLoadKey((k) => k + 1);
+      setJobDetailExitAnimated(true);
+      setJobDetailModalAnimation('slide');
+      setJobDetailMounted(true);
+      setJobDetailOpen(true);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (jobDetailOpen) setJobDetailMounted(true);
+  }, [jobDetailOpen]);
+
+  // Android job detail is an in-tree overlay (not Dialog Modal) — handle back.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !jobDetailOpen) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (topmostSheet) {
+        sheetStackWriters?.requestCloseTopmost();
+        return true;
+      }
+      if (jobDetailSwipeClosingRef.current) return true;
+      closeJobDetail();
+      return true;
+    });
+    return () => sub.remove();
+  }, [closeJobDetail, jobDetailOpen, sheetStackWriters, topmostSheet]);
 
   useEffect(() => {
     if (mainTab !== 'home') setProfileOpen(false);
@@ -162,11 +288,15 @@ function AuthenticatedShell() {
         to_tab: tab,
         has_live_session: liveSession.hasLiveSession,
       });
+      if (jobDetailOpen) {
+        closeJobDetail();
+      }
+      if (inboxOpen) setInboxOpen(false);
       setMainTab(tab);
       // HOME tab tap closes Profile overlay (same tab stays selected).
       if (tab === 'home') setProfileOpen(false);
     },
-    [liveSession.hasLiveSession, mainTab],
+    [closeJobDetail, inboxOpen, jobDetailOpen, liveSession.hasLiveSession, mainTab],
   );
 
   /**
@@ -190,29 +320,6 @@ function AuthenticatedShell() {
       }
     },
     [jobDetailOpen, selectedJobId],
-  );
-
-  /**
-   * Tapping a tab from inside `JobDetailScreen` closes the detail and
-   * switches the shell to that tab. JOBS returns to `JobsScreen`; HOME and
-   * EARNINGS go to their respective screens. We always close detail because
-   * it covers the shell — leaving it open would just hide the tab the user
-   * just navigated to.
-   */
-  const onJobDetailSelectShellTab = useCallback(
-    (tab: ShellMainTab) => {
-      analytics.capture('shell_tab_selected', {
-        from_tab: 'job_detail',
-        to_tab: tab,
-        has_live_session: liveSession.hasLiveSession,
-      });
-      analytics.capture('job_detail_closed', { destination: tab });
-      setMainTab(tab);
-      if (tab === 'home') setProfileOpen(false);
-      setJobDetailOpen(false);
-      setJobDetailInitialEditOpen(false);
-    },
-    [liveSession.hasLiveSession],
   );
 
   const currentScreen = useMemo(() => {
@@ -325,44 +432,39 @@ function AuthenticatedShell() {
       />
       {legalGate === 'ready' && analyticsConsentGate === 'ready' ? (
         <>
-      {jobDetailOpen ? (
-        <JobDetailScreen
-          loadKey={jobDetailLoadKey}
-          jobId={selectedJobId}
-          entrySource={jobDetailEntrySource}
-          initialEditOpen={jobDetailInitialEditOpen}
-          sessionUserId={session.user.id}
-          sessionEmail={session.user.email ?? null}
-          onRequestClose={() => {
-            analytics.capture('job_detail_closed', { destination: mainTab });
-            setJobDetailOpen(false);
-            setJobDetailInitialEditOpen(false);
-          }}
-          onSelectShellTab={onJobDetailSelectShellTab}
-        />
-      ) : inboxOpen ? (
-        <InboxScreen
-          loadKey={inboxLoadKey}
+      {inboxMounted ? (
+        <OverlaySlideHost
+          visible={inboxOpen}
+          axis="horizontal"
           onRequestClose={() => {
             analytics.capture('inbox_closed', { destination: mainTab });
             setInboxOpen(false);
           }}
-          onSelectShellTab={(tab) => {
-            analytics.capture('shell_tab_selected', {
-              from_tab: 'inbox',
-              to_tab: tab,
-              has_live_session: liveSession.hasLiveSession,
-            });
-            analytics.capture('inbox_closed', { destination: tab });
-            setInboxOpen(false);
-            setMainTab(tab);
-            if (tab === 'home') setProfileOpen(false);
-          }}
-        />
+          onExited={() => setInboxMounted(false)}
+        >
+          <InboxScreen
+            loadKey={inboxLoadKey}
+            onRequestClose={() => {
+              analytics.capture('inbox_closed', { destination: mainTab });
+              setInboxOpen(false);
+            }}
+            onSelectShellTab={(tab) => {
+              analytics.capture('shell_tab_selected', {
+                from_tab: 'inbox',
+                to_tab: tab,
+                has_live_session: liveSession.hasLiveSession,
+              });
+              analytics.capture('inbox_closed', { destination: tab });
+              setInboxOpen(false);
+              setMainTab(tab);
+              if (tab === 'home') setProfileOpen(false);
+            }}
+          />
+        </OverlaySlideHost>
       ) : (
         <View style={styles.shellColumn}>
           <View style={styles.shellMain}>
-            <View style={tabPaneStyle(mainTab === 'home' && !profileOpen)}>
+            <View style={tabPaneStyle(mainTab === 'home')}>
               <HomeScreen
                 onOpenProfile={() => {
                   analytics.capture('profile_opened_from_home', {});
@@ -378,57 +480,118 @@ function AuthenticatedShell() {
                   setMainTab('earnings');
                 }}
                 onOpenJobDetail={(jobId, options) => {
-                  setJobDetailEntrySource('home');
-                  setSelectedJobId(jobId ?? null);
-                  setJobDetailInitialEditOpen(options?.initialEditOpen ?? false);
-                  setJobDetailLoadKey((k) => k + 1);
-                  setJobDetailOpen(true);
+                  openJobDetail(jobId, {
+                    ...options,
+                    entrySource: 'home',
+                  });
                 }}
+                onOpenJobsOpenTab={navigateToJobsOpenSection}
               />
             </View>
-            {profileOpen ? (
-              <View style={tabPaneStyle(mainTab === 'home')}>
-                <ProfileScreen onBack={() => setProfileOpen(false)} />
-              </View>
-            ) : null}
             <View style={tabPaneStyle(mainTab === 'jobs')}>
               <JobsScreen
+                isActive={mainTab === 'jobs'}
                 jobsListTab={jobsListTab}
                 onJobsListTabChange={setJobsListTab}
+                openScrollToSection={jobsOpenScrollTarget}
+                openScrollNonce={jobsOpenScrollNonce}
+                onOpenScrollToSectionHandled={clearJobsOpenScrollTarget}
                 suppressFab={liveSession.hasLiveSession}
                 onOpenInbox={openInbox}
                 onOpenJobDetail={(jobId?: string, options?: { initialEditOpen?: boolean }) => {
-                  setJobDetailEntrySource(options?.initialEditOpen ? 'jobs_new_job' : 'jobs_list');
-                  setSelectedJobId(jobId ?? null);
-                  setJobDetailInitialEditOpen(options?.initialEditOpen ?? false);
-                  setJobDetailLoadKey((k) => k + 1);
-                  setJobDetailOpen(true);
+                  openJobDetail(jobId, {
+                    ...options,
+                    entrySource: options?.initialEditOpen ? 'jobs_new_job' : 'jobs_list',
+                  });
                 }}
               />
             </View>
             <View style={tabPaneStyle(mainTab === 'earnings')}>
               <EarningsScreen
+                isActive={mainTab === 'earnings'}
                 window={earningsWindow}
                 onWindowChange={setEarningsWindow}
-                onOpenJobsOpenTab={() => {
-                  setJobsListTab('open');
-                  setMainTab('jobs');
-                }}
+                onOpenJobsOpenTab={() => navigateToJobsOpenSection('unpaid')}
                 onOpenJobDetail={(jobId?: string) => {
-                  setJobDetailEntrySource('earnings');
-                  setSelectedJobId(jobId ?? null);
-                  setJobDetailInitialEditOpen(false);
-                  setJobDetailLoadKey((k) => k + 1);
-                  setJobDetailOpen(true);
+                  openJobDetail(jobId, { entrySource: 'earnings' });
                 }}
               />
             </View>
           </View>
           <ShellBottomNav selected={mainTab} onSelect={onShellTabSelect} />
+          {profileMounted ? (
+            <View style={styles.profileOverlayPane}>
+              <OverlaySlideHost
+                visible={profileOpen}
+                axis="horizontal"
+                onRequestClose={() => setProfileOpen(false)}
+                onExited={() => setProfileMounted(false)}
+              >
+                <ProfileScreen
+                  onBack={() => setProfileOpen(false)}
+                  onSelectShellTab={onShellTabSelect}
+                />
+              </OverlaySlideHost>
+            </View>
+          ) : null}
         </View>
       )}
 
       <LiveSessionOverlay onSessionEnded={({ jobId }) => onLiveSessionEnded(jobId)} />
+
+      {Platform.OS === 'android' && jobDetailMounted ? (
+        <View style={styles.jobDetailOverlayHost} testID="job-detail-modal">
+          <OverlaySlideHost
+            visible={jobDetailOpen}
+            axis="vertical"
+            enableSwipeDismiss={false}
+            exitAnimated={jobDetailExitAnimated}
+            onRequestClose={() => closeJobDetail()}
+            onExited={() => {
+              setJobDetailMounted(false);
+              setJobDetailExitAnimated(true);
+            }}
+          >
+            <View style={styles.jobDetailModalRoot}>
+              <JobDetailScreen
+                loadKey={jobDetailLoadKey}
+                jobId={selectedJobId}
+                entrySource={jobDetailEntrySource}
+                initialEditOpen={jobDetailInitialEditOpen}
+                sessionUserId={session.user.id}
+                sessionEmail={session.user.email ?? null}
+                onRequestClose={closeJobDetail}
+                onSwipeDismissStart={onJobDetailSwipeDismissStart}
+                onSwipeDismissCancel={onJobDetailSwipeDismissCancel}
+              />
+            </View>
+          </OverlaySlideHost>
+        </View>
+      ) : null}
+
+      {Platform.OS !== 'android' ? (
+      <Modal
+        testID="job-detail-modal"
+        visible={jobDetailOpen}
+        animationType={jobDetailModalAnimation}
+        presentationStyle="fullScreen"
+        onRequestClose={() => closeJobDetail()}
+      >
+        <GestureHandlerRootView style={styles.jobDetailModalRoot}>
+          <JobDetailScreen
+            loadKey={jobDetailLoadKey}
+            jobId={selectedJobId}
+            entrySource={jobDetailEntrySource}
+            initialEditOpen={jobDetailInitialEditOpen}
+            sessionUserId={session.user.id}
+            sessionEmail={session.user.email ?? null}
+            onRequestClose={closeJobDetail}
+            onSwipeDismissStart={onJobDetailSwipeDismissStart}
+            onSwipeDismissCancel={onJobDetailSwipeDismissCancel}
+          />
+        </GestureHandlerRootView>
+      </Modal>
+      ) : null}
         </>
       ) : null}
     </View>
@@ -438,7 +601,8 @@ function AuthenticatedShell() {
 export default function App() {
   const configured = isSupabaseConfigured();
   return (
-    <SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+    <SafeAreaProvider style={styles.root}>
       <View style={styles.root}>
         {configured ? (
           <AuthProvider>
@@ -461,6 +625,7 @@ export default function App() {
         <StatusBar style="dark" />
       </View>
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -488,6 +653,22 @@ const styles = StyleSheet.create({
   },
   tabPaneHidden: {
     display: 'none',
+  },
+  profileOverlayPane: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 20,
+    elevation: 20,
+  },
+  /** Above live-session chrome (zIndex 1100) so Android job detail covers the shell. */
+  jobDetailOverlayHost: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 1200,
+    elevation: 1200,
+  },
+  jobDetailModalRoot: {
+    flex: 1,
+    backgroundColor: bg.canvasWarm,
+    overflow: 'visible',
   },
   centered: {
     justifyContent: 'center',

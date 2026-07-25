@@ -22,11 +22,20 @@ import {
   ActivityIndicator,
   Animated,
   Alert,
+  Easing,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import {
+  PanGestureHandler,
+  ScrollView as GHScrollView,
+  State,
+  type PanGestureHandlerStateChangeEvent,
+} from 'react-native-gesture-handler';
 
 import {
   ChooseSessionBottomSheet,
@@ -52,11 +61,6 @@ import {
 } from '../components/ds';
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import {
-  ShellBottomNav,
-  shellBottomNavOuterHeight,
-  type ShellMainTab,
-} from '../components/shell/ShellBottomNav';
-import {
   JobDetailIconCtaMore,
   JobDetailIconSectionAdd,
   JobDetailIconSectionMaterials,
@@ -65,6 +69,7 @@ import {
   JobDetailIconTopClose,
   JobDetailIconTopEdit,
 } from '../components/figma-icons/JobDetailScreenIcons';
+import type { ShellMainTab } from '../components/shell/ShellBottomNav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/tokens';
 import {
@@ -122,7 +127,7 @@ import { useContentColumn } from '../theme/useContentColumn';
 import type { EditJobBottomSheetValues } from '../components/ds/EditJobBottomSheet';
 
 /** Vertical gap between stacked blocks in the main column (`Spacing/20` = 16 + 4). */
-const SLOT_GAP = space('Spacing/20');
+const SLOT_GAP = space('Spacing/24');
 
 function supabaseApiHostLabel(): string {
   const u = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
@@ -142,9 +147,25 @@ function jobDetailIsFinanciallyComplete(job: JobDetailViewModel): boolean {
   );
 }
 
+export type JobDetailCloseOptions = {
+  /**
+   * When false, the parent Modal/host should unmount without its slide animation
+   * (content already left the screen via an interactive swipe).
+   * @default true
+   */
+  animated?: boolean;
+};
+
 export type JobDetailScreenProps = {
   /** Top-left close (X): return to the tab shell (HOME / JOBS / EARNINGS). */
-  onRequestClose?: () => void;
+  onRequestClose?: (options?: JobDetailCloseOptions) => void;
+  /**
+   * Called as soon as a swipe dismiss commits (before the off-screen timing
+   * finishes) so the parent can arm exitAnimation=none / ignore late animated closes.
+   */
+  onSwipeDismissStart?: () => void;
+  /** Called if the swipe exit animation is interrupted before close. */
+  onSwipeDismissCancel?: () => void;
   /**
    * Tab nav handler — closes Job Detail and switches the parent shell to the
    * tapped tab (HOME / JOBS / EARNINGS). Owned by the parent because Job
@@ -167,6 +188,8 @@ export type JobDetailScreenProps = {
 
 export function JobDetailScreen({
   onRequestClose,
+  onSwipeDismissStart,
+  onSwipeDismissCancel,
   onSelectShellTab,
   sessionUserId,
   sessionEmail,
@@ -177,8 +200,129 @@ export function JobDetailScreen({
 }: JobDetailScreenProps = {}) {
   /** Top safe area (status bar); bottom inset used for scroll padding + nav. */
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
+  /** Tracks scroll offset for swipe-down-to-close when presented as a modal. */
+  const scrollOffsetY = useRef(0);
+  const [scrollAtTop, setScrollAtTop] = useState(true);
+  const jobDetailPanRef = useRef<PanGestureHandler>(null);
+  const dismissY = useRef(new Animated.Value(0)).current;
+  const dismissOpacity = useRef(new Animated.Value(1)).current;
+  const closingFromSwipeRef = useRef(false);
+
+  const onJobDetailPanGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: dismissY } }],
+    {
+      useNativeDriver: true,
+      listener: (event: { nativeEvent: { translationY: number } }) => {
+        const ty = event.nativeEvent.translationY;
+        if (ty < 0 || scrollOffsetY.current > 4) {
+          dismissY.setValue(0);
+        }
+      },
+    },
+  );
+
+  /** Shared swipe exit: animate off-screen, then hide Modal without a second slide. */
+  const finishSwipeDismiss = useCallback(
+    (fromY: number) => {
+      if (!onRequestClose || closingFromSwipeRef.current) return;
+      const start = Math.max(0, fromY);
+      dismissY.setValue(start);
+      const remaining = Math.max(1, windowHeight - start);
+      const duration = Math.max(140, Math.min(280, remaining * 0.32));
+      closingFromSwipeRef.current = true;
+      // Arm parent immediately so X / back cannot start a second animated exit
+      // while this timing is still running.
+      onSwipeDismissStart?.();
+      Animated.parallel([
+        Animated.timing(dismissY, {
+          toValue: windowHeight,
+          duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(dismissOpacity, {
+          toValue: 0,
+          duration: Math.min(200, duration),
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        if (!finished) {
+          closingFromSwipeRef.current = false;
+          onSwipeDismissCancel?.();
+          return;
+        }
+        // Content is already off-screen — skip RN Modal/host slide replay.
+        onRequestClose({ animated: false });
+      });
+    },
+    [
+      dismissOpacity,
+      dismissY,
+      onRequestClose,
+      onSwipeDismissCancel,
+      onSwipeDismissStart,
+      windowHeight,
+    ],
+  );
+
+  const onJobDetailPanStateChange = useCallback(
+    (event: PanGestureHandlerStateChangeEvent) => {
+      if (!onRequestClose || closingFromSwipeRef.current) return;
+      const { state, oldState, translationY, velocityY } = event.nativeEvent;
+      if (oldState === State.ACTIVE) {
+        if (scrollOffsetY.current > 4) {
+          Animated.spring(dismissY, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 0,
+          }).start();
+          return;
+        }
+        if (translationY > 56 || velocityY > 900) {
+          finishSwipeDismiss(translationY);
+          return;
+        }
+        Animated.spring(dismissY, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 0,
+        }).start();
+      }
+      if (state === State.BEGAN && !closingFromSwipeRef.current) {
+        dismissY.setValue(0);
+      }
+    },
+    [dismissY, finishSwipeDismiss, onRequestClose],
+  );
+
+  const onJobDetailScroll = useCallback(
+    (event: { nativeEvent: { contentOffset: { y: number } } }) => {
+      const y = event.nativeEvent.contentOffset.y;
+      scrollOffsetY.current = y;
+      scrollY.setValue(y);
+      const atTop = y <= 4;
+      setScrollAtTop((prev) => (prev === atTop ? prev : atTop));
+    },
+    [scrollY],
+  );
+
+  const onScrollEndDragDismiss = useCallback(
+    (event: { nativeEvent: { contentOffset: { y: number }; velocity?: { y: number } } }) => {
+      // Android: pan handler owns dismiss. Overscroll + sheet exit reads as a double slide.
+      if (Platform.OS === 'android') return;
+      if (!onRequestClose || closingFromSwipeRef.current || scrollOffsetY.current > 4) return;
+      const { y } = event.nativeEvent.contentOffset;
+      const vy = event.nativeEvent.velocity?.y ?? 0;
+      if (y < -28 || (y <= 0 && vy < -0.35)) {
+        finishSwipeDismiss(Math.max(0, -y));
+      }
+    },
+    [finishSwipeDismiss, onRequestClose],
+  );
   /**
    * Height of the scrollable content, reported via the scrollview's
    * `onContentSizeChange`. Passed to `CanvasTiledBackground` so the ruled
@@ -208,6 +352,7 @@ export function JobDetailScreen({
   );
 
   const supabaseReady = isSupabaseConfigured();
+  const { invalidateJobsList } = useJobsListInvalidation();
   const [job, setJob] = useState<JobDetailViewModel | null>(null);
   const [jobLoading, setJobLoading] = useState(supabaseReady);
   const [jobSaving, setJobSaving] = useState(false);
@@ -346,8 +491,17 @@ export function JobDetailScreen({
   }, [entrySource, initialEditOpen, supabaseReady, sessionUserId, loadKey, jobId]);
 
   const onClose = useCallback(() => {
+    if (closingFromSwipeRef.current) return;
     onRequestClose?.();
   }, [onRequestClose]);
+
+  // Reset interactive-dismiss transforms when (re)opening a job so a prior
+  // swipe-off doesn't leave the sheet translated for the next presentation.
+  useEffect(() => {
+    closingFromSwipeRef.current = false;
+    dismissY.setValue(0);
+    dismissOpacity.setValue(1);
+  }, [dismissOpacity, dismissY, loadKey, jobId]);
   const onEdit = useCallback(() => {
     if (job) {
       analytics.capture('job_edit_opened', {
@@ -396,6 +550,7 @@ export function JobDetailScreen({
         const refreshed = await fetchJobDetail(supabase, job.id);
         if (refreshed) setJob(refreshed);
         onCloseEditSheet();
+        invalidateJobsList();
         analytics.capture('job_saved', {
           job_id: job.id,
           changed_fields: changedFields(before, values),
@@ -424,7 +579,7 @@ export function JobDetailScreen({
         setJobSaving(false);
       }
     },
-    [job, onCloseEditSheet, toEditValues],
+    [invalidateJobsList, job, onCloseEditSheet, toEditValues],
   );
 
   // --- Session add/edit flow ---
@@ -447,7 +602,6 @@ export function JobDetailScreen({
   // --- Live session integration ---
 
   const liveSessionCtx = useLiveSession();
-  const { invalidateJobsList } = useJobsListInvalidation();
   const liveSessionForThisJob =
     liveSessionCtx.liveSession?.jobId === job?.id ? liveSessionCtx.liveSession : null;
 
@@ -1447,7 +1601,7 @@ export function JobDetailScreen({
   /** Spinner state: same canvas background as main screen so the transition does not flash a flat color. */
   if (!fontsLoaded || (supabaseReady && jobLoading)) {
     return (
-      <View style={styles.loading}>
+      <View testID="job-detail-loading" style={styles.loading}>
         <CanvasTiledBackground scrollY={scrollY} />
         <ActivityIndicator
           accessibilityLabel={!fontsLoaded ? 'Loading fonts' : 'Loading job'}
@@ -1457,7 +1611,7 @@ export function JobDetailScreen({
   }
 
   if (supabaseReady && !job) {
-    const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
+    const headerTopPad = Math.max(insets.top - space('Spacing/8'), 0);
     return (
       <View style={styles.root}>
         <CanvasTiledBackground scrollY={scrollY} />
@@ -1465,8 +1619,9 @@ export function JobDetailScreen({
           <View
             style={[
               styles.topHeader,
+              styles.topHeaderModal,
               columnStyle,
-              { paddingTop: headerTopPad + space('Spacing/8') },
+              { paddingTop: headerTopPad + space('Spacing/4') },
             ]}
           >
             <View style={styles.topHeaderRow}>
@@ -1511,14 +1666,39 @@ export function JobDetailScreen({
   }
 
   if (!job) {
-    return null;
+    return (
+      <View testID="job-detail-loading" style={styles.loading}>
+        <CanvasTiledBackground scrollY={scrollY} />
+        <ActivityIndicator accessibilityLabel="Loading job" />
+      </View>
+    );
   }
 
-  /** Space reserved under the scroll content so the last section clears the fixed bottom tab bar. */
-  const bottomNavReservedHeight = shellBottomNavOuterHeight(insets.bottom);
+  /** Bottom inset for modal presentation (no shell tab bar). */
+  const bottomInset = insets.bottom;
+  /** Match tab screens: minimal inset under the status bar (modal — no double padding). */
+  const headerTopPad = Math.max(insets.top - space('Spacing/8'), 0);
 
   return (
-    <View style={styles.root}>
+    <PanGestureHandler
+      ref={jobDetailPanRef}
+      enabled={!!onRequestClose && scrollAtTop}
+      activeOffsetY={10}
+      failOffsetY={-5}
+      failOffsetX={[-24, 24]}
+      onGestureEvent={onJobDetailPanGestureEvent}
+      onHandlerStateChange={onJobDetailPanStateChange}
+    >
+    <Animated.View
+      testID="job-detail-screen"
+      style={[
+        styles.root,
+        {
+          opacity: dismissOpacity,
+          transform: [{ translateY: dismissY }],
+        },
+      ]}
+    >
       {/* Lined canvas + cream fill — behind all scroll content. Sized to
           the scrollable content height so the ruled texture doesn't cut
           off on long screens. */}
@@ -1526,21 +1706,21 @@ export function JobDetailScreen({
         scrollY={scrollY}
         contentHeight={scrollContentHeight}
       />
-      <Animated.ScrollView
+      <GHScrollView
+        waitFor={scrollAtTop ? jobDetailPanRef : undefined}
         style={[styles.scroll, styles.scrollTransparent]}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
+        onScroll={onJobDetailScroll}
         onContentSizeChange={(_w, h) => setScrollContentHeight(h)}
         scrollEventThrottle={16}
+        onScrollEndDrag={onScrollEndDragDismiss}
+        bounces={!!onRequestClose}
+        // Never rubber-band on Android modal — overscroll + pan exit looks like a double slide.
+        overScrollMode="never"
+        nestedScrollEnabled
         contentContainerStyle={{
           width: '100%',
-          paddingTop: Math.max(
-            0,
-            insets.top - space('Spacing/6') - space('Spacing/12'),
-          ),
-          paddingBottom: space('Spacing/20') + bottomNavReservedHeight,
+          paddingTop: headerTopPad + space('Spacing/4'),
+          paddingBottom: space('Spacing/20') + bottomInset,
           alignItems: 'stretch',
         }}
         keyboardShouldPersistTaps="handled"
@@ -1562,7 +1742,7 @@ export function JobDetailScreen({
           </Text>
         ) : null}
         {/* `TopHeader` variant `X (Close &Edit)` (`231:858`) */}
-        <View style={styles.topHeader}>
+        <View style={[styles.topHeader, styles.topHeaderModal]}>
           <View style={styles.topHeaderRow}>
             <Pressable
               accessibilityRole="button"
@@ -1578,8 +1758,8 @@ export function JobDetailScreen({
               onPress={onEdit}
               style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
             >
-              <JobDetailIconTopEdit color={fg.primary} />
-              <Text style={[typography.pillCompact, styles.actionButtonLabel]}>
+              <JobDetailIconTopEdit color={bg.canvasWarm} />
+              <Text style={[typography.pillCompact, styles.actionButtonLabelOnDark]}>
                 EDIT
               </Text>
             </Pressable>
@@ -1608,7 +1788,11 @@ export function JobDetailScreen({
             primaryDisabled={statusActionPending}
             moreDisabled={statusActionPending}
           />
-          <JobDetailMetricTertiary metrics={job.metrics} typography={typography} />
+          <JobDetailMetricTertiary
+            metrics={job.metrics}
+            netEarningsCents={job.earnings.netEarningsCents}
+            typography={typography}
+          />
         </View>
 
         {/* Section headers are full-bleed within max width; ADD uses a compact primary button. */}
@@ -1693,17 +1877,8 @@ export function JobDetailScreen({
           />
         )}
         </View>
-      </Animated.ScrollView>
+      </GHScrollView>
 
-      {/* Shared bottom nav — JOBS is the active tab here. Tapping HOME /
-          JOBS / EARNINGS bubbles up to the parent which closes Job Detail
-          and switches the shell tab in one update (see App.tsx). */}
-      <ShellBottomNav
-        selected="jobs"
-        onSelect={(tab) => {
-          onSelectShellTab?.(tab);
-        }}
-      />
       {editSheetMounted ? (
         <EditJobBottomSheet
           typography={typography}
@@ -1940,7 +2115,8 @@ export function JobDetailScreen({
           />
         </>
       ) : null}
-    </View>
+    </Animated.View>
+    </PanGestureHandler>
   );
 }
 
@@ -2074,8 +2250,8 @@ function SectionHeaderFigma({
           disabled={!onAddPress}
           style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}
         >
-          <JobDetailIconSectionAdd color={fg.primary} />
-          <Text style={[typography.pillCompact, styles.actionButtonLabel]}>
+          <JobDetailIconSectionAdd color={bg.canvasWarm} />
+          <Text style={[typography.pillCompact, styles.actionButtonLabelOnDark]}>
             ADD
           </Text>
         </Pressable>
@@ -2106,9 +2282,9 @@ const styles = StyleSheet.create({
    * hasn't fired yet), users see the same cream colour instead of iOS's
    * default system background bleeding through.
    */
-  root: { flex: 1, backgroundColor: bg.canvasWarm },
+  root: { flex: 1, backgroundColor: bg.canvasWarm, overflow: 'visible' },
   /** Centered spinner over the same lined background as the loaded screen. */
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg.canvasWarm },
   errorBody: {
     flex: 1,
     alignItems: 'center',
@@ -2130,15 +2306,18 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
     backgroundColor: 'transparent',
-    // Safe-area inset is already applied via ScrollView paddingTop — keep this tight.
-    paddingTop: space('Spacing/8'),
+    paddingTop: space('Spacing/12'),
+  },
+  /** Modal uses safe-area padding on the scroll container — no extra header inset. */
+  topHeaderModal: {
+    paddingTop: 0,
   },
   topHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 0,
-    paddingBottom: space('Spacing/8'),
+    paddingBottom: space('Spacing/4'),
   },
   closeCircle: {
     width: space('Spacing/32'),
@@ -2158,11 +2337,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/12'),
-    backgroundColor: bg.surfaceWhite,
+    backgroundColor: fg.primary,
     ...cardShadowRn,
   },
   actionButtonLabel: {
     color: fg.primary,
+  },
+  actionButtonLabelOnDark: {
+    color: bg.canvasWarm,
   },
 
   /** Hero block: job header, summary, CTAs, metric card — width from parent column. */
@@ -2204,7 +2386,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/12'),
-    backgroundColor: bg.surfaceWhite,
+    backgroundColor: fg.primary,
     ...cardShadowRn,
   },
 

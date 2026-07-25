@@ -7,17 +7,13 @@ import type { TextStyles } from '../../theme/nativeTokens';
 import {
   SessionCaptureTileMaterialIcon,
   SessionCaptureTileNoteIcon,
-  SessionCaptureTilePhotoIcon,
-  SessionCaptureTileVoiceIcon,
 } from '../figma-icons/JobDetailScreenIcons';
 
-type TileKind = 'note' | 'material' | 'photo' | 'voice';
+type TileKind = 'note' | 'material';
 
 const TILE_LABEL: Record<TileKind, string> = {
   note: 'Note',
   material: 'Material',
-  photo: 'Photo',
-  voice: 'Voice',
 };
 
 function tileIcon(kind: TileKind, tint: string): ReactNode {
@@ -27,10 +23,6 @@ function tileIcon(kind: TileKind, tint: string): ReactNode {
       return <SessionCaptureTileNoteIcon {...props} />;
     case 'material':
       return <SessionCaptureTileMaterialIcon {...props} />;
-    case 'photo':
-      return <SessionCaptureTilePhotoIcon {...props} />;
-    case 'voice':
-      return <SessionCaptureTileVoiceIcon {...props} />;
   }
 }
 
@@ -40,10 +32,6 @@ function tileTint(kind: TileKind): string {
       return color('Semantic/Activity/Note');
     case 'material':
       return color('Semantic/Activity/Material');
-    case 'photo':
-      return color('Semantic/Activity/Photo');
-    case 'voice':
-      return color('Semantic/Activity/Voice');
   }
 }
 
@@ -56,8 +44,7 @@ export type SessionAddToSessionTilesProps = {
 };
 
 /**
- * "Add to Session" heading + 4 capture tiles. Photo and Voice are never
- * pressable; Note and Material only when the corresponding callback is set.
+ * "Add to Session" heading + Note and Material capture tiles (half-width each).
  */
 export function SessionAddToSessionTiles({
   typography,
@@ -68,7 +55,7 @@ export function SessionAddToSessionTiles({
     <View style={styles.captureSection}>
       <Text style={[typography.bodySmall, { color: fg.primary }]}>Add to Session</Text>
       <View style={styles.tileRow}>
-        {(['note', 'material', 'photo', 'voice'] as TileKind[]).map((kind) => {
+        {(['note', 'material'] as TileKind[]).map((kind) => {
           const interactive =
             (kind === 'note' && onAddNote) || (kind === 'material' && onAddMaterial);
           const inner = (
@@ -111,13 +98,14 @@ const styles = StyleSheet.create({
   },
   tileRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: space('Spacing/8'),
-    flexWrap: 'wrap',
+    width: '100%',
   },
   tile: {
     ...cardShadowRn,
-    width: 73.75,
+    flex: 1,
+    minWidth: 0,
     height: 56,
     borderRadius: radius('Radius/12'),
     borderWidth: 1,

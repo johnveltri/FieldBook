@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { bg, border, fg } from '../../theme/nativeTokens';
@@ -92,12 +92,7 @@ export function ChooseJobBottomSheet({
             </Text>
           </View>
         ) : (
-          <ScrollView
-            style={styles.listScroll}
-            contentContainerStyle={styles.listContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={styles.listContent}>
             {jobs.map((job) => (
               <Pressable
                 key={job.id}
@@ -117,7 +112,7 @@ export function ChooseJobBottomSheet({
                 </View>
               </Pressable>
             ))}
-          </ScrollView>
+          </View>
         )}
       </View>
     </BottomSheetShell>

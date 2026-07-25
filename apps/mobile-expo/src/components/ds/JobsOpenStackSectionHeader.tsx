@@ -7,7 +7,7 @@ import { type TextStyles, fg, space } from '../../theme/nativeTokens';
 export const JOBS_OPEN_SECTION_KINDS = ['incomplete', 'inProgress', 'unpaid'] as const;
 export type JobsOpenSectionKind = (typeof JOBS_OPEN_SECTION_KINDS)[number];
 
-const COPY: Record<
+export const JOBS_OPEN_SECTION_COPY: Record<
   JobsOpenSectionKind,
   { titlePrefix: string; subtitle: string }
 > = {
@@ -16,11 +16,15 @@ const COPY: Record<
   unpaid: { titlePrefix: 'Unpaid', subtitle: 'Completed but not paid' },
 };
 
-const TITLE_COLORS: Record<JobsOpenSectionKind, string> = {
+export const JOBS_OPEN_SECTION_TITLE_COLORS: Record<JobsOpenSectionKind, string> = {
   incomplete: color('Semantic/Status/Warning/Text'),
   inProgress: color('Semantic/Status/Info/Text'),
   unpaid: color('Semantic/Status/Neutral/Text'),
 };
+
+const COPY = JOBS_OPEN_SECTION_COPY;
+
+const TITLE_COLORS = JOBS_OPEN_SECTION_TITLE_COLORS;
 
 function LeadingIncomplete({ stroke }: { stroke: string }) {
   return (

@@ -166,6 +166,7 @@ describe('HomeScreen quick session', () => {
         onOpenProfile={() => undefined}
         onOpenJobDetail={() => undefined}
         onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={() => undefined}
       />,
     );
 
@@ -184,6 +185,7 @@ describe('HomeScreen quick session', () => {
         onOpenProfile={() => undefined}
         onOpenJobDetail={() => undefined}
         onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={() => undefined}
       />,
     );
 
@@ -217,6 +219,7 @@ describe('HomeScreen quick session', () => {
         onOpenProfile={() => undefined}
         onOpenJobDetail={() => undefined}
         onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={() => undefined}
       />,
     );
 
@@ -258,6 +261,7 @@ describe('HomeScreen quick session', () => {
         onOpenProfile={() => undefined}
         onOpenJobDetail={() => undefined}
         onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={() => undefined}
       />,
     );
 
@@ -339,11 +343,13 @@ describe('HomeScreen quick session', () => {
     ]);
 
     const onOpenJobDetail = jest.fn();
+    const onOpenJobsOpenTab = jest.fn();
     const screen = render(
       <HomeScreen
         onOpenProfile={() => undefined}
         onOpenJobDetail={onOpenJobDetail}
         onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={onOpenJobsOpenTab}
       />,
     );
 
@@ -356,7 +362,7 @@ describe('HomeScreen quick session', () => {
     });
     expect(mockListJobsForCurrentUserPage).toHaveBeenCalledWith(
       { client: 'supabase' },
-      expect.objectContaining({ tab: 'open', limit: 20, offset: 0 }),
+      expect.objectContaining({ tab: 'open', limit: 100, offset: 0 }),
     );
     expect(mockListRecentDetailedJobsForCurrentUser).toHaveBeenCalledWith(
       { client: 'supabase' },
@@ -364,24 +370,23 @@ describe('HomeScreen quick session', () => {
     );
     expect(screen.getByText('Completed jobs worked in the past 7 days')).toBeTruthy();
     expect(screen.getByText('Needs Attention')).toBeTruthy();
-    expect(screen.getByText('Missing: Description, Revenue, Materials, Sessions')).toBeTruthy();
-    expect(screen.getByText('10 of 11 jobs')).toBeTruthy();
+    expect(screen.getByText('Incomplete')).toBeTruthy();
+    expect(screen.getByText('Missing key info')).toBeTruthy();
+    expect(screen.getByText('Fix →')).toBeTruthy();
+    expect(screen.getByLabelText('Incomplete. 11 jobs. Missing key info. Fix.')).toBeTruthy();
+    expect(screen.queryByText('10 of 11 jobs')).toBeNull();
     expect(screen.queryByText('Wire outlet')).toBeNull();
     expect(screen.getByText('Jump Back In')).toBeTruthy();
     expect(screen.getByText('Replace ceiling fan')).toBeTruthy();
 
-    fireEvent.press(screen.getByText('10 of 11 jobs'));
-    expect(screen.getByText('Wire outlet')).toBeTruthy();
-    expect(screen.getByText('11 of 11 jobs')).toBeTruthy();
-
-    fireEvent.press(screen.getByText('Untitled Job'));
-    expect(onOpenJobDetail).toHaveBeenCalledWith('job-incomplete-1');
+    fireEvent.press(screen.getByLabelText('Incomplete. 11 jobs. Missing key info. Fix.'));
+    expect(onOpenJobsOpenTab).toHaveBeenCalledWith('incomplete');
 
     fireEvent.press(screen.getByText('Replace ceiling fan'));
     expect(onOpenJobDetail).toHaveBeenCalledWith('job-recent-1');
   });
 
-  it('shows review rows for financially complete jobs with work but work not marked complete', async () => {
+  it('shows an In Progress summary for financially complete in-progress open jobs', async () => {
     mockListJobsForCurrentUserPage.mockResolvedValue({
       items: [
         job({
@@ -414,19 +419,21 @@ describe('HomeScreen quick session', () => {
         onOpenProfile={() => undefined}
         onOpenJobDetail={() => undefined}
         onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={() => undefined}
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Patch drywall')).toBeTruthy();
+      expect(screen.getByText('In Progress')).toBeTruthy();
     });
-    expect(screen.getByText('Worked: Not marked complete')).toBeTruthy();
-    expect(screen.getByText('Review →')).toBeTruthy();
+    expect(screen.getByText('Active work underway')).toBeTruthy();
+    expect(screen.getByLabelText('In Progress. 1 jobs. Active work underway. Review.')).toBeTruthy();
+    expect(screen.queryByText('Patch drywall')).toBeNull();
     expect(screen.queryByText('Estimate panel')).toBeNull();
     expect(screen.queryByText('Paused repair')).toBeNull();
   });
 
-  it('shows pending-payment rows for completed jobs in the open tab', async () => {
+  it('shows an Unpaid summary for completed open jobs pending payment', async () => {
     mockListJobsForCurrentUserPage.mockResolvedValue({
       items: [
         job({
@@ -449,24 +456,25 @@ describe('HomeScreen quick session', () => {
       hasMore: false,
     });
 
-    const onOpenJobDetail = jest.fn();
+    const onOpenJobsOpenTab = jest.fn();
     const screen = render(
       <HomeScreen
         onOpenProfile={() => undefined}
-        onOpenJobDetail={onOpenJobDetail}
+        onOpenJobDetail={() => undefined}
         onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={onOpenJobsOpenTab}
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Garbage Disposal Install')).toBeTruthy();
+      expect(screen.getByText('Unpaid')).toBeTruthy();
     });
-    expect(screen.getByText('Completed:')).toBeTruthy();
-    expect(screen.getByText('Pending payment')).toBeTruthy();
-    expect(screen.getByText('Review →')).toBeTruthy();
+    expect(screen.getByText('Completed but not paid')).toBeTruthy();
+    expect(screen.getByLabelText('Unpaid. 1 jobs. Completed but not paid. Review.')).toBeTruthy();
+    expect(screen.queryByText('Garbage Disposal Install')).toBeNull();
     expect(screen.queryByText('Paid faucet repair')).toBeNull();
 
-    fireEvent.press(screen.getByText('Garbage Disposal Install'));
-    expect(onOpenJobDetail).toHaveBeenCalledWith('job-payment-1');
+    fireEvent.press(screen.getByLabelText('Unpaid. 1 jobs. Completed but not paid. Review.'));
+    expect(onOpenJobsOpenTab).toHaveBeenCalledWith('unpaid');
   });
 });

@@ -12,9 +12,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createMaterial,
   createNote,
+  deleteJobById,
   deleteMaterial,
   deleteNote,
   fetchJobDetail,
+  updateJobById,
   updateMaterial,
   updateNote,
 } from '@fieldsolo/api-client';
@@ -27,6 +29,7 @@ import type {
 import {
   ChooseSessionBottomSheet,
   DropdownBottomSheet,
+  EditJobBottomSheet,
   EditLiveSessionBottomSheet,
   EditMaterialBottomSheet,
   EditNoteBottomSheet,
@@ -34,6 +37,7 @@ import {
   MinimizedLiveSessionBar,
   type ChooseSessionBottomSheetSession,
   type DropdownBottomSheetOption,
+  type EditJobBottomSheetValues,
   type EditMaterialBottomSheetValues,
   type EditNoteBottomSheetValues,
   type EditLiveSessionSavePayload,
@@ -43,6 +47,7 @@ import {
   useTopmostBottomSheet,
 } from '../context/BottomSheetStackContext';
 import { useLiveSession } from '../context/LiveSessionContext';
+import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import {
   analytics,
   durationMinutesBetween,
@@ -85,7 +90,9 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
     endLiveSessionNow,
     updateLiveSessionStartedAt,
     deleteLiveSessionNow,
+    updateLiveSessionJobShortDescription,
   } = useLiveSession();
+  const { invalidateJobsList } = useJobsListInvalidation();
 
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,
@@ -129,6 +136,9 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
   const [matDraftUnit, setMatDraftUnit] = useState('ea');
   const [matDraftSessionId, setMatDraftSessionId] = useState<string | null>(null);
   const [materialSaving, setMaterialSaving] = useState(false);
+  const [editJobOpen, setEditJobOpen] = useState(false);
+  const [editJobMounted, setEditJobMounted] = useState(false);
+  const [jobSaving, setJobSaving] = useState(false);
 
   const refetchJobDetail = useCallback(async () => {
     if (!liveSession || !isSupabaseConfigured()) return;
@@ -145,6 +155,7 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
       setJobDetail(null);
       setNoteFlow('closed');
       setMaterialFlow('closed');
+      setEditJobOpen(false);
       return;
     }
     void refetchJobDetail();
@@ -156,12 +167,13 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
     }
   }, [mode, liveSession, refetchJobDetail]);
 
-  // Note/material flows only apply to the main live sheet. Closing that layer
-  // (minimize, edit live session) abandons the draft the same as navigating away.
+  // Note/material/edit-job flows only apply to the main live sheet. Closing that
+  // layer (minimize, edit live session) abandons the draft the same as navigating away.
   useEffect(() => {
     if (mode === 'minimized' || mode === 'hidden' || mode === 'editSheet') {
       setNoteFlow('closed');
       setMaterialFlow('closed');
+      setEditJobOpen(false);
     }
   }, [mode]);
 
@@ -255,11 +267,14 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
     return jobDetail.inProgressSession.attachments;
   }, [jobDetail, liveSession]);
 
-  /** Show the live session capture UI only when no note/material sub-flow (swap, not stack). */
+  /** Show the live session capture UI only when no note/material/job sub-flow (swap, not stack). */
   const showLiveSessionMain = useMemo(
     () =>
-      mode === 'sheet' && noteFlow === 'closed' && materialFlow === 'closed',
-    [mode, materialFlow, noteFlow],
+      mode === 'sheet' &&
+      noteFlow === 'closed' &&
+      materialFlow === 'closed' &&
+      !editJobOpen,
+    [mode, materialFlow, noteFlow, editJobOpen],
   );
 
   const showNoteForm = mode === 'sheet' && (noteFlow === 'addNote' || noteFlow === 'editNote');
@@ -664,6 +679,128 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
     }
   }, [deleteLiveSessionNow, elapsedSeconds, formatErrorMessage, liveSession, onSessionEnded]);
 
+  const editJobValues = useMemo<EditJobBottomSheetValues | undefined>(() => {
+    if (!jobDetail) {
+      if (!liveSession) return undefined;
+      return {
+        shortDescription: liveSession.jobShortDescription || '',
+        customerName: '',
+        serviceAddress: '',
+        revenue: '',
+      };
+    }
+    const revenue =
+      jobDetail.earnings.revenueCents == null
+        ? ''
+        : (jobDetail.earnings.revenueCents / 100).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+    return {
+      shortDescription: jobDetail.shortDescription,
+      customerName: jobDetail.customerName,
+      serviceAddress: jobDetail.serviceAddress,
+      revenue,
+    };
+  }, [jobDetail, liveSession]);
+
+  const openEditJob = useCallback(() => {
+    if (!liveSession) return;
+    analytics.capture('job_edit_opened', {
+      source: 'live_session_header',
+      job_id: liveSession.jobId,
+    });
+    setEditJobMounted(true);
+    setEditJobOpen(true);
+  }, [liveSession]);
+
+  const closeEditJob = useCallback(() => {
+    setEditJobOpen(false);
+  }, []);
+
+  const onSaveEditJob = useCallback(
+    async (values: EditJobBottomSheetValues) => {
+      if (!liveSession || jobSaving) return;
+      const trimmedRevenue = values.revenue.trim().replace(/[$,\s]/g, '');
+      const revenueCents =
+        trimmedRevenue.length === 0 ? null : Math.round(Number(trimmedRevenue) * 100);
+      setJobSaving(true);
+      try {
+        await updateJobById(supabase, liveSession.jobId, {
+          shortDescription: values.shortDescription,
+          customerName: values.customerName.trim(),
+          serviceAddress: values.serviceAddress.trim(),
+          revenueCents,
+        });
+        updateLiveSessionJobShortDescription({
+          jobId: liveSession.jobId,
+          jobShortDescription: values.shortDescription.trim(),
+        });
+        await refetchJobDetail();
+        invalidateJobsList();
+        setEditJobOpen(false);
+        analytics.capture('job_saved', {
+          job_id: liveSession.jobId,
+          source: 'live_session_header',
+          revenue_bucket: moneyBucket(revenueCents),
+        });
+      } catch (e) {
+        analytics.capture('job_save_failed', {
+          job_id: liveSession.jobId,
+          source: 'live_session_header',
+          ...errorProperties(e),
+        });
+        Alert.alert('Save failed', formatErrorMessage(e) || 'Could not save job changes.');
+      } finally {
+        setJobSaving(false);
+      }
+    },
+    [
+      formatErrorMessage,
+      invalidateJobsList,
+      jobSaving,
+      liveSession,
+      refetchJobDetail,
+      updateLiveSessionJobShortDescription,
+    ],
+  );
+
+  const onDeleteEditJob = useCallback(async () => {
+    if (!liveSession || jobSaving) return;
+    setJobSaving(true);
+    try {
+      await deleteJobById(supabase, liveSession.jobId);
+      const deleted = await deleteLiveSessionNow();
+      invalidateJobsList();
+      setEditJobOpen(false);
+      analytics.capture('job_deleted', {
+        job_id: liveSession.jobId,
+        source: 'live_session_header',
+      });
+      if (deleted) {
+        onSessionEnded({ jobId: deleted.jobId });
+      } else {
+        onSessionEnded({ jobId: liveSession.jobId });
+      }
+    } catch (e) {
+      analytics.capture('job_delete_failed', {
+        job_id: liveSession.jobId,
+        source: 'live_session_header',
+        ...errorProperties(e),
+      });
+      Alert.alert('Delete failed', formatErrorMessage(e) || 'Could not delete this job.');
+    } finally {
+      setJobSaving(false);
+    }
+  }, [
+    deleteLiveSessionNow,
+    formatErrorMessage,
+    invalidateJobsList,
+    jobSaving,
+    liveSession,
+    onSessionEnded,
+  ]);
+
   // Tapping the minimized bar should:
   //   1. If a foreign bottom sheet (Edit Job, etc.) is currently presented,
   //      ask it to dismiss first so the user is not left with two stacked
@@ -760,6 +897,7 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
         }}
         onMinimize={minimize}
         onEditPress={openEditSheet}
+        onEditJobPress={openEditJob}
         onEndSessionPress={() => void handleEndSession()}
       />
 
@@ -774,6 +912,25 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
         onSavePress={(payload) => void handleEditSave(payload)}
         onDeletePress={() => void handleEditDelete()}
       />
+
+      {editJobMounted ? (
+        <EditJobBottomSheet
+          typography={typography}
+          values={editJobValues}
+          visible={editJobOpen && mode === 'sheet'}
+          registerInGlobalStack={false}
+          onClose={closeEditJob}
+          onClosed={() => {
+            if (!editJobOpen) setEditJobMounted(false);
+          }}
+          onSavePress={(values) => {
+            void onSaveEditJob(values);
+          }}
+          onDeletePress={() => {
+            void onDeleteEditJob();
+          }}
+        />
+      ) : null}
 
       {/*
         Note / material + pickers: swap into the same modal layer as the live

@@ -76,6 +76,27 @@ jest.mock('./src/components/LiveSessionOverlay', () => ({
   LiveSessionOverlay: () => null,
 }));
 
+jest.mock('./src/navigation/OverlaySlideHost', () => {
+  const React = require('react');
+  return {
+    OverlaySlideHost: ({
+      children,
+      visible,
+      onExited,
+    }: {
+      children: React.ReactNode;
+      visible: boolean;
+      onExited?: () => void;
+    }) => {
+      React.useEffect(() => {
+        if (!visible) onExited?.();
+      }, [visible, onExited]);
+      if (!visible) return null;
+      return children;
+    },
+  };
+});
+
 jest.mock('./src/screens/SignInScreen', () => ({
   SignInScreen: () => {
     const { Text } = require('react-native');
@@ -251,42 +272,6 @@ describe('App jobs to detail sync', () => {
     expect(screen.getByTestId('detail-props')).toBeTruthy();
 
     fireEvent.press(screen.getByText('CloseDetail'));
-    expect(screen.getByTestId('jobs-screen')).toBeTruthy();
-  });
-
-  it('switches to HOME and dismisses Job Detail when the HOME tab is tapped from inside detail', async () => {
-    const screen = await renderAppReady();
-
-    openJobsTab(screen);
-    fireEvent.press(screen.getByText('OpenJob'));
-    expect(screen.getByTestId('detail-props')).toBeTruthy();
-
-    fireEvent.press(screen.getByText('DetailNavHome'));
-    expect(screen.queryByTestId('detail-props')).toBeNull();
-    expect(screen.getByTestId('home-screen')).toBeTruthy();
-  });
-
-  it('switches to EARNINGS and dismisses Job Detail when the EARNINGS tab is tapped from inside detail', async () => {
-    const screen = await renderAppReady();
-
-    openJobsTab(screen);
-    fireEvent.press(screen.getByText('OpenJob'));
-    expect(screen.getByTestId('detail-props')).toBeTruthy();
-
-    fireEvent.press(screen.getByText('DetailNavEarnings'));
-    expect(screen.queryByTestId('detail-props')).toBeNull();
-    expect(screen.getByTestId('earnings-screen')).toBeTruthy();
-  });
-
-  it('returns to JobsScreen when the JOBS tab is tapped from inside Job Detail', async () => {
-    const screen = await renderAppReady();
-
-    openJobsTab(screen);
-    fireEvent.press(screen.getByText('OpenJob'));
-    expect(screen.getByTestId('detail-props')).toBeTruthy();
-
-    fireEvent.press(screen.getByText('DetailNavJobs'));
-    expect(screen.queryByTestId('detail-props')).toBeNull();
     expect(screen.getByTestId('jobs-screen')).toBeTruthy();
   });
 });

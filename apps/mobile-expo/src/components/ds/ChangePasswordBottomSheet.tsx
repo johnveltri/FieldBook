@@ -79,6 +79,7 @@ export function ChangePasswordBottomSheet({
       onClose={onClose}
       onClosed={onClosed}
       registerInGlobalStack={registerInGlobalStack}
+      bottomPaddingExtra={space('Spacing/4')}
     >
       <View style={styles.body}>
         <Pressable

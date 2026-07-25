@@ -86,6 +86,7 @@ describe('JobsScreen', () => {
       expect.anything(),
       expect.objectContaining({ tab: 'all' }),
     );
+    expect(apiClient.listJobsForCurrentUserPage.mock.calls.length).toBeGreaterThanOrEqual(3);
 
     fireEvent.press(screen.getByText('Install light fixture'));
     expect(onOpenJobDetail).toHaveBeenCalledWith('job-1');
@@ -120,8 +121,90 @@ describe('JobsScreen', () => {
     });
   });
 
-  it('loads open jobs with tab open and shows empty copy when none', async () => {
-    apiClient.listJobsForCurrentUserPage.mockResolvedValue({ items: [], hasMore: false });
+  it('loads open jobs from prefetch cache without refetching on tab switch', async () => {
+    apiClient.listJobsForCurrentUserPage.mockImplementation(
+      (_client: unknown, opts: { tab: string }) => {
+        if (opts.tab === 'open') {
+          return Promise.resolve({ items: [], hasMore: false });
+        }
+        return Promise.resolve({
+          items: [
+            {
+              id: 'job-all-only',
+              shortDescription: 'All tab job',
+              customerName: 'Alice',
+              updatedAt: '2026-04-17T00:00:00.000Z',
+              createdAt: '2026-04-10T08:00:00.000Z',
+              lastWorkedAt: '2026-04-16T12:00:00.000Z',
+              lastWorkedLabel: 'Last worked Apr 16, 2026',
+              timeLabel: '1.5h',
+              jobType: 'electrical',
+              workStatus: 'inProgress',
+              jobPaymentState: 'pending',
+              revenueCents: 30000,
+              materialsCents: -2000,
+              netEarningsCents: 28000,
+              collectedCents: 0,
+              isFinanciallyComplete: true,
+              hasMaterials: true,
+              hasSessions: true,
+            },
+          ],
+          hasMore: false,
+        });
+      },
+    );
+
+    const screen = render(<JobsScreen onOpenJobDetail={() => undefined} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('All tab job')).toBeTruthy();
+    });
+
+    const callsAfterLoad = apiClient.listJobsForCurrentUserPage.mock.calls.length;
+    expect(callsAfterLoad).toBe(3);
+
+    fireEvent.press(screen.getByText('Open'));
+
+    await waitFor(() => {
+      expect(screen.getByText('All caught up! No open jobs.')).toBeTruthy();
+    });
+    expect(apiClient.listJobsForCurrentUserPage.mock.calls.length).toBe(callsAfterLoad);
+  });
+
+  it('loads paid jobs from prefetch cache and uses recency sections', async () => {
+    apiClient.listJobsForCurrentUserPage.mockImplementation(
+      (_client: unknown, opts: { tab: string }) => {
+        if (opts.tab === 'paid') {
+          return Promise.resolve({
+            items: [
+              {
+                id: 'job-paid-1',
+                shortDescription: 'Paid job',
+                customerName: 'Bob',
+                updatedAt: '2026-04-17T00:00:00.000Z',
+                createdAt: '2026-04-10T08:00:00.000Z',
+                lastWorkedAt: '2026-04-16T12:00:00.000Z',
+                lastWorkedLabel: 'Last worked Apr 16, 2026',
+                timeLabel: '1.0h',
+                jobType: '',
+                workStatus: 'paid',
+                jobPaymentState: 'paid',
+                revenueCents: 10000,
+                materialsCents: 0,
+                netEarningsCents: 10000,
+                collectedCents: 10000,
+                isFinanciallyComplete: false,
+                hasMaterials: false,
+                hasSessions: true,
+              },
+            ],
+            hasMore: false,
+          });
+        }
+        return Promise.resolve({ items: [], hasMore: false });
+      },
+    );
 
     const screen = render(<JobsScreen onOpenJobDetail={() => undefined} />);
 
@@ -129,61 +212,7 @@ describe('JobsScreen', () => {
       expect(screen.getByText('No jobs yet.')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('Open'));
-
-    await waitFor(() => {
-      expect(apiClient.listJobsForCurrentUserPage).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ tab: 'open' }),
-      );
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('All caught up! No open jobs.')).toBeTruthy();
-    });
-  });
-
-  it('loads paid jobs with tab paid and uses recency sections', async () => {
-    apiClient.listJobsForCurrentUserPage.mockResolvedValue({
-      items: [
-        {
-          id: 'job-paid-1',
-          shortDescription: 'Paid job',
-          customerName: 'Bob',
-          updatedAt: '2026-04-17T00:00:00.000Z',
-          createdAt: '2026-04-10T08:00:00.000Z',
-          lastWorkedAt: '2026-04-16T12:00:00.000Z',
-          lastWorkedLabel: 'Last worked Apr 16, 2026',
-          timeLabel: '1.0h',
-          jobType: '',
-          workStatus: 'paid',
-          jobPaymentState: 'paid',
-          revenueCents: 10000,
-          materialsCents: 0,
-          netEarningsCents: 10000,
-          collectedCents: 10000,
-          isFinanciallyComplete: false,
-          hasMaterials: false,
-          hasSessions: true,
-        },
-      ],
-      hasMore: false,
-    });
-
-    const screen = render(<JobsScreen onOpenJobDetail={() => undefined} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Paid job')).toBeTruthy();
-    });
-
     fireEvent.press(screen.getByText('Paid'));
-
-    await waitFor(() => {
-      expect(apiClient.listJobsForCurrentUserPage).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ tab: 'paid' }),
-      );
-    });
 
     await waitFor(() => {
       expect(screen.getByText(/Today|Past Week|Past Month|Older/)).toBeTruthy();

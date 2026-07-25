@@ -3,10 +3,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailSessionAttachment } from '@fieldsolo/shared-types';
 
-import { cardShadowRn } from '../../theme/nativeTokens';
+import { bg, cardShadowRn, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import {
   LiveSessionActiveDotIcon,
+  SessionCardEditPencilIcon,
   SessionSheetBackIcon,
 } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
@@ -32,7 +33,10 @@ type LiveSessionBottomSheetProps = {
   onMinimize: () => void;
   /** Animation-completed callback (forwarded to BottomSheetShell.onClosed). */
   onClosed?: () => void;
+  /** Opens Edit Live Session (start/end times) from the capture card. */
   onEditPress: () => void;
+  /** Opens Edit Job (name/customer/address/revenue) from the header. */
+  onEditJobPress: () => void;
   onEndSessionPress: () => void;
 };
 
@@ -58,6 +62,7 @@ export function LiveSessionBottomSheet({
   onMinimize,
   onClosed,
   onEditPress,
+  onEditJobPress,
   onEndSessionPress,
 }: LiveSessionBottomSheetProps) {
   const [expanded, setExpanded] = useState(true);
@@ -121,6 +126,16 @@ export function LiveSessionBottomSheet({
             <Text style={[typography.labelCaps, styles.statusLabel]}>
               ACTIVE SESSION
             </Text>
+            <View style={styles.statusSpacer} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Edit job"
+              onPress={onEditJobPress}
+              style={({ pressed }) => [styles.headerEditButton, pressed && styles.pressed]}
+            >
+              <SessionCardEditPencilIcon color={fg.primary} />
+              <Text style={[typography.pillCompact, styles.headerEditLabel]}>EDIT</Text>
+            </Pressable>
           </View>
 
           <View style={styles.titleWrap}>
@@ -248,8 +263,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
   },
+  statusSpacer: {
+    flex: 1,
+    minWidth: 0,
+  },
   statusLabel: {
     color: color('Foundation/Text/Muted'),
+  },
+  headerEditButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space('Spacing/8'),
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: space('Spacing/12'),
+    paddingVertical: space('Spacing/8'),
+    borderRadius: radius('Radius/12'),
+    backgroundColor: bg.canvasWarm,
+    ...cardShadowRn,
+  },
+  headerEditLabel: {
+    color: fg.primary,
   },
   titleWrap: {
     width: '100%',
@@ -274,8 +309,10 @@ const styles = StyleSheet.create({
   },
   // Body — Figma `1897:3115` "live-session-body"; extra bottom inset so the
   // END SESSION button clears the sheet foot comfortable above safe area.
+  // Explicit cream fill: fullbleed shell bg is the dark header blue.
   body: {
     width: '100%',
+    backgroundColor: bg.canvasWarm,
     paddingHorizontal: space('Spacing/20'),
     paddingTop: space('Spacing/12'),
     paddingBottom: space('Spacing/32'),

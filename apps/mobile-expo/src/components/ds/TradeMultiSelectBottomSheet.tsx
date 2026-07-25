@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -107,7 +106,10 @@ export function TradeMultiSelectBottomSheet({
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const sheetChrome = insets.top + insets.bottom + 16 + 22 + 12 + 24;
-  const bodyMaxHeight = Math.max(360, windowHeight - sheetChrome);
+  const bodyMaxHeight = Math.min(
+    windowHeight * 0.55,
+    Math.max(320, windowHeight - sheetChrome),
+  );
 
   return (
     <BottomSheetShell
@@ -138,11 +140,7 @@ export function TradeMultiSelectBottomSheet({
           </Text>
         </View>
 
-        <ScrollView
-          style={styles.listScroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.listScroll}>
           {presets.map((opt, i) => {
             const sel = isSelected(opt.value);
             return (
@@ -224,7 +222,7 @@ export function TradeMultiSelectBottomSheet({
               ))}
             </View>
           ) : null}
-        </ScrollView>
+        </View>
 
         <Pressable
           accessibilityRole="button"

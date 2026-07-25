@@ -23,7 +23,11 @@ import {
 import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
-import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
+import {
+  ShellBottomNav,
+  shellBottomNavOuterHeight,
+  type ShellMainTab,
+} from '../components/shell/ShellBottomNav';
 import {
   ChangePasswordBottomSheet,
   DeleteAccountBottomSheet,
@@ -46,6 +50,7 @@ import { analytics, changedFields, emailProperties, errorProperties } from '../l
 import { supabase } from '../lib/supabase';
 import { PrivacyChoicesScreen } from './PrivacyChoicesScreen';
 import { HelpScreen } from './HelpScreen';
+import { OverlaySlideHost } from '../navigation/OverlaySlideHost';
 import { TRADE_PRESETS, formatTradesForDisplay } from '../lib/trades';
 import {
   bg,
@@ -89,9 +94,11 @@ type ProfileFlow =
 
 export type ProfileScreenProps = {
   onBack: () => void;
+  /** Tab bar lives on Profile (full-screen overlay covers the shell nav). */
+  onSelectShellTab: (tab: ShellMainTab) => void;
 };
 
-export function ProfileScreen({ onBack }: ProfileScreenProps) {
+export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
@@ -124,6 +131,14 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [privacyChoicesOpen, setPrivacyChoicesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [helpMounted, setHelpMounted] = useState(false);
+  const [privacyMounted, setPrivacyMounted] = useState(false);
+  useEffect(() => {
+    if (helpOpen) setHelpMounted(true);
+  }, [helpOpen]);
+  useEffect(() => {
+    if (privacyChoicesOpen) setPrivacyMounted(true);
+  }, [privacyChoicesOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -428,19 +443,6 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     );
   }
 
-  if (helpOpen) {
-    return <HelpScreen onBack={() => setHelpOpen(false)} />;
-  }
-
-  if (privacyChoicesOpen && session?.user.id) {
-    return (
-      <PrivacyChoicesScreen
-        userId={session.user.id}
-        onBack={() => setPrivacyChoicesOpen(false)}
-      />
-    );
-  }
-
   return (
     <View style={styles.root}>
       <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
@@ -482,7 +484,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
               icon={<ProfilePersonalInfoIcon color={color('Brand/Accent')} />}
               actionLabel="EDIT"
               actionIcon={
-                <ProfileEditPencilIcon color={fg.primary} />
+                <ProfileEditPencilIcon color={bg.canvasWarm} />
               }
               onActionPress={openEditProfile}
             />
@@ -507,6 +509,10 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           </View>
         </View>
       </Animated.ScrollView>
+
+      {/* Fixed in the column (not overlaid) so tab taps reach the nav on Android.
+          Profile is a full-screen overlay above the shell nav, so it owns a copy. */}
+      <ShellBottomNav selected="home" onSelect={onSelectShellTab} />
 
       {editProfileMounted ? (
         <>
@@ -565,6 +571,31 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           onSubmit={onDeleteAccountSheetSubmit}
         />
       ) : null}
+
+      {helpMounted ? (
+        <OverlaySlideHost
+          visible={helpOpen}
+          axis="horizontal"
+          onRequestClose={() => setHelpOpen(false)}
+          onExited={() => setHelpMounted(false)}
+        >
+          <HelpScreen onBack={() => setHelpOpen(false)} />
+        </OverlaySlideHost>
+      ) : null}
+
+      {privacyMounted && session?.user.id ? (
+        <OverlaySlideHost
+          visible={privacyChoicesOpen}
+          axis="horizontal"
+          onRequestClose={() => setPrivacyChoicesOpen(false)}
+          onExited={() => setPrivacyMounted(false)}
+        >
+          <PrivacyChoicesScreen
+            userId={session.user.id}
+            onBack={() => setPrivacyChoicesOpen(false)}
+          />
+        </OverlaySlideHost>
+      ) : null}
     </View>
   );
 }
@@ -585,7 +616,6 @@ function ProfileSectionHeader({
   actionIcon?: React.ReactNode;
   onActionPress?: () => void;
 }) {
-  const labelColor = fg.primary;
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderLead}>
@@ -601,7 +631,7 @@ function ProfileSectionHeader({
           style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
         >
           {actionIcon}
-          <Text style={[typography.bodySmall, { color: labelColor }]}>
+          <Text style={[typography.pillCompact, styles.actionButtonLabel]}>
             {actionLabel}
           </Text>
         </Pressable>
@@ -667,8 +697,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/12'),
-    backgroundColor: bg.surfaceWhite,
+    backgroundColor: fg.primary,
     ...cardShadowRn,
+  },
+  actionButtonLabel: {
+    color: bg.canvasWarm,
   },
   deleteSpacer: {
     height: space('Spacing/4'),

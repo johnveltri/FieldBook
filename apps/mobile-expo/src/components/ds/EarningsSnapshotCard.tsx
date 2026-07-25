@@ -2,11 +2,13 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { color, colorWithAlpha, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
+import { earningsSuccessNegativeColor } from '../../lib/financialColors';
 import { bg, cardShadowRn, fg, type TextStyles } from '../../theme/nativeTokens';
 
 export type EarningsSnapshotCardProps = {
   /** Pre-formatted currency, e.g. `$242,608.00`. */
   netEarnings: string;
+  netEarningsCents: number;
   /** Pre-formatted currency, e.g. `$639,375.00`. */
   revenue: string;
   /** Pre-formatted currency with sign, e.g. `-$148,767.00`. */
@@ -15,6 +17,7 @@ export type EarningsSnapshotCardProps = {
   time: string;
   /** Pre-formatted net/hr, e.g. `$6,337/hr` or `—`. */
   netPerHr: string;
+  netPerHrCents: number | null;
   /** Pre-formatted job count, e.g. `239`. */
   jobs: string;
   typography: TextStyles;
@@ -26,15 +29,19 @@ export type EarningsSnapshotCardProps = {
  */
 export function EarningsSnapshotCard({
   netEarnings,
+  netEarningsCents,
   revenue,
   materials,
   time,
   netPerHr,
+  netPerHrCents,
   jobs,
   typography,
 }: EarningsSnapshotCardProps) {
-  const success = color('Semantic/Status/Success/Text');
   const brand = color('Brand/Primary');
+  const netColor = earningsSuccessNegativeColor(netEarningsCents);
+  const netHrColor =
+    netPerHrCents == null ? fg.primary : earningsSuccessNegativeColor(netPerHrCents);
 
   return (
     <View
@@ -44,7 +51,7 @@ export function EarningsSnapshotCard({
     >
       <View style={styles.primary}>
         <Text style={[typography.labelHeadingSecondary, styles.center]}>NET EARNINGS</Text>
-        <Text style={[typography.metricXL, styles.center, { color: success }]}>{netEarnings}</Text>
+        <Text style={[typography.metricXL, styles.center, { color: netColor }]}>{netEarnings}</Text>
       </View>
 
       <View style={styles.row}>
@@ -67,7 +74,7 @@ export function EarningsSnapshotCard({
         </View>
         <View style={styles.colCenter}>
           <Text style={[typography.labelHeadingSecondary, styles.center]}>NET/HR</Text>
-          <Text style={[typography.metric, styles.center, { color: success, textTransform: 'none' }]}>
+          <Text style={[typography.metric, styles.center, { color: netHrColor, textTransform: 'none' }]}>
             {netPerHr}
           </Text>
         </View>
