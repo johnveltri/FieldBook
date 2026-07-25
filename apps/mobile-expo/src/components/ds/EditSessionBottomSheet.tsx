@@ -19,6 +19,7 @@ import {
   SessionSheetBackIcon,
 } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { InlineMonthCalendar } from './InlineMonthCalendar';
 import { screenHeaderA11y } from '../../lib/accessibility';
 import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
 
@@ -119,14 +120,14 @@ export function EditSessionBottomSheet({
   const [date, setDate] = useState<Date>(initialDate);
   const [startTime, setStartTime] = useState<Date>(initialStart);
   const [endTime, setEndTime] = useState<Date>(initialEnd);
-  const [iosPicker, setIosPicker] = useState<PickerKind | null>(null);
+  const [activePicker, setActivePicker] = useState<PickerKind | null>(null);
 
   useEffect(() => {
     if (!visible) return;
     setDate(initialDate);
     setStartTime(initialStart);
     setEndTime(initialEnd);
-    setIosPicker(null);
+    setActivePicker(null);
   }, [initialDate, initialEnd, initialStart, visible]);
 
   const applyPick = useCallback(
@@ -144,12 +145,13 @@ export function EditSessionBottomSheet({
 
   const openPicker = useCallback(
     (kind: PickerKind) => {
-      const current =
-        kind === 'date' ? date : kind === 'startTime' ? startTime : endTime;
-      if (Platform.OS === 'android') {
+      // Android DateTimePicker cannot embed inline; date uses our month grid.
+      // Time still uses the system dialog on Android.
+      if (Platform.OS === 'android' && kind !== 'date') {
+        const current = kind === 'startTime' ? startTime : endTime;
         DateTimePickerAndroid.open({
           value: current,
-          mode: kind === 'date' ? 'date' : 'time',
+          mode: 'time',
           is24Hour: false,
           onChange: (event: DateTimePickerEvent, selectedDate?: Date) => {
             if (event.type === 'dismissed' || !selectedDate) return;
@@ -158,17 +160,17 @@ export function EditSessionBottomSheet({
         });
         return;
       }
-      setIosPicker((prev) => (prev === kind ? null : kind));
+      setActivePicker((prev) => (prev === kind ? null : kind));
     },
-    [applyPick, date, endTime, startTime],
+    [applyPick, endTime, startTime],
   );
 
-  const handleIosChange = useCallback(
+  const handleTimeChange = useCallback(
     (_event: DateTimePickerEvent, selectedDate?: Date) => {
-      if (!iosPicker || !selectedDate) return;
-      applyPick(iosPicker, selectedDate);
+      if (!activePicker || activePicker === 'date' || !selectedDate) return;
+      applyPick(activePicker, selectedDate);
     },
-    [applyPick, iosPicker],
+    [activePicker, applyPick],
   );
 
   const handleSave = useCallback(() => {
@@ -180,14 +182,8 @@ export function EditSessionBottomSheet({
     });
   }, [date, endTime, onSavePress, startTime]);
 
-  const iosValue =
-    iosPicker === 'date'
-      ? date
-      : iosPicker === 'startTime'
-        ? startTime
-        : iosPicker === 'endTime'
-          ? endTime
-          : null;
+  const timePickerValue =
+    activePicker === 'startTime' ? startTime : activePicker === 'endTime' ? endTime : null;
 
   return (
     <BottomSheetShell visible={visible} onClose={onClose} onClosed={onClosed}>
@@ -215,7 +211,7 @@ export function EditSessionBottomSheet({
           <FieldShell
             typography={typography}
             value={dateFmt.format(date)}
-            active={iosPicker === 'date'}
+            active={activePicker === 'date'}
             onPress={() => openPicker('date')}
             accessibilityLabel="Session date"
           />
@@ -223,7 +219,7 @@ export function EditSessionBottomSheet({
           <FieldShell
             typography={typography}
             value={formatTimeLabel(startTime)}
-            active={iosPicker === 'startTime'}
+            active={activePicker === 'startTime'}
             onPress={() => openPicker('startTime')}
             accessibilityLabel="Start time"
           />
@@ -231,32 +227,52 @@ export function EditSessionBottomSheet({
           <FieldShell
             typography={typography}
             value={formatTimeLabel(endTime)}
-            active={iosPicker === 'endTime'}
+            active={activePicker === 'endTime'}
             onPress={() => openPicker('endTime')}
             accessibilityLabel="End time"
           />
         </View>
 
-        {Platform.OS === 'ios' && iosPicker && iosValue ? (
-          <View style={styles.iosPickerWrap}>
-            <DateTimePicker
-              value={iosValue}
-              mode={iosPicker === 'date' ? 'date' : 'time'}
-              display="spinner"
-              is24Hour={false}
-              onChange={handleIosChange}
-              textColor={fg.primary}
-            />
+        {activePicker === 'date' ? (
+          <View style={styles.pickerWrap}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Done"
-              onPress={() => setIosPicker(null)}
-              style={({ pressed }) => [styles.iosDone, pressed && styles.pressed]}
+              onPress={() => setActivePicker(null)}
+              style={({ pressed }) => [styles.pickerDone, pressed && styles.pressed]}
             >
               <Text style={[typography.bodyBold, { color: color('Brand/Primary') }]}>
                 Done
               </Text>
             </Pressable>
+            <InlineMonthCalendar
+              typography={typography}
+              value={date}
+              onChange={(next) => applyPick('date', next)}
+            />
+          </View>
+        ) : null}
+
+        {Platform.OS === 'ios' && timePickerValue && activePicker && activePicker !== 'date' ? (
+          <View style={styles.pickerWrap}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Done"
+              onPress={() => setActivePicker(null)}
+              style={({ pressed }) => [styles.pickerDone, pressed && styles.pressed]}
+            >
+              <Text style={[typography.bodyBold, { color: color('Brand/Primary') }]}>
+                Done
+              </Text>
+            </Pressable>
+            <DateTimePicker
+              value={timePickerValue}
+              mode="time"
+              display="spinner"
+              is24Hour={false}
+              onChange={handleTimeChange}
+              textColor={fg.primary}
+            />
           </View>
         ) : null}
 
@@ -340,12 +356,12 @@ const styles = StyleSheet.create({
   fieldShellActive: {
     borderColor: color('Brand/Primary'),
   },
-  iosPickerWrap: {
+  pickerWrap: {
     marginTop: space('Spacing/8'),
     borderTopWidth: 1,
     borderTopColor: border.subtle,
   },
-  iosDone: {
+  pickerDone: {
     alignSelf: 'flex-end',
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/8'),

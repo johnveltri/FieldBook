@@ -31,7 +31,16 @@ type EditJobBottomSheetProps = {
   onClosed?: () => void;
   onSavePress?: (values: EditJobBottomSheetValues) => void;
   onDeletePress?: () => void;
+  /** @default true */
+  registerInGlobalStack?: boolean;
 };
+
+function revenueTextIsZero(text: string): boolean {
+  const trimmed = text.trim().replace(/[$,\s]/g, '');
+  if (trimmed.length === 0) return false;
+  const n = Number(trimmed);
+  return Number.isFinite(n) && n === 0;
+}
 
 const DEFAULT_VALUES: EditJobBottomSheetValues = {
   shortDescription: 'Bathroom Remodel Phase 1',
@@ -74,6 +83,7 @@ export function EditJobBottomSheet({
   onClosed,
   onSavePress,
   onDeletePress,
+  registerInGlobalStack = true,
 }: EditJobBottomSheetProps) {
   const v = { ...DEFAULT_VALUES, ...values };
   const [shortDescription, setShortDescription] = useState(v.shortDescription);
@@ -98,6 +108,7 @@ export function EditJobBottomSheet({
       onClose={onClose}
       onClosed={onClosed}
       accessibilityTitle="Edit Job"
+      registerInGlobalStack={registerInGlobalStack}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -161,6 +172,11 @@ export function EditJobBottomSheet({
                 ref={revenueRef}
                 value={revenue}
                 onChangeText={setRevenue}
+                onFocus={() => {
+                  if (revenueTextIsZero(revenue)) {
+                    setRevenue('');
+                  }
+                }}
                 placeholder="Revenue"
                 placeholderTextColor={fg.secondary}
                 keyboardType="numeric"

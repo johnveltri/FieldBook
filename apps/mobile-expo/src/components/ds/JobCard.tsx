@@ -1,6 +1,6 @@
 import type { ListJobsForCurrentUserItem } from '@fieldsolo/api-client';
 import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/tokens';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   bg,
@@ -10,6 +10,8 @@ import {
   type TextStyles,
   space,
 } from '../../theme/nativeTokens';
+
+import { financialPositiveNegativeColor } from '../../lib/financialColors';
 
 import { JobDetailStatusPill } from './JobDetailStatusPill';
 
@@ -62,8 +64,21 @@ export function JobCard({
       : job.lastWorkedLabel;
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [pressed && styles.pressed]}>
-      <View style={styles.jobCard}>
+    // Outer lift keeps Android elevation off the Pressable so opacity/ripple
+    // don't draw a square "border" ring around the rounded card.
+    <View style={styles.jobCardLift}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        android_ripple={{
+          color: colorWithAlpha('Foundation/Text/Primary', 0.08),
+          borderless: false,
+        }}
+        style={({ pressed }) => [
+          styles.jobCard,
+          Platform.OS === 'ios' && pressed && styles.pressed,
+        ]}
+      >
         <View style={styles.jobCardRail} />
         <View style={styles.jobCardContent}>
           <View style={styles.jobHeaderRow}>
@@ -119,7 +134,7 @@ export function JobCard({
                 style={[
                   typography.metric,
                   styles.metricValue,
-                  { color: color('Semantic/Financial/Positive') },
+                  { color: financialPositiveNegativeColor(job.netEarningsCents) },
                 ]}
               >
                 {net}
@@ -127,12 +142,18 @@ export function JobCard({
             </View>
           </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  jobCardLift: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: bg.surfaceWhite,
+    ...cardShadowRn,
+  },
   jobCard: {
     width: '100%',
     borderWidth: 1,
@@ -143,7 +164,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingLeft: space('Spacing/24'),
     paddingRight: 0,
-    ...cardShadowRn,
   },
   jobCardRail: {
     width: 2,

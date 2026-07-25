@@ -20,8 +20,9 @@
     },
     "android": {
       "package": "com.veltriventures.fieldsolo",
+      "icon": "./assets/brand/fieldsolo-solo-notch-light.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/brand/fieldsolo-solo-notch-light.png",
+        "foregroundImage": "./assets/brand/fieldsolo-solo-notch-adaptive-fg.png",
         "monochromeImage": "./assets/brand/fieldsolo-solo-notch-monochrome.png",
         "backgroundColor": "#FAF6F0"
       },

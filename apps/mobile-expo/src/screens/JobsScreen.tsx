@@ -15,6 +15,7 @@ import {
   Text,
   TextInput,
   View,
+  type FlatList,
   type ListRenderItem,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +29,7 @@ import {
 import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/tokens';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
+import { ScrollFriendlyPressable } from '../components/ScrollFriendlyPressable';
 import {
   JobsFabPlusIcon,
   JobsInboxIcon,
@@ -42,6 +44,7 @@ import {
 import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { analytics, errorProperties } from '../lib/analytics';
+import { bucketOpenTabJobs } from '../lib/openJobsBuckets';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   recencyBucket,
@@ -63,7 +66,25 @@ import { screenHeaderA11y } from '../lib/accessibility';
 
 const PAGE_SIZE = 20;
 
+const JOBS_TABS: ListJobsForCurrentUserTab[] = ['all', 'open', 'paid'];
+
+type TabCacheEntry = {
+  jobs: ListJobsForCurrentUserItem[];
+  hasMore: boolean;
+  loaded: boolean;
+};
+
+function emptyTabCache(): Record<ListJobsForCurrentUserTab, TabCacheEntry> {
+  return {
+    all: { jobs: [], hasMore: true, loaded: false },
+    open: { jobs: [], hasMore: true, loaded: false },
+    paid: { jobs: [], hasMore: true, loaded: false },
+  };
+}
+
 type JobsScreenProps = {
+  /** When false, the jobs tab is hidden — skip list refetch until the user returns. */
+  isActive?: boolean;
   onOpenJobDetail: (jobId?: string, options?: { initialEditOpen?: boolean }) => void;
   /** Open the Inbox of unassigned quick captures (header icon). */
   onOpenInbox?: () => void;
@@ -78,13 +99,14 @@ type JobsScreenProps = {
    */
   jobsListTab?: ListJobsForCurrentUserTab;
   onJobsListTabChange?: (tab: ListJobsForCurrentUserTab) => void;
+  /** Scroll Open tab to this section header after deep-link navigation from Home/Earnings. */
+  openScrollToSection?: JobsOpenSectionKind | null;
+  /** Bumped on each deep-link so repeated taps re-scroll the same section. */
+  openScrollNonce?: number;
+  onOpenScrollToSectionHandled?: () => void;
 };
 
 type Typography = ReturnType<typeof createTextStyles>;
-
-function isJobIncomplete(job: ListJobsForCurrentUserItem): boolean {
-  return !job.isFinanciallyComplete;
-}
 
 function incompletePillsFor(job: ListJobsForCurrentUserItem): string[] {
   const pills: string[] = [];
@@ -128,14 +150,7 @@ function buildFlatRows(jobs: ListJobsForCurrentUserItem[]): JobsFlatRow[] {
 }
 
 function buildOpenFlatRows(jobs: ListJobsForCurrentUserItem[]): JobsFlatRow[] {
-  const incomplete: ListJobsForCurrentUserItem[] = [];
-  const inProgress: ListJobsForCurrentUserItem[] = [];
-  const unpaid: ListJobsForCurrentUserItem[] = [];
-  for (const job of jobs) {
-    if (isJobIncomplete(job)) incomplete.push(job);
-    else if (job.workStatus === 'inProgress') inProgress.push(job);
-    else if (job.workStatus === 'completed') unpaid.push(job);
-  }
+  const { incomplete, inProgress, unpaid } = bucketOpenTabJobs(jobs);
 
   const rows: JobsFlatRow[] = [];
   const pushOpenSection = (
@@ -214,12 +229,17 @@ export function JobsScreen({
   onOpenJobDetail,
   onOpenInbox,
   suppressFab = false,
+  isActive = true,
   jobsListTab: jobsListTabProp,
   onJobsListTabChange,
+  openScrollToSection = null,
+  openScrollNonce = 0,
+  onOpenScrollToSectionHandled,
 }: JobsScreenProps) {
   const insets = useSafeAreaInsets();
   const { columnStyle, fabRight } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
+  const scrollOffsetRef = useRef(0);
   const { version } = useJobsListInvalidation();
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,
@@ -239,11 +259,11 @@ export function JobsScreen({
     [],
   );
 
-  const [jobs, setJobs] = useState<ListJobsForCurrentUserItem[]>([]);
-  const jobsRef = useRef(jobs);
+  const [tabCache, setTabCache] = useState(emptyTabCache);
+  const tabCacheRef = useRef(tabCache);
   useEffect(() => {
-    jobsRef.current = jobs;
-  }, [jobs]);
+    tabCacheRef.current = tabCache;
+  }, [tabCache]);
 
   // Live count of unassigned quick captures for the header Inbox badge.
   // Refetched whenever the jobs list is invalidated (e.g. after a capture or
@@ -283,7 +303,16 @@ export function JobsScreen({
     },
     [activeTab, jobsTabControlled, onJobsListTabChange],
   );
-  const [hasMore, setHasMore] = useState(true);
+
+  const activeEntry = tabCache[activeTab];
+  const jobs = activeEntry.jobs;
+  const hasMore = activeEntry.hasMore;
+  const tabAwaitingData = !activeEntry.loaded;
+  const jobsRef = useRef(jobs);
+  useEffect(() => {
+    jobsRef.current = jobs;
+  }, [jobs]);
+
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreInFlight = useRef(false);
@@ -295,6 +324,7 @@ export function JobsScreen({
   const searchInputRef = useRef<TextInput>(null);
   const firstPageRequestIdRef = useRef(0);
   const [listContentHeight, setListContentHeight] = useState(0);
+  const listRef = useRef<FlatList<JobsFlatRow>>(null);
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
@@ -313,15 +343,15 @@ export function JobsScreen({
   }, []);
 
   const jobsListFetchKeyRef = useRef('');
+  const lastJobsFetchVersionRef = useRef(-1);
 
-  const loadFirstPage = useCallback(async (options?: { showLoading?: boolean }) => {
+  const loadAllTabsFirstPage = useCallback(async () => {
     const startedAt = Date.now();
     const requestId = firstPageRequestIdRef.current + 1;
     firstPageRequestIdRef.current = requestId;
     if (!isSupabaseConfigured()) {
       setLoading(false);
-      setJobs([]);
-      setHasMore(false);
+      setTabCache(emptyTabCache());
       setLoadError('Supabase is not configured.');
       analytics.capture('supabase_not_configured_seen', {
         screen: 'jobs',
@@ -331,47 +361,65 @@ export function JobsScreen({
     }
     if (searchFocused && debouncedSearch.trim() === '') {
       setLoading(false);
-      setJobs([]);
-      setHasMore(false);
+      setTabCache(emptyTabCache());
       setLoadError(null);
       return;
     }
-    const showLoading = options?.showLoading ?? true;
+    const showLoading = !JOBS_TABS.some((t) => tabCacheRef.current[t].loaded);
     if (showLoading) {
       setLoading(true);
     }
     setLoadError(null);
-    setHasMore(true);
     try {
-      const { items, hasMore: more } = await listJobsForCurrentUserPage(supabase, {
-        limit: PAGE_SIZE,
-        offset: 0,
-        tab: activeTab,
-        search: debouncedSearch.trim() || undefined,
-      });
+      const search = debouncedSearch.trim() || undefined;
+      const results = await Promise.all(
+        JOBS_TABS.map((tab) =>
+          listJobsForCurrentUserPage(supabase, {
+            limit: PAGE_SIZE,
+            offset: 0,
+            tab,
+            search,
+          }),
+        ),
+      );
       if (firstPageRequestIdRef.current !== requestId) return;
-      setJobs(items);
-      setHasMore(more);
+      setTabCache((prev) => {
+        const next = { ...prev };
+        JOBS_TABS.forEach((tab, i) => {
+          next[tab] = {
+            jobs: results[i]?.items ?? [],
+            hasMore: results[i]?.hasMore ?? false,
+            loaded: true,
+          };
+        });
+        return next;
+      });
+      const activeIndex = JOBS_TABS.indexOf(activeTab);
+      const activeItems = results[activeIndex]?.items ?? [];
       analytics.capture('jobs_list_loaded', {
         tab: activeTab,
         search_present: debouncedSearch.trim().length > 0,
         search_length: debouncedSearch.trim().length,
-        item_count: items.length,
-        has_more: more,
+        item_count: activeItems.length,
+        has_more: results[activeIndex]?.hasMore ?? false,
         load_duration_ms: Date.now() - startedAt,
         inbox_count: inboxCount,
+        prefetched_tabs: JOBS_TABS.length,
       });
       if (searchFocused && debouncedSearch.trim().length > 0) {
         analytics.capture('jobs_search_submitted', {
           query_length: debouncedSearch.trim().length,
-          result_count: items.length,
+          result_count: activeItems.length,
           tab: activeTab,
         });
       }
     } catch (error) {
       if (firstPageRequestIdRef.current !== requestId) return;
-      setJobs([]);
-      setHasMore(false);
+      setTabCache({
+        all: { jobs: [], hasMore: false, loaded: true },
+        open: { jobs: [], hasMore: false, loaded: true },
+        paid: { jobs: [], hasMore: false, loaded: true },
+      });
       setLoadError(formatLoadError(error));
       analytics.capture('jobs_list_load_failed', {
         tab: activeTab,
@@ -388,40 +436,49 @@ export function JobsScreen({
   }, [activeTab, debouncedSearch, formatLoadError, inboxCount, searchFocused]);
 
   useEffect(() => {
-    const fetchKey = `${activeTab}|${debouncedSearch}|${searchFocused}`;
+    if (!isActive) return;
+    const fetchKey = `${debouncedSearch}|${searchFocused}`;
     const filtersChanged = jobsListFetchKeyRef.current !== fetchKey;
+    const versionChanged = lastJobsFetchVersionRef.current !== version;
+    if (!filtersChanged && !versionChanged && JOBS_TABS.every((t) => tabCacheRef.current[t].loaded)) {
+      return;
+    }
     jobsListFetchKeyRef.current = fetchKey;
-    const showLoading = filtersChanged || jobsRef.current.length === 0;
-    void loadFirstPage({ showLoading });
-  }, [version, loadFirstPage, activeTab, debouncedSearch, searchFocused]);
+    lastJobsFetchVersionRef.current = version;
+    void loadAllTabsFirstPage();
+  }, [isActive, version, loadAllTabsFirstPage, debouncedSearch, searchFocused]);
 
   const loadNextPage = useCallback(async () => {
     if (!isSupabaseConfigured() || loadMoreInFlight.current || loading || !hasMore) return;
     if (searchFocused && debouncedSearch.trim() === '') return;
     const requestId = firstPageRequestIdRef.current;
+    const tab = activeTab;
     loadMoreInFlight.current = true;
     setLoadingMore(true);
     setLoadError(null);
     try {
-      const offset = jobsRef.current.length;
+      const offset = tabCacheRef.current[tab].jobs.length;
       const { items, hasMore: more } = await listJobsForCurrentUserPage(supabase, {
         limit: PAGE_SIZE,
         offset,
-        tab: activeTab,
+        tab,
         search: debouncedSearch.trim() || undefined,
       });
       if (firstPageRequestIdRef.current !== requestId) return;
-      setJobs((prev) => {
-        const seen = new Set(prev.map((j) => j.id));
-        const next = [...prev];
+      setTabCache((prev) => {
+        const cur = prev[tab];
+        const seen = new Set(cur.jobs.map((j) => j.id));
+        const merged = [...cur.jobs];
         for (const j of items) {
-          if (!seen.has(j.id)) next.push(j);
+          if (!seen.has(j.id)) merged.push(j);
         }
-        return next;
+        return {
+          ...prev,
+          [tab]: { jobs: merged, hasMore: more, loaded: true },
+        };
       });
-      setHasMore(more);
       analytics.capture('jobs_pagination_loaded', {
-        tab: activeTab,
+        tab,
         offset,
         added_count: items.length,
         has_more: more,
@@ -431,8 +488,8 @@ export function JobsScreen({
       if (firstPageRequestIdRef.current !== requestId) return;
       setLoadError(formatLoadError(error));
       analytics.capture('jobs_pagination_failed', {
-        tab: activeTab,
-        offset: jobsRef.current.length,
+        tab,
+        offset: tabCacheRef.current[tab].jobs.length,
         search_present: debouncedSearch.trim().length > 0,
         ...errorProperties(error),
       });
@@ -474,6 +531,57 @@ export function JobsScreen({
   const flatData = useMemo(
     () => (activeTab === 'open' ? buildOpenFlatRows(jobs) : buildFlatRows(jobs)),
     [activeTab, jobs],
+  );
+
+  const scrollToOpenSection = useCallback(
+    (section: JobsOpenSectionKind) => {
+      const index = flatData.findIndex(
+        (row) =>
+          row.kind === 'section' &&
+          row.mode === 'openStack' &&
+          row.openKind === section,
+      );
+      if (index < 0) return;
+      const viewOffset = space('Spacing/8');
+      listRef.current?.scrollToIndex({ index, viewOffset, animated: true });
+    },
+    [flatData],
+  );
+
+  useEffect(() => {
+    if (!isActive || !openScrollToSection || activeTab !== 'open') return;
+    if (loading || tabAwaitingData) return;
+    const section = openScrollToSection;
+    const frame = requestAnimationFrame(() => {
+      scrollToOpenSection(section);
+    });
+    const done = setTimeout(() => {
+      onOpenScrollToSectionHandled?.();
+    }, 320);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(done);
+    };
+  }, [
+    activeTab,
+    flatData,
+    isActive,
+    loading,
+    onOpenScrollToSectionHandled,
+    openScrollNonce,
+    openScrollToSection,
+    scrollToOpenSection,
+    tabAwaitingData,
+  ]);
+
+  const onScrollToIndexFailed = useCallback(
+    (info: { index: number; averageItemLength: number }) => {
+      listRef.current?.scrollToOffset({
+        offset: Math.max(0, info.averageItemLength * info.index),
+        animated: true,
+      });
+    },
+    [],
   );
 
   const onCreateJob = useCallback(async () => {
@@ -711,7 +819,7 @@ export function JobsScreen({
   );
 
   const listEmpty = useMemo(() => {
-    if (loading && jobs.length === 0) {
+    if ((loading || tabAwaitingData) && jobs.length === 0) {
       return <JobsLoadingSkeleton typography={typography} />;
     }
     if (loadError) {
@@ -762,11 +870,14 @@ export function JobsScreen({
         </View>
       );
     }
-    return (
-      <View style={styles.centerState}>
-        <Text style={[typography.body, { color: fg.primary }]}>No jobs yet.</Text>
-      </View>
-    );
+    if (jobs.length === 0) {
+      return (
+        <View style={styles.centerState}>
+          <Text style={[typography.body, { color: fg.primary }]}>No jobs yet.</Text>
+        </View>
+      );
+    }
+    return null;
   }, [
     activeTab,
     debouncedSearch,
@@ -775,6 +886,7 @@ export function JobsScreen({
     loadError,
     loading,
     searchFocused,
+    tabAwaitingData,
     typography,
   ]);
 
@@ -820,7 +932,8 @@ export function JobsScreen({
         <View style={styles.topAccent} />
       </View>
       <Animated.FlatList
-        data={loading && jobs.length === 0 ? [] : flatData}
+        ref={listRef}
+        data={loading || tabAwaitingData ? (jobs.length === 0 ? [] : flatData) : flatData}
         keyExtractor={(item) => item.key}
         renderItem={renderItem}
         ListHeaderComponent={listHeader}
@@ -836,26 +949,35 @@ export function JobsScreen({
         ]}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
           useNativeDriver: true,
+          listener: (event: { nativeEvent: { contentOffset: { y: number } } }) => {
+            scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+          },
         })}
         scrollEventThrottle={16}
         onContentSizeChange={(_w, h) => setListContentHeight(h)}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.35}
+        onScrollToIndexFailed={onScrollToIndexFailed}
         keyboardShouldPersistTaps="handled"
       />
 
       {suppressFab ? null : (
         <View style={[styles.fabWrap, { bottom: fabBottom, right: fabRight }]}>
-          <Pressable
+          <ScrollFriendlyPressable
             accessibilityRole="button"
             accessibilityLabel="Create new job"
             disabled={creatingJob}
             onPress={onCreateJob}
+            onScrollDelta={(dy) => {
+              const next = Math.max(0, scrollOffsetRef.current - dy);
+              scrollOffsetRef.current = next;
+              listRef.current?.scrollToOffset({ offset: next, animated: false });
+            }}
             style={({ pressed }) => [styles.fabContent, (pressed || creatingJob) && styles.pressed]}
           >
             <JobsFabPlusIcon color={bg.canvasWarm} />
             <Text style={[typography.bodyBold, { color: bg.canvasWarm }]}>New Job</Text>
-          </Pressable>
+          </ScrollFriendlyPressable>
         </View>
       )}
 

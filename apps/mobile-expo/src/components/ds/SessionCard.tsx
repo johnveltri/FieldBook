@@ -72,10 +72,10 @@ export function SessionCard({
               onPress={onEditPress}
               style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
             >
-              <SessionCardEditPencilIcon color={fg.primary} />
+              <SessionCardEditPencilIcon color={bg.canvasWarm} />
               <Text
                 style={[
-                  typography.bodySmall,
+                  typography.pillCompact,
                   styles.editButtonLabel,
                 ]}
               >
@@ -154,11 +154,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/12'),
-    backgroundColor: bg.surfaceWhite,
+    backgroundColor: fg.primary,
     ...cardShadowRn,
   },
   editButtonLabel: {
-    color: fg.primary,
+    color: bg.canvasWarm,
   },
   pressed: {
     opacity: 0.75,

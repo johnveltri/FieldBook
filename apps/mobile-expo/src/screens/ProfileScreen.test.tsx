@@ -54,6 +54,11 @@ jest.mock('@fieldsolo/api-client', () => ({
   updateCurrentUserProfile: (...args: unknown[]) => mockUpdateProfile(...(args as [])),
 }));
 
+jest.mock('../components/shell/ShellBottomNav', () => ({
+  ShellBottomNav: () => null,
+  shellBottomNavOuterHeight: () => 80,
+}));
+
 describe('ProfileScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -66,7 +71,7 @@ describe('ProfileScreen', () => {
   });
 
   it('renders all three section headers and the user info', async () => {
-    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    const screen = render(<ProfileScreen onBack={jest.fn()} onSelectShellTab={jest.fn()} />);
     await waitFor(() => {
       expect(screen.getByText('Alex Builder')).toBeTruthy();
     });
@@ -78,7 +83,7 @@ describe('ProfileScreen', () => {
   });
 
   it('logs the user out when "Log out" is pressed', async () => {
-    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    const screen = render(<ProfileScreen onBack={jest.fn()} onSelectShellTab={jest.fn()} />);
     await waitFor(() => {
       expect(screen.getByText('Log out')).toBeTruthy();
     });
@@ -90,7 +95,7 @@ describe('ProfileScreen', () => {
 
   it('opens the Update Profile sheet from the EDIT pill even when no profile row exists', async () => {
     mockFetchProfile.mockResolvedValueOnce(null);
-    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    const screen = render(<ProfileScreen onBack={jest.fn()} onSelectShellTab={jest.fn()} />);
     await waitFor(() => {
       expect(screen.getByText('Personal Info')).toBeTruthy();
     });
@@ -101,7 +106,7 @@ describe('ProfileScreen', () => {
   });
 
   it('opens Privacy from the account section', async () => {
-    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    const screen = render(<ProfileScreen onBack={jest.fn()} onSelectShellTab={jest.fn()} />);
     await waitFor(() => {
       expect(screen.getByText('Privacy')).toBeTruthy();
     });
@@ -112,7 +117,7 @@ describe('ProfileScreen', () => {
   });
 
   it('opens Help from the account section', async () => {
-    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    const screen = render(<ProfileScreen onBack={jest.fn()} onSelectShellTab={jest.fn()} />);
     await waitFor(() => {
       expect(screen.getByText('Help')).toBeTruthy();
     });
@@ -125,7 +130,7 @@ describe('ProfileScreen', () => {
 
   it('opens the delete account sheet before showing the system confirmation', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    const screen = render(<ProfileScreen onBack={jest.fn()} onSelectShellTab={jest.fn()} />);
     await waitFor(() => {
       expect(screen.getByText('Delete account')).toBeTruthy();
     });

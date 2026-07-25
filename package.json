@@ -26,6 +26,7 @@
     "marketing:build": "npm run build -w @fieldsolo/marketing",
     "mobile": "npm run start -w mobile-expo",
     "mobile:android": "npm run android -w mobile-expo",
+    "mobile:android:go": "npm run android:go -w mobile-expo",
     "mobile:ios": "npm run ios -w mobile-expo",
     "db:start": "npx supabase start --workdir backend",
     "db:stop": "npx supabase stop --workdir backend",

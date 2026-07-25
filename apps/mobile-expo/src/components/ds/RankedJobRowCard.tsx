@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { color, colorWithAlpha, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
+import { earningsSuccessNegativeColor } from '../../lib/financialColors';
 import { bg, border, cardShadowRn, fg, type TextStyles } from '../../theme/nativeTokens';
 
 export type RankedJobRowCardProps = {
@@ -11,6 +12,8 @@ export type RankedJobRowCardProps = {
   subtitle: string | null;
   /** Pre-formatted trailing value, e.g. `$100` or `$100/hr`. */
   value: string;
+  /** Signed cents for value color (net or net/hr). */
+  valueCents: number | null;
   typography: TextStyles;
   onPress: () => void;
 };
@@ -23,10 +26,11 @@ export function RankedJobRowCard({
   title,
   subtitle,
   value,
+  valueCents,
   typography,
   onPress,
 }: RankedJobRowCardProps) {
-  const success = color('Semantic/Status/Success/Text');
+  const valueColor = earningsSuccessNegativeColor(valueCents ?? 0);
 
   return (
     <Pressable
@@ -51,7 +55,7 @@ export function RankedJobRowCard({
         </View>
       </View>
       <View style={styles.trailing}>
-        <Text style={[typography.bodyBold, { color: success }]}>{value}</Text>
+        <Text style={[typography.bodyBold, { color: valueColor }]}>{value}</Text>
       </View>
     </Pressable>
   );

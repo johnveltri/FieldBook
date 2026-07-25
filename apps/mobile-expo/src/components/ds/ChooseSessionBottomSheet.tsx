@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { bg, border, fg } from '../../theme/nativeTokens';
@@ -86,12 +86,7 @@ export function ChooseSessionBottomSheet({
           {title}
         </Text>
 
-        <ScrollView
-          style={styles.listScroll}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.listContent}>
           {mode === 'edit' ? (
             <>
               <RemoveFromSessionRow typography={typography} onPress={onRemove} />
@@ -106,7 +101,7 @@ export function ChooseSessionBottomSheet({
               onPress={() => onSelect(s.id)}
             />
           ))}
-        </ScrollView>
+        </View>
       </View>
     </BottomSheetShell>
   );

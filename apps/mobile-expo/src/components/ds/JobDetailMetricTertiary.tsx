@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
+import { radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailViewModel } from '@fieldsolo/shared-types';
 
+import { financialPositiveNegativeColor } from '../../lib/financialColors';
 import {
   bg,
   border,
@@ -11,12 +12,17 @@ import type { TextStyles } from '../../theme/nativeTokens';
 
 export function JobDetailMetricTertiary({
   metrics,
+  netEarningsCents,
   typography,
 }: {
   metrics: JobDetailViewModel['metrics'];
+  netEarningsCents: number;
   typography: TextStyles;
 }) {
-  const success = color('Semantic/Financial/Positive');
+  const netHrColor =
+    metrics.netPerHrDisplay === '—'
+      ? fg.primary
+      : financialPositiveNegativeColor(netEarningsCents);
 
   return (
     <View style={styles.metricCard}>
@@ -31,7 +37,7 @@ export function JobDetailMetricTertiary({
           <Text style={typography.jobDetailMetricColumnLabel}>NET/HR</Text>
           <View style={styles.netHrValue}>
             <Text
-              style={[typography.metric, { color: success, textAlign: 'center', textTransform: 'none' }]}
+              style={[typography.metric, { color: netHrColor, textAlign: 'center', textTransform: 'none' }]}
             >
               {`$ ${metrics.netPerHrDisplay}`}
             </Text>

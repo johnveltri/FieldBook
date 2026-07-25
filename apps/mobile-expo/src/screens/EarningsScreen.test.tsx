@@ -146,7 +146,7 @@ describe('EarningsScreen', () => {
     fireEvent.press(
       screen.getByLabelText('Outstanding. 2 jobs pending payment. $1,500.00.'),
     );
-    expect(onOpenJobsOpenTab).toHaveBeenCalledTimes(1);
+    expect(onOpenJobsOpenTab).toHaveBeenCalledWith('unpaid');
 
     fireEvent.press(screen.getByLabelText('Rank 1. Panel Upgrade. Ada. $800.'));
     expect(onOpenJobDetail).toHaveBeenCalledWith('job-high');

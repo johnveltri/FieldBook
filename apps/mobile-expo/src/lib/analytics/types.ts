@@ -76,6 +76,8 @@ export type AnalyticsEventName =
   | 'home_quick_action_selected'
   | 'home_job_card_pressed'
   | 'home_needs_attention_expanded'
+  | 'home_needs_attention_summary_pressed'
+  | 'home_jobs_open_pressed'
   | 'home_earnings_pressed'
   | 'session_start_requested'
   | 'live_session_started'

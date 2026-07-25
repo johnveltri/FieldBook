@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -13,7 +14,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   useWindowDimensions,
   type LayoutChangeEvent,
@@ -26,6 +26,15 @@ import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 import { useBottomSheetStackWriters } from '../../context/BottomSheetStackContext';
 import { announceAccessibilityMessage } from '../../lib/accessibility';
 import { bg, border } from '../../theme/nativeTokens';
+import {
+  PanGestureHandler,
+  State,
+  type PanGestureHandlerStateChangeEvent,
+} from 'react-native-gesture-handler';
+import {
+  BottomSheetScrollProvider,
+  BottomSheetScrollView,
+} from './bottomSheetScrollContext';
 
 const absoluteFill = {
   position: 'absolute',
@@ -76,7 +85,7 @@ type BottomSheetShellProps = {
   registerInGlobalStack?: boolean;
   /**
    * Extra cream padding below sheet content (above the safe-area inset).
-   * @default space('Spacing/12')
+   * @default space('Spacing/4')
    */
   bottomPaddingExtra?: number;
   /**
@@ -102,7 +111,7 @@ export function BottomSheetShell({
   variant = 'standard',
   autoSizeUpToFraction,
   registerInGlobalStack = true,
-  bottomPaddingExtra = space('Spacing/12'),
+  bottomPaddingExtra = space('Spacing/4'),
   accessibilityTitle,
 }: BottomSheetShellProps) {
   const insets = useSafeAreaInsets();
@@ -124,8 +133,12 @@ export function BottomSheetShell({
   // sibling stack.
   const hiddenOffset = windowHeight;
   const translateY = useRef(new Animated.Value(hiddenOffset)).current;
+  const dragY = useRef(new Animated.Value(0)).current;
   const scrimOpacity = useRef(new Animated.Value(0)).current;
   const forcedOffset = useRef(new Animated.Value(0)).current;
+  const scrollOffsetY = useRef(0);
+  const [scrollAtTop, setScrollAtTop] = useState(true);
+  const panRef = useRef<PanGestureHandler>(null);
 
   /**
    * Tracks whether the sheet's natural content height exceeds the cap, so we
@@ -149,10 +162,14 @@ export function BottomSheetShell({
    * live-session bar on Android (elevation-based compositing).
    */
   const [stackingElevated, setStackingElevated] = useState(visible);
+  /** When true, swipe already carried the sheet off-screen — skip snap+slide on close. */
+  const closingFromSwipeRef = useRef(false);
 
   useEffect(() => {
     if (visible) {
+      closingFromSwipeRef.current = false;
       setStackingElevated(true);
+      dragY.setValue(0);
       Animated.parallel([
         Animated.timing(translateY, {
           toValue: 0,
@@ -170,6 +187,17 @@ export function BottomSheetShell({
       return;
     }
 
+    if (closingFromSwipeRef.current) {
+      closingFromSwipeRef.current = false;
+      dragY.setValue(0);
+      translateY.setValue(hiddenOffset);
+      scrimOpacity.setValue(0);
+      setStackingElevated(false);
+      onClosed?.();
+      return;
+    }
+
+    dragY.setValue(0);
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: hiddenOffset,
@@ -189,7 +217,7 @@ export function BottomSheetShell({
         onClosed?.();
       }
     });
-  }, [hiddenOffset, onClosed, scrimOpacity, translateY, visible]);
+  }, [dragY, hiddenOffset, onClosed, scrimOpacity, translateY, visible]);
 
   const prevVisibleRef = useRef(visible);
   useEffect(() => {
@@ -279,14 +307,101 @@ export function BottomSheetShell({
   // `fullbleedDark`, so the only overhead there is the safe-area bottom.
   const sheetChromeHeight = isFullbleed
     ? effectiveSafeBottom + bottomPaddingExtra
-    : space('Spacing/16') /* paddingTop */ +
+    : space('Spacing/12') /* paddingTop */ +
+      space('Spacing/12') /* handleHitArea paddingBottom */ +
       6 /* handle h */ +
-      space('Spacing/16') /* handle marginBottom */ +
       effectiveSafeBottom +
       bottomPaddingExtra;
 
   const scrollViewMaxHeight =
     maxSheetHeight != null ? Math.max(0, maxSheetHeight - sheetChromeHeight) : undefined;
+
+  const dismissSheet = useCallback(() => {
+    onCloseRef.current?.();
+  }, []);
+
+  const onPanGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: dragY } }],
+    {
+      useNativeDriver: true,
+      listener: (event: { nativeEvent: { translationY: number } }) => {
+        const ty = event.nativeEvent.translationY;
+        if (ty < 0 || scrollOffsetY.current > 4) {
+          dragY.setValue(0);
+        }
+      },
+    },
+  );
+
+  const onPanHandlerStateChange = useCallback(
+    (event: PanGestureHandlerStateChangeEvent) => {
+      const { state, oldState, translationY, velocityY } = event.nativeEvent;
+      if (oldState === State.ACTIVE) {
+        if (scrollOffsetY.current > 4) {
+          Animated.spring(dragY, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 0,
+          }).start();
+          return;
+        }
+        if (translationY > 72 || velocityY > 800) {
+          const start = Math.max(0, translationY);
+          dragY.setValue(start);
+          const remaining = Math.max(1, hiddenOffset - start);
+          const duration = Math.max(140, Math.min(280, remaining * 0.32));
+          closingFromSwipeRef.current = true;
+          Animated.parallel([
+            Animated.timing(dragY, {
+              toValue: hiddenOffset,
+              duration,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+            Animated.timing(scrimOpacity, {
+              toValue: 0,
+              duration: Math.min(180, duration),
+              easing: Easing.in(Easing.quad),
+              useNativeDriver: true,
+            }),
+          ]).start(({ finished }) => {
+            if (!finished) {
+              closingFromSwipeRef.current = false;
+              return;
+            }
+            dismissSheet();
+          });
+          return;
+        }
+        Animated.spring(dragY, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 0,
+        }).start();
+      }
+      if (state === State.BEGAN) {
+        if (!closingFromSwipeRef.current) {
+          dragY.setValue(0);
+        }
+      }
+    },
+    [dismissSheet, dragY, hiddenOffset, scrimOpacity],
+  );
+
+  const onScrollOffsetChange = useCallback((offsetY: number) => {
+    const atTop = offsetY <= 4;
+    setScrollAtTop((prev) => (prev === atTop ? prev : atTop));
+  }, []);
+
+  // Bleed into the status bar only. Never bleed below the host — sheets that
+  // sit in `shellMain` (above the tab bar) would otherwise paint scrim over
+  // the nav as a solid grey band under the sheet.
+  const overlayBleedStyle = useMemo(
+    () => ({
+      top: -insets.top,
+    }),
+    [insets.top],
+  );
 
   // When the sheet is hidden we still keep the view tree mounted so the slide-down
   // animation can play, but taps must pass through to whatever is behind us —
@@ -306,12 +421,13 @@ export function BottomSheetShell({
     >
       {/* Scrim sits in its OWN absolutely-positioned layer so it covers
           the full screen (including the area behind the keyboard) — keeps
-          tap-to-dismiss working everywhere outside the sheet. */}
+          tap-to-dismiss working everywhere outside the sheet.
+          Bleed into system bars on Android without expanding the sheet host. */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Close bottom sheet"
         onPress={onClose}
-        style={absoluteFill}
+        style={[absoluteFill, overlayBleedStyle]}
         pointerEvents={visible ? 'auto' : 'none'}
       >
         <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]} />
@@ -328,46 +444,70 @@ export function BottomSheetShell({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         pointerEvents="box-none"
       >
-        <Animated.View
-          onLayout={handleSheetLayout}
-          style={[
-            isFullbleed ? styles.sheetFullbleed : styles.sheet,
-            !isFullbleed ? { paddingHorizontal: sheetGutter } : null,
-            {
-              paddingBottom: isFullbleed ? 0 : effectiveSafeBottom + bottomPaddingExtra,
-              maxHeight: maxSheetHeight,
-              transform: [
-                {
-                  translateY: Animated.add(
-                    translateY,
-                    Animated.multiply(forcedOffset, -1),
-                  ),
-                },
-              ],
-            },
-          ]}
-          pointerEvents={visible ? 'auto' : 'none'}
+        <BottomSheetScrollProvider
+          onDismiss={dismissSheet}
+          scrollOffsetYRef={scrollOffsetY}
+          onScrollOffsetChange={onScrollOffsetChange}
         >
-          {!isFullbleed ? <View style={styles.handle} /> : null}
-          {scrollViewMaxHeight != null ? (
-            <ScrollView
-              style={{ maxHeight: scrollViewMaxHeight }}
-              contentContainerStyle={isFullbleed ? undefined : styles.contentContainer}
-              scrollEnabled={contentOverflow}
-              showsVerticalScrollIndicator={contentOverflow}
-              onContentSizeChange={(_w, h) => {
-                setContentOverflow(h > scrollViewMaxHeight);
-              }}
-              keyboardShouldPersistTaps="handled"
+          <PanGestureHandler
+            ref={panRef}
+            enabled={visible && scrollAtTop}
+            activeOffsetY={10}
+            failOffsetY={-5}
+            failOffsetX={[-24, 24]}
+            onGestureEvent={onPanGestureEvent}
+            onHandlerStateChange={onPanHandlerStateChange}
+          >
+            <Animated.View
+              onLayout={handleSheetLayout}
+              collapsable={false}
+              style={[
+                isFullbleed ? styles.sheetFullbleed : styles.sheet,
+                !isFullbleed ? { paddingHorizontal: sheetGutter } : null,
+                {
+                  paddingBottom: isFullbleed ? 0 : effectiveSafeBottom + bottomPaddingExtra,
+                  maxHeight: maxSheetHeight,
+                  transform: [
+                    {
+                      translateY: Animated.add(
+                        Animated.add(translateY, dragY),
+                        Animated.multiply(forcedOffset, -1),
+                      ),
+                    },
+                  ],
+                },
+              ]}
+              pointerEvents={visible ? 'auto' : 'none'}
             >
-              {isFullbleed ? children : <View style={styles.content}>{children}</View>}
-            </ScrollView>
-          ) : isFullbleed ? (
-            children
-          ) : (
-            <View style={styles.content}>{children}</View>
-          )}
-        </Animated.View>
+              {!isFullbleed ? (
+                <View style={styles.handleHitArea}>
+                  <View style={styles.handle} />
+                </View>
+              ) : null}
+              {scrollViewMaxHeight != null ? (
+                <BottomSheetScrollView
+                  waitFor={scrollAtTop ? panRef : undefined}
+                  style={{ maxHeight: scrollViewMaxHeight }}
+                  contentContainerStyle={isFullbleed ? undefined : styles.contentContainer}
+                  scrollEnabled={contentOverflow || Platform.OS === 'android'}
+                  showsVerticalScrollIndicator={contentOverflow}
+                  scrollEventThrottle={16}
+                  nestedScrollEnabled
+                  onContentSizeChange={(_w, h) => {
+                    setContentOverflow(h > scrollViewMaxHeight);
+                  }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {isFullbleed ? children : <View style={styles.content}>{children}</View>}
+                </BottomSheetScrollView>
+              ) : isFullbleed ? (
+                children
+              ) : (
+                <View style={styles.content}>{children}</View>
+              )}
+            </Animated.View>
+          </PanGestureHandler>
+        </BottomSheetScrollProvider>
       </KeyboardAvoidingView>
     </View>
   );
@@ -407,19 +547,26 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: border.subtle,
     backgroundColor: bg.canvasWarm,
-    paddingTop: space('Spacing/16'),
+    paddingTop: space('Spacing/12'),
     // Horizontal inset comes from the shared responsive gutter at runtime.
+  },
+  /** Larger touch target for swipe-down dismiss (handle + padding). */
+  handleHitArea: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingBottom: space('Spacing/12'),
   },
   /**
    * Fullbleed variant: caller owns ALL visual chrome (top corners, header
    * background, padding) so the dark live-session header can run flush to
-   * the rounded top edge.
+   * the rounded top edge. Sheet fill matches the live-session header blue so
+   * the clipped radius never flashes cream above the header.
    */
   sheetFullbleed: {
     borderTopLeftRadius: radius('Radius/32'),
     borderTopRightRadius: radius('Radius/32'),
     overflow: 'hidden',
-    backgroundColor: bg.canvasWarm,
+    backgroundColor: color('Foundation/Border/Default'),
   },
   handle: {
     alignSelf: 'center',
@@ -428,7 +575,6 @@ const styles = StyleSheet.create({
     borderRadius: radius('Radius/Full'),
     backgroundColor: color('Foundation/Text/Primary'),
     opacity: 0.2,
-    marginBottom: space('Spacing/16'),
   },
   content: {
     width: '100%',

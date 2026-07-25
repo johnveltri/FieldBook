@@ -19,6 +19,7 @@ import {
   SessionSheetBackIcon,
 } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { InlineMonthCalendar } from './InlineMonthCalendar';
 import { screenHeaderA11y } from '../../lib/accessibility';
 import { SheetPrimaryDeleteActions } from './SheetPrimaryDeleteActions';
 
@@ -119,9 +120,9 @@ export function EditLiveSessionBottomSheet({
   const [startTime, setStartTime] = useState<Date>(initialStart);
   /** Null until the user explicitly picks an end time. */
   const [endTime, setEndTime] = useState<Date | null>(null);
-  /** iOS spinner seed for optional end time; opening the picker alone is not a selection. */
-  const [iosDraftEndTime, setIosDraftEndTime] = useState<Date | null>(null);
-  const [iosPicker, setIosPicker] = useState<PickerKind | null>(null);
+  /** Spinner seed for optional end time; opening the picker alone is not a selection. */
+  const [draftEndTime, setDraftEndTime] = useState<Date | null>(null);
+  const [activePicker, setActivePicker] = useState<PickerKind | null>(null);
 
   // Re-seed every time the sheet opens so reopening after a minimize→edit
   // cycle reflects any start-time change made elsewhere.
@@ -130,8 +131,8 @@ export function EditLiveSessionBottomSheet({
     setDate(initialDate);
     setStartTime(initialStart);
     setEndTime(null);
-    setIosDraftEndTime(null);
-    setIosPicker(null);
+    setDraftEndTime(null);
+    setActivePicker(null);
   }, [initialDate, initialStart, visible]);
 
   const applyPick = useCallback((kind: PickerKind, picked: Date) => {
@@ -152,11 +153,13 @@ export function EditLiveSessionBottomSheet({
           ? date
           : kind === 'startTime'
             ? startTime
-            : (endTime ?? iosDraftEndTime ?? fallback);
-      if (Platform.OS === 'android') {
+            : (endTime ?? draftEndTime ?? fallback);
+
+      // Android DateTimePicker is dialog-only; date uses our month grid.
+      if (Platform.OS === 'android' && kind !== 'date') {
         DateTimePickerAndroid.open({
           value: current,
-          mode: kind === 'date' ? 'date' : 'time',
+          mode: 'time',
           is24Hour: false,
           onChange: (event: DateTimePickerEvent, selectedDate?: Date) => {
             if (event.type === 'dismissed' || !selectedDate) return;
@@ -165,27 +168,26 @@ export function EditLiveSessionBottomSheet({
         });
         return;
       }
-      // On iOS, opening end-time without a value should seed the picker
-      // with `now` so the spinner has something to land on. Keep that seed
-      // separate from `endTime`; merely opening the picker must not turn a
-      // start-time-only save into "end this session".
-      if (kind === 'endTime') setIosDraftEndTime(current);
-      setIosPicker((prev) => (prev === kind ? null : kind));
+
+      // Opening end-time without a value seeds the spinner with `now`, kept
+      // separate from `endTime` so merely opening does not end the session.
+      if (kind === 'endTime') setDraftEndTime(current);
+      setActivePicker((prev) => (prev === kind ? null : kind));
     },
-    [applyPick, date, endTime, iosDraftEndTime, startTime],
+    [applyPick, date, draftEndTime, endTime, startTime],
   );
 
-  const handleIosChange = useCallback(
+  const handleTimeChange = useCallback(
     (_event: DateTimePickerEvent, selectedDate?: Date) => {
-      if (!iosPicker || !selectedDate) return;
-      if (iosPicker === 'endTime') {
-        setIosDraftEndTime(selectedDate);
+      if (!activePicker || activePicker === 'date' || !selectedDate) return;
+      if (activePicker === 'endTime') {
+        setDraftEndTime(selectedDate);
         setEndTime(selectedDate);
         return;
       }
-      applyPick(iosPicker, selectedDate);
+      applyPick(activePicker, selectedDate);
     },
-    [applyPick, iosPicker],
+    [activePicker, applyPick],
   );
 
   const handleSave = useCallback(() => {
@@ -198,14 +200,12 @@ export function EditLiveSessionBottomSheet({
     onSavePress?.({ kind: 'updateStart', startedAt: startedAtIso });
   }, [date, endTime, onSavePress, startTime]);
 
-  const iosValue =
-    iosPicker === 'date'
-      ? date
-      : iosPicker === 'startTime'
-        ? startTime
-        : iosPicker === 'endTime'
-          ? (iosDraftEndTime ?? endTime ?? new Date())
-          : null;
+  const timePickerValue =
+    activePicker === 'startTime'
+      ? startTime
+      : activePicker === 'endTime'
+        ? (draftEndTime ?? endTime ?? new Date())
+        : null;
 
   return (
     <BottomSheetShell
@@ -239,7 +239,7 @@ export function EditLiveSessionBottomSheet({
           <FieldShell
             typography={typography}
             value={dateFmt.format(date)}
-            active={iosPicker === 'date'}
+            active={activePicker === 'date'}
             onPress={() => openPicker('date')}
             accessibilityLabel="Session date"
           />
@@ -247,7 +247,7 @@ export function EditLiveSessionBottomSheet({
           <FieldShell
             typography={typography}
             value={formatTimeLabel(startTime)}
-            active={iosPicker === 'startTime'}
+            active={activePicker === 'startTime'}
             onPress={() => openPicker('startTime')}
             accessibilityLabel="Start time"
           />
@@ -258,32 +258,46 @@ export function EditLiveSessionBottomSheet({
             // "Editing will End Live Session" until the user picks one.
             value={endTime ? formatTimeLabel(endTime) : 'Editing will End Live Session'}
             placeholder={!endTime}
-            active={iosPicker === 'endTime'}
+            active={activePicker === 'endTime'}
             onPress={() => openPicker('endTime')}
             accessibilityLabel="End time (optional — saving with a value ends the session)"
           />
         </View>
 
-        {Platform.OS === 'ios' && iosPicker && iosValue ? (
-          <View style={styles.iosPickerWrap}>
-            <DateTimePicker
-              value={iosValue}
-              mode={iosPicker === 'date' ? 'date' : 'time'}
-              display="spinner"
-              is24Hour={false}
-              onChange={handleIosChange}
-              textColor={fg.primary}
+        {activePicker === 'date' ? (
+          <View style={styles.pickerWrap}>
+            <View style={styles.pickerActions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Done"
+                onPress={() => setActivePicker(null)}
+                style={({ pressed }) => [styles.pickerDone, pressed && styles.pressed]}
+              >
+                <Text style={[typography.bodyBold, { color: color('Brand/Primary') }]}>
+                  Done
+                </Text>
+              </Pressable>
+            </View>
+            <InlineMonthCalendar
+              typography={typography}
+              value={date}
+              onChange={(next) => applyPick('date', next)}
             />
-            <View style={styles.iosPickerActions}>
-              {iosPicker === 'endTime' && endTime ? (
+          </View>
+        ) : null}
+
+        {Platform.OS === 'ios' && timePickerValue && activePicker && activePicker !== 'date' ? (
+          <View style={styles.pickerWrap}>
+            <View style={styles.pickerActions}>
+              {activePicker === 'endTime' && endTime ? (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Clear end time"
                   onPress={() => {
                     setEndTime(null);
-                    setIosPicker(null);
+                    setActivePicker(null);
                   }}
-                  style={({ pressed }) => [styles.iosClear, pressed && styles.pressed]}
+                  style={({ pressed }) => [styles.pickerClear, pressed && styles.pressed]}
                 >
                   <Text
                     style={[typography.bodyBold, { color: color('Semantic/Status/Error/Text') }]}
@@ -295,14 +309,22 @@ export function EditLiveSessionBottomSheet({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Done"
-                onPress={() => setIosPicker(null)}
-                style={({ pressed }) => [styles.iosDone, pressed && styles.pressed]}
+                onPress={() => setActivePicker(null)}
+                style={({ pressed }) => [styles.pickerDone, pressed && styles.pressed]}
               >
                 <Text style={[typography.bodyBold, { color: color('Brand/Primary') }]}>
                   Done
                 </Text>
               </Pressable>
             </View>
+            <DateTimePicker
+              value={timePickerValue}
+              mode="time"
+              display="spinner"
+              is24Hour={false}
+              onChange={handleTimeChange}
+              textColor={fg.primary}
+            />
           </View>
         ) : null}
 
@@ -391,23 +413,23 @@ const styles = StyleSheet.create({
   fieldShellActive: {
     borderColor: color('Brand/Primary'),
   },
-  iosPickerWrap: {
+  pickerWrap: {
     marginTop: space('Spacing/8'),
     borderTopWidth: 1,
     borderTopColor: border.subtle,
   },
-  iosPickerActions: {
+  pickerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: space('Spacing/8'),
   },
-  iosClear: {
+  pickerClear: {
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/Full'),
   },
-  iosDone: {
+  pickerDone: {
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/Full'),

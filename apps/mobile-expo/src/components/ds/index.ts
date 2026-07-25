@@ -9,6 +9,7 @@ export {
   type DropdownBottomSheetOption,
 } from './DropdownBottomSheet';
 export { EditJobBottomSheet } from './EditJobBottomSheet';
+export type { EditJobBottomSheetValues } from './EditJobBottomSheet';
 export {
   EditMaterialBottomSheet,
   type EditMaterialBottomSheetAssignedSession,
@@ -35,8 +36,11 @@ export { MinimizedLiveSessionBar } from './MinimizedLiveSessionBar';
 export {
   JobsOpenStackSectionHeader,
   JOBS_OPEN_SECTION_KINDS,
+  JOBS_OPEN_SECTION_COPY,
+  JOBS_OPEN_SECTION_TITLE_COLORS,
   type JobsOpenSectionKind,
 } from './JobsOpenStackSectionHeader';
+export { JobsOpenSummaryCard } from './JobsOpenSummaryCard';
 export { JobDetailJobHeader } from './JobDetailJobHeader';
 export { JobDetailMetricTertiary } from './JobDetailMetricTertiary';
 export { JobDetailStatusPill, JOB_DETAIL_WORK_STATUS_LABEL } from './JobDetailStatusPill';

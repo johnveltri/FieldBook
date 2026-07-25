@@ -22,6 +22,7 @@ import {
   OutstandingPaymentCard,
   RankedJobRowCard,
   SectionHeader,
+  type JobsOpenSectionKind,
 } from '../components/ds';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { analytics, errorProperties, moneyBucket } from '../lib/analytics';
@@ -39,12 +40,14 @@ import { screenHeaderA11y } from '../lib/accessibility';
 export type EarningsWindow = 'week' | 'month' | 'year';
 
 type EarningsScreenProps = {
+  /** When false, the earnings tab is hidden — skip refetch until the user returns. */
+  isActive?: boolean;
   /** Selected time window (controlled by the shell so Home can land on `week`). */
   window: EarningsWindow;
   onWindowChange: (next: EarningsWindow) => void;
   onOpenJobDetail: (jobId?: string) => void;
   /** Navigate to the Jobs screen, Open tab (unpaid section). */
-  onOpenJobsOpenTab: () => void;
+  onOpenJobsOpenTab: (section: JobsOpenSectionKind) => void;
 };
 
 type WindowConfig = {
@@ -119,10 +122,11 @@ function formatNetPerHr(cents: number | null): string {
 type RankedSection = {
   key: string;
   title: string;
-  rows: { job: EarningsSnapshotJob; value: string }[];
+  rows: { job: EarningsSnapshotJob; value: string; valueCents: number | null }[];
 };
 
 export function EarningsScreen({
+  isActive = true,
   window,
   onWindowChange,
   onOpenJobDetail,
@@ -152,7 +156,19 @@ export function EarningsScreen({
     [],
   );
 
-  const [snapshot, setSnapshot] = useState<SnapshotState>(EMPTY_SNAPSHOT);
+  const [snapshotsByWindow, setSnapshotsByWindow] = useState<
+    Record<EarningsWindow, SnapshotState>
+  >({
+    week: EMPTY_SNAPSHOT,
+    month: EMPTY_SNAPSHOT,
+    year: EMPTY_SNAPSHOT,
+  });
+  const snapshotsRef = useRef(snapshotsByWindow);
+  useEffect(() => {
+    snapshotsRef.current = snapshotsByWindow;
+  }, [snapshotsByWindow]);
+
+  const snapshot = snapshotsByWindow[window];
   const [outstanding, setOutstanding] = useState<{ count: number; revenueCents: number }>({
     count: 0,
     revenueCents: 0,
@@ -160,6 +176,7 @@ export function EarningsScreen({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const loadedWindowsRef = useRef<Set<EarningsWindow>>(new Set());
+  const lastEarningsFetchVersionRef = useRef(-1);
 
   const config = WINDOW_CONFIG[window];
 
@@ -177,18 +194,29 @@ export function EarningsScreen({
   );
 
   useEffect(() => {
+    if (!isActive) return;
+    const versionChanged = lastEarningsFetchVersionRef.current !== version;
+    const allLoaded = WINDOW_ORDER.every((w) => loadedWindowsRef.current.has(w));
+    if (!versionChanged && allLoaded) return;
+    lastEarningsFetchVersionRef.current = version;
+
     let alive = true;
     const startedAt = Date.now();
-    const isFirstLoadForWindow = !loadedWindowsRef.current.has(window);
-    if (isFirstLoadForWindow) {
+    const isFirstLoad = !allLoaded;
+    if (isFirstLoad) {
       setLoading(true);
     }
     setLoadError(null);
     if (!isSupabaseConfigured()) {
       setLoading(false);
       setLoadError('Supabase is not configured.');
-      setSnapshot(EMPTY_SNAPSHOT);
+      setSnapshotsByWindow({
+        week: EMPTY_SNAPSHOT,
+        month: EMPTY_SNAPSHOT,
+        year: EMPTY_SNAPSHOT,
+      });
       setOutstanding({ count: 0, revenueCents: 0 });
+      loadedWindowsRef.current = new Set();
       analytics.capture('supabase_not_configured_seen', {
         screen: 'earnings',
         operation: 'earnings_loaded',
@@ -197,45 +225,68 @@ export function EarningsScreen({
     }
     void (async () => {
       try {
-        const [snap, owed] = await Promise.all([
-          getEarningsSnapshotForCurrentUser(supabase, { windowDays: config.windowDays }),
+        const [owed, ...snapResults] = await Promise.all([
           getOutstandingPaymentsForCurrentUser(supabase),
+          ...WINDOW_ORDER.map((w) =>
+            getEarningsSnapshotForCurrentUser(supabase, {
+              windowDays: WINDOW_CONFIG[w].windowDays,
+            }),
+          ),
         ]);
         if (!alive) return;
-        setSnapshot({
-          netEarningsCents: snap.aggregate.netEarningsCents,
-          revenueCents: snap.aggregate.revenueCents,
-          materialsCents: snap.aggregate.materialsCents,
-          totalHours: snap.aggregate.totalHours,
-          jobCount: snap.aggregate.jobCount,
-          netPerHrCents: snap.aggregate.netPerHrCents,
-          jobs: snap.jobs,
+        const nextSnapshots: Record<EarningsWindow, SnapshotState> = {
+          week: EMPTY_SNAPSHOT,
+          month: EMPTY_SNAPSHOT,
+          year: EMPTY_SNAPSHOT,
+        };
+        WINDOW_ORDER.forEach((w, i) => {
+          const snap = snapResults[i];
+          nextSnapshots[w] = {
+            netEarningsCents: snap.aggregate.netEarningsCents,
+            revenueCents: snap.aggregate.revenueCents,
+            materialsCents: snap.aggregate.materialsCents,
+            totalHours: snap.aggregate.totalHours,
+            jobCount: snap.aggregate.jobCount,
+            netPerHrCents: snap.aggregate.netPerHrCents,
+            jobs: snap.jobs,
+          };
         });
+        setSnapshotsByWindow(nextSnapshots);
         setOutstanding({ count: owed.count, revenueCents: owed.revenueCents });
+        for (const w of WINDOW_ORDER) {
+          loadedWindowsRef.current.add(w);
+        }
+        const activeSnap = nextSnapshots[window];
         analytics.capture('earnings_loaded', {
           window,
           window_days: config.windowDays,
-          net_bucket: moneyBucket(snap.aggregate.netEarningsCents),
-          revenue_bucket: moneyBucket(snap.aggregate.revenueCents),
-          materials_bucket: moneyBucket(snap.aggregate.materialsCents),
+          net_bucket: moneyBucket(activeSnap.netEarningsCents),
+          revenue_bucket: moneyBucket(activeSnap.revenueCents),
+          materials_bucket: moneyBucket(activeSnap.materialsCents),
           hours_bucket:
-            snap.aggregate.totalHours === 0
+            activeSnap.totalHours === 0
               ? 'zero'
-              : snap.aggregate.totalHours < 5
+              : activeSnap.totalHours < 5
                 ? 'under_5'
-                : snap.aggregate.totalHours < 20
+                : activeSnap.totalHours < 20
                   ? '5_19'
                   : '20_plus',
-          job_count: snap.aggregate.jobCount,
+          job_count: activeSnap.jobCount,
           outstanding_count: owed.count,
           outstanding_value_bucket: moneyBucket(owed.revenueCents),
           load_duration_ms: Date.now() - startedAt,
+          prefetched_windows: WINDOW_ORDER.length,
         });
       } catch (err) {
         if (!alive) return;
         setLoadError(err instanceof Error ? err.message : 'Failed to load earnings.');
-        setSnapshot(EMPTY_SNAPSHOT);
+        setSnapshotsByWindow({
+          week: EMPTY_SNAPSHOT,
+          month: EMPTY_SNAPSHOT,
+          year: EMPTY_SNAPSHOT,
+        });
         setOutstanding({ count: 0, revenueCents: 0 });
+        loadedWindowsRef.current = new Set();
         analytics.capture('earnings_load_failed', {
           window,
           window_days: config.windowDays,
@@ -244,7 +295,6 @@ export function EarningsScreen({
         });
       } finally {
         if (alive) {
-          loadedWindowsRef.current.add(window);
           setLoading(false);
         }
       }
@@ -252,7 +302,7 @@ export function EarningsScreen({
     return () => {
       alive = false;
     };
-  }, [config.windowDays, version, window]);
+  }, [config.windowDays, isActive, version, window]);
 
   const rankedSections = useMemo<RankedSection[]>(() => {
     const jobs = snapshot.jobs;
@@ -267,15 +317,23 @@ export function EarningsScreen({
       .slice(0, 3);
 
     const earningsRows = (list: EarningsSnapshotJob[]) =>
-      list.map((job) => ({ job, value: formatUsd(job.netEarningsCents, 0) }));
+      list.map((job) => ({
+        job,
+        value: formatUsd(job.netEarningsCents, 0),
+        valueCents: job.netEarningsCents,
+      }));
     const profitRows = (list: EarningsSnapshotJob[]) =>
-      list.map((job) => ({ job, value: formatNetPerHr(job.netPerHrCents) }));
+      list.map((job) => ({
+        job,
+        value: formatNetPerHr(job.netPerHrCents),
+        valueCents: job.netPerHrCents,
+      }));
 
     return [
       { key: 'highest', title: 'Highest Earnings (Net)', rows: earningsRows(byNetDesc) },
       { key: 'lowest', title: 'Lowest Earnings (Net)', rows: earningsRows(byNetAsc) },
-      { key: 'most', title: 'MOST PROFITABLE (NET/HR)', rows: profitRows(byHrDesc) },
-      { key: 'least', title: 'LEAST PROFITABLE (NET/HR)', rows: profitRows(byHrAsc) },
+      { key: 'most', title: 'Most Profitable (Net/Hr)', rows: profitRows(byHrDesc) },
+      { key: 'least', title: 'Least Profitable (Net/Hr)', rows: profitRows(byHrAsc) },
     ];
   }, [snapshot.jobs]);
 
@@ -374,10 +432,12 @@ export function EarningsScreen({
               <View style={styles.cardBand}>
                 <EarningsSnapshotCard
                   netEarnings={formatUsd(snapshot.netEarningsCents)}
+                  netEarningsCents={snapshot.netEarningsCents}
                   revenue={formatUsd(snapshot.revenueCents)}
                   materials={formatUsd(snapshot.materialsCents)}
                   time={`${snapshot.totalHours.toFixed(1)}h`}
                   netPerHr={formatNetPerHr(snapshot.netPerHrCents)}
+                  netPerHrCents={snapshot.netPerHrCents}
                   jobs={String(snapshot.jobCount)}
                   typography={typography}
                 />
@@ -394,7 +454,7 @@ export function EarningsScreen({
                         outstanding_count: outstanding.count,
                         outstanding_value_bucket: moneyBucket(outstanding.revenueCents),
                       });
-                      onOpenJobsOpenTab();
+                      onOpenJobsOpenTab('unpaid');
                     }}
                   />
                 </View>
@@ -415,13 +475,14 @@ export function EarningsScreen({
                       </Text>
                     </View>
                   ) : (
-                    section.rows.map(({ job, value }, index) => (
+                    section.rows.map(({ job, value, valueCents }, index) => (
                       <View key={job.id} style={styles.cardBand}>
                         <RankedJobRowCard
                           rank={index + 1}
                           title={job.shortDescription || 'Untitled Job'}
                           subtitle={job.customerName}
                           value={value}
+                          valueCents={valueCents}
                           typography={typography}
                           onPress={() => {
                             analytics.capture('earnings_ranked_job_pressed', {
@@ -501,10 +562,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'stretch',
     paddingHorizontal: 0,
-    marginBottom: space('Spacing/12'),
+    marginBottom: space('Spacing/16'),
   },
   cardBandTopGap: {
-    marginTop: space('Spacing/4'),
+    marginTop: space('Spacing/8'),
   },
   sectionGroup: {
     width: '100%',
