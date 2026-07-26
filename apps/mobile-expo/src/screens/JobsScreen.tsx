@@ -683,7 +683,9 @@ export function JobsScreen({
             <JobsInboxIcon color={fg.primary} />
             {inboxCount > 0 ? (
               <View style={styles.inboxBadge}>
-                <Text style={[typography.bodySmall, { color: bg.canvasWarm }]}>
+                <Text
+                  style={[typography.bodySmall, styles.inboxBadgeText, { color: bg.canvasWarm }]}
+                >
                   {inboxCount > 99 ? '99+' : inboxCount}
                 </Text>
               </View>
@@ -1055,15 +1057,22 @@ const styles = StyleSheet.create({
   },
   inboxBadge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 16,
-    height: 16,
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
     borderRadius: radius('Radius/Full'),
     backgroundColor: color('Brand/Primary'),
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
+  },
+  inboxBadgeText: {
+    fontSize: 11,
+    lineHeight: 12,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
   },
   searchBarOuter: {
     width: '100%',

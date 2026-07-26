@@ -2299,7 +2299,7 @@ const styles = StyleSheet.create({
   },
   topHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: 0,
     paddingBottom: space('Spacing/4'),
@@ -2323,6 +2323,7 @@ const styles = StyleSheet.create({
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/12'),
     backgroundColor: fg.primary,
+    marginTop: space('Spacing/12'),
     ...cardShadowRn,
   },
   actionButtonLabel: {

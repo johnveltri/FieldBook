@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   },
   statusRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 7,
   },
   statusSpacer: {

@@ -57,7 +57,7 @@ import {
   textLengthBucket,
 } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { createTextStyles, space } from '../theme/nativeTokens';
+import { contentColumnMetrics, createTextStyles, space } from '../theme/nativeTokens';
 
 type LiveSessionOverlayProps = {
   /**
@@ -76,7 +76,8 @@ type LiveSessionOverlayProps = {
  */
 export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) {
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const minimizedBarMetrics = useMemo(() => contentColumnMetrics(windowWidth), [windowWidth]);
   const sheetStackWriters = useBottomSheetStackWriters();
   const topmostSheet = useTopmostBottomSheet();
   const {
@@ -1061,7 +1062,13 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
           styles.minimizedAnchor,
           barVisible && styles.minimizedAnchorRaised,
           barAboveForeignSheet && styles.minimizedAnchorAboveSheet,
-          { bottom: fabSlotBottom, transform: [{ translateY: liftAnim }] },
+          {
+            bottom: fabSlotBottom,
+            left: minimizedBarMetrics.sideInset,
+            right: minimizedBarMetrics.sideInset,
+            paddingHorizontal: minimizedBarMetrics.gutter,
+            transform: [{ translateY: liftAnim }],
+          },
         ]}
       >
         <MinimizedLiveSessionBar
@@ -1082,7 +1089,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: space('Spacing/16'),
   },
   minimizedAnchorRaised: {
     zIndex: 30,

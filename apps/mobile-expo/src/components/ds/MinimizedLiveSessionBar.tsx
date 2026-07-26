@@ -164,11 +164,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  // Figma `1287:1561` — w=359, dark slab, rounded 16. Shadow matches the
-  // JobsScreen "+ New Job" FAB (`fabContent` — cardShadowRn + same overrides).
+  // Fill the shared content column so the minimized session aligns with the
+  // job cards behind it. Shadow matches the JobsScreen "+ New Job" FAB.
   bar: {
     width: '100%',
-    maxWidth: 359,
     minHeight: 67.5,
     paddingHorizontal: space('Spacing/16'),
     paddingVertical: space('Spacing/8'),
