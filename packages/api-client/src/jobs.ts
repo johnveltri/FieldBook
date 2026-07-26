@@ -122,8 +122,8 @@ type ListJobsRow = {
   job_payment_state: JobPaymentState | null;
   revenue_cents: number | null;
   collected_cents: number | null;
-  is_financially_complete?: boolean | null;
-  no_materials_confirmed?: boolean | null;
+  is_job_record_complete: boolean;
+  costs_reviewed_at: string | null;
 };
 
 type ListJobSessionRow = {
@@ -139,6 +139,7 @@ type ListJobMaterialRow = {
   job_id: string | null;
   session_id: string | null;
   total_cost_cents: number;
+  cost_type: string;
 };
 
 function formatDateLabel(iso: string): string {
@@ -167,43 +168,9 @@ export type ListJobsForCurrentUserPageResult = {
 
 export type ListJobsForCurrentUserTab = 'all' | 'open' | 'paid';
 
-/** Full list row including financial completeness + no-materials confirmation flag. */
+/** Current list contract; migration drift is treated as an error. */
 const JOB_LIST_SELECT_FULL =
-  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_financially_complete, no_materials_confirmed';
-
-/** Older DBs with `is_financially_complete` but not yet `no_materials_confirmed`. */
-const JOB_LIST_SELECT_FINANCIAL_WITHOUT_NO_MATERIALS_FLAG =
-  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_financially_complete';
-
-const JOB_LIST_SELECT_LEGACY =
-  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents';
-
-function isMissingFinancialCompletenessColumn(error: unknown): boolean {
-  if (typeof error !== 'object' || error == null) return false;
-  const e = error as { code?: unknown; message?: unknown };
-  return (
-    e.code === '42703' ||
-    (typeof e.message === 'string' && e.message.includes('is_financially_complete'))
-  );
-}
-
-function isMissingNoMaterialsConfirmedColumn(error: unknown): boolean {
-  if (typeof error !== 'object' || error == null) return false;
-  const e = error as { message?: unknown };
-  return typeof e.message === 'string' && e.message.includes('no_materials_confirmed');
-}
-
-function isFinanciallyCompleteFallback(row: ListJobsRow, hasMaterials: boolean, hasSessions: boolean): boolean {
-  const desc = row.short_description.trim();
-  const materialsOk = hasMaterials || Boolean(row.no_materials_confirmed);
-  return (
-    desc !== '' &&
-    desc !== 'Untitled Job' &&
-    (row.revenue_cents ?? 0) > 0 &&
-    materialsOk &&
-    hasSessions
-  );
-}
+  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_job_record_complete, costs_reviewed_at';
 
 /**
  * One page of jobs ordered by `list_recency_at` desc (`coalesce(last_worked_at, created_at)`), then `id` desc.
@@ -220,16 +187,13 @@ export async function listJobsForCurrentUserPage(
 ): Promise<ListJobsForCurrentUserPageResult> {
   const { limit, offset, tab = 'all', search } = options;
   const runQuery = async (selectColumns: string) => {
-    const includeFinancialCompleteness = selectColumns.includes('is_financially_complete');
     let listQuery = client.from('jobs').select(selectColumns).is('deleted_at', null);
 
     if (tab === 'open') {
       listQuery = listQuery
         .neq('job_work_status', 'canceled')
         .or(
-          includeFinancialCompleteness
-            ? 'is_financially_complete.eq.false,job_work_status.eq.in_progress,and(job_work_status.eq.completed,or(job_payment_state.is.null,job_payment_state.eq.pending))'
-            : 'job_work_status.neq.completed,and(job_work_status.eq.completed,or(job_payment_state.is.null,job_payment_state.eq.pending))',
+          'is_job_record_complete.eq.false,job_work_status.eq.in_progress,and(job_work_status.eq.completed,job_payment_state.neq.paid)',
         );
     } else if (tab === 'paid') {
       listQuery = listQuery.eq('job_work_status', 'completed').eq('job_payment_state', 'paid');
@@ -252,13 +216,7 @@ export async function listJobsForCurrentUserPage(
       .range(offset, offset + limit - 1);
   };
 
-  let result = await runQuery(JOB_LIST_SELECT_FULL);
-  if (result.error != null && isMissingNoMaterialsConfirmedColumn(result.error)) {
-    result = await runQuery(JOB_LIST_SELECT_FINANCIAL_WITHOUT_NO_MATERIALS_FLAG);
-  }
-  if (result.error != null && isMissingFinancialCompletenessColumn(result.error)) {
-    result = await runQuery(JOB_LIST_SELECT_LEGACY);
-  }
+  const result = await runQuery(JOB_LIST_SELECT_FULL);
 
   if (result.error) throw result.error;
   const rows = ((result.data ?? []) as unknown) as ListJobsRow[];
@@ -310,14 +268,14 @@ async function enrichJobsRowsWithSessionRollups(
   const sessionIds = sessions.map((s) => s.id);
   const [materialsByJobRes, materialsBySessionRes] = await Promise.all([
     client
-      .from('materials')
-      .select('id, job_id, session_id, total_cost_cents')
+      .from('job_costs')
+      .select('id, job_id, session_id, total_cost_cents, cost_type')
       .in('job_id', jobIds)
       .is('deleted_at', null),
     sessionIds.length > 0
       ? client
-          .from('materials')
-          .select('id, job_id, session_id, total_cost_cents')
+          .from('job_costs')
+          .select('id, job_id, session_id, total_cost_cents, cost_type')
           .in('session_id', sessionIds)
           .is('deleted_at', null)
       : Promise.resolve({ data: [] as ListJobMaterialRow[], error: null }),
@@ -334,17 +292,24 @@ async function enrichJobsRowsWithSessionRollups(
   }
 
   const materialsSpendByJobId = new Map<string, number>();
+  const totalCostsSpendByJobId = new Map<string, number>();
   const jobsWithMaterialLines = new Set<string>();
   for (const m of materialById.values()) {
     const materialJobId =
       m.job_id ??
       (m.session_id ? sessionJobIdBySessionId.get(m.session_id) ?? null : null);
     if (!materialJobId) continue;
-    jobsWithMaterialLines.add(materialJobId);
-    materialsSpendByJobId.set(
+    totalCostsSpendByJobId.set(
       materialJobId,
-      (materialsSpendByJobId.get(materialJobId) ?? 0) + m.total_cost_cents,
+      (totalCostsSpendByJobId.get(materialJobId) ?? 0) + m.total_cost_cents,
     );
+    if (m.cost_type == null || m.cost_type === 'material') {
+      jobsWithMaterialLines.add(materialJobId);
+      materialsSpendByJobId.set(
+        materialJobId,
+        (materialsSpendByJobId.get(materialJobId) ?? 0) + m.total_cost_cents,
+      );
+    }
   }
 
   return rows.map((row) => {
@@ -353,12 +318,10 @@ async function enrichJobsRowsWithSessionRollups(
     const materialsSpendCents = materialsSpendByJobId.get(row.id) ?? 0;
     const materialsCents = -materialsSpendCents;
     const revenueCents = row.revenue_cents ?? 0;
-    const netEarningsCents = revenueCents + materialsCents;
+    const netEarningsCents = revenueCents - (totalCostsSpendByJobId.get(row.id) ?? 0);
     const hasMaterials = jobsWithMaterialLines.has(row.id);
     const hasSessions = (sessionCountByJobId.get(row.id) ?? 0) > 0;
-    const isFinanciallyComplete =
-      row.is_financially_complete ??
-      isFinanciallyCompleteFallback(row, hasMaterials, hasSessions);
+    const isFinanciallyComplete = row.is_job_record_complete;
 
     return {
       id: row.id,
@@ -378,7 +341,7 @@ async function enrichJobsRowsWithSessionRollups(
       collectedCents: row.collected_cents,
       isFinanciallyComplete,
       hasMaterials,
-      noMaterialsConfirmed: Boolean(row.no_materials_confirmed),
+      noMaterialsConfirmed: row.costs_reviewed_at != null,
       hasSessions,
     };
   });
@@ -553,13 +516,13 @@ export async function getWeeklyNetEarningsCentsForCurrentUser(
 
   const [materialsByJobRes, materialsBySessionRes] = await Promise.all([
     client
-      .from('materials')
+      .from('job_costs')
       .select('id, total_cost_cents')
       .in('job_id', jobIds)
       .is('deleted_at', null),
     sessionIds.length > 0
       ? client
-          .from('materials')
+          .from('job_costs')
           .select('id, total_cost_cents')
           .in('session_id', sessionIds)
           .is('deleted_at', null)
@@ -687,14 +650,14 @@ export async function getEarningsSnapshotForCurrentUser(
   const sessionIds = sessions.map((s) => s.id);
   const [materialsByJobRes, materialsBySessionRes] = await Promise.all([
     client
-      .from('materials')
-      .select('id, job_id, session_id, total_cost_cents')
+      .from('job_costs')
+      .select('id, job_id, session_id, total_cost_cents, cost_type')
       .in('job_id', jobIds)
       .is('deleted_at', null),
     sessionIds.length > 0
       ? client
-          .from('materials')
-          .select('id, job_id, session_id, total_cost_cents')
+          .from('job_costs')
+          .select('id, job_id, session_id, total_cost_cents, cost_type')
           .in('session_id', sessionIds)
           .is('deleted_at', null)
       : Promise.resolve({ data: [] as ListJobMaterialRow[], error: null }),
@@ -711,20 +674,27 @@ export async function getEarningsSnapshotForCurrentUser(
   }
 
   const materialsSpendByJobId = new Map<string, number>();
+  const allCostsSpendByJobId = new Map<string, number>();
   for (const m of materialById.values()) {
     const materialJobId =
       m.job_id ?? (m.session_id ? sessionJobIdBySessionId.get(m.session_id) ?? null : null);
     if (!materialJobId) continue;
-    materialsSpendByJobId.set(
+    allCostsSpendByJobId.set(
       materialJobId,
-      (materialsSpendByJobId.get(materialJobId) ?? 0) + m.total_cost_cents,
+      (allCostsSpendByJobId.get(materialJobId) ?? 0) + m.total_cost_cents,
     );
+    if (m.cost_type == null || m.cost_type === 'material') {
+      materialsSpendByJobId.set(
+        materialJobId,
+        (materialsSpendByJobId.get(materialJobId) ?? 0) + m.total_cost_cents,
+      );
+    }
   }
 
   const jobs: EarningsSnapshotJob[] = jobRows.map((row) => {
     const revenueCents = row.revenue_cents ?? 0;
     const materialsCents = -(materialsSpendByJobId.get(row.id) ?? 0);
-    const netEarningsCents = revenueCents + materialsCents;
+    const netEarningsCents = revenueCents - (allCostsSpendByJobId.get(row.id) ?? 0);
     const hours = totalHoursByJobId.get(row.id) ?? 0;
     const netPerHrCents = hours > 0 ? netEarningsCents / hours : null;
     return {
@@ -764,37 +734,28 @@ export type OutstandingPaymentsForCurrentUserResult = {
 };
 
 /**
- * All-time outstanding payments: jobs that are financially complete, marked
+ * All-time outstanding payments: jobs whose record is complete, marked
  * work complete, but not yet paid — the same set as the Jobs Open tab "unpaid"
- * section (`job_work_status = completed` AND payment state null/pending AND
- * `is_financially_complete`). Returns the count and total revenue owed.
+ * section (`job_work_status = completed` and payment state is not paid).
  */
 export async function getOutstandingPaymentsForCurrentUser(
   client: FieldSoloSupabaseClient,
 ): Promise<OutstandingPaymentsForCurrentUserResult> {
-  type OutstandingRow = { revenue_cents: number | null };
-
-  const runQuery = (withFinancialFilter: boolean) => {
-    let query = client
-      .from('jobs')
-      .select('revenue_cents')
-      .eq('job_work_status', 'completed')
-      .or('job_payment_state.is.null,job_payment_state.eq.pending')
-      .is('deleted_at', null);
-    if (withFinancialFilter) {
-      query = query.eq('is_financially_complete', true);
-    }
-    return query;
-  };
-
-  let result = await runQuery(true);
-  if (result.error != null && isMissingFinancialCompletenessColumn(result.error)) {
-    result = await runQuery(false);
-  }
+  type OutstandingRow = { revenue_cents: number | null; collected_cents: number };
+  const result = await client
+    .from('jobs')
+    .select('revenue_cents, collected_cents')
+    .eq('job_work_status', 'completed')
+    .or('job_payment_state.is.null,job_payment_state.eq.unpaid,job_payment_state.eq.partially_paid')
+    .eq('is_job_record_complete', true)
+    .is('deleted_at', null);
   if (result.error) throw result.error;
 
   const rows = (result.data ?? []) as OutstandingRow[];
-  const revenueCents = rows.reduce((acc, row) => acc + (row.revenue_cents ?? 0), 0);
+  const revenueCents = rows.reduce(
+    (acc, row) => acc + Math.max(0, (row.revenue_cents ?? 0) - (row.collected_cents ?? 0)),
+    0,
+  );
   return { count: rows.length, revenueCents };
 }
 
@@ -816,13 +777,7 @@ export async function listRecentDetailedJobsForCurrentUser(
       .limit(limit);
   };
 
-  let result = await runQuery(JOB_LIST_SELECT_FULL);
-  if (result.error != null && isMissingNoMaterialsConfirmedColumn(result.error)) {
-    result = await runQuery(JOB_LIST_SELECT_FINANCIAL_WITHOUT_NO_MATERIALS_FLAG);
-  }
-  if (result.error != null && isMissingFinancialCompletenessColumn(result.error)) {
-    result = await runQuery(JOB_LIST_SELECT_LEGACY);
-  }
+  const result = await runQuery(JOB_LIST_SELECT_FULL);
 
   if (result.error) throw result.error;
   const rows = ((result.data ?? []) as unknown) as ListJobsRow[];
@@ -905,32 +860,17 @@ function normalizeEditableJobInput(input: UpdateJobInput): UpdateJobInput {
   };
 }
 
-/** True when PostgREST reports the `jobs.no_materials_confirmed` column is absent (migration not applied). */
-export function isNoMaterialsConfirmedColumnMissingError(error: unknown): boolean {
-  const msg =
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof (error as { message: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : error instanceof Error
-        ? error.message
-        : String(error);
-  return msg.includes('no_materials_confirmed');
-}
-
 /**
- * Sets whether the user has confirmed there were no materials on this job.
- * Triggers server-side `is_financially_complete` refresh when the column exists.
+ * Records or clears the user's review of the job's costs.
  */
-export async function updateJobNoMaterialsConfirmed(
+export async function updateJobCostsReviewed(
   client: FieldSoloSupabaseClient,
   id: JobId,
-  noMaterialsConfirmed: boolean,
+  reviewed: boolean,
 ): Promise<void> {
   const { data, error } = await client
     .from('jobs')
-    .update({ no_materials_confirmed: noMaterialsConfirmed })
+    .update({ costs_reviewed_at: reviewed ? new Date().toISOString() : null })
     .eq('id', id)
     .is('deleted_at', null)
     .select('id')
@@ -952,10 +892,7 @@ export async function bumpJobToInProgressIfNotStarted(
 ): Promise<void> {
   const { error } = await client
     .from('jobs')
-    .update({
-      job_work_status: 'in_progress',
-      job_payment_state: null,
-    })
+    .update({ job_work_status: 'in_progress' })
     .eq('id', jobId)
     .eq('job_work_status', 'not_started')
     .is('deleted_at', null);
@@ -1009,23 +946,26 @@ export async function updateJobById(
  * Maps UI job status to `jobs` row columns. `paid` in the view model is
  * `completed` + `job_payment_state: paid` in the database.
  */
-export function jobDetailWorkStatusToDbColumns(status: JobDetailWorkStatus): {
+export function jobDetailWorkStatusToDbColumns(
+  status: JobDetailWorkStatus,
+  revenueCents = 0,
+): {
   job_work_status: JobWorkStatusDb;
-  job_payment_state: JobPaymentState | null;
+  collected_cents: number;
 } {
   switch (status) {
     case 'notStarted':
-      return { job_work_status: 'not_started', job_payment_state: null };
+      return { job_work_status: 'not_started', collected_cents: 0 };
     case 'inProgress':
-      return { job_work_status: 'in_progress', job_payment_state: null };
+      return { job_work_status: 'in_progress', collected_cents: 0 };
     case 'onHold':
-      return { job_work_status: 'on_hold', job_payment_state: null };
+      return { job_work_status: 'on_hold', collected_cents: 0 };
     case 'completed':
-      return { job_work_status: 'completed', job_payment_state: 'pending' };
+      return { job_work_status: 'completed', collected_cents: 0 };
     case 'paid':
-      return { job_work_status: 'completed', job_payment_state: 'paid' };
+      return { job_work_status: 'completed', collected_cents: Math.max(0, revenueCents) };
     case 'cancelled':
-      return { job_work_status: 'canceled', job_payment_state: null };
+      return { job_work_status: 'canceled', collected_cents: 0 };
   }
 }
 
@@ -1034,7 +974,19 @@ export async function updateJobStatusById(
   id: JobId,
   status: JobDetailWorkStatus,
 ): Promise<void> {
-  const patch = jobDetailWorkStatusToDbColumns(status);
+  let revenueCents = 0;
+  if (status === 'paid') {
+    const { data: job, error: readError } = await client
+      .from('jobs')
+      .select('revenue_cents')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (!job) throw new Error('Job not found (check RLS: job must be owned by you).');
+    revenueCents = (job as { revenue_cents: number | null }).revenue_cents ?? 0;
+  }
+  const patch = jobDetailWorkStatusToDbColumns(status, revenueCents);
   const { data, error } = await client
     .from('jobs')
     .update(patch)

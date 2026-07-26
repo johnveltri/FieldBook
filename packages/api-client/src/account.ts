@@ -10,8 +10,8 @@ export async function updateCurrentUserPassword(
   newPassword: string,
 ): Promise<void> {
   const trimmed = newPassword;
-  if (!trimmed || trimmed.length < 6) {
-    throw new Error('Password must be at least 6 characters.');
+  if (!trimmed || trimmed.length < 8) {
+    throw new Error('Password must be at least 8 characters.');
   }
 
   const { error } = await client.auth.updateUser({ password: trimmed });

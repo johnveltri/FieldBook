@@ -62,7 +62,10 @@ export async function recordLegalAcceptance(
   const userId = await requireAuthenticatedUserId(client);
   const { error } = await client
     .from('legal_acceptances')
-    .insert(rowFromInput(userId, input));
+    .upsert(rowFromInput(userId, input), {
+      onConflict: 'user_id,document_type,document_version',
+      ignoreDuplicates: true,
+    });
 
   if (error) throw error;
 }
@@ -95,7 +98,10 @@ async function recordBothLegalAcceptances(
     }),
   ];
 
-  const { error } = await client.from('legal_acceptances').insert(rows);
+  const { error } = await client.from('legal_acceptances').upsert(rows, {
+    onConflict: 'user_id,document_type,document_version',
+    ignoreDuplicates: true,
+  });
   if (error) throw error;
 }
 

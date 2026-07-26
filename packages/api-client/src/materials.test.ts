@@ -11,7 +11,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             onInsert: (payload) => {
               inserted = payload;
@@ -39,6 +39,7 @@ describe('materials api client', () => {
       unit: 'ea',
       unit_cost_cents: 125,
       total_cost_cents: 1250, // round(125 * 10)
+      cost_type: 'material',
       job_id: 'job-9',
       session_id: null,
     });
@@ -49,7 +50,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             onInsert: (payload) => {
               inserted = payload;
@@ -77,6 +78,7 @@ describe('materials api client', () => {
       unit: 'ea',
       unit_cost_cents: 999,
       total_cost_cents: 1998,
+      cost_type: 'material',
       job_id: null,
       session_id: 'sess-1',
     });
@@ -87,7 +89,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             onInsert: (payload) => {
               inserted = payload;
@@ -114,7 +116,7 @@ describe('materials api client', () => {
   it('createMaterial rejects a blank description', async () => {
     const client = makeClient({
       authUserId: 'user-1',
-      buildersByTable: { materials: [] },
+      buildersByTable: { job_costs: [] },
     });
 
     await expect(
@@ -132,7 +134,7 @@ describe('materials api client', () => {
   it('createMaterial rejects non-positive quantity', async () => {
     const client = makeClient({
       authUserId: 'user-1',
-      buildersByTable: { materials: [] },
+      buildersByTable: { job_costs: [] },
     });
 
     await expect(
@@ -150,7 +152,7 @@ describe('materials api client', () => {
   it('createMaterial rejects negative unit cost', async () => {
     const client = makeClient({
       authUserId: 'user-1',
-      buildersByTable: { materials: [] },
+      buildersByTable: { job_costs: [] },
     });
 
     await expect(
@@ -168,7 +170,7 @@ describe('materials api client', () => {
   it('createMaterial throws when no authenticated user exists', async () => {
     const client = makeClient({
       authUserId: null,
-      buildersByTable: { materials: [] },
+      buildersByTable: { job_costs: [] },
     });
 
     await expect(
@@ -190,7 +192,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             onUpdate: (value) => {
               patch = value;
@@ -211,7 +213,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             onUpdate: (value) => {
               patch = value;
@@ -239,7 +241,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           // 1) SELECT current quantity/unit_cost_cents.
           makeBuilder({
             maybeSingleResult: {
@@ -268,7 +270,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             maybeSingleResult: {
               data: { quantity: 3, unit_cost_cents: 200 },
@@ -295,7 +297,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             onUpdate: (value) => {
               patch = value;
@@ -316,7 +318,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           // 1) SELECT current job_id/session_id (session-scoped row).
           makeBuilder({
             maybeSingleResult: {
@@ -350,7 +352,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             onUpdate: (value) => {
               patch = value;
@@ -365,14 +367,14 @@ describe('materials api client', () => {
 
     expect(patch).toEqual({ job_id: 'job-77', session_id: null });
     expect((client.from as unknown as { mock: { calls: unknown[][] } }).mock.calls).toEqual([
-      ['materials'],
+      ['job_costs'],
     ]);
   });
 
   it('updateMaterial rejects a blank description', async () => {
     const client = makeClient({
       authUserId: 'user-1',
-      buildersByTable: { materials: [] },
+      buildersByTable: { job_costs: [] },
     });
 
     await expect(
@@ -384,7 +386,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             maybeSingleResult: { data: null, error: null },
           }),
@@ -409,7 +411,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             onUpdate: (value) => {
               patch = value;
@@ -436,7 +438,7 @@ describe('materials api client', () => {
     const client = makeClient({
       authUserId: 'user-1',
       buildersByTable: {
-        materials: [
+        job_costs: [
           makeBuilder({
             maybeSingleResult: { data: null, error: null },
           }),

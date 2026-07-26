@@ -1,6 +1,7 @@
 import type { JobId } from '@fieldsolo/shared-types';
 
 import type { FieldSoloSupabaseClient } from './client';
+import type { Database } from './database.types';
 import type { SessionId } from './sessions';
 
 export type MaterialId = string;
@@ -97,6 +98,7 @@ export async function createMaterial(
     unit: input.unit.trim(),
     unit_cost_cents: input.unitCostCents,
     total_cost_cents: computeTotalCostCents(input.unitCostCents, input.quantity),
+    cost_type: 'material',
     // When a session is chosen we null out job_id. Otherwise job-scoped, or —
     // when jobId is also null — an Inbox quick capture with no parent. Matches
     // how fetchJobDetail / inbox lists bucket materials.
@@ -105,7 +107,7 @@ export async function createMaterial(
   };
 
   const { data, error } = await client
-    .from('materials')
+    .from('job_costs')
     .insert(row)
     .select('id')
     .single();
@@ -130,7 +132,7 @@ export async function updateMaterial(
   materialId: MaterialId,
   input: UpdateMaterialInput,
 ): Promise<void> {
-  const patch: Record<string, unknown> = {};
+  const patch: Database['public']['Tables']['job_costs']['Update'] = {};
 
   if (input.description !== undefined) {
     assertDescriptionNotBlank(input.description);
@@ -160,9 +162,10 @@ export async function updateMaterial(
 
     if (effectiveQty === undefined || effectiveUnitCost === undefined) {
       const { data: current, error: readErr } = await client
-        .from('materials')
+        .from('job_costs')
         .select('quantity, unit_cost_cents')
         .eq('id', materialId)
+        .eq('cost_type', 'material')
         .is('deleted_at', null)
         .maybeSingle();
       if (readErr) throw readErr;
@@ -200,9 +203,10 @@ export async function updateMaterial(
         // whichever side is currently set, so the row ends up with at
         // least one parent.
         const { data: current, error: readErr } = await client
-          .from('materials')
+          .from('job_costs')
           .select('job_id, session_id')
           .eq('id', materialId)
+          .eq('cost_type', 'material')
           .is('deleted_at', null)
           .maybeSingle();
         if (readErr) throw readErr;
@@ -240,9 +244,10 @@ export async function updateMaterial(
   if (Object.keys(patch).length === 0) return;
 
   const { data, error } = await client
-    .from('materials')
+    .from('job_costs')
     .update(patch)
     .eq('id', materialId)
+    .eq('cost_type', 'material')
     .is('deleted_at', null)
     .select('id')
     .maybeSingle();
@@ -261,9 +266,10 @@ export async function deleteMaterial(
   materialId: MaterialId,
 ): Promise<void> {
   const { data, error } = await client
-    .from('materials')
+    .from('job_costs')
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', materialId)
+    .eq('cost_type', 'material')
     .is('deleted_at', null)
     .select('id')
     .maybeSingle();

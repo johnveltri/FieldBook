@@ -20,6 +20,12 @@ PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
   -f backend/supabase/tests/consent_tables_rls.test.sql
 ```
 
+```bash
+PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -f backend/supabase/tests/prelaunch_hardening.test.sql
+```
+
 Or run all DB tests:
 
 ```bash

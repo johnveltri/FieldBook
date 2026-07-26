@@ -1,6 +1,7 @@
 import type { JobId } from '@fieldsolo/shared-types';
 
 import type { FieldSoloSupabaseClient } from './client';
+import type { Database } from './database.types';
 import type { SessionId } from './sessions';
 
 export type NoteId = string;
@@ -87,7 +88,7 @@ export async function updateNote(
   noteId: NoteId,
   input: UpdateNoteInput,
 ): Promise<void> {
-  const patch: Record<string, unknown> = {};
+  const patch: Database['public']['Tables']['notes']['Update'] = {};
 
   if (input.body !== undefined) {
     assertBodyNotBlank(input.body);

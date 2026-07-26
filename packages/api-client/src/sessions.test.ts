@@ -44,10 +44,7 @@ describe('sessions api client', () => {
       started_at: '2026-04-17T13:00:00.000Z',
       ended_at: '2026-04-17T14:30:00.000Z',
     });
-    expect(jobPatch).toEqual({
-      job_work_status: 'in_progress',
-      job_payment_state: null,
-    });
+    expect(jobPatch).toEqual({ job_work_status: 'in_progress' });
   });
 
   it('createManualSession still returns the inserted id when the status bump fails', async () => {

@@ -31,8 +31,8 @@ export type ActiveLiveSession = {
 /** Stable identifier for a job across DB, API, and clients. */
 export type JobId = string;
 
-/** Maps to `public.payment_state_enum` on `jobs.job_payment_state`. */
-export type JobPaymentState = 'pending' | 'paid';
+/** Derived from `jobs.revenue_cents` and `jobs.collected_cents`. */
+export type JobPaymentState = 'unpaid' | 'partially_paid' | 'paid';
 
 /**
  * Domain model for a job — extend as the Job Detail vertical slice grows.

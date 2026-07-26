@@ -65,10 +65,14 @@ migration to a hosted project, create or confirm the `fieldsolo` bucket in Supab
 
 Job Detail loads **`fetchFirstJobIdForCurrentUser`** → **`fetchJobDetail`**: only rows the **authenticated user** can see under RLS (typically **`jobs.user_id = auth.uid()`**). If none exist, the UI shows **no jobs**. `seed.sql` is intentionally empty by default; create real user-owned jobs in local dev.
 
-For child tables (`sessions`, `notes`, `materials`, `attachments`, `job_activity_events`), authenticated
-CRUD now requires both:
+For active client tables (`sessions`, `notes`, `job_costs`), authenticated reads/writes require both:
 - row ownership (`user_id = auth.uid()`)
 - parent ownership (referenced `job_id` / `session_id` resolves to rows owned by `auth.uid()`)
+
+`job_costs` is the generalized storage table; the launch UI writes and displays only
+`cost_type = 'material'`. Attachments and activity events remain inaccessible to app roles until
+their features and policies are implemented. Client hard deletes are disabled; normal deletion is
+performed through the existing soft-delete fields.
 
 There is no seed-demo bypass policy or demo-claim RPC in the shared schema.
 
@@ -87,7 +91,7 @@ npx supabase db reset --workdir backend
 
 ## Authentication (email / password only)
 
-**Local (`config.toml`):** SMS signup is off (`[auth.sms]` / `enable_signup = false`); OAuth blocks like `[auth.external.apple]` stay `enabled = false`. Email signup is on under `[auth.email]`. Confirmations default to off locally (`enable_confirmations = false`) so new users can sign in immediately—turn confirmations on for production-like testing if needed.
+**Local (`config.toml`):** SMS signup is off (`[auth.sms]` / `enable_signup = false`); OAuth blocks like `[auth.external.apple]` stay `enabled = false`. Email signup is on under `[auth.email]`. Confirmations default to off locally (`enable_confirmations = false`) so new users can sign in immediately—turn confirmations on for production-like testing if needed. Passwords must contain at least eight characters.
 
 **Hosted:** In the [Supabase Dashboard](https://supabase.com/dashboard) → **Authentication** → **Providers**, disable every provider except **Email** (disable Phone, Apple, Google, and any others you do not use). Under **Email**, enable “Email” / password sign-in as required by your app.
 

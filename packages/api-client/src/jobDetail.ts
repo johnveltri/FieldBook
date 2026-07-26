@@ -32,7 +32,7 @@ type JobRow = {
   collected_cents: number | null;
   updated_at: string;
   last_worked_at: string | null;
-  no_materials_confirmed?: boolean | null;
+  costs_reviewed_at: string | null;
 };
 
 type SessionRow = {
@@ -62,21 +62,13 @@ type MaterialRow = {
   unit: string | null;
   unit_cost_cents: number | null;
   total_cost_cents: number;
+  cost_type: string;
   created_at: string;
   updated_at: string;
 };
 
 const JOB_DETAIL_JOB_SELECT_BASE =
-  'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at, last_worked_at';
-
-const JOB_DETAIL_JOB_SELECT_WITH_NO_MATERIALS_FLAG =
-  `${JOB_DETAIL_JOB_SELECT_BASE}, no_materials_confirmed`;
-
-function isMissingNoMaterialsConfirmedColumn(error: unknown): boolean {
-  if (typeof error !== 'object' || error == null) return false;
-  const e = error as { message?: unknown };
-  return typeof e.message === 'string' && e.message.includes('no_materials_confirmed');
-}
+  'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at, last_worked_at, costs_reviewed_at';
 
 const moneyFmt = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -225,13 +217,12 @@ export async function fetchJobDetail(
   client: FieldSoloSupabaseClient,
   jobId: JobId,
 ): Promise<JobDetailViewModel | null> {
-  const runJobSelect = (columns: string) =>
-    client.from('jobs').select(columns).eq('id', jobId).is('deleted_at', null).maybeSingle();
-
-  let { data: job, error: jobErr } = await runJobSelect(JOB_DETAIL_JOB_SELECT_WITH_NO_MATERIALS_FLAG);
-  if (jobErr != null && isMissingNoMaterialsConfirmedColumn(jobErr)) {
-    ({ data: job, error: jobErr } = await runJobSelect(JOB_DETAIL_JOB_SELECT_BASE));
-  }
+  const { data: job, error: jobErr } = await client
+    .from('jobs')
+    .select(JOB_DETAIL_JOB_SELECT_BASE)
+    .eq('id', jobId)
+    .is('deleted_at', null)
+    .maybeSingle();
   if (jobErr) throw jobErr;
   if (!job) return null;
 
@@ -264,13 +255,13 @@ export async function fetchJobDetail(
   const [notesRes, matsJobRes, matsSessRes] = await Promise.all([
     notesQ,
     client
-      .from('materials')
+      .from('job_costs')
       .select('*')
       .eq('job_id', jobId)
       .is('deleted_at', null),
     sessionIds.length
       ? client
-          .from('materials')
+          .from('job_costs')
           .select('*')
           .in('session_id', sessionIds)
           .is('deleted_at', null)
@@ -288,15 +279,19 @@ export async function fetchJobDetail(
   const matById = new Map<string, MaterialRow>();
   for (const m of (matsJob ?? []) as MaterialRow[]) matById.set(m.id, m);
   for (const m of (matsSess ?? []) as MaterialRow[]) matById.set(m.id, m);
-  const materials = [...matById.values()];
+  const allCosts = [...matById.values()];
+  const materials = allCosts.filter(
+    (cost) => cost.cost_type == null || cost.cost_type === 'material',
+  );
 
   const notes = (notesRaw ?? []) as NoteRow[];
 
   const revenueCents = j.revenue_cents ?? 0;
   const materialsSpend = materials.reduce((s, m) => s + m.total_cost_cents, 0);
+  const allCostsSpend = allCosts.reduce((s, cost) => s + cost.total_cost_cents, 0);
   const materialsCents = -materialsSpend;
   const feesCents = 0;
-  const netEarningsCents = revenueCents + materialsCents + feesCents;
+  const netEarningsCents = revenueCents - allCostsSpend + feesCents;
 
   let totalHours = 0;
   for (const s of activeSessions) {
@@ -431,6 +426,6 @@ export async function fetchJobDetail(
       : null,
     materialBuckets,
     noteBuckets,
-    noMaterialsConfirmed: Boolean(j.no_materials_confirmed),
+    noMaterialsConfirmed: j.costs_reviewed_at != null,
   };
 }

@@ -116,10 +116,11 @@ export async function listInboxMaterials(
   client: FieldSoloSupabaseClient,
 ): Promise<InboxMaterialItem[]> {
   const { data, error } = await client
-    .from('materials')
+    .from('job_costs')
     .select('id, description, quantity, unit, unit_cost_cents, total_cost_cents, created_at')
     .is('job_id', null)
     .is('session_id', null)
+    .eq('cost_type', 'material')
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -141,10 +142,11 @@ export async function countInboxItems(
       .is('session_id', null)
       .is('deleted_at', null),
     client
-      .from('materials')
+      .from('job_costs')
       .select('id', { count: 'exact', head: true })
       .is('job_id', null)
       .is('session_id', null)
+      .eq('cost_type', 'material')
       .is('deleted_at', null),
   ]);
   if (notesRes.error) throw notesRes.error;

@@ -83,8 +83,7 @@ import {
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
-  updateJobNoMaterialsConfirmed,
-  isNoMaterialsConfirmedColumnMissingError,
+  updateJobCostsReviewed,
   updateJobStatusById,
   updateMaterial,
   updateNote,
@@ -1438,7 +1437,7 @@ export function JobDetailScreen({
     if (!job || noMaterialsSaving || !supabaseReady) return;
     setNoMaterialsSaving(true);
     try {
-      await updateJobNoMaterialsConfirmed(supabase, job.id, true);
+      await updateJobCostsReviewed(supabase, job.id, true);
       await refetchJob();
       invalidateJobsList();
       analytics.capture('no_materials_confirmed', {
@@ -1451,17 +1450,10 @@ export function JobDetailScreen({
         action: 'confirm',
         ...errorProperties(e),
       });
-      if (isNoMaterialsConfirmedColumnMissingError(e)) {
-        Alert.alert(
-          'Database update required',
-          'Your Supabase project is missing the jobs.no_materials_confirmed column. Apply migrations from the FieldSolo repo (e.g. 20260429120000_job_no_materials_confirmed.sql), run `supabase db push` against this project, then try again.',
-        );
-      } else {
-        Alert.alert(
-          'Update failed',
-          formatErrorMessage(e) || 'Could not confirm materials.',
-        );
-      }
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not confirm materials.',
+      );
     } finally {
       setNoMaterialsSaving(false);
     }
@@ -1478,7 +1470,7 @@ export function JobDetailScreen({
     if (!job || noMaterialsSaving || !supabaseReady) return;
     setNoMaterialsSaving(true);
     try {
-      await updateJobNoMaterialsConfirmed(supabase, job.id, false);
+      await updateJobCostsReviewed(supabase, job.id, false);
       await refetchJob();
       invalidateJobsList();
       analytics.capture('no_materials_confirmation_undone', {
@@ -1491,17 +1483,10 @@ export function JobDetailScreen({
         action: 'undo',
         ...errorProperties(e),
       });
-      if (isNoMaterialsConfirmedColumnMissingError(e)) {
-        Alert.alert(
-          'Database update required',
-          'Your Supabase project is missing the jobs.no_materials_confirmed column. Apply migrations from the FieldSolo repo (e.g. 20260429120000_job_no_materials_confirmed.sql), run `supabase db push` against this project, then try again.',
-        );
-      } else {
-        Alert.alert(
-          'Update failed',
-          formatErrorMessage(e) || 'Could not undo materials confirmation.',
-        );
-      }
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not undo materials confirmation.',
+      );
     } finally {
       setNoMaterialsSaving(false);
     }

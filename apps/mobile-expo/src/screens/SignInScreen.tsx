@@ -105,6 +105,10 @@ export function SignInScreen() {
       return;
     }
     if (mode === 'signUp') {
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters.');
+        return;
+      }
       if (!firstName.trim() || !lastName.trim()) {
         setError('Enter your first and last name.');
         return;

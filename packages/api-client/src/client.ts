@@ -1,12 +1,13 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from './database.types';
 
-/** Supabase client for FieldSolo — add generated `Database` generic when types are generated. */
-export type FieldSoloSupabaseClient = SupabaseClient;
+/** Supabase client parameterized with the checked-in database contract. */
+export type FieldSoloSupabaseClient = SupabaseClient<Database>;
 
 export function createFieldSoloClient(
   supabaseUrl: string,
   supabaseAnonKey: string,
-  options?: Parameters<typeof createClient>[2],
+  options?: Parameters<typeof createClient<Database>>[2],
 ): FieldSoloSupabaseClient {
-  return createClient(supabaseUrl, supabaseAnonKey, options);
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, options);
 }

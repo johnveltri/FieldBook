@@ -23,7 +23,7 @@ type ChangePasswordBottomSheetProps = {
   registerInGlobalStack?: boolean;
 };
 
-const MIN_PASSWORD_LENGTH = 6;
+const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Change Password sheet (Figma `1924:2083`).
@@ -36,7 +36,7 @@ const MIN_PASSWORD_LENGTH = 6;
  *   "Password does not match"   (only when both fields filled and unequal)
  *   [ SAVE NEW PASSWORD              ]
  *
- * The CTA is disabled until both fields contain at least 6 characters AND
+ * The CTA is disabled until both fields contain at least 8 characters AND
  * are exactly equal. The mismatch hint never shows on initial render —
  * only after both fields are non-empty.
  *

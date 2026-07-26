@@ -13,9 +13,8 @@ import {
   listJobsForCurrentUserPage,
   listRecentJobsForCurrentUser,
   updateJobById,
-  updateJobNoMaterialsConfirmed,
+  updateJobCostsReviewed,
   bumpJobToInProgressIfNotStarted,
-  isNoMaterialsConfirmedColumnMissingError,
   updateJobStatusById,
 } from './jobs';
 import { makeBuilder, makeClient } from './testUtils';
@@ -171,7 +170,7 @@ describe('jobs api client', () => {
       buildersByTable: {
         jobs: [weeklyJobsBuilder],
         sessions: [allJobSessionsBuilder],
-        materials: [materialsByJobBuilder, materialsBySessionBuilder],
+        job_costs: [materialsByJobBuilder, materialsBySessionBuilder],
       },
     });
 
@@ -282,7 +281,7 @@ describe('jobs api client', () => {
       buildersByTable: {
         jobs: [snapshotJobsBuilder],
         sessions: [sessionsBuilder],
-        materials: [materialsByJobBuilder, materialsBySessionBuilder],
+        job_costs: [materialsByJobBuilder, materialsBySessionBuilder],
       },
     });
 
@@ -335,7 +334,11 @@ describe('jobs api client', () => {
   it('getOutstandingPaymentsForCurrentUser counts financially complete unpaid jobs', async () => {
     const outstandingBuilder = makeBuilder({
       awaitResult: {
-        data: [{ revenue_cents: 50000 }, { revenue_cents: null }, { revenue_cents: 12500 }],
+        data: [
+          { revenue_cents: 50000, collected_cents: 0 },
+          { revenue_cents: null, collected_cents: 0 },
+          { revenue_cents: 12500, collected_cents: 0 },
+        ],
         error: null,
       },
     });
@@ -349,11 +352,11 @@ describe('jobs api client', () => {
     const result = await getOutstandingPaymentsForCurrentUser(client as never);
 
     expect(result).toEqual({ count: 3, revenueCents: 62500 });
-    expect(outstandingBuilder.select).toHaveBeenCalledWith('revenue_cents');
+    expect(outstandingBuilder.select).toHaveBeenCalledWith('revenue_cents, collected_cents');
     expect(outstandingBuilder.eq).toHaveBeenCalledWith('job_work_status', 'completed');
-    expect(outstandingBuilder.eq).toHaveBeenCalledWith('is_financially_complete', true);
+    expect(outstandingBuilder.eq).toHaveBeenCalledWith('is_job_record_complete', true);
     expect(outstandingBuilder.or).toHaveBeenCalledWith(
-      'job_payment_state.is.null,job_payment_state.eq.pending',
+      'job_payment_state.is.null,job_payment_state.eq.unpaid,job_payment_state.eq.partially_paid',
     );
     expect(outstandingBuilder.is).toHaveBeenCalledWith('deleted_at', null);
   });
@@ -431,19 +434,19 @@ describe('jobs api client', () => {
   it('jobDetailWorkStatusToDbColumns maps UI status to DB columns', () => {
     expect(jobDetailWorkStatusToDbColumns('notStarted')).toEqual({
       job_work_status: 'not_started',
-      job_payment_state: null,
+      collected_cents: 0,
     });
     expect(jobDetailWorkStatusToDbColumns('completed')).toEqual({
       job_work_status: 'completed',
-      job_payment_state: 'pending',
+      collected_cents: 0,
     });
-    expect(jobDetailWorkStatusToDbColumns('paid')).toEqual({
+    expect(jobDetailWorkStatusToDbColumns('paid', 25000)).toEqual({
       job_work_status: 'completed',
-      job_payment_state: 'paid',
+      collected_cents: 25000,
     });
     expect(jobDetailWorkStatusToDbColumns('cancelled')).toEqual({
       job_work_status: 'canceled',
-      job_payment_state: null,
+      collected_cents: 0,
     });
   });
 
@@ -467,7 +470,7 @@ describe('jobs api client', () => {
 
     expect(patch).toEqual({
       job_work_status: 'in_progress',
-      job_payment_state: null,
+      collected_cents: 0,
     });
   });
 
@@ -479,20 +482,9 @@ describe('jobs api client', () => {
       },
     });
 
-    await expect(updateJobStatusById(client as never, 'job-1', 'paid')).rejects.toThrow(
+    await expect(updateJobStatusById(client as never, 'job-1', 'completed')).rejects.toThrow(
       'Update affected no rows',
     );
-  });
-
-  it('isNoMaterialsConfirmedColumnMissingError matches PostgREST schema cache message', () => {
-    expect(
-      isNoMaterialsConfirmedColumnMissingError(
-        new Error(
-          "Could not find the 'no_materials_confirmed' column of 'jobs' in the schema cache",
-        ),
-      ),
-    ).toBe(true);
-    expect(isNoMaterialsConfirmedColumnMissingError(new Error('permission denied'))).toBe(false);
   });
 
   it('bumpJobToInProgressIfNotStarted patches job to in_progress', async () => {
@@ -512,15 +504,12 @@ describe('jobs api client', () => {
 
     await bumpJobToInProgressIfNotStarted(client as never, 'job-1');
 
-    expect(patch).toEqual({
-      job_work_status: 'in_progress',
-      job_payment_state: null,
-    });
+    expect(patch).toEqual({ job_work_status: 'in_progress' });
     expect(jobBuilder.eq).toHaveBeenCalledWith('id', 'job-1');
     expect(jobBuilder.eq).toHaveBeenCalledWith('job_work_status', 'not_started');
   });
 
-  it('updateJobNoMaterialsConfirmed patches no_materials_confirmed', async () => {
+  it('updateJobCostsReviewed stamps costs_reviewed_at', async () => {
     let patch: unknown;
     const client = makeClient({
       authUserId: 'user-1',
@@ -536,9 +525,9 @@ describe('jobs api client', () => {
       },
     });
 
-    await updateJobNoMaterialsConfirmed(client as never, 'job-1', true);
+    await updateJobCostsReviewed(client as never, 'job-1', true);
 
-    expect(patch).toEqual({ no_materials_confirmed: true });
+    expect(patch).toEqual({ costs_reviewed_at: expect.any(String) });
   });
 
   it('updateJobById rejects blank titles and invalid revenue', async () => {
@@ -597,7 +586,7 @@ describe('jobs api client', () => {
                   job_payment_state: 'paid',
                   revenue_cents: 50000,
                   collected_cents: 50000,
-                  is_financially_complete: true,
+                  is_job_record_complete: true,
                 },
               ],
               error: null,
@@ -627,7 +616,7 @@ describe('jobs api client', () => {
             },
           }),
         ],
-        materials: [
+        job_costs: [
           makeBuilder({
             awaitResult: {
               data: [
@@ -696,7 +685,7 @@ describe('jobs api client', () => {
       job_payment_state: null,
       revenue_cents: 0,
       collected_cents: 0,
-      is_financially_complete: false,
+      is_job_record_complete: false,
     });
     const client = makeClient({
       authUserId: 'user-1',
@@ -713,7 +702,7 @@ describe('jobs api client', () => {
           makeBuilder({ awaitResult: { data: [], error: null } }),
           makeBuilder({ awaitResult: { data: [], error: null } }),
         ],
-        materials: [
+        job_costs: [
           makeBuilder({ awaitResult: { data: [], error: null } }),
           makeBuilder({ awaitResult: { data: [], error: null } }),
         ],
@@ -748,194 +737,16 @@ describe('jobs api client', () => {
     expect(neqSpy.mock.calls).toContainEqual(['job_work_status', 'canceled']);
     expect(orSpy.mock.calls.length).toBeGreaterThan(0);
     const clause = String(orSpy.mock.calls[0]?.[0]);
-    expect(clause).toContain('is_financially_complete.eq.false');
+    expect(clause).toContain('is_job_record_complete.eq.false');
     expect(clause).toContain('job_work_status.eq.in_progress');
-    expect(clause).toContain('job_payment_state.eq.pending');
-  });
-
-  it('listJobsForCurrentUserPage falls back when financial completeness column is missing', async () => {
-    const missingColumnBuilder = makeBuilder({
-      awaitResult: {
-        data: null,
-        error: {
-          code: '42703',
-          message: 'column jobs.is_financially_complete does not exist',
-        },
-      },
-    });
-    const legacyBuilder = makeBuilder({
-      awaitResult: {
-        data: [
-          {
-            id: 'job-legacy',
-            short_description: 'Legacy schema job',
-            customer_name: null,
-            updated_at: '2026-04-17T10:00:00.000Z',
-            created_at: '2026-04-10T08:00:00.000Z',
-            last_worked_at: '2026-04-16T12:00:00.000Z',
-            job_type: 'x',
-            job_work_status: 'not_started' as const,
-            job_payment_state: null,
-            revenue_cents: 10000,
-            collected_cents: 0,
-          },
-        ],
-        error: null,
-      },
-    });
-    const client = makeClient({
-      authUserId: 'user-1',
-      buildersByTable: {
-        jobs: [missingColumnBuilder, legacyBuilder],
-        sessions: [makeBuilder({ awaitResult: { data: [], error: null } })],
-        materials: [makeBuilder({ awaitResult: { data: [], error: null } })],
-      },
-    });
-
-    const result = await listJobsForCurrentUserPage(client as never, {
-      limit: 10,
-      offset: 0,
-      tab: 'open',
-    });
-
-    const firstSelect = missingColumnBuilder.select as unknown as { mock: { calls: unknown[][] } };
-    const secondSelect = legacyBuilder.select as unknown as { mock: { calls: unknown[][] } };
-    const secondOr = legacyBuilder.or as unknown as { mock: { calls: unknown[][] } };
-    expect(String(firstSelect.mock.calls[0]?.[0])).toContain('is_financially_complete');
-    expect(String(secondSelect.mock.calls[0]?.[0])).not.toContain('is_financially_complete');
-    expect(String(secondOr.mock.calls[0]?.[0])).toContain('job_work_status.neq.completed');
-    expect(result.items[0]).toMatchObject({
-      id: 'job-legacy',
-      isFinanciallyComplete: false,
-    });
-  });
-
-  it('legacy financial completeness fallback requires description, revenue, material, and session', async () => {
-    const row = (id: string, shortDescription: string, revenueCents: number) => ({
-      id,
-      short_description: shortDescription,
-      customer_name: null,
-      updated_at: '2026-04-17T10:00:00.000Z',
-      created_at: '2026-04-10T08:00:00.000Z',
-      last_worked_at: '2026-04-16T12:00:00.000Z',
-      job_type: 'x',
-      job_work_status: 'not_started' as const,
-      job_payment_state: null,
-      revenue_cents: revenueCents,
-      collected_cents: 0,
-    });
-    const client = makeClient({
-      authUserId: 'user-1',
-      buildersByTable: {
-        jobs: [
-          makeBuilder({
-            awaitResult: {
-              data: [
-                row('job-complete', 'Legacy schema job', 10000),
-                row('job-placeholder', 'Untitled Job', 10000),
-                row('job-no-revenue', 'No revenue', 0),
-                row('job-no-materials', 'No materials', 10000),
-                row('job-no-sessions', 'No sessions', 10000),
-              ],
-              error: null,
-            },
-          }),
-        ],
-        sessions: [
-          makeBuilder({
-            awaitResult: {
-              data: [
-                {
-                  id: 'sess-complete',
-                  job_id: 'job-complete',
-                  session_status: 'ended',
-                  started_at: '2026-04-16T10:00:00.000Z',
-                  ended_at: '2026-04-16T12:00:00.000Z',
-                },
-                {
-                  id: 'sess-placeholder',
-                  job_id: 'job-placeholder',
-                  session_status: 'ended',
-                  started_at: '2026-04-16T10:00:00.000Z',
-                  ended_at: '2026-04-16T12:00:00.000Z',
-                },
-                {
-                  id: 'sess-no-revenue',
-                  job_id: 'job-no-revenue',
-                  session_status: 'ended',
-                  started_at: '2026-04-16T10:00:00.000Z',
-                  ended_at: '2026-04-16T12:00:00.000Z',
-                },
-                {
-                  id: 'sess-no-materials',
-                  job_id: 'job-no-materials',
-                  session_status: 'ended',
-                  started_at: '2026-04-16T10:00:00.000Z',
-                  ended_at: '2026-04-16T12:00:00.000Z',
-                },
-              ],
-              error: null,
-            },
-          }),
-        ],
-        materials: [
-          makeBuilder({
-            awaitResult: {
-              data: [
-                {
-                  id: 'mat-complete',
-                  job_id: 'job-complete',
-                  session_id: null,
-                  total_cost_cents: 4000,
-                },
-                {
-                  id: 'mat-placeholder',
-                  job_id: 'job-placeholder',
-                  session_id: null,
-                  total_cost_cents: 4000,
-                },
-                {
-                  id: 'mat-no-revenue',
-                  job_id: 'job-no-revenue',
-                  session_id: null,
-                  total_cost_cents: 4000,
-                },
-                {
-                  id: 'mat-no-sessions',
-                  job_id: 'job-no-sessions',
-                  session_id: null,
-                  total_cost_cents: 4000,
-                },
-              ],
-              error: null,
-            },
-          }),
-          makeBuilder({ awaitResult: { data: [], error: null } }),
-        ],
-      },
-    });
-
-    const result = await listJobsForCurrentUserPage(client as never, { limit: 10, offset: 0 });
-    expect(
-      Object.fromEntries(result.items.map((item) => [item.id, item.isFinanciallyComplete])),
-    ).toEqual({
-      'job-complete': true,
-      'job-placeholder': false,
-      'job-no-revenue': false,
-      'job-no-materials': false,
-      'job-no-sessions': false,
-    });
+    expect(clause).toContain('job_payment_state.neq.paid');
   });
 
   it('listJobsForCurrentUserPage applies search ilike or filter', async () => {
-    const jobsBuilder = makeBuilder({
-      awaitResult: { data: [], error: null },
-    });
+    const jobsBuilder = makeBuilder({ awaitResult: { data: [], error: null } });
     const client = makeClient({
       authUserId: 'user-1',
-      buildersByTable: {
-        jobs: [jobsBuilder],
-      },
+      buildersByTable: { jobs: [jobsBuilder] },
     });
 
     await listJobsForCurrentUserPage(client as never, {
@@ -953,14 +764,10 @@ describe('jobs api client', () => {
   });
 
   it('listJobsForCurrentUserPage applies paid-tab query filters', async () => {
-    const jobsBuilder = makeBuilder({
-      awaitResult: { data: [], error: null },
-    });
+    const jobsBuilder = makeBuilder({ awaitResult: { data: [], error: null } });
     const client = makeClient({
       authUserId: 'user-1',
-      buildersByTable: {
-        jobs: [jobsBuilder],
-      },
+      buildersByTable: { jobs: [jobsBuilder] },
     });
 
     await listJobsForCurrentUserPage(client as never, { limit: 10, offset: 0, tab: 'paid' });
@@ -1011,10 +818,10 @@ describe('jobs api client', () => {
                   last_worked_at: '2026-04-16T11:00:00.000Z',
                   job_type: 'electrical',
                   job_work_status: 'in_progress',
-                  job_payment_state: 'pending',
+                  job_payment_state: 'unpaid',
                   revenue_cents: 80000,
                   collected_cents: 0,
-                  is_financially_complete: true,
+                  is_job_record_complete: true,
                 },
               ],
               error: null,
@@ -1037,7 +844,7 @@ describe('jobs api client', () => {
             },
           }),
         ],
-        materials: [materialsByJobBuilder, materialsBySessionBuilder],
+        job_costs: [materialsByJobBuilder, materialsBySessionBuilder],
       },
     });
 
@@ -1075,10 +882,10 @@ describe('jobs api client', () => {
             last_worked_at: '2026-04-16T12:00:00.000Z',
             job_type: 'plumbing',
             job_work_status: 'completed',
-            job_payment_state: 'pending',
+            job_payment_state: 'unpaid',
             revenue_cents: 120000,
             collected_cents: 0,
-            is_financially_complete: true,
+            is_job_record_complete: true,
           },
         ],
         error: null,
@@ -1137,7 +944,7 @@ describe('jobs api client', () => {
           service_address: '22 Cedar St',
           job_type: 'plumbing',
           job_work_status: 'completed',
-          job_payment_state: 'pending',
+          job_payment_state: 'unpaid',
           revenue_cents: 120000,
           collected_cents: 0,
           updated_at: '2026-04-17T10:00:00.000Z',
@@ -1204,7 +1011,7 @@ describe('jobs api client', () => {
       buildersByTable: {
         jobs: [jobsBuilder, jobDetailJobBuilder],
         sessions: [sessionsForListBuilder, sessionsForDetailBuilder],
-        materials: [
+        job_costs: [
           matsListByJobBuilder,
           matsListBySessionBuilder,
           matsDetailByJobBuilder,
@@ -1254,7 +1061,7 @@ describe('jobs api client', () => {
                 service_address: '44 North Ave',
                 job_type: 'electrical',
                 job_work_status: 'in_progress',
-                job_payment_state: 'pending',
+                job_payment_state: 'unpaid',
                 revenue_cents: 150000,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
@@ -1288,7 +1095,7 @@ describe('jobs api client', () => {
           }),
         ],
         notes: [makeBuilder({ awaitResult: { data: [], error: null } })],
-        materials: [
+        job_costs: [
           makeBuilder({ awaitResult: { data: [], error: null } }),
           makeBuilder({ awaitResult: { data: [], error: null } }),
         ],
@@ -1340,7 +1147,7 @@ describe('jobs api client', () => {
                 service_address: '12 Oak Dr',
                 job_type: 'hvac',
                 job_work_status: 'in_progress',
-                job_payment_state: 'pending',
+                job_payment_state: 'unpaid',
                 revenue_cents: 90000,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
@@ -1367,7 +1174,7 @@ describe('jobs api client', () => {
           }),
         ],
         notes: [notesBuilder],
-        materials: [
+        job_costs: [
           makeBuilder({ awaitResult: { data: [], error: null } }),
           makeBuilder({ awaitResult: { data: [], error: null } }),
         ],
@@ -1453,7 +1260,7 @@ describe('jobs api client', () => {
                 service_address: '1 St',
                 job_type: 'x',
                 job_work_status: 'in_progress',
-                job_payment_state: 'pending',
+                job_payment_state: 'unpaid',
                 revenue_cents: 0,
                 collected_cents: 0,
                 updated_at: '2026-04-17T10:00:00.000Z',
@@ -1480,7 +1287,7 @@ describe('jobs api client', () => {
           }),
         ],
         notes: [notesBuilder],
-        materials: [matsBuilder, makeBuilder({ awaitResult: { data: [], error: null } })],
+        job_costs: [matsBuilder, makeBuilder({ awaitResult: { data: [], error: null } })],
       },
     });
 

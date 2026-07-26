@@ -62,7 +62,7 @@ describe('inbox api client', () => {
     });
     const client = makeClient({
       authUserId: 'user-1',
-      buildersByTable: { materials: [matBuilder] },
+      buildersByTable: { job_costs: [matBuilder] },
     });
 
     const items = await listInboxMaterials(client as never);
@@ -91,7 +91,7 @@ describe('inbox api client', () => {
             awaitResult: { data: null, error: null, count: 2 } as never,
           }),
         ],
-        materials: [
+        job_costs: [
           makeBuilder({
             awaitResult: { data: null, error: null, count: 5 } as never,
           }),

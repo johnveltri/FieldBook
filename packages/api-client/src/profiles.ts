@@ -1,4 +1,5 @@
 import type { FieldSoloSupabaseClient } from './client';
+import type { Database } from './database.types';
 
 /** Camel-cased shape returned to the app. `trades` is always an array (possibly empty). */
 export type UserProfile = {
@@ -100,7 +101,7 @@ export async function updateCurrentUserProfile(
         })()
       : undefined;
 
-  const payload: Record<string, unknown> = { id: userId };
+  const payload: Database['public']['Tables']['profiles']['Insert'] = { id: userId };
   if (input.firstName !== undefined) payload.first_name = normalizeName(input.firstName);
   if (input.lastName !== undefined) payload.last_name = normalizeName(input.lastName);
   if (cleanedTrades !== undefined) payload.trades = cleanedTrades;
