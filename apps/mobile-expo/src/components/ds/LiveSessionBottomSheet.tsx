@@ -122,10 +122,12 @@ export function LiveSessionBottomSheet({
           </Pressable>
 
           <View style={styles.statusRow}>
-            <LiveSessionActiveDotIcon color={color('Brand/Accent')} size={11.5} />
-            <Text style={[typography.labelCaps, styles.statusLabel]}>
-              ACTIVE SESSION
-            </Text>
+            <View style={styles.statusIdentity}>
+              <LiveSessionActiveDotIcon color={color('Brand/Accent')} size={11.5} />
+              <Text style={[typography.labelCaps, styles.statusLabel]}>
+                ACTIVE SESSION
+              </Text>
+            </View>
             <View style={styles.statusSpacer} />
             <Pressable
               accessibilityRole="button"
@@ -261,6 +263,11 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+    gap: 7,
+  },
+  statusIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 7,
   },
   statusSpacer: {
