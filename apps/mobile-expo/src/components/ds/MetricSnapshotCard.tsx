@@ -11,6 +11,7 @@ import { bg, cardShadowRn, type TextStyles } from '../../theme/nativeTokens';
 export type MetricSnapshotCardProps = {
   label: string;
   value: string;
+  helperText?: string;
   valueTone: 'success' | 'neutral';
   typography: TextStyles;
   /** When provided, the card becomes a button that navigates on press. */
@@ -23,6 +24,7 @@ export type MetricSnapshotCardProps = {
 export function MetricSnapshotCard({
   label,
   value,
+  helperText,
   valueTone,
   typography,
   onPress,
@@ -70,6 +72,11 @@ export function MetricSnapshotCard({
           {value}
         </Text>
       </View>
+      {helperText ? (
+        <Text style={[typography.bodySmall, styles.helper, { color: color('Foundation/Text/Secondary') }]}>
+          {helperText}
+        </Text>
+      ) : null}
     </View>
   );
 
@@ -78,7 +85,7 @@ export function MetricSnapshotCard({
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${label} ${value}`}
+        accessibilityLabel={`${label} ${value}${helperText ? `. ${helperText}` : ''}`}
         style={({ pressed }) => [styles.card, { padding: cardPad }, pressed && styles.pressed]}
       >
         {inner}
@@ -90,7 +97,7 @@ export function MetricSnapshotCard({
     <View
       style={[styles.card, { padding: cardPad }]}
       accessibilityRole="summary"
-      accessibilityLabel={`${label} ${value}`}
+      accessibilityLabel={`${label} ${value}${helperText ? `. ${helperText}` : ''}`}
     >
       {inner}
     </View>
@@ -120,6 +127,10 @@ const styles = StyleSheet.create({
   value: {
     textAlign: 'center',
     width: '100%',
+  },
+  helper: {
+    marginTop: space('Spacing/8'),
+    textAlign: 'center',
   },
   pressed: { opacity: 0.75 },
 });

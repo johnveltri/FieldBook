@@ -11,6 +11,7 @@ import {
   createNote,
   deleteJobById,
   fetchJobDetail,
+  fetchFirstJobIdForCurrentUser,
   getWeeklyNetEarningsCentsForCurrentUser,
   listJobsForCurrentUserPage,
   listRecentDetailedJobsForCurrentUser,
@@ -25,6 +26,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -104,6 +106,7 @@ function formatWeeklyUsd(cents: number): string {
 }
 
 export type HomeScreenProps = {
+  onCreateFirstJob?: () => Promise<string>;
   onOpenProfile: () => void;
   onOpenJobDetail: (jobId?: string, options?: { initialEditOpen?: boolean }) => void;
   /** Navigate to the Earnings tab (Past Week) — fired by the weekly snapshot card. */
@@ -187,6 +190,7 @@ function formatCaptureError(e: unknown): string {
 }
 
 export function HomeScreen({
+  onCreateFirstJob = async () => { throw new Error('Could not create your first job.'); },
   onOpenProfile,
   onOpenJobDetail,
   onOpenEarnings,
@@ -235,6 +239,9 @@ export function HomeScreen({
   const [refreshing, setRefreshing] = useState(false);
   const [homeError, setHomeError] = useState<string | null>(null);
   const [weeklyNetCents, setWeeklyNetCents] = useState(0);
+  const [hasAnyJobs, setHasAnyJobs] = useState<boolean | null>(null);
+  const [creatingFirstJob, setCreatingFirstJob] = useState(false);
+  const [firstJobError, setFirstJobError] = useState<string | null>(null);
   const [openTabJobsPage, setOpenTabJobsPage] = useState<ListJobsForCurrentUserItem[]>([]);
   const [recentJobsDetail, setRecentJobsDetail] = useState<ListJobsForCurrentUserItem[]>([]);
   /** Lined canvas height — same pattern as JobDetail (`CanvasTiledBackground` + `onContentSizeChange`). */
@@ -301,7 +308,7 @@ export function HomeScreen({
     }
     if (!isCancelled()) setHomeError(null);
     try {
-      const [weekly, openPage, recent] = await Promise.all([
+      const [weekly, openPage, recent, firstJobId] = await Promise.all([
         getWeeklyNetEarningsCentsForCurrentUser(supabase),
         listJobsForCurrentUserPage(supabase, {
           limit: OPEN_TAB_PAGE_SIZE,
@@ -309,11 +316,13 @@ export function HomeScreen({
           tab: 'open',
         }),
         listRecentDetailedJobsForCurrentUser(supabase, { limit: 3 }),
+        fetchFirstJobIdForCurrentUser(supabase),
       ]);
       if (!isCancelled()) {
         setWeeklyNetCents(weekly.netEarningsCents);
         setOpenTabJobsPage(openPage.items);
         setRecentJobsDetail(recent);
+        setHasAnyJobs(firstJobId != null);
         const buckets = bucketOpenTabJobs(openPage.items);
         analytics.capture('home_loaded', {
           weekly_net_bucket: moneyBucket(weekly.netEarningsCents),
@@ -332,6 +341,7 @@ export function HomeScreen({
         setWeeklyNetCents(0);
         setOpenTabJobsPage([]);
         setRecentJobsDetail([]);
+        setHasAnyJobs(null);
         analytics.capture('home_load_failed', {
           failing_module: 'home',
           load_duration_ms: Date.now() - startedAt,
@@ -853,7 +863,50 @@ export function HomeScreen({
             </Text>
           ) : null}
 
-          {!homeLoading ? (
+          {!homeLoading && hasAnyJobs === false ? (
+            <View style={styles.firstJobEmptyState}>
+              <Image
+                accessibilityIgnoresInvertColors
+                source={require('../../assets/brand/fieldsolo-solo-notch-light.png')}
+                style={styles.firstJobLogo}
+              />
+              <Text accessibilityRole="header" style={[typography.headingH2, styles.firstJobTitle, { color: fg.primary }]}>
+                Looks like you don't have any jobs yet
+              </Text>
+              <Text style={[typography.bodySmall, styles.firstJobBody, { color: fg.primary }]}>
+                FieldSolo is a jobs &amp; earnings tracker for independent tradespeople designed for the field.
+              </Text>
+              <Text style={[typography.bodySmall, styles.firstJobBody, { color: fg.primary }]}>
+                Start with minimal info, and then let FieldSolo guide you to track enough so that you can understand your profitability. Track every job to understand your business and price smarter over time.
+              </Text>
+              {firstJobError ? (
+                <Text style={[typography.bodySmall, styles.firstJobError, { color: color('Semantic/Status/Error/Text') }]}>
+                  {firstJobError}
+                </Text>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                disabled={creatingFirstJob}
+                onPress={() => {
+                  if (creatingFirstJob) return;
+                  setCreatingFirstJob(true);
+                  setFirstJobError(null);
+                  void onCreateFirstJob()
+                    .catch((error) => setFirstJobError(error instanceof Error ? error.message : 'Could not create your first job.'))
+                    .finally(() => setCreatingFirstJob(false));
+                }}
+                style={({ pressed }) => [styles.firstJobButton, (pressed || creatingFirstJob) && styles.pressed]}
+              >
+                {creatingFirstJob ? (
+                  <ActivityIndicator color={bg.canvasWarm} />
+                ) : (
+                  <Text style={[typography.bodyBold, styles.firstJobButtonText]}>Create my first job</Text>
+                )}
+              </Pressable>
+            </View>
+          ) : null}
+
+          {!homeLoading && hasAnyJobs !== false ? (
             <>
               <SectionHeader
                 title="Weekly Snapshot"
@@ -865,6 +918,7 @@ export function HomeScreen({
               <MetricSnapshotCard
                 label="NET EARNINGS"
                 value={formatWeeklyUsd(weeklyNetCents)}
+                helperText={weeklyNetCents === 0 ? 'No earnings from this week. Complete a job to track earnings here.' : undefined}
                 valueTone="success"
                 typography={typography}
                 onPress={onOpenEarnings}
@@ -872,7 +926,7 @@ export function HomeScreen({
             </>
           ) : null}
 
-          {needsAttentionSummaries.length > 0 ? (
+          {hasAnyJobs !== false && needsAttentionSummaries.length > 0 ? (
             <>
               <SectionHeader
                 title="Needs Attention"
@@ -906,7 +960,7 @@ export function HomeScreen({
             </>
           ) : null}
 
-          {recentJobsDetail.length > 0 ? (
+          {hasAnyJobs !== false && recentJobsDetail.length > 0 ? (
             <>
               <SectionHeader
                 title="Jump Back In"
@@ -940,7 +994,7 @@ export function HomeScreen({
         </View>
       </Animated.ScrollView>
 
-      {hasLiveSession || quickActionsVisible ? null : (
+      {hasAnyJobs === false || hasLiveSession || quickActionsVisible ? null : (
         <View style={[styles.fabWrap, { bottom: fabBottom, right: fabRight }]}>
           <ScrollFriendlyPressable
             accessibilityRole="button"
@@ -1171,6 +1225,45 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'stretch',
     overflow: 'visible',
+  },
+  firstJobEmptyState: {
+    ...cardShadowRn,
+    alignItems: 'center',
+    backgroundColor: bg.surfaceWhite,
+    borderRadius: radius('Radius/16'),
+    marginTop: space('Spacing/20'),
+    padding: space('Spacing/28'),
+  },
+  firstJobLogo: {
+    height: 76,
+    marginBottom: space('Spacing/24'),
+    resizeMode: 'contain',
+    width: 76,
+  },
+  firstJobTitle: {
+    marginBottom: space('Spacing/20'),
+    textAlign: 'center',
+  },
+  firstJobBody: {
+    marginBottom: space('Spacing/16'),
+    textAlign: 'center',
+  },
+  firstJobError: {
+    marginBottom: space('Spacing/12'),
+    textAlign: 'center',
+  },
+  firstJobButton: {
+    alignItems: 'center',
+    backgroundColor: color('Brand/Primary'),
+    borderRadius: radius('Radius/12'),
+    justifyContent: 'center',
+    marginTop: space('Spacing/12'),
+    minHeight: 52,
+    paddingHorizontal: space('Spacing/20'),
+    width: '100%',
+  },
+  firstJobButtonText: {
+    color: bg.canvasWarm,
   },
   homeError: {
     textAlign: 'center',

@@ -465,6 +465,20 @@ export type WeeklyNetEarningsForCurrentUserResult = {
   jobCount: number;
 };
 
+/** Count non-deleted jobs whose work status is complete for the signed-in user. */
+export async function countCompletedJobsForCurrentUser(
+  client: FieldSoloSupabaseClient,
+): Promise<number> {
+  const { count, error } = await client
+    .from('jobs')
+    .select('id', { count: 'exact', head: true })
+    .eq('job_work_status', 'completed')
+    .is('deleted_at', null);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 const MS_PER_DAY = 86_400_000;
 
 /**

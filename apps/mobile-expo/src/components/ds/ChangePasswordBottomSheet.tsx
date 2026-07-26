@@ -8,6 +8,10 @@ import { SessionSheetBackIcon } from '../figma-icons/JobDetailScreenIcons';
 import { ProfileAccountIcon } from '../figma-icons/ProfileScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
 import { screenHeaderA11y } from '../../lib/accessibility';
+import {
+  NEW_PASSWORD_REQUIREMENT,
+  newPasswordMeetsPolicy,
+} from '../../lib/passwordPolicy';
 
 type ChangePasswordBottomSheetProps = {
   typography: TextStyles;
@@ -23,8 +27,6 @@ type ChangePasswordBottomSheetProps = {
   registerInGlobalStack?: boolean;
 };
 
-const MIN_PASSWORD_LENGTH = 8;
-
 /**
  * Change Password sheet (Figma `1924:2083`).
  *
@@ -36,8 +38,8 @@ const MIN_PASSWORD_LENGTH = 8;
  *   "Password does not match"   (only when both fields filled and unequal)
  *   [ SAVE NEW PASSWORD              ]
  *
- * The CTA is disabled until both fields contain at least 8 characters AND
- * are exactly equal. The mismatch hint never shows on initial render —
+ * The CTA is disabled until the new password satisfies the shared policy AND
+ * both fields are exactly equal. The mismatch hint never shows on initial render —
  * only after both fields are non-empty.
  *
  * Local field state resets on the visible→true edge so re-opening the sheet
@@ -66,9 +68,9 @@ export function ChangePasswordBottomSheet({
 
   const bothFilled = next.length > 0 && confirm.length > 0;
   const matches = next === confirm;
-  const hasMinLength = next.length >= MIN_PASSWORD_LENGTH;
+  const meetsPolicy = newPasswordMeetsPolicy(next);
   const showMismatch = bothFilled && !matches;
-  const canSubmit = hasMinLength && bothFilled && matches && !saving;
+  const canSubmit = meetsPolicy && bothFilled && matches && !saving;
 
   const accent = color('Brand/Primary');
   const errorText = color('Semantic/Status/Error/Text');
@@ -117,6 +119,9 @@ export function ChangePasswordBottomSheet({
               style={[typography.body, styles.inputText]}
             />
           </View>
+          <Text style={[typography.bodySmall, styles.requirement, { color: fg.secondary }]}>
+            {NEW_PASSWORD_REQUIREMENT}
+          </Text>
           <View style={styles.inputShell}>
             <TextInput
               value={confirm}
@@ -210,6 +215,9 @@ const styles = StyleSheet.create({
   },
   error: {
     textAlign: 'center',
+  },
+  requirement: {
+    paddingHorizontal: space('Spacing/4'),
   },
   primary: {
     minHeight: space('Spacing/50'),

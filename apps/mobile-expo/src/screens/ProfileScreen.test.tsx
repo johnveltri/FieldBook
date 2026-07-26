@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
@@ -91,6 +91,19 @@ describe('ProfileScreen', () => {
       fireEvent.press(screen.getByText('Log out'));
     });
     expect(mockSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens a prefilled feedback email from the primary profile button', async () => {
+    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    const screen = render(<ProfileScreen onBack={jest.fn()} onSelectShellTab={jest.fn()} />);
+
+    await waitFor(() => expect(screen.getByText('Send feedback')).toBeTruthy());
+    fireEvent.press(screen.getByText('Send feedback'));
+
+    await waitFor(() => {
+      expect(openUrlSpy).toHaveBeenCalledWith(expect.stringContaining('mailto:support@fieldsolo.com'));
+    });
+    openUrlSpy.mockRestore();
   });
 
   it('opens the Update Profile sheet from the EDIT pill even when no profile row exists', async () => {

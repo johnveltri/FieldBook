@@ -12,6 +12,7 @@ export {
   listRecentDetailedJobsForCurrentUser,
   listRecentJobsForCurrentUser,
   getWeeklyNetEarningsCentsForCurrentUser,
+  countCompletedJobsForCurrentUser,
   getEarningsSnapshotForCurrentUser,
   getOutstandingPaymentsForCurrentUser,
   updateJobById,

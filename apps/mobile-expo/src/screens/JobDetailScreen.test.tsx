@@ -1,9 +1,20 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { JobDetailScreen } from './JobDetailScreen';
 import type { JobDetailViewModel } from '@fieldsolo/shared-types';
+
+const mockClaimFeedbackPromptMilestone = jest.fn<(...args: unknown[]) => Promise<1 | 3 | null>>();
+const mockMarkFeedbackSent = jest.fn<(...args: unknown[]) => Promise<void>>();
+const mockOpenFeedbackEmail = jest.fn<(...args: unknown[]) => Promise<void>>();
+
+jest.mock('../lib/feedback', () => ({
+  claimFeedbackPromptMilestone: (...args: unknown[]) => mockClaimFeedbackPromptMilestone(...args),
+  markFeedbackSent: (...args: unknown[]) => mockMarkFeedbackSent(...args),
+  openFeedbackEmail: (...args: unknown[]) => mockOpenFeedbackEmail(...args),
+}));
 
 jest.mock('expo-font', () => ({
   useFonts: () => [true],
@@ -65,8 +76,12 @@ jest.mock('../components/figma-icons/JobDetailScreenIcons', () => ({
 }));
 
 jest.mock('../components/ds', () => ({
+  nextStatusAfterPrimaryAction: () => 'completed',
   EditJobBottomSheet: () => null,
-  JobDetailCtaRow: () => null,
+  JobDetailCtaRow: ({ onPrimaryPress }: { onPrimaryPress: () => void }) => {
+    const { Text } = require('react-native');
+    return <Text onPress={onPrimaryPress}>Primary status action</Text>;
+  },
   JobDetailJobHeader: () => null,
   JobDetailMetricTertiary: () => null,
   JobDetailSummaryCard: () => null,
@@ -352,6 +367,7 @@ jest.mock('../components/ds', () => ({
 }));
 
 jest.mock('@fieldsolo/api-client', () => ({
+  countCompletedJobsForCurrentUser: jest.fn(),
   createManualSession: jest.fn(),
   createMaterial: jest.fn(),
   createNote: jest.fn(),
@@ -453,6 +469,30 @@ describe('JobDetailScreen manual session and note flows', () => {
     apiClient.deleteMaterial.mockResolvedValue(undefined);
     apiClient.updateJobNoMaterialsConfirmed.mockResolvedValue(undefined);
     apiClient.updateJobStatusById.mockResolvedValue(undefined);
+    apiClient.countCompletedJobsForCurrentUser.mockResolvedValue(1);
+    mockClaimFeedbackPromptMilestone.mockResolvedValue(null);
+    mockMarkFeedbackSent.mockResolvedValue(undefined);
+    mockOpenFeedbackEmail.mockResolvedValue(undefined);
+  });
+
+  it('offers feedback after the first completed job', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockClaimFeedbackPromptMilestone.mockResolvedValueOnce(1);
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => expect(screen.getByText('Primary status action')).toBeTruthy());
+    fireEvent.press(screen.getByText('Primary status action'));
+
+    await waitFor(() => {
+      expect(apiClient.countCompletedJobsForCurrentUser).toHaveBeenCalledWith({});
+      expect(mockClaimFeedbackPromptMilestone).toHaveBeenCalledWith('user-1', 1);
+      expect(alertSpy).toHaveBeenCalledWith(
+        "How's FieldSolo working for you?",
+        'You just completed your first job. What felt confusing or missing?',
+        expect.any(Array),
+      );
+    });
+    alertSpy.mockRestore();
   });
 
   it('creates a manual session from add flow', async () => {

@@ -86,6 +86,7 @@ type JobsScreenProps = {
   /** When false, the jobs tab is hidden — skip list refetch until the user returns. */
   isActive?: boolean;
   onOpenJobDetail: (jobId?: string, options?: { initialEditOpen?: boolean }) => void;
+  onCreateJob?: () => Promise<string>;
   /** Open the Inbox of unassigned quick captures (header icon). */
   onOpenInbox?: () => void;
   /**
@@ -227,6 +228,7 @@ function JobsLoadingSkeleton({ typography }: { typography: Typography }) {
 
 export function JobsScreen({
   onOpenJobDetail,
+  onCreateJob: onCreateJobProp,
   onOpenInbox,
   suppressFab = false,
   isActive = true,
@@ -586,7 +588,7 @@ export function JobsScreen({
 
   const onCreateJob = useCallback(async () => {
     if (creatingJob) return;
-    if (!isSupabaseConfigured()) {
+    if (!onCreateJobProp && !isSupabaseConfigured()) {
       setLoadError('Supabase is not configured.');
       analytics.capture('supabase_not_configured_seen', {
         screen: 'jobs',
@@ -598,13 +600,17 @@ export function JobsScreen({
     setLoadError(null);
     analytics.capture('job_create_started', { source: 'jobs_fab' });
     try {
-      const jobId = await createBlankJobForCurrentUser(supabase);
-      analytics.capture('job_created', {
-        source: 'jobs_fab',
-        job_id: jobId,
-        placeholder: true,
-      });
-      onOpenJobDetail(jobId, { initialEditOpen: true });
+      if (onCreateJobProp) {
+        await onCreateJobProp();
+      } else {
+        const jobId = await createBlankJobForCurrentUser(supabase);
+        analytics.capture('job_created', {
+          source: 'jobs_fab',
+          job_id: jobId,
+          placeholder: true,
+        });
+        onOpenJobDetail(jobId, { initialEditOpen: true });
+      }
     } catch (error) {
       const message =
         error instanceof Error
@@ -623,7 +629,7 @@ export function JobsScreen({
     } finally {
       setCreatingJob(false);
     }
-  }, [creatingJob, onOpenJobDetail]);
+  }, [creatingJob, onCreateJobProp, onOpenJobDetail]);
 
   const renderItem = useCallback<ListRenderItem<JobsFlatRow>>(
     ({ item }) => {
@@ -1168,7 +1174,7 @@ const styles = StyleSheet.create({
   },
   paidTabSubcopy: {
     marginTop: space('Spacing/8'),
-    textAlign: 'center',
+    textAlign: 'left',
   },
   sectionHeader: {
     width: '100%',

@@ -4,6 +4,7 @@ import { fetchJobDetail } from './jobDetail';
 import {
   createBlankJobForCurrentUser,
   createBlankJobForLiveSessionStart,
+  countCompletedJobsForCurrentUser,
   deleteJobById,
   getEarningsSnapshotForCurrentUser,
   getOutstandingPaymentsForCurrentUser,
@@ -20,6 +21,21 @@ import {
 import { makeBuilder, makeClient } from './testUtils';
 
 describe('jobs api client', () => {
+  it('counts completed, non-deleted jobs for the current user', async () => {
+    const jobsBuilder = makeBuilder({
+      awaitResult: { data: null, error: null, count: 3 },
+    });
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: { jobs: [jobsBuilder] },
+    });
+
+    await expect(countCompletedJobsForCurrentUser(client as never)).resolves.toBe(3);
+    expect(jobsBuilder.select).toHaveBeenCalledWith('id', { count: 'exact', head: true });
+    expect(jobsBuilder.eq).toHaveBeenCalledWith('job_work_status', 'completed');
+    expect(jobsBuilder.is).toHaveBeenCalledWith('deleted_at', null);
+  });
+
   it('createBlankJobForCurrentUser inserts required defaults and returns id', async () => {
     let inserted: unknown;
     const client = makeClient({

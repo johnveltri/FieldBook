@@ -22,6 +22,7 @@ const mockListJobsForCurrentUserPage = jest.fn<
 const mockListRecentDetailedJobsForCurrentUser = jest.fn<
   (...args: unknown[]) => Promise<unknown[]>
 >();
+const mockFetchFirstJobIdForCurrentUser = jest.fn<(...args: unknown[]) => Promise<string | null>>();
 const mockTryBumpJobToInProgressIfNotStarted = jest.fn<
   (...args: unknown[]) => Promise<void>
 >();
@@ -46,6 +47,8 @@ jest.mock('@fieldsolo/api-client', () => ({
   listJobsForCurrentUserPage: (...args: unknown[]) => mockListJobsForCurrentUserPage(...args),
   listRecentDetailedJobsForCurrentUser: (...args: unknown[]) =>
     mockListRecentDetailedJobsForCurrentUser(...args),
+  fetchFirstJobIdForCurrentUser: (...args: unknown[]) =>
+    mockFetchFirstJobIdForCurrentUser(...args),
   tryBumpJobToInProgressIfNotStarted: (...args: unknown[]) =>
     mockTryBumpJobToInProgressIfNotStarted(...args),
 }));
@@ -149,6 +152,7 @@ describe('HomeScreen quick session', () => {
     });
     mockListJobsForCurrentUserPage.mockResolvedValue({ items: [], hasMore: false });
     mockListRecentDetailedJobsForCurrentUser.mockResolvedValue([]);
+    mockFetchFirstJobIdForCurrentUser.mockResolvedValue('job-existing');
     mockTryBumpJobToInProgressIfNotStarted.mockResolvedValue(undefined);
     mockDeleteJobById.mockResolvedValue(undefined);
     mockCreateNote.mockResolvedValue('note-new-1');
@@ -174,6 +178,40 @@ describe('HomeScreen quick session', () => {
     const title = screen.getByText(/FIELD\s*SOLO/);
     expect(title.props.accessibilityRole).toBe('header');
     expect(title.props.accessibilityLabel).toBe('FieldSolo');
+  });
+
+  it('explains zero weekly earnings for an account with jobs', async () => {
+    const screen = render(
+      <HomeScreen
+        onOpenProfile={() => undefined}
+        onOpenJobDetail={() => undefined}
+        onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={() => undefined}
+      />,
+    );
+
+    expect(await screen.findByText('No earnings from this week. Complete a job to track earnings here.')).toBeTruthy();
+  });
+
+  it('shows the full first-job state and creates a job from its CTA', async () => {
+    mockFetchFirstJobIdForCurrentUser.mockResolvedValue(null);
+    const onCreateFirstJob = jest.fn<() => Promise<string>>().mockResolvedValue('job-new');
+    const screen = render(
+      <HomeScreen
+        onCreateFirstJob={onCreateFirstJob}
+        onOpenProfile={() => undefined}
+        onOpenJobDetail={() => undefined}
+        onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={() => undefined}
+      />,
+    );
+
+    expect(await screen.findByText("Looks like you don't have any jobs yet")).toBeTruthy();
+    expect(screen.queryByText('Weekly Snapshot')).toBeNull();
+    expect(screen.queryByLabelText('Quick capture')).toBeNull();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Create my first job' }));
+    await waitFor(() => expect(onCreateFirstJob).toHaveBeenCalledTimes(1));
   });
 
   it('cleans up the temporary quick-session job when starting the live session fails', async () => {

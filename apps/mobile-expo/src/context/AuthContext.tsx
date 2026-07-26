@@ -9,6 +9,7 @@ import {
 import { analytics, errorProperties } from '../lib/analytics';
 import { clearAnalyticsConsentCache } from '../lib/analytics/consentStorage';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { newPasswordPolicyError } from '../lib/passwordPolicy';
 
 export type SignUpProfileSeed = {
   firstName: string;
@@ -37,7 +38,7 @@ type AuthContextValue = {
     email: string,
     password: string,
     profile?: SignUpProfileSeed,
-  ) => Promise<{ error: AuthError | null; session: Session | null }>;
+  ) => Promise<{ error: Error | null; session: Session | null }>;
   signOut: () => Promise<void>;
   /** Wraps `auth.updateUser({ password })`. Throws on failure. */
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
@@ -97,6 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error, session: data.session };
       },
       signUp: async (email, password, profile) => {
+        const policyError = newPasswordPolicyError(password);
+        if (policyError) return { error: new Error(policyError), session: null };
         const options = profile
           ? {
               data: {
@@ -121,6 +124,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await clearAnalyticsConsentCache();
       },
       updatePassword: async (newPassword) => {
+        const policyError = newPasswordPolicyError(newPassword);
+        if (policyError) return { error: new Error(policyError) };
         try {
           await updateCurrentUserPassword(supabase, newPassword);
           return { error: null };

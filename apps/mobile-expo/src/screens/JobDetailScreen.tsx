@@ -76,6 +76,7 @@ import {
   createManualSession,
   createMaterial,
   createNote,
+  countCompletedJobsForCurrentUser,
   deleteMaterial,
   deleteNote,
   deleteSession,
@@ -113,6 +114,11 @@ import {
   textLengthBucket,
 } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import {
+  claimFeedbackPromptMilestone,
+  markFeedbackSent,
+  openFeedbackEmail,
+} from '../lib/feedback';
 import {
   bg,
   border,
@@ -814,6 +820,56 @@ export function JobDetailScreen({
     [],
   );
 
+  const maybeShowCompletionFeedbackPrompt = useCallback(async () => {
+    if (!sessionUserId) return;
+    try {
+      const completedJobCount = await countCompletedJobsForCurrentUser(supabase);
+      const milestone = await claimFeedbackPromptMilestone(sessionUserId, completedJobCount);
+      if (milestone == null) return;
+
+      analytics.capture('feedback_prompt_shown', {
+        source: 'job_completion',
+        completed_job_milestone: milestone,
+      });
+      Alert.alert(
+        "How's FieldSolo working for you?",
+        `You just completed your ${milestone === 1 ? 'first' : 'third'} job. What felt confusing or missing?`,
+        [
+          {
+            text: 'Not now',
+            style: 'cancel',
+            onPress: () => analytics.capture('feedback_prompt_dismissed', {
+              completed_job_milestone: milestone,
+            }),
+          },
+          {
+            text: 'Send feedback',
+            onPress: () => {
+              analytics.capture('feedback_composer_opened', {
+                source: 'completion_prompt',
+                completed_job_milestone: milestone,
+              });
+              void openFeedbackEmail('completion_prompt')
+                .then(() => markFeedbackSent(sessionUserId))
+                .catch((error) => {
+                  analytics.capture('feedback_composer_failed', {
+                    source: 'completion_prompt',
+                    ...errorProperties(error),
+                  });
+                  Alert.alert('Email unavailable', 'Email us directly at support@fieldsolo.com.');
+                });
+            },
+          },
+        ],
+      );
+    } catch (error) {
+      analytics.capture('feedback_prompt_check_failed', {
+        source: 'job_completion',
+        ...errorProperties(error),
+      });
+    }
+  }, [sessionUserId]);
+
   const onPrimaryStatusCta = useCallback(async () => {
     if (!job || statusActionPending) return;
     const next = nextStatusAfterPrimaryAction(job.workStatus);
@@ -827,6 +883,9 @@ export function JobDetailScreen({
         to_status: next,
         source: 'primary_cta',
       });
+      if (job.workStatus !== 'completed' && next === 'completed') {
+        void maybeShowCompletionFeedbackPrompt();
+      }
     } catch (e) {
       analytics.capture('job_status_change_failed', {
         job_id: job.id,
@@ -842,7 +901,7 @@ export function JobDetailScreen({
     } finally {
       setStatusActionPending(false);
     }
-  }, [job, statusActionPending, refetchJob, formatErrorMessage]);
+  }, [job, statusActionPending, refetchJob, formatErrorMessage, maybeShowCompletionFeedbackPrompt]);
 
   const onSelectJobStatusFromSheet = useCallback(
     async (value: string) => {
@@ -860,6 +919,9 @@ export function JobDetailScreen({
           to_status: next,
           source: 'status_sheet',
         });
+        if (job.workStatus !== 'completed' && next === 'completed') {
+          void maybeShowCompletionFeedbackPrompt();
+        }
       } catch (e) {
         analytics.capture('job_status_change_failed', {
           job_id: job.id,
@@ -876,7 +938,7 @@ export function JobDetailScreen({
         setStatusActionPending(false);
       }
     },
-    [job, statusActionPending, refetchJob, formatErrorMessage, closeStatusSheet],
+    [job, statusActionPending, refetchJob, formatErrorMessage, closeStatusSheet, maybeShowCompletionFeedbackPrompt],
   );
 
   const onSaveNewSession = useCallback(

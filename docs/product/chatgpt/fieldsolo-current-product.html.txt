@@ -106,6 +106,7 @@
       <ol>
         <li>Anonymous users see <a href="#screen-sign-in">Sign in / Sign up</a>.</li>
         <li>Authenticated users must pass the <a href="#state-legal-reacceptance">legal-version gate</a> and, when unresolved, the <a href="#state-analytics-consent">analytics choice</a>.</li>
+        <li>Accounts with no jobs and no prior dismissal see the <a href="#state-first-run">first-run job prompt</a> after consent; they may add a real job or choose Not now.</li>
         <li>The persistent main shell contains <a href="#screen-home">Home</a>, <a href="#screen-jobs">Jobs</a>, and <a href="#screen-earnings">Earnings</a>.</li>
         <li><a href="#screen-job-detail">Job Detail</a> and <a href="#state-inbox-notes">Inbox</a> cover the shell but preserve the selected destination tab.</li>
         <li><a href="#screen-profile">Profile</a> stacks over Home; <a href="#state-help">Help</a> and <a href="#state-privacy">Privacy</a> are secondary Profile screens.</li>
@@ -119,13 +120,13 @@
         <article id="screen-sign-in" data-screen-id="sign-in" data-status="shipped">
           <p class="kicker">Anonymous entry</p>
           <h3>Sign in and sign up</h3>
-          <dl><dt>Entry</dt><dd>No authenticated Supabase session.</dd><dt>Actions</dt><dd>Email/password sign in; switch to account creation; enter first/last name; accept Privacy Policy and Terms for signup.</dd><dt>Constraints</dt><dd>Signup is blocked until legal acceptance is checked and persisted.</dd></dl>
+          <dl><dt>Entry</dt><dd>No authenticated Supabase session.</dd><dt>Actions</dt><dd>Email/password sign in; show or hide the password; switch to account creation; enter first/last name; confirm a new password; accept Privacy Policy and Terms for signup.</dd><dt>Presentation</dt><dd>Branded, mode-specific Welcome back and Create your account states.</dd><dt>Behavior</dt><dd>Inputs provide native autofill hints and keyboard Next/Done behavior; emails are normalized and locally validated; common authentication failures use clear user-facing copy.</dd><dt>Constraints</dt><dd>Signup and password changes require matching new passwords with at least eight characters, one capital letter, and one symbol. Existing passwords remain valid for sign-in. Signup is blocked until legal acceptance is checked and persisted.</dd></dl>
           <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/SignInScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-2">Figma node 2025:2</a></p>
         </article>
         <article id="screen-home" data-screen-id="home" data-status="shipped">
           <p class="kicker">Main tab</p>
           <h3>Home</h3>
-          <dl><dt>Purpose</dt><dd>Fast capture, current work, and attention queue.</dd><dt>Actions</dt><dd>Open Profile, Earnings, or Job Detail; start a live session; quick-capture a note or material to Inbox or a selected job.</dd><dt>States</dt><dd>Weekly net snapshot, recent jobs, incomplete jobs, work needing completion review, pending payment, loading, error, empty.</dd></dl>
+          <dl><dt>Purpose</dt><dd>Fast capture, current work, and attention queue.</dd><dt>Actions</dt><dd>Open Profile, Earnings, or Job Detail; start a live session; quick-capture a note or material to Inbox or a selected job.</dd><dt>States</dt><dd>Weekly net snapshot with zero-earnings guidance, recent jobs, incomplete jobs, work needing completion review, pending payment, loading, error, and a full-page first-job state.</dd></dl>
           <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/HomeScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-19">Figma node 2025:19</a></p>
         </article>
         <article id="screen-jobs" data-screen-id="jobs" data-status="shipped">
@@ -149,18 +150,20 @@
         <article id="screen-profile" data-screen-id="profile" data-status="shipped">
           <p class="kicker">Home overlay</p>
           <h3>Profile</h3>
-          <dl><dt>Data</dt><dd>Name, email, trade selections, and current free plan label.</dd><dt>Actions</dt><dd>Edit profile/trades, change password, open Privacy, open Help, log out, or begin permanent account deletion.</dd><dt>Nested screens</dt><dd>Privacy and Help replace Profile until Back is selected.</dd></dl>
+          <dl><dt>Data</dt><dd>Name, email, trade selections, and current free plan label.</dd><dt>Actions</dt><dd>Send feedback from the primary button between Personal Info and Plan; edit profile/trades; change password; open Privacy or Help; log out; or begin permanent account deletion.</dd><dt>Nested screens</dt><dd>Privacy and Help replace Profile until Back is selected.</dd></dl>
           <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/ProfileScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-958">Figma node 2025:958</a></p>
         </article>
       </div>
 
       <h3 id="states">Shipped secondary screens and states</h3>
       <div class="grid">
+        <article id="state-first-run" data-state-id="first-run" data-status="shipped"><h4>First-run onboarding</h4><p>Shown once after legal and analytics choices when the account has no jobs. Add my first job creates a blank job and opens editing; Not now dismisses the prompt for that user.</p></article>
         <article id="state-jobs-open" data-state-id="jobs-open" data-status="shipped"><h4>Jobs — Open</h4><p>Incomplete, in-progress, and unpaid completed jobs. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-977">Figma 2028:977</a></p></article>
         <article id="state-jobs-paid" data-state-id="jobs-paid" data-status="shipped"><h4>Jobs — Paid</h4><p>Financially complete, paid jobs grouped by recency. Paid jobs with incomplete records remain under Open. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1152">Figma 2028:1152</a></p></article>
         <article id="state-inbox-notes" data-state-id="inbox-notes" data-status="shipped"><h4>Inbox — Notes</h4><p>Unassigned notes grouped by recency; selecting one opens job assignment. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1274">Figma 2028:1274</a></p></article>
         <article id="state-inbox-materials" data-state-id="inbox-materials" data-status="shipped"><h4>Inbox — Materials</h4><p>Unassigned materials grouped by recency; selecting one opens job assignment. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1443">Figma 2028:1443</a></p></article>
         <article id="state-help" data-state-id="help" data-status="shipped"><h4>Help</h4><p>Explains account/data-copy support and opens the support email link. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1576">Figma 2028:1576</a></p></article>
+        <article id="state-feedback-prompt" data-state-id="feedback-prompt" data-status="shipped"><h4>Completion feedback prompt</h4><p>After the first completed job, and once more after the third if feedback has not been sent, offers a dismissible path to a prefilled support email.</p></article>
         <article id="state-privacy" data-state-id="privacy" data-status="shipped"><h4>Privacy Choices</h4><p>Reads and changes optional analytics consent and links to the Privacy Policy and Terms. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1582">Figma 2028:1582</a></p></article>
         <article id="state-analytics-consent" data-state-id="analytics-consent" data-status="shipped"><h4>Analytics consent</h4><p>Blocks the authenticated shell until the user chooses Allow analytics or No thanks. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1596">Figma 2028:1596</a></p></article>
         <article id="state-legal-reacceptance" data-state-id="legal-reacceptance" data-status="shipped"><h4>Legal reacceptance</h4><p>Fails closed when current Privacy/Terms acceptance cannot be verified and records acceptance before continuing. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1606">Figma 2028:1606</a></p></article>
@@ -175,7 +178,8 @@
         <thead><tr><th>Capability</th><th>Entry point</th><th>Action and data effect</th><th>Constraints / states</th></tr></thead>
         <tbody>
           <tr data-capability-id="auth.sign-in" data-status="shipped"><td>Sign in</td><td>Sign In</td><td>Creates a Supabase email/password session and enters the authenticated shell on Home.</td><td>Errors remain on the form; prior tab and overlay navigation is cleared on sign-out.</td></tr>
-          <tr data-capability-id="auth.sign-up" data-status="shipped"><td>Create account</td><td>Sign In mode switch</td><td>Creates account/profile context and records legal acceptance.</td><td>First/last name, email, password, and legal checkbox.</td></tr>
+          <tr data-capability-id="auth.sign-up" data-status="shipped"><td>Create account</td><td>Sign In mode switch</td><td>Creates account/profile context and records legal acceptance.</td><td>First/last name, valid email, matching password confirmation meeting the new-password policy, and legal checkbox.</td></tr>
+          <tr data-capability-id="onboarding.first-job" data-status="shipped"><td>Start first job</td><td>First-run prompt / Home / Jobs</td><td>Creates a blank job and opens its edit flow.</td><td>First-run state is user-scoped and appears only when no non-deleted job exists.</td></tr>
           <tr data-capability-id="legal.accept" data-status="shipped"><td>Accept current legal versions</td><td>Signup or legal gate</td><td>Persists Privacy and Terms versions/timestamps; local cache is best-effort.</td><td>Server verification remains authoritative; gate fails closed.</td></tr>
           <tr data-capability-id="analytics.choose" data-status="shipped"><td>Choose analytics</td><td>First authenticated run or Privacy</td><td>Grants or withdraws optional analytics and updates client activation.</td><td>Analytics are off before consent; failed writes revert UI.</td></tr>
           <tr data-capability-id="home.review" data-status="shipped"><td>Review current work</td><td>Home</td><td>Loads weekly net, recent work, incomplete jobs, completion review, and pending payment.</td><td>Paginated attention data; loading/error/empty states.</td></tr>
@@ -191,6 +195,7 @@
           <tr data-capability-id="inbox.assign" data-status="shipped"><td>Assign Inbox item</td><td>Inbox item</td><td>Updates an unassigned note/material with a selected job and removes it from Inbox.</td><td>Notes and materials have separate tabs.</td></tr>
           <tr data-capability-id="earnings.review" data-status="shipped"><td>Review earnings</td><td>Earnings</td><td>Aggregates job economics for 7/30/365-day windows and lists ranked jobs.</td><td>Only completed, financially complete jobs in the selected work window contribute; Home's weekly snapshot uses the same rule.</td></tr>
           <tr data-capability-id="profile.manage" data-status="shipped"><td>Manage profile/account</td><td>Profile</td><td>Edit name/trades, change password, log out, open Help/Privacy.</td><td>Profile save upserts when an older user lacks a profile row.</td></tr>
+          <tr data-capability-id="feedback.send" data-status="shipped"><td>Send feedback</td><td>Profile / job completion prompt</td><td>Opens a prefilled email to FieldSolo support with short feedback questions and device context.</td><td>Completion prompts are user-scoped and limited to the first and third completed-job milestones; sending feedback suppresses later prompts on that device.</td></tr>
           <tr data-capability-id="account.delete" data-status="shipped"><td>Delete account</td><td>Profile</td><td>Calls the delete-account Edge Function, clears the session, and reports failures.</td><td>Exact phrase plus system confirmation; permanent.</td></tr>
         </tbody>
       </table>
@@ -259,13 +264,15 @@
   "statusRule": "Only shipped is current functionality.",
   "screens": [
     {"id":"sign-in","status":"shipped","parent":null,"capabilities":["auth.sign-in","auth.sign-up","legal.accept"]},
+    {"id":"first-run","status":"shipped","parent":"authenticated-shell","capabilities":["onboarding.first-job"]},
     {"id":"home","status":"shipped","parent":"authenticated-shell","capabilities":["home.review","capture.quick","session.live"]},
     {"id":"jobs","status":"shipped","parent":"authenticated-shell","capabilities":["jobs.browse","jobs.create"]},
     {"id":"jobs-open","status":"shipped","parent":"jobs","capabilities":["jobs.browse"]},
     {"id":"jobs-paid","status":"shipped","parent":"jobs","capabilities":["jobs.browse"]},
     {"id":"earnings","status":"shipped","parent":"authenticated-shell","capabilities":["earnings.review"]},
     {"id":"job-detail","status":"shipped","parent":"authenticated-shell","capabilities":["jobs.update","jobs.delete","sessions.manage","notes.manage","materials.manage"]},
-    {"id":"profile","status":"shipped","parent":"home","capabilities":["profile.manage","account.delete"]},
+    {"id":"feedback-prompt","status":"shipped","parent":"job-detail","capabilities":["feedback.send"]},
+    {"id":"profile","status":"shipped","parent":"home","capabilities":["profile.manage","feedback.send","account.delete"]},
     {"id":"inbox-notes","status":"shipped","parent":"jobs","capabilities":["inbox.assign"]},
     {"id":"inbox-materials","status":"shipped","parent":"jobs","capabilities":["inbox.assign"]},
     {"id":"help","status":"shipped","parent":"profile","capabilities":["profile.manage"]},
@@ -278,6 +285,7 @@
   "capabilities": [
     {"id":"auth.sign-in","status":"shipped","screen":"sign-in"},
     {"id":"auth.sign-up","status":"shipped","screen":"sign-in"},
+    {"id":"onboarding.first-job","status":"shipped","screen":"first-run"},
     {"id":"legal.accept","status":"shipped","screen":"sign-in"},
     {"id":"analytics.choose","status":"shipped","screen":"privacy"},
     {"id":"home.review","status":"shipped","screen":"home"},
@@ -293,6 +301,7 @@
     {"id":"inbox.assign","status":"shipped","screen":"inbox-notes"},
     {"id":"earnings.review","status":"shipped","screen":"earnings"},
     {"id":"profile.manage","status":"shipped","screen":"profile"},
+    {"id":"feedback.send","status":"shipped","screen":"profile"},
     {"id":"account.delete","status":"shipped","screen":"profile"}
   ],
   "visualReferences": {

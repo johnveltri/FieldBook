@@ -63,6 +63,7 @@ import {
 import type { TextStyles } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
 import { screenHeaderA11y } from '../lib/accessibility';
+import { markFeedbackSent, openFeedbackEmail } from '../lib/feedback';
 
 /** Page back control — scale up Figma `231:837` (24×24 artboard). */
 const PROFILE_BACK_ICON_SIZE = 28;
@@ -407,6 +408,21 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
     setHelpOpen(true);
   }, []);
 
+  const sendFeedback = useCallback(() => {
+    analytics.capture('feedback_composer_opened', { source: 'profile' });
+    void openFeedbackEmail('profile')
+      .then(() => {
+        if (session?.user.id) void markFeedbackSent(session.user.id).catch(() => {});
+      })
+      .catch((error) => {
+        analytics.capture('feedback_composer_failed', {
+          source: 'profile',
+          ...errorProperties(error),
+        });
+        Alert.alert('Email unavailable', `Email us directly at support@fieldsolo.com.`);
+      });
+  }, [session?.user.id]);
+
   const accountRows: ProfileRowsCardRow[] = useMemo(
     () => [
       { kind: 'link', label: 'Help', onPress: openHelp },
@@ -489,6 +505,15 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
               onActionPress={openEditProfile}
             />
             <ProfileRowsCard typography={typography} rows={personalInfoRows} />
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Send feedback"
+              onPress={sendFeedback}
+              style={({ pressed }) => [styles.feedbackButton, pressed && styles.pressed]}
+            >
+              <Text style={[typography.bodyBold, styles.feedbackButtonLabel]}>Send feedback</Text>
+            </Pressable>
 
             <ProfileSectionHeader
               typography={typography}
@@ -671,6 +696,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: space('Spacing/8'),
     gap: space('Spacing/12'),
+  },
+  feedbackButton: {
+    alignItems: 'center',
+    backgroundColor: color('Brand/Primary'),
+    borderRadius: radius('Radius/12'),
+    justifyContent: 'center',
+    minHeight: 52,
+    paddingHorizontal: space('Spacing/20'),
+    width: '100%',
+  },
+  feedbackButtonLabel: {
+    color: bg.canvasWarm,
   },
   sectionHeader: {
     flexDirection: 'row',
