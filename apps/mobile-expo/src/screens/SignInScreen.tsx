@@ -9,6 +9,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Image,
+  Keyboard,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -36,6 +38,26 @@ import { supabase } from '../lib/supabase';
 import { cardShadowRn, createTextStyles, fg, space } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
 import { announceAccessibilityMessage, screenHeaderA11y } from '../lib/accessibility';
+import {
+  NEW_PASSWORD_REQUIREMENT,
+  newPasswordPolicyError,
+} from '../lib/passwordPolicy';
+
+function authErrorMessage(error: unknown): string {
+  const message = error instanceof Error
+    ? error.message
+    : typeof error === 'object' && error !== null && 'message' in error
+      ? String((error as { message: unknown }).message)
+      : String(error);
+  const normalized = message.toLowerCase();
+  if (normalized.includes('invalid login credentials')) return 'Incorrect email or password.';
+  if (normalized.includes('email not confirmed')) return 'Confirm your email before signing in.';
+  if (normalized.includes('user already registered')) return 'An account already exists for this email. Sign in instead.';
+  if (normalized.includes('fetch failed') || normalized.includes('network request failed')) {
+    return "Couldn't connect. Check your connection and try again.";
+  }
+  return message || 'Something went wrong. Try again.';
+}
 
 export function SignInScreen() {
   const insets = useSafeAreaInsets();
@@ -44,13 +66,19 @@ export function SignInScreen() {
   const { signIn, signUp, setSignupLegalPending } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [legalAccepted, setLegalAccepted] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const previousModeRef = useRef(mode);
+  const lastNameInputRef = useRef<TextInput>(null);
+  const emailInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
+  const confirmPasswordInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     analytics.capture('auth_screen_viewed', { mode });
@@ -99,14 +127,23 @@ export function SignInScreen() {
 
   const onSubmit = useCallback(async () => {
     setError(null);
-    const trimmed = email.trim();
+    const trimmed = email.trim().toLowerCase();
     if (!trimmed || !password) {
       setError('Enter email and password.');
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError('Enter a valid email address.');
+      return;
+    }
     if (mode === 'signUp') {
-      if (password.length < 8) {
-        setError('Password must be at least 8 characters.');
+      const policyError = newPasswordPolicyError(password);
+      if (policyError) {
+        setError(policyError);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
         return;
       }
       if (!firstName.trim() || !lastName.trim()) {
@@ -131,8 +168,9 @@ export function SignInScreen() {
             ...emailProperties(trimmed),
             ...errorProperties(err),
           });
-          setError(err.message);
+          setError(authErrorMessage(err));
         } else {
+          Keyboard.dismiss();
           analytics.capture('sign_in_succeeded', {
             ...emailProperties(trimmed),
           });
@@ -155,12 +193,13 @@ export function SignInScreen() {
             ...emailProperties(trimmed),
             ...errorProperties(signUpErr),
           });
-          setError(signUpErr.message);
+          setError(authErrorMessage(signUpErr));
           return;
         }
         analytics.capture('sign_up_succeeded', {
           ...emailProperties(trimmed),
         });
+        Keyboard.dismiss();
 
         setSignupLegalPending(true);
         try {
@@ -223,11 +262,11 @@ export function SignInScreen() {
         ...emailProperties(trimmed),
         ...errorProperties(e),
       });
-      setError(e instanceof Error ? e.message : 'Network request failed');
+      setError(authErrorMessage(e));
     } finally {
       setBusy(false);
     }
-  }, [email, password, firstName, lastName, legalAccepted, mode, setSignupLegalPending, signIn, signUp]);
+  }, [email, password, confirmPassword, firstName, lastName, legalAccepted, mode, setSignupLegalPending, signIn, signUp]);
 
   if (!fontsLoaded) {
     return (
@@ -255,6 +294,7 @@ export function SignInScreen() {
           scrollEventThrottle={16}
           contentContainerStyle={[
             styles.scrollContent,
+            mode === 'signIn' ? styles.scrollContentCentered : styles.scrollContentTop,
             {
               paddingTop: insets.top + gap,
               paddingBottom: insets.bottom + gap,
@@ -263,14 +303,22 @@ export function SignInScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={columnStyle}>
+          <View style={styles.brandBlock}>
+            <Image
+              accessibilityIgnoresInvertColors
+              source={require('../../assets/brand/fieldsolo-solo-notch-light.png')}
+              style={styles.logo}
+            />
+            <Text {...screenHeaderA11y('FieldSolo')} style={[typography.displayH1, styles.brandName, { color: fg.primary }]}>FIELDSOLO</Text>
+          </View>
           <View style={styles.card}>
-            <Text {...screenHeaderA11y('FieldSolo')} style={[text.title, { color: fg.primary, marginBottom: gap }]}>
-              FieldSolo
+            <Text accessibilityRole="header" style={[text.title, { color: fg.primary, marginBottom: space('Spacing/8') }]}>
+              {mode === 'signUp' ? 'Create your account' : 'Welcome back'}
             </Text>
-            <Text style={[text.body, { color: fg.secondary, marginBottom: gap }]}>
+            <Text style={[text.body, { color: fg.secondary, marginBottom: space('Spacing/24') }]}>
               {mode === 'signUp'
-                ? 'Create an account with email and password'
-                : 'Sign in with email and password'}
+                ? 'Start with one real job. You can add the rest as you go.'
+                : 'Sign in to keep track of your jobs, time & earnings.'}
             </Text>
 
             {mode === 'signUp' ? (
@@ -285,9 +333,17 @@ export function SignInScreen() {
                 </Text>
                 <TextInput
                   value={firstName}
-                  onChangeText={setFirstName}
+                  onChangeText={(value) => {
+                    setFirstName(value);
+                    if (error) setError(null);
+                  }}
+                  accessibilityLabel="First name"
                   autoCapitalize="words"
+                  autoComplete="name-given"
                   autoCorrect={false}
+                  textContentType="givenName"
+                  returnKeyType="next"
+                  onSubmitEditing={() => lastNameInputRef.current?.focus()}
                   placeholder="Alex"
                   placeholderTextColor={fg.secondary}
                   style={[styles.input, text.body, { color: fg.primary }]}
@@ -306,10 +362,19 @@ export function SignInScreen() {
                   Last name
                 </Text>
                 <TextInput
+                  ref={lastNameInputRef}
                   value={lastName}
-                  onChangeText={setLastName}
+                  onChangeText={(value) => {
+                    setLastName(value);
+                    if (error) setError(null);
+                  }}
+                  accessibilityLabel="Last name"
                   autoCapitalize="words"
+                  autoComplete="name-family"
                   autoCorrect={false}
+                  textContentType="familyName"
+                  returnKeyType="next"
+                  onSubmitEditing={() => emailInputRef.current?.focus()}
                   placeholder="Builder"
                   placeholderTextColor={fg.secondary}
                   style={[styles.input, text.body, { color: fg.primary }]}
@@ -323,11 +388,20 @@ export function SignInScreen() {
               Email
             </Text>
             <TextInput
+              ref={emailInputRef}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(value) => {
+                setEmail(value);
+                if (error) setError(null);
+              }}
+              accessibilityLabel="Email"
               autoCapitalize="none"
+              autoComplete="email"
               autoCorrect={false}
               keyboardType="email-address"
+              textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordInputRef.current?.focus()}
               placeholder="you@example.com"
               placeholderTextColor={fg.secondary}
               style={[styles.input, text.body, { color: fg.primary }]}
@@ -342,15 +416,77 @@ export function SignInScreen() {
             >
               Password
             </Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="••••••••"
-              placeholderTextColor={fg.secondary}
-              style={[styles.input, text.body, { color: fg.primary }]}
-              editable={!busy}
-            />
+            <View style={styles.passwordInputShell}>
+              <TextInput
+                ref={passwordInputRef}
+                value={password}
+                onChangeText={(value) => {
+                  setPassword(value);
+                  if (error) setError(null);
+                }}
+                accessibilityLabel="Password"
+                autoCapitalize="none"
+                autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
+                autoCorrect={false}
+                secureTextEntry={!passwordVisible}
+                textContentType={mode === 'signIn' ? 'password' : 'newPassword'}
+                returnKeyType={mode === 'signUp' ? 'next' : 'done'}
+                onSubmitEditing={() => {
+                  if (mode === 'signUp') confirmPasswordInputRef.current?.focus();
+                  else void onSubmit();
+                }}
+                placeholder="••••••••"
+                placeholderTextColor={fg.secondary}
+                style={[styles.passwordInput, text.body, { color: fg.primary }]}
+                editable={!busy}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'}
+                disabled={busy}
+                hitSlop={8}
+                onPress={() => setPasswordVisible((visible) => !visible)}
+                style={({ pressed }) => [styles.passwordVisibilityButton, pressed && styles.pressed]}
+              >
+                <Text style={[text.caption, styles.passwordVisibilityLabel, { color: fg.primary }]}>
+                  {passwordVisible ? 'Hide' : 'Show'}
+                </Text>
+              </Pressable>
+            </View>
+
+            {mode === 'signUp' ? (
+              <>
+                <Text style={[text.caption, styles.passwordRequirement, { color: fg.secondary }]}>{NEW_PASSWORD_REQUIREMENT}</Text>
+                <Text
+                  style={[
+                    text.caption,
+                    { color: fg.secondary, marginBottom: space('Spacing/8'), marginTop: gap },
+                  ]}
+                >
+                  Confirm password
+                </Text>
+                <TextInput
+                  ref={confirmPasswordInputRef}
+                  value={confirmPassword}
+                  onChangeText={(value) => {
+                    setConfirmPassword(value);
+                    if (error) setError(null);
+                  }}
+                  accessibilityLabel="Confirm password"
+                  autoCapitalize="none"
+                  autoComplete="new-password"
+                  autoCorrect={false}
+                  secureTextEntry={!passwordVisible}
+                  textContentType="newPassword"
+                  returnKeyType="done"
+                  onSubmitEditing={() => void onSubmit()}
+                  placeholder="Re-enter password"
+                  placeholderTextColor={fg.secondary}
+                  style={[styles.input, text.body, { color: fg.primary }]}
+                  editable={!busy}
+                />
+              </>
+            ) : null}
 
             {error ? (
               <Text style={[text.caption, { color: '#b00020', marginTop: gap }]}>{error}</Text>
@@ -390,6 +526,8 @@ export function SignInScreen() {
             ) : null}
 
             <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy, busy }}
               onPress={onSubmit}
               disabled={busy}
               style={({ pressed }) => [
@@ -407,6 +545,7 @@ export function SignInScreen() {
             </Pressable>
 
             <Pressable
+              accessibilityRole="button"
               onPress={() => {
                 setMode((m) => {
                   const next = m === 'signIn' ? 'signUp' : 'signIn';
@@ -415,31 +554,36 @@ export function SignInScreen() {
                   }
                   return next;
                 });
+                setPassword('');
+                setConfirmPassword('');
+                setPasswordVisible(false);
                 setError(null);
               }}
               disabled={busy}
-              style={{ marginTop: gap }}
+              style={styles.modeSwitch}
             >
-              <Text style={[text.caption, { color: fg.secondary }]}>
-                {mode === 'signIn' ? 'Need an account? Sign up' : 'Have an account? Sign in'}
+              <Text style={[text.bodySemi, { color: fg.primary }]}>
+                {mode === 'signIn' ? 'Create an account' : 'Back to sign in'}
               </Text>
             </Pressable>
 
-            <Text style={[text.caption, styles.legalFooter, { color: fg.secondary, marginTop: gap }]}>
-              <Text
-                style={styles.consentLink}
-                onPress={() => void Linking.openURL(LEGAL_URLS.privacyPolicy)}
-              >
-                Privacy Policy
+            {mode === 'signIn' ? (
+              <Text style={[text.caption, styles.legalFooter, { color: fg.secondary, marginTop: gap }]}>
+                <Text
+                  style={styles.consentLink}
+                  onPress={() => void Linking.openURL(LEGAL_URLS.privacyPolicy)}
+                >
+                  Privacy Policy
+                </Text>
+                {' · '}
+                <Text
+                  style={styles.consentLink}
+                  onPress={() => void Linking.openURL(LEGAL_URLS.terms)}
+                >
+                  Terms
+                </Text>
               </Text>
-              {' · '}
-              <Text
-                style={styles.consentLink}
-                onPress={() => void Linking.openURL(LEGAL_URLS.terms)}
-              >
-                Terms
-              </Text>
-            </Text>
+            ) : null}
           </View>
           </View>
         </Animated.ScrollView>
@@ -452,7 +596,12 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1, zIndex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', zIndex: 1 },
-  scrollContent: { flexGrow: 1, justifyContent: 'center' },
+  scrollContent: { flexGrow: 1 },
+  scrollContentCentered: { justifyContent: 'center' },
+  scrollContentTop: { justifyContent: 'flex-start' },
+  brandBlock: { alignItems: 'center', marginBottom: space('Spacing/20') },
+  logo: { height: 68, resizeMode: 'contain', width: 68 },
+  brandName: { letterSpacing: 1.4, marginTop: space('Spacing/8') },
   card: {
     width: '100%',
     padding: space('Spacing/24'),
@@ -466,6 +615,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  passwordInputShell: {
+    alignItems: 'center',
+    borderColor: 'rgba(0,0,0,0.12)',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    minHeight: 48,
+  },
+  passwordInput: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  passwordVisibilityButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 56,
+    paddingHorizontal: space('Spacing/12'),
+  },
+  passwordVisibilityLabel: {
+    textDecorationLine: 'underline',
+  },
+  passwordRequirement: {
+    marginTop: space('Spacing/8'),
+  },
   primaryButton: {
     ...cardShadowRn,
     backgroundColor: '#1a1a1a',
@@ -475,6 +651,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 48,
   },
+  modeSwitch: {
+    alignItems: 'center',
+    borderColor: 'rgba(43,52,65,0.18)',
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    marginTop: space('Spacing/12'),
+    minHeight: 46,
+    paddingHorizontal: space('Spacing/12'),
+  },
+  pressed: { opacity: 0.75 },
   consentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

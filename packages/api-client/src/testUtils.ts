@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 type QueryResult<T = unknown> = {
   data: T;
   error: unknown;
+  count?: number | null;
 };
 
 type BuilderOptions = {
