@@ -2311,7 +2311,7 @@ const styles = StyleSheet.create({
     backgroundColor: bg.subtle,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateY: -space('Spacing/8') }],
+    transform: [{ translateY: -space('Spacing/12') }],
   },
   editButton: {
     flexDirection: 'row',
