@@ -131,13 +131,13 @@
         <article id="screen-jobs" data-screen-id="jobs" data-status="shipped">
           <p class="kicker">Main tab</p>
           <h3>Jobs</h3>
-          <dl><dt>Purpose</dt><dd>Searchable, paginated job list.</dd><dt>Actions</dt><dd>Switch All/Open/Paid; search by job or customer; open Inbox; create a blank job; open Job Detail.</dd><dt>Grouping</dt><dd>All/Paid use recency sections. Open groups incomplete, in-progress, and completed-but-unpaid jobs.</dd></dl>
+          <dl><dt>Purpose</dt><dd>Searchable, paginated job list.</dd><dt>Actions</dt><dd>Switch All/Open/Paid; search by job or customer; open Inbox; create a blank job; open Job Detail.</dd><dt>Grouping</dt><dd>All and Paid use recency sections. Paid contains financially complete, paid jobs. Open groups incomplete, in-progress, and completed-but-unpaid jobs, including paid jobs whose records become incomplete.</dd></dl>
           <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/JobsScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-216">Figma node 2025:216</a></p>
         </article>
         <article id="screen-earnings" data-screen-id="earnings" data-status="shipped">
           <p class="kicker">Main tab</p>
           <h3>Earnings</h3>
-          <dl><dt>Windows</dt><dd>Past week (7 days), month (30 days), or year (365 days).</dd><dt>Measures</dt><dd>Net earnings, revenue, materials, hours, job count, and net per hour.</dd><dt>Actions</dt><dd>Open ranked jobs; jump from outstanding payments to the Jobs Open tab.</dd></dl>
+          <dl><dt>Windows</dt><dd>Past week (7 days), month (30 days), or year (365 days).</dd><dt>Measures</dt><dd>Net earnings, revenue, materials, hours, job count, and net per hour for completed, financially complete jobs.</dd><dt>Actions</dt><dd>Open ranked jobs; jump from outstanding payments to the Jobs Open tab.</dd></dl>
           <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/EarningsScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-313">Figma node 2025:313</a></p>
         </article>
         <article id="screen-job-detail" data-screen-id="job-detail" data-status="shipped">
@@ -157,7 +157,7 @@
       <h3 id="states">Shipped secondary screens and states</h3>
       <div class="grid">
         <article id="state-jobs-open" data-state-id="jobs-open" data-status="shipped"><h4>Jobs — Open</h4><p>Incomplete, in-progress, and unpaid completed jobs. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-977">Figma 2028:977</a></p></article>
-        <article id="state-jobs-paid" data-state-id="jobs-paid" data-status="shipped"><h4>Jobs — Paid</h4><p>Paid jobs grouped by recency. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1152">Figma 2028:1152</a></p></article>
+        <article id="state-jobs-paid" data-state-id="jobs-paid" data-status="shipped"><h4>Jobs — Paid</h4><p>Financially complete, paid jobs grouped by recency. Paid jobs with incomplete records remain under Open. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1152">Figma 2028:1152</a></p></article>
         <article id="state-inbox-notes" data-state-id="inbox-notes" data-status="shipped"><h4>Inbox — Notes</h4><p>Unassigned notes grouped by recency; selecting one opens job assignment. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1274">Figma 2028:1274</a></p></article>
         <article id="state-inbox-materials" data-state-id="inbox-materials" data-status="shipped"><h4>Inbox — Materials</h4><p>Unassigned materials grouped by recency; selecting one opens job assignment. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1443">Figma 2028:1443</a></p></article>
         <article id="state-help" data-state-id="help" data-status="shipped"><h4>Help</h4><p>Explains account/data-copy support and opens the support email link. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1576">Figma 2028:1576</a></p></article>
@@ -174,7 +174,7 @@
       <table>
         <thead><tr><th>Capability</th><th>Entry point</th><th>Action and data effect</th><th>Constraints / states</th></tr></thead>
         <tbody>
-          <tr data-capability-id="auth.sign-in" data-status="shipped"><td>Sign in</td><td>Sign In</td><td>Creates a Supabase email/password session.</td><td>Errors remain on the form.</td></tr>
+          <tr data-capability-id="auth.sign-in" data-status="shipped"><td>Sign in</td><td>Sign In</td><td>Creates a Supabase email/password session and enters the authenticated shell on Home.</td><td>Errors remain on the form; prior tab and overlay navigation is cleared on sign-out.</td></tr>
           <tr data-capability-id="auth.sign-up" data-status="shipped"><td>Create account</td><td>Sign In mode switch</td><td>Creates account/profile context and records legal acceptance.</td><td>First/last name, email, password, and legal checkbox.</td></tr>
           <tr data-capability-id="legal.accept" data-status="shipped"><td>Accept current legal versions</td><td>Signup or legal gate</td><td>Persists Privacy and Terms versions/timestamps; local cache is best-effort.</td><td>Server verification remains authoritative; gate fails closed.</td></tr>
           <tr data-capability-id="analytics.choose" data-status="shipped"><td>Choose analytics</td><td>First authenticated run or Privacy</td><td>Grants or withdraws optional analytics and updates client activation.</td><td>Analytics are off before consent; failed writes revert UI.</td></tr>
@@ -189,7 +189,7 @@
           <tr data-capability-id="notes.manage" data-status="shipped"><td>Manage notes</td><td>Job Detail / Home / Inbox</td><td>Create, update, soft-delete, and attach notes to jobs/sessions.</td><td>Unassigned notes remain in Inbox.</td></tr>
           <tr data-capability-id="materials.manage" data-status="shipped"><td>Manage materials</td><td>Job Detail / Home / Inbox</td><td>Create, update, soft-delete, price, quantify, and attach materials.</td><td>Description and nonzero quantity required; preset/custom unit.</td></tr>
           <tr data-capability-id="inbox.assign" data-status="shipped"><td>Assign Inbox item</td><td>Inbox item</td><td>Updates an unassigned note/material with a selected job and removes it from Inbox.</td><td>Notes and materials have separate tabs.</td></tr>
-          <tr data-capability-id="earnings.review" data-status="shipped"><td>Review earnings</td><td>Earnings</td><td>Aggregates job economics for 7/30/365-day windows and lists ranked jobs.</td><td>Only completed jobs in the selected work window contribute.</td></tr>
+          <tr data-capability-id="earnings.review" data-status="shipped"><td>Review earnings</td><td>Earnings</td><td>Aggregates job economics for 7/30/365-day windows and lists ranked jobs.</td><td>Only completed, financially complete jobs in the selected work window contribute; Home's weekly snapshot uses the same rule.</td></tr>
           <tr data-capability-id="profile.manage" data-status="shipped"><td>Manage profile/account</td><td>Profile</td><td>Edit name/trades, change password, log out, open Help/Privacy.</td><td>Profile save upserts when an older user lacks a profile row.</td></tr>
           <tr data-capability-id="account.delete" data-status="shipped"><td>Delete account</td><td>Profile</td><td>Calls the delete-account Edge Function, clears the session, and reports failures.</td><td>Exact phrase plus system confirmation; permanent.</td></tr>
         </tbody>
@@ -203,7 +203,7 @@
         <tbody>
           <tr data-entity="job" data-rule-id="job-work-status"><td>Job</td><td>notStarted, inProgress, completed, onHold, cancelled; derived paid</td><td>Work status describes operational progress. Paid is presented when payment is paid.</td><td>Owns sessions, notes, and materials.</td></tr>
           <tr data-entity="job" data-rule-id="job-payment-status"><td>Job payment</td><td>pending or paid</td><td>Completed jobs with null/pending payment appear in pending-payment attention and Open.</td><td>Separate from work status.</td></tr>
-          <tr data-entity="job" data-rule-id="job-financial-completeness"><td>Job completeness</td><td>Derived</td><td>Missing description, revenue, materials/no-materials confirmation, or sessions produces incomplete attention.</td><td>Drives Home and Jobs Open grouping.</td></tr>
+          <tr data-entity="job" data-rule-id="job-financial-completeness"><td>Job completeness</td><td>Derived</td><td>Missing description, revenue, materials/no-materials confirmation, or sessions produces incomplete attention.</td><td>Drives Home and Jobs Open grouping and gates Paid and earnings snapshots.</td></tr>
           <tr data-entity="session" data-rule-id="session-state"><td>Session</td><td>in progress or ended</td><td><code>endedAt=null</code> means active/in progress; ended sessions have duration and display labels.</td><td>Belongs to one job; may own note/material attachments.</td></tr>
           <tr data-entity="note" data-rule-id="note-parent"><td>Note</td><td>Inbox, job-scoped, or session-scoped</td><td>Unassigned note has no job; assignment attaches it to a job. Delete is soft-delete.</td><td>Optional job/session parent.</td></tr>
           <tr data-entity="material" data-rule-id="material-cost"><td>Material</td><td>Inbox, job-scoped, or session-scoped</td><td>Total cost derives from quantity and unit cost; delete is soft-delete.</td><td>Optional job/session parent; contributes to earnings.</td></tr>
@@ -216,7 +216,7 @@
     <section id="privacy-and-safety" data-status="shipped">
       <h2>Authentication, consent, privacy, and destructive actions</h2>
       <div class="grid">
-        <div class="panel"><h3>Authentication</h3><p>Supabase email/password authentication controls access. Local migration preserves prior Fieldbook auth storage only when the FieldSolo key does not already exist.</p></div>
+        <div class="panel"><h3>Authentication</h3><p>Supabase email/password authentication controls access. Local migration preserves prior Fieldbook auth storage only when the FieldSolo key does not already exist. Every new authenticated session enters on Home rather than restoring the screen or overlay that was open before sign-out.</p></div>
         <div class="panel"><h3>Legal acceptance</h3><p>Signup and reacceptance persist versioned Privacy/Terms acceptance. A current server record is authoritative; a current user/version-specific cache can bridge temporary server failure.</p></div>
         <div class="panel"><h3>Analytics</h3><p>Optional analytics do not activate before consent. Granting activates identify/events; withdrawal clears the persisted anonymous identifier and stops events.</p></div>
         <div class="panel"><h3>Permanent account deletion</h3><p class="danger">Profile requires the phrase <code>delete account</code>, then a system confirmation. The delete-account Edge Function permanently removes the account and associated data.</p></div>

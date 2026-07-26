@@ -100,9 +100,11 @@ export function MinimizedLiveSessionBar({
         style={({ pressed }) => [styles.bar, pressed && styles.pressed]}
       >
         <View style={styles.main}>
-          <LiveSessionActiveDotIcon color={color('Brand/Accent')} size={13.5} />
           <View style={styles.copy}>
-            <Text style={[typography.labelCaps, styles.label]}>ACTIVE SESSION</Text>
+            <View style={styles.labelRow}>
+              <LiveSessionActiveDotIcon color={color('Brand/Accent')} size={13.5} />
+              <Text style={[typography.labelCaps, styles.label]}>ACTIVE SESSION</Text>
+            </View>
             <Text
               style={[typography.bodyBold, styles.title]}
               numberOfLines={2}
@@ -164,11 +166,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  // Figma `1287:1561` — w=359, dark slab, rounded 16. Shadow matches the
-  // JobsScreen "+ New Job" FAB (`fabContent` — cardShadowRn + same overrides).
+  // Fill the shared content column so the minimized session aligns with the
+  // job cards behind it. Shadow matches the JobsScreen "+ New Job" FAB.
   bar: {
     width: '100%',
-    maxWidth: 359,
     minHeight: 67.5,
     paddingHorizontal: space('Spacing/16'),
     paddingVertical: space('Spacing/8'),
@@ -187,9 +188,6 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   main: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
     flex: 1,
     minWidth: 0,
   },
@@ -198,11 +196,17 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 2,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
   label: {
     color: 'rgba(255,255,255,0.7)',
   },
   title: {
     color: color('Foundation/Text/Muted'),
+    marginLeft: 24.5,
   },
   actions: {
     flexDirection: 'row',

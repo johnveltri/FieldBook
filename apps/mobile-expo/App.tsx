@@ -176,6 +176,14 @@ function AuthenticatedShell() {
     if (session) return;
     void analytics.onSignOut();
     setAnalyticsConsentGate('idle');
+    // AuthenticatedShell remains mounted while the sign-in screen is shown, so
+    // explicitly clear its navigation state. A later login must always enter
+    // Home instead of restoring Profile, Inbox, Job Detail, or another tab.
+    setMainTab('home');
+    setProfileOpen(false);
+    setInboxOpen(false);
+    setJobDetailOpen(false);
+    setSelectedJobId(null);
   }, [session]);
 
   const navigateToJobsOpenSection = useCallback((section: JobsOpenSectionKind) => {

@@ -196,7 +196,10 @@ export async function listJobsForCurrentUserPage(
           'is_job_record_complete.eq.false,job_work_status.eq.in_progress,and(job_work_status.eq.completed,job_payment_state.neq.paid)',
         );
     } else if (tab === 'paid') {
-      listQuery = listQuery.eq('job_work_status', 'completed').eq('job_payment_state', 'paid');
+      listQuery = listQuery
+        .eq('job_work_status', 'completed')
+        .eq('job_payment_state', 'paid')
+        .eq('is_job_record_complete', true);
     }
 
     const searchTrimmed = search?.trim() ?? '';
@@ -465,10 +468,10 @@ export type WeeklyNetEarningsForCurrentUserResult = {
 const MS_PER_DAY = 86_400_000;
 
 /**
- * Net earnings (revenue minus materials) for jobs marked **work complete** in the DB
- * (`job_work_status = completed`, including pending and paid payment states) whose
- * `last_worked_at` is within the last 7 days. Materials include job-attributed and
- * session-attributed lines for those jobs.
+ * Net earnings (revenue minus materials) for financially complete jobs marked
+ * **work complete** in the DB (`job_work_status = completed`, including pending
+ * and paid payment states) whose `last_worked_at` is within the last 7 days.
+ * Materials include job-attributed and session-attributed lines for those jobs.
  */
 export async function getWeeklyNetEarningsCentsForCurrentUser(
   client: FieldSoloSupabaseClient,
@@ -479,6 +482,7 @@ export async function getWeeklyNetEarningsCentsForCurrentUser(
     .from('jobs')
     .select('id, revenue_cents')
     .eq('job_work_status', 'completed')
+    .eq('is_job_record_complete', true)
     .gte('last_worked_at', windowStartIso)
     .is('deleted_at', null);
 
@@ -581,11 +585,11 @@ export type EarningsSnapshotForCurrentUserResult = {
 
 /**
  * Earnings snapshot over a rolling window. Generalizes
- * `getWeeklyNetEarningsCentsForCurrentUser`: completed jobs
- * (`job_work_status = completed`, including pending and paid payment states)
- * whose `last_worked_at` falls within the last `windowDays` days. Returns
- * aggregate metrics plus per-job rollups (revenue, materials, hours, net,
- * net/hr) for ranking on the Earnings page.
+ * `getWeeklyNetEarningsCentsForCurrentUser`: financially complete, completed
+ * jobs (`job_work_status = completed`, including pending and paid payment
+ * states) whose `last_worked_at` falls within the last `windowDays` days.
+ * Returns aggregate metrics plus per-job rollups (revenue, materials, hours,
+ * net, net/hr) for ranking on the Earnings page.
  */
 export async function getEarningsSnapshotForCurrentUser(
   client: FieldSoloSupabaseClient,
@@ -607,6 +611,7 @@ export async function getEarningsSnapshotForCurrentUser(
     .from('jobs')
     .select('id, short_description, customer_name, revenue_cents')
     .eq('job_work_status', 'completed')
+    .eq('is_job_record_complete', true)
     .gte('last_worked_at', windowStartIso)
     .is('deleted_at', null);
 

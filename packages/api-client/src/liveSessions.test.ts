@@ -219,6 +219,9 @@ describe('live sessions api client', () => {
         'session_status',
         'in_progress',
       );
+      expect((builder.select as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
+        'id, job_id, started_at, started_tz, jobs!sessions_job_owner_fkey(short_description)',
+      );
       expect((builder.is as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
         'deleted_at',
         null,
@@ -254,6 +257,9 @@ describe('live sessions api client', () => {
       const result = await fetchActiveLiveSessionForCurrentUser(client as never);
 
       expect(result?.id).toBe('sess-live-fallback');
+      expect((builderOk.select as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
+        'id, job_id, started_at, jobs!sessions_job_owner_fkey(short_description)',
+      );
       // Falls back to a non-empty device timezone string.
       expect(result?.startedTz?.length ?? 0).toBeGreaterThan(0);
     });

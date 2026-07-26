@@ -1704,7 +1704,10 @@ export function JobDetailScreen({
         nestedScrollEnabled
         contentContainerStyle={{
           width: '100%',
-          paddingTop: headerTopPad + space('Spacing/4'),
+          paddingTop: Math.max(
+            headerTopPad + space('Spacing/4') - space('Spacing/24'),
+            0,
+          ),
           paddingBottom: space('Spacing/20') + bottomInset,
           alignItems: 'stretch',
         }}
@@ -2299,7 +2302,7 @@ const styles = StyleSheet.create({
   },
   topHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: 0,
     paddingBottom: space('Spacing/4'),
@@ -2311,6 +2314,7 @@ const styles = StyleSheet.create({
     backgroundColor: bg.subtle,
     alignItems: 'center',
     justifyContent: 'center',
+    transform: [{ translateY: -space('Spacing/12') }],
   },
   editButton: {
     flexDirection: 'row',
@@ -2323,6 +2327,7 @@ const styles = StyleSheet.create({
     paddingVertical: space('Spacing/8'),
     borderRadius: radius('Radius/12'),
     backgroundColor: fg.primary,
+    marginTop: space('Spacing/12'),
     ...cardShadowRn,
   },
   actionButtonLabel: {

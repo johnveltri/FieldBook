@@ -683,7 +683,9 @@ export function JobsScreen({
             <JobsInboxIcon color={fg.primary} />
             {inboxCount > 0 ? (
               <View style={styles.inboxBadge}>
-                <Text style={[typography.bodySmall, { color: bg.canvasWarm }]}>
+                <Text
+                  style={[typography.bodySmall, styles.inboxBadgeText, { color: bg.canvasWarm }]}
+                >
                   {inboxCount > 99 ? '99+' : inboxCount}
                 </Text>
               </View>
@@ -740,65 +742,78 @@ export function JobsScreen({
         ) : null}
 
         {searchFocused ? null : (
-          <View style={styles.tabsWrap}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: activeTab === 'all' }}
-              onPress={() => setActiveTab('all')}
-              style={({ pressed }) => [
-                activeTab === 'all' ? styles.tabActive : styles.tabIdle,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  typography.statusPillLabel,
-                  styles.jobsTabLabel,
-                  { color: activeTab === 'all' ? fg.primary : fg.secondary },
+          <>
+            <View style={styles.tabsWrap}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeTab === 'all' }}
+                onPress={() => setActiveTab('all')}
+                style={({ pressed }) => [
+                  activeTab === 'all' ? styles.tabActive : styles.tabIdle,
+                  pressed && styles.pressed,
                 ]}
               >
-                All
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: activeTab === 'open' }}
-              onPress={() => setActiveTab('open')}
-              style={({ pressed }) => [
-                activeTab === 'open' ? styles.tabActive : styles.tabIdle,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  typography.statusPillLabel,
-                  styles.jobsTabLabel,
-                  { color: activeTab === 'open' ? fg.primary : fg.secondary },
+                <Text
+                  style={[
+                    typography.statusPillLabel,
+                    styles.jobsTabLabel,
+                    { color: activeTab === 'all' ? fg.primary : fg.secondary },
+                  ]}
+                >
+                  All
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeTab === 'open' }}
+                onPress={() => setActiveTab('open')}
+                style={({ pressed }) => [
+                  activeTab === 'open' ? styles.tabActive : styles.tabIdle,
+                  pressed && styles.pressed,
                 ]}
               >
-                Open
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: activeTab === 'paid' }}
-              onPress={() => setActiveTab('paid')}
-              style={({ pressed }) => [
-                activeTab === 'paid' ? styles.tabActive : styles.tabIdle,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  typography.statusPillLabel,
-                  styles.jobsTabLabel,
-                  { color: activeTab === 'paid' ? fg.primary : fg.secondary },
+                <Text
+                  style={[
+                    typography.statusPillLabel,
+                    styles.jobsTabLabel,
+                    { color: activeTab === 'open' ? fg.primary : fg.secondary },
+                  ]}
+                >
+                  Open
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeTab === 'paid' }}
+                onPress={() => setActiveTab('paid')}
+                style={({ pressed }) => [
+                  activeTab === 'paid' ? styles.tabActive : styles.tabIdle,
+                  pressed && styles.pressed,
                 ]}
               >
-                Paid
+                <Text
+                  style={[
+                    typography.statusPillLabel,
+                    styles.jobsTabLabel,
+                    { color: activeTab === 'paid' ? fg.primary : fg.secondary },
+                  ]}
+                >
+                  Paid
+                </Text>
+              </Pressable>
+            </View>
+            {activeTab === 'paid' ? (
+              <Text
+                style={[
+                  typography.bodySmall,
+                  styles.paidTabSubcopy,
+                  { color: fg.secondary },
+                ]}
+              >
+                Financially complete, paid jobs
               </Text>
-            </Pressable>
-          </View>
+            ) : null}
+          </>
         )}
         </View>
       </View>
@@ -1042,15 +1057,22 @@ const styles = StyleSheet.create({
   },
   inboxBadge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 16,
-    height: 16,
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
     borderRadius: radius('Radius/Full'),
     backgroundColor: color('Brand/Primary'),
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
+  },
+  inboxBadgeText: {
+    fontSize: 11,
+    lineHeight: 12,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
   },
   searchBarOuter: {
     width: '100%',
@@ -1143,6 +1165,10 @@ const styles = StyleSheet.create({
   },
   jobsTabLabel: {
     textTransform: 'uppercase',
+  },
+  paidTabSubcopy: {
+    marginTop: space('Spacing/8'),
+    textAlign: 'center',
   },
   sectionHeader: {
     width: '100%',
