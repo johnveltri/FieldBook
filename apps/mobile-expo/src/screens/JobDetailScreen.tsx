@@ -1705,7 +1705,7 @@ export function JobDetailScreen({
         contentContainerStyle={{
           width: '100%',
           paddingTop: Math.max(
-            headerTopPad + space('Spacing/4') - space('Spacing/12'),
+            headerTopPad + space('Spacing/4') - space('Spacing/24'),
             0,
           ),
           paddingBottom: space('Spacing/20') + bottomInset,
