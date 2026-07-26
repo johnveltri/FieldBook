@@ -1704,7 +1704,10 @@ export function JobDetailScreen({
         nestedScrollEnabled
         contentContainerStyle={{
           width: '100%',
-          paddingTop: headerTopPad + space('Spacing/4'),
+          paddingTop: Math.max(
+            headerTopPad + space('Spacing/4') - space('Spacing/12'),
+            0,
+          ),
           paddingBottom: space('Spacing/20') + bottomInset,
           alignItems: 'stretch',
         }}
