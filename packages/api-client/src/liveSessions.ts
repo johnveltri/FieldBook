@@ -156,7 +156,9 @@ export async function fetchActiveLiveSessionForCurrentUser(
 
   let result = await client
     .from('sessions')
-    .select('id, job_id, started_at, started_tz, jobs!inner(short_description)')
+    .select(
+      'id, job_id, started_at, started_tz, jobs!sessions_job_owner_fkey(short_description)',
+    )
     .eq('user_id', userId)
     .eq('session_status', 'in_progress')
     .is('deleted_at', null)
@@ -175,7 +177,7 @@ export async function fetchActiveLiveSessionForCurrentUser(
   ) {
     result = await client
       .from('sessions')
-      .select('id, job_id, started_at, jobs!inner(short_description)')
+      .select('id, job_id, started_at, jobs!sessions_job_owner_fkey(short_description)')
       .eq('user_id', userId)
       .eq('session_status', 'in_progress')
       .is('deleted_at', null)
