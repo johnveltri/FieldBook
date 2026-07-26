@@ -101,6 +101,15 @@ begin
          updated_at = now()
    where user_id = user_a;
 
+  -- Match the supabase-js upsert used by the mobile consent prompt. It includes
+  -- user_id in the conflict update even though ownership is unchanged.
+  insert into public.analytics_consent (user_id, status, updated_at)
+  values (user_a, 'granted', now())
+  on conflict (user_id) do update
+    set user_id = excluded.user_id,
+        status = excluded.status,
+        updated_at = excluded.updated_at;
+
   begin
     update public.analytics_consent
        set status = 'granted',
