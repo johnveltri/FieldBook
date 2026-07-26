@@ -215,6 +215,7 @@ describe('JobsScreen', () => {
     fireEvent.press(screen.getByText('Paid'));
 
     await waitFor(() => {
+      expect(screen.getByText('Financially complete, paid jobs')).toBeTruthy();
       expect(screen.getByText(/Today|Past Week|Past Month|Older/)).toBeTruthy();
       expect(screen.getByText('Paid job')).toBeTruthy();
     });

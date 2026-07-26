@@ -179,6 +179,7 @@ describe('jobs api client', () => {
     expect(result).toEqual({ netEarningsCents: 6500, jobCount: 1 });
     expect(weeklyJobsBuilder.select).toHaveBeenCalledWith('id, revenue_cents');
     expect(weeklyJobsBuilder.eq).toHaveBeenCalledWith('job_work_status', 'completed');
+    expect(weeklyJobsBuilder.eq).toHaveBeenCalledWith('is_job_record_complete', true);
     expect(weeklyJobsBuilder.gte).toHaveBeenCalledWith('last_worked_at', expect.any(String));
     expect(weeklyJobsBuilder.is).toHaveBeenCalledWith('deleted_at', null);
     expect(allJobSessionsBuilder.select).toHaveBeenCalledWith('id');
@@ -321,6 +322,7 @@ describe('jobs api client', () => {
       'id, short_description, customer_name, revenue_cents',
     );
     expect(snapshotJobsBuilder.eq).toHaveBeenCalledWith('job_work_status', 'completed');
+    expect(snapshotJobsBuilder.eq).toHaveBeenCalledWith('is_job_record_complete', true);
     expect(snapshotJobsBuilder.gte).toHaveBeenCalledWith('last_worked_at', expect.any(String));
     expect(snapshotJobsBuilder.is).toHaveBeenCalledWith('deleted_at', null);
     expect(sessionsBuilder.in).toHaveBeenCalledWith('job_id', ['job-high', 'job-low']);
@@ -775,6 +777,7 @@ describe('jobs api client', () => {
     const eqSpy = jobsBuilder.eq as unknown as { mock: { calls: unknown[][] } };
     expect(eqSpy.mock.calls).toContainEqual(['job_work_status', 'completed']);
     expect(eqSpy.mock.calls).toContainEqual(['job_payment_state', 'paid']);
+    expect(eqSpy.mock.calls).toContainEqual(['is_job_record_complete', true]);
   });
 
   it('listJobsForCurrentUser filters out soft-deleted materials from per-job rollups', async () => {

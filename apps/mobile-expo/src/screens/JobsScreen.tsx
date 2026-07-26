@@ -740,65 +740,78 @@ export function JobsScreen({
         ) : null}
 
         {searchFocused ? null : (
-          <View style={styles.tabsWrap}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: activeTab === 'all' }}
-              onPress={() => setActiveTab('all')}
-              style={({ pressed }) => [
-                activeTab === 'all' ? styles.tabActive : styles.tabIdle,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  typography.statusPillLabel,
-                  styles.jobsTabLabel,
-                  { color: activeTab === 'all' ? fg.primary : fg.secondary },
+          <>
+            <View style={styles.tabsWrap}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeTab === 'all' }}
+                onPress={() => setActiveTab('all')}
+                style={({ pressed }) => [
+                  activeTab === 'all' ? styles.tabActive : styles.tabIdle,
+                  pressed && styles.pressed,
                 ]}
               >
-                All
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: activeTab === 'open' }}
-              onPress={() => setActiveTab('open')}
-              style={({ pressed }) => [
-                activeTab === 'open' ? styles.tabActive : styles.tabIdle,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  typography.statusPillLabel,
-                  styles.jobsTabLabel,
-                  { color: activeTab === 'open' ? fg.primary : fg.secondary },
+                <Text
+                  style={[
+                    typography.statusPillLabel,
+                    styles.jobsTabLabel,
+                    { color: activeTab === 'all' ? fg.primary : fg.secondary },
+                  ]}
+                >
+                  All
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeTab === 'open' }}
+                onPress={() => setActiveTab('open')}
+                style={({ pressed }) => [
+                  activeTab === 'open' ? styles.tabActive : styles.tabIdle,
+                  pressed && styles.pressed,
                 ]}
               >
-                Open
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: activeTab === 'paid' }}
-              onPress={() => setActiveTab('paid')}
-              style={({ pressed }) => [
-                activeTab === 'paid' ? styles.tabActive : styles.tabIdle,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  typography.statusPillLabel,
-                  styles.jobsTabLabel,
-                  { color: activeTab === 'paid' ? fg.primary : fg.secondary },
+                <Text
+                  style={[
+                    typography.statusPillLabel,
+                    styles.jobsTabLabel,
+                    { color: activeTab === 'open' ? fg.primary : fg.secondary },
+                  ]}
+                >
+                  Open
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeTab === 'paid' }}
+                onPress={() => setActiveTab('paid')}
+                style={({ pressed }) => [
+                  activeTab === 'paid' ? styles.tabActive : styles.tabIdle,
+                  pressed && styles.pressed,
                 ]}
               >
-                Paid
+                <Text
+                  style={[
+                    typography.statusPillLabel,
+                    styles.jobsTabLabel,
+                    { color: activeTab === 'paid' ? fg.primary : fg.secondary },
+                  ]}
+                >
+                  Paid
+                </Text>
+              </Pressable>
+            </View>
+            {activeTab === 'paid' ? (
+              <Text
+                style={[
+                  typography.bodySmall,
+                  styles.paidTabSubcopy,
+                  { color: fg.secondary },
+                ]}
+              >
+                Financially complete, paid jobs
               </Text>
-            </Pressable>
-          </View>
+            ) : null}
+          </>
         )}
         </View>
       </View>
@@ -1143,6 +1156,10 @@ const styles = StyleSheet.create({
   },
   jobsTabLabel: {
     textTransform: 'uppercase',
+  },
+  paidTabSubcopy: {
+    marginTop: space('Spacing/8'),
+    textAlign: 'center',
   },
   sectionHeader: {
     width: '100%',

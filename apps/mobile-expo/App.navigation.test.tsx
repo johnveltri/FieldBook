@@ -4,6 +4,10 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import App from './App';
 
+let mockSession: { user: { id: string; email: string } } | null = {
+  user: { id: 'user-77', email: 'tech@example.com' },
+};
+
 jest.mock('@fieldsolo/api-client', () => ({
   fetchLatestLegalAcceptanceVersions: jest.fn(async () => ({
     privacy_policy: '2026-07-03',
@@ -40,7 +44,7 @@ jest.mock('./src/context/AuthContext', () => {
       loading: false,
       signupLegalPending: false,
       setSignupLegalPending: jest.fn(),
-      session: { user: { id: 'user-77', email: 'tech@example.com' } },
+      session: mockSession,
     }),
   };
 });
@@ -164,11 +168,16 @@ jest.mock('./src/screens/HomeScreen', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
-    HomeScreen: () => {
+    HomeScreen: ({ onOpenProfile }: { onOpenProfile?: () => void }) => {
       React.useEffect(() => {
         homeMountCount += 1;
       }, []);
-      return <Text testID="home-screen">HomeScreen</Text>;
+      return (
+        <>
+          <Text testID="home-screen">HomeScreen</Text>
+          <Text onPress={() => onOpenProfile?.()}>OpenProfile</Text>
+        </>
+      );
     },
   };
 });
@@ -246,6 +255,7 @@ async function renderAppReady() {
 
 describe('App jobs to detail sync', () => {
   beforeEach(() => {
+    mockSession = { user: { id: 'user-77', email: 'tech@example.com' } };
     homeMountCount = 0;
     jobsMountCount = 0;
     earningsMountCount = 0;
@@ -278,6 +288,7 @@ describe('App jobs to detail sync', () => {
 
 describe('App shell tab caching', () => {
   beforeEach(() => {
+    mockSession = { user: { id: 'user-77', email: 'tech@example.com' } };
     homeMountCount = 0;
     jobsMountCount = 0;
     earningsMountCount = 0;
@@ -303,6 +314,7 @@ describe('App shell tab caching', () => {
 
 describe('App inbox shell tab navigation', () => {
   beforeEach(() => {
+    mockSession = { user: { id: 'user-77', email: 'tech@example.com' } };
     homeMountCount = 0;
     jobsMountCount = 0;
     earningsMountCount = 0;
@@ -342,5 +354,31 @@ describe('App inbox shell tab navigation', () => {
     fireEvent.press(screen.getByText('InboxNavEarnings'));
     expect(screen.queryByTestId('inbox-screen')).toBeNull();
     expect(screen.getByTestId('earnings-screen')).toBeTruthy();
+  });
+});
+
+describe('App authentication navigation reset', () => {
+  beforeEach(() => {
+    mockSession = { user: { id: 'user-77', email: 'tech@example.com' } };
+    homeMountCount = 0;
+    jobsMountCount = 0;
+    earningsMountCount = 0;
+  });
+
+  it('returns a user to Home after signing out from Profile and signing in again', async () => {
+    const screen = await renderAppReady();
+
+    fireEvent.press(screen.getByText('OpenProfile'));
+    expect(screen.getByTestId('profile-screen')).toBeTruthy();
+
+    mockSession = null;
+    screen.rerender(<App />);
+    await waitFor(() => expect(screen.getByText('SignInScreen')).toBeTruthy());
+
+    mockSession = { user: { id: 'user-88', email: 'returning@example.com' } };
+    screen.rerender(<App />);
+
+    await waitFor(() => expect(screen.getByTestId('home-screen')).toBeTruthy());
+    expect(screen.queryByTestId('profile-screen')).toBeNull();
   });
 });
