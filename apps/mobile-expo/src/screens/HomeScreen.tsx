@@ -918,7 +918,13 @@ export function HomeScreen({
               <MetricSnapshotCard
                 label="NET EARNINGS"
                 value={formatWeeklyUsd(weeklyNetCents)}
-                helperText={weeklyNetCents === 0 ? 'No earnings from this week. Complete a job to track earnings here.' : undefined}
+                helperText={
+                  weeklyNetCents === 0
+                    ? needsAttentionSummaries.some((s) => s.kind === 'incomplete')
+                      ? 'No earnings counted this week. Finish missing job details so completed work can show here.'
+                      : 'No earnings from this week. Complete a job to track earnings here.'
+                    : undefined
+                }
                 valueTone="success"
                 typography={typography}
                 onPress={onOpenEarnings}
@@ -1012,8 +1018,9 @@ export function HomeScreen({
         </View>
       )}
 
+      {quickActionsVisible ? (
       <Modal
-        visible={quickActionsVisible}
+        visible
         transparent
         animationType="none"
         statusBarTranslucent
@@ -1023,7 +1030,7 @@ export function HomeScreen({
         <View style={styles.modalHost}>
           <QuickActionsBottomSheet
             typography={typography}
-            visible={quickActionsVisible && captureStep === 'idle'}
+            visible={captureStep === 'idle'}
             step={qaStep}
             onStepChange={setQaStep}
             recentJobs={recentJobs}
@@ -1187,6 +1194,7 @@ export function HomeScreen({
           />
         </View>
       </Modal>
+      ) : null}
     </View>
   );
 }

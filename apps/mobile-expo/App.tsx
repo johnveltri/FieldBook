@@ -179,10 +179,16 @@ function AuthenticatedShell() {
     // AuthenticatedShell remains mounted while the sign-in screen is shown, so
     // explicitly clear its navigation state. A later login must always enter
     // Home instead of restoring Profile, Inbox, Job Detail, or another tab.
+    // Clear mount flags too: signing out early-returns before OverlaySlideHost
+    // can fire onExited, and a sticky inboxMounted/jobDetailMounted would hide
+    // or block the shell on the next login.
     setMainTab('home');
     setProfileOpen(false);
+    setProfileMounted(false);
     setInboxOpen(false);
+    setInboxMounted(false);
     setJobDetailOpen(false);
+    setJobDetailMounted(false);
     setSelectedJobId(null);
   }, [session]);
 
@@ -437,22 +443,31 @@ function AuthenticatedShell() {
 
   return (
     <View style={styles.root}>
-      <LegalReacceptanceModal
-        visible={legalGate === 'blocked'}
-        onAccepted={() => {
-          void cacheLegalAcceptance({
-            userId: session.user.id,
-            privacyVersion: REQUIRED_PRIVACY_VERSION,
-            termsVersion: REQUIRED_TERMS_VERSION,
-          }).catch(() => {});
-          setLegalGate('ready');
-        }}
-      />
-      <AnalyticsConsentPromptModal
-        visible={legalGate === 'ready' && analyticsConsentGate === 'prompt'}
-        userId={session.user.id}
-        onResolved={() => setAnalyticsConsentGate('ready')}
-      />
+      {/*
+        Mount these Modals only while shown. Leaving transparent RN Modals in the
+        tree with visible={false} after they were presented can leave an invisible
+        native host that swallows all taps (especially on iOS).
+      */}
+      {legalGate === 'blocked' ? (
+        <LegalReacceptanceModal
+          visible
+          onAccepted={() => {
+            void cacheLegalAcceptance({
+              userId: session.user.id,
+              privacyVersion: REQUIRED_PRIVACY_VERSION,
+              termsVersion: REQUIRED_TERMS_VERSION,
+            }).catch(() => {});
+            setLegalGate('ready');
+          }}
+        />
+      ) : null}
+      {legalGate === 'ready' && analyticsConsentGate === 'prompt' ? (
+        <AnalyticsConsentPromptModal
+          visible
+          userId={session.user.id}
+          onResolved={() => setAnalyticsConsentGate('ready')}
+        />
+      ) : null}
       {legalGate === 'ready' && analyticsConsentGate === 'ready' ? (
         <>
       {inboxMounted ? (
@@ -594,13 +609,18 @@ function AuthenticatedShell() {
         </View>
       ) : null}
 
-      {Platform.OS !== 'android' ? (
+      {Platform.OS !== 'android' && jobDetailMounted ? (
       <Modal
         testID="job-detail-modal"
         visible={jobDetailOpen}
         animationType={jobDetailModalAnimation}
         presentationStyle="fullScreen"
         onRequestClose={() => closeJobDetail()}
+        onDismiss={() => {
+          setJobDetailMounted(false);
+          setJobDetailModalAnimation('slide');
+          jobDetailSwipeClosingRef.current = false;
+        }}
       >
         <GestureHandlerRootView style={styles.jobDetailModalRoot}>
           <JobDetailScreen

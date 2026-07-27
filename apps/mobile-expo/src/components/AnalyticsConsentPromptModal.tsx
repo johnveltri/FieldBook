@@ -70,9 +70,11 @@ export function AnalyticsConsentPromptModal({
     }
   }, [onResolved, userId]);
 
+  if (!visible) return null;
+
   return (
     <Modal
-      visible={visible}
+      visible
       transparent
       animationType="fade"
       onRequestClose={() => {}}

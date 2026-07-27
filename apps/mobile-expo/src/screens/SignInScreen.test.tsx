@@ -111,6 +111,27 @@ describe('SignInScreen', () => {
     expect(mockSignIn).toHaveBeenCalledWith('tech@example.com', 'password123');
   });
 
+  it('hides email and password placeholders while those fields are focused', () => {
+    const screen = render(<SignInScreen />);
+    const email = screen.getByLabelText('Email');
+    const password = screen.getByLabelText('Password');
+
+    expect(email.props.placeholder).toBe('you@example.com');
+    expect(password.props.placeholder).toBe('••••••••');
+
+    fireEvent(email, 'focus');
+    expect(screen.getByLabelText('Email').props.placeholder).toBeUndefined();
+    expect(screen.getByLabelText('Password').props.placeholder).toBe('••••••••');
+
+    fireEvent(email, 'blur');
+    fireEvent(password, 'focus');
+    expect(screen.getByLabelText('Email').props.placeholder).toBe('you@example.com');
+    expect(screen.getByLabelText('Password').props.placeholder).toBeUndefined();
+
+    fireEvent(password, 'blur');
+    expect(screen.getByLabelText('Password').props.placeholder).toBe('••••••••');
+  });
+
   it('dismisses the keyboard before starting sign-in', async () => {
     const dismissKeyboard = jest.spyOn(Keyboard, 'dismiss');
     const screen = render(<SignInScreen />);

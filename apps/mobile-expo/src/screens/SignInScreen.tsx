@@ -74,6 +74,8 @@ export function SignInScreen() {
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const previousModeRef = useRef(mode);
   const lastNameInputRef = useRef<TextInput>(null);
   const emailInputRef = useRef<TextInput>(null);
@@ -396,6 +398,8 @@ export function SignInScreen() {
                 setEmail(value);
                 if (error) setError(null);
               }}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
               accessibilityLabel="Email"
               autoCapitalize="none"
               autoComplete="email"
@@ -404,7 +408,7 @@ export function SignInScreen() {
               textContentType="emailAddress"
               returnKeyType="next"
               onSubmitEditing={() => passwordInputRef.current?.focus()}
-              placeholder="you@example.com"
+              placeholder={emailFocused ? undefined : 'you@example.com'}
               placeholderTextColor={fg.secondary}
               style={[styles.input, text.body, { color: fg.primary }]}
               editable={!busy}
@@ -426,6 +430,8 @@ export function SignInScreen() {
                   setPassword(value);
                   if (error) setError(null);
                 }}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 accessibilityLabel="Password"
                 autoCapitalize="none"
                 autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
@@ -437,7 +443,7 @@ export function SignInScreen() {
                   if (mode === 'signUp') confirmPasswordInputRef.current?.focus();
                   else void onSubmit();
                 }}
-                placeholder="••••••••"
+                placeholder={passwordFocused ? undefined : '••••••••'}
                 placeholderTextColor={fg.secondary}
                 style={[styles.passwordInput, text.body, { color: fg.primary }]}
                 editable={!busy}

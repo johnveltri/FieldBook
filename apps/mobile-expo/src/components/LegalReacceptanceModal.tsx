@@ -54,9 +54,11 @@ export function LegalReacceptanceModal({
     }
   }, [onAccepted]);
 
+  if (!visible) return null;
+
   return (
     <Modal
-      visible={visible}
+      visible
       transparent
       animationType="fade"
       onRequestClose={() => {}}

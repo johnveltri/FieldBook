@@ -216,7 +216,7 @@ export function LandingPage() {
         <motion.div aria-hidden className={`${styles.heroGlow} ${styles.heroGlowRust}`} animate={{ x: [-20, 20, -20], y: [-10, 10, -10], rotate: [0, 5, 0] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} />
         <motion.div aria-hidden className={`${styles.heroGlow} ${styles.heroGlowInk}`} animate={{ x: [20, -20, 20], y: [10, -10, 10], rotate: [0, -5, 0] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }} />
         <motion.div className={styles.heroInner} initial={initial} animate={animate} variants={stagger}>
-        <motion.span variants={reveal} className={styles.badge}>Beta</motion.span><motion.h1 variants={reveal}>Free job &amp; profit tracker</motion.h1>
+        <motion.span variants={reveal} className={styles.badge}>Beta</motion.span><motion.h1 variants={reveal}>Free job &amp; earnings tracker</motion.h1>
         <motion.p variants={reveal} className={styles.kicker}>Built for independent tradespeople. Designed for the field.</motion.p>
         <motion.p variants={reveal} className={styles.heroLead}>Know what you actually made on every job to price smarter.</motion.p>
         <motion.div variants={reveal} className={styles.tradeTicker} aria-label="Trades supported by FieldSolo"><motion.div animate={{ x: ["0%", "-50%"] }} transition={{ repeat: Infinity, ease: "linear", duration: 30 }}><span>{"Plumbing · Electrical · HVAC · Handyman · Carpentry · Contractor · Painting · Roofing · Flooring · Drywall · Landscaping · Appliances · Auto Repair · "}</span><span>{"Plumbing · Electrical · HVAC · Handyman · Carpentry · Contractor · Painting · Roofing · Flooring · Drywall · Landscaping · Appliances · Auto Repair · "}</span></motion.div></motion.div>
