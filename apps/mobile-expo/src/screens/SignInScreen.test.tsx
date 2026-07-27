@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
+import { Keyboard } from 'react-native';
 
 import { SignInScreen } from './SignInScreen';
 
@@ -108,6 +109,23 @@ describe('SignInScreen', () => {
     });
 
     expect(mockSignIn).toHaveBeenCalledWith('tech@example.com', 'password123');
+  });
+
+  it('dismisses the keyboard before starting sign-in', async () => {
+    const dismissKeyboard = jest.spyOn(Keyboard, 'dismiss');
+    const screen = render(<SignInScreen />);
+    fireEvent.changeText(screen.getByLabelText('Email'), 'tech@example.com');
+    fireEvent.changeText(screen.getByLabelText('Password'), 'password123');
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Sign in'));
+    });
+
+    expect(dismissKeyboard).toHaveBeenCalledTimes(1);
+    expect(dismissKeyboard.mock.invocationCallOrder[0]).toBeLessThan(
+      mockSignIn.mock.invocationCallOrder[0],
+    );
+    dismissKeyboard.mockRestore();
   });
 
   it('turns invalid-credential errors into clear sign-in copy', async () => {

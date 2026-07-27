@@ -1769,28 +1769,13 @@ export function JobDetailScreen({
           paddingTop: Math.max(
             headerTopPad + space('Spacing/4') - space('Spacing/24'),
             0,
-          ),
+          ) + 48,
           paddingBottom: space('Spacing/20') + bottomInset,
           alignItems: 'stretch',
         }}
         keyboardShouldPersistTaps="handled"
       >
         <View style={columnStyle}>
-        {__DEV__ && supabaseReady ? (
-          <Text
-            style={[
-              typography.bodySmall,
-              {
-                color: fg.muted,
-                alignSelf: 'center',
-                marginBottom: space('Spacing/8'),
-                textAlign: 'center',
-              },
-            ]}
-          >
-            {sessionEmail ?? '(no email)'} · {supabaseApiHostLabel()} · job {job.id}
-          </Text>
-        ) : null}
         {/* `TopHeader` variant `X (Close &Edit)` (`231:858`) */}
         <View style={[styles.topHeader, styles.topHeaderModal]}>
           <View style={styles.topHeaderRow}>
