@@ -193,6 +193,38 @@ describe('HomeScreen quick session', () => {
     expect(await screen.findByText('No earnings from this week. Complete a job to track earnings here.')).toBeTruthy();
   });
 
+  it('explains zero weekly earnings when incomplete jobs are blocking the count', async () => {
+    mockListJobsForCurrentUserPage.mockResolvedValue({
+      items: [
+        job({
+          id: 'job-incomplete',
+          shortDescription: 'Untitled Job',
+          workStatus: 'notStarted',
+          isFinanciallyComplete: false,
+          hasMaterials: false,
+          hasSessions: false,
+          revenueCents: 0,
+        }),
+      ],
+      hasMore: false,
+    });
+
+    const screen = render(
+      <HomeScreen
+        onOpenProfile={() => undefined}
+        onOpenJobDetail={() => undefined}
+        onOpenEarnings={() => undefined}
+        onOpenJobsOpenTab={() => undefined}
+      />,
+    );
+
+    expect(
+      await screen.findByText(
+        'No earnings counted this week. Finish missing job details so completed work can show here.',
+      ),
+    ).toBeTruthy();
+  });
+
   it('shows the full first-job state and creates a job from its CTA', async () => {
     mockFetchFirstJobIdForCurrentUser.mockResolvedValue(null);
     const onCreateFirstJob = jest.fn<() => Promise<string>>().mockResolvedValue('job-new');

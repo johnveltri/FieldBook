@@ -144,8 +144,11 @@ function supabaseApiHostLabel(): string {
 }
 
 function jobDetailIsFinanciallyComplete(job: JobDetailViewModel): boolean {
+  const title = job.shortDescription.trim();
+  const hasNamedJob = title.length > 0 && title !== 'Untitled Job';
   const hasMaterials = job.materialBuckets.some((bucket) => bucket.items.length > 0);
   return (
+    hasNamedJob &&
     job.earnings.revenueCents > 0 &&
     job.metrics.sessionCount > 0 &&
     (hasMaterials || job.noMaterialsConfirmed)
