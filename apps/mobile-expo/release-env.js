@@ -51,6 +51,14 @@ function validateReleaseEnvironment(env = process.env) {
       'Production builds require EXPO_PUBLIC_ANALYTICS_DEBUG_RICH=false.',
     );
   }
+
+  if (env.EXPO_PUBLIC_ANALYTICS_PROVIDER !== 'posthog') {
+    throw new Error('Production builds require EXPO_PUBLIC_ANALYTICS_PROVIDER=posthog.');
+  }
+
+  if (!(env.EXPO_PUBLIC_POSTHOG_KEY || '').trim()) {
+    throw new Error('Production builds require EXPO_PUBLIC_POSTHOG_KEY.');
+  }
 }
 
 module.exports = { validateReleaseEnvironment };

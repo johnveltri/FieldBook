@@ -10,6 +10,8 @@ const hostedReleaseEnv = {
   EXPO_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
   EXPO_PUBLIC_SUPABASE_ANON_KEY: 'public-anon-key',
   EXPO_PUBLIC_ANALYTICS_DEBUG_RICH: 'false',
+  EXPO_PUBLIC_ANALYTICS_PROVIDER: 'posthog',
+  EXPO_PUBLIC_POSTHOG_KEY: 'posthog-project-key',
 };
 
 describe('validateReleaseEnvironment', () => {
@@ -51,5 +53,21 @@ describe('validateReleaseEnvironment', () => {
         EXPO_PUBLIC_ANALYTICS_DEBUG_RICH: 'true',
       }),
     ).toThrow('EXPO_PUBLIC_ANALYTICS_DEBUG_RICH=false');
+  });
+
+  it('requires consent-gated PostHog configuration for production builds', () => {
+    expect(() =>
+      validateReleaseEnvironment({
+        ...hostedReleaseEnv,
+        EXPO_PUBLIC_ANALYTICS_PROVIDER: 'none',
+      }),
+    ).toThrow('EXPO_PUBLIC_ANALYTICS_PROVIDER=posthog');
+
+    expect(() =>
+      validateReleaseEnvironment({
+        ...hostedReleaseEnv,
+        EXPO_PUBLIC_POSTHOG_KEY: '',
+      }),
+    ).toThrow('EXPO_PUBLIC_POSTHOG_KEY');
   });
 });

@@ -32,7 +32,6 @@ import {
 import type { ListJobsForCurrentUserTab } from '@fieldsolo/api-client';
 import {
   createBlankJobForCurrentUser,
-  fetchFirstJobIdForCurrentUser,
   fetchLatestLegalAcceptanceVersions,
   needsLegalReacceptance,
 } from '@fieldsolo/api-client';
@@ -56,25 +55,16 @@ import { JobsScreen } from './src/screens/JobsScreen';
 import { JobDetailScreen } from './src/screens/JobDetailScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
-import { FirstRunOnboardingScreen } from './src/screens/FirstRunOnboardingScreen';
 import { OverlaySlideHost } from './src/navigation/OverlaySlideHost';
 import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { bg } from './src/theme/nativeTokens';
-import {
-  getFirstRunOnboardingState,
-  setFirstRunOnboardingState,
-} from './src/lib/firstRunOnboardingStorage';
-
 function AuthenticatedShell() {
   const { session, loading, signupLegalPending } = useAuth();
   const [legalGate, setLegalGate] = useState<'loading' | 'blocked' | 'ready'>('loading');
   const [analyticsConsentGate, setAnalyticsConsentGate] = useState<
     'idle' | 'loading' | 'prompt' | 'ready'
   >('idle');
-  const [onboardingGate, setOnboardingGate] = useState<'idle' | 'loading' | 'show' | 'ready'>('idle');
-  const [onboardingBusy, setOnboardingBusy] = useState(false);
-  const [onboardingError, setOnboardingError] = useState<string | null>(null);
   /** When true, job detail covers tab shell (HOME / JOBS / EARNINGS); X returns here. */
   const [jobDetailOpen, setJobDetailOpen] = useState(false);
   /** Android: keep host mounted through exit animation (Modal is iOS-only for detail). */
@@ -183,30 +173,6 @@ function AuthenticatedShell() {
   }, [session?.user.id, signupLegalPending, legalGate]);
 
   useEffect(() => {
-    if (!session?.user.id || analyticsConsentGate !== 'ready') {
-      if (!session?.user.id) setOnboardingGate('idle');
-      return;
-    }
-    let cancelled = false;
-    setOnboardingGate('loading');
-    void (async () => {
-      try {
-        const [savedState, firstJobId] = await Promise.all([
-          getFirstRunOnboardingState(session.user.id),
-          fetchFirstJobIdForCurrentUser(supabase),
-        ]);
-        if (!cancelled) {
-          setOnboardingGate(savedState == null && firstJobId == null ? 'show' : 'ready');
-        }
-      } catch {
-        // Onboarding must never prevent a returning user from reaching their records.
-        if (!cancelled) setOnboardingGate('ready');
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [analyticsConsentGate, session?.user.id]);
-
-  useEffect(() => {
     if (session) return;
     void analytics.onSignOut();
     setAnalyticsConsentGate('idle');
@@ -300,7 +266,7 @@ function AuthenticatedShell() {
     [],
   );
 
-  const createJobAndOpen = useCallback(async (source: 'onboarding' | 'jobs_fab' | 'home_empty') => {
+  const createJobAndOpen = useCallback(async (source: 'jobs_fab' | 'home_empty') => {
     if (!isSupabaseConfigured()) throw new Error('Supabase is not configured.');
     analytics.capture('job_create_started', { source });
     try {
@@ -457,7 +423,6 @@ function AuthenticatedShell() {
     || signupLegalPending
     || (session && legalGate === 'loading')
     || (session && legalGate === 'ready' && analyticsConsentGate === 'loading')
-    || (session && analyticsConsentGate === 'ready' && onboardingGate === 'loading')
   ) {
     return (
       <View style={[styles.root, styles.centered]}>
@@ -468,31 +433,6 @@ function AuthenticatedShell() {
 
   if (!session) {
     return <SignInScreen />;
-  }
-
-  if (legalGate === 'ready' && analyticsConsentGate === 'ready' && onboardingGate === 'show') {
-    return (
-      <FirstRunOnboardingScreen
-        busy={onboardingBusy}
-        error={onboardingError}
-        onAddFirstJob={() => {
-          if (onboardingBusy) return;
-          setOnboardingBusy(true);
-          setOnboardingError(null);
-          void createJobAndOpen('onboarding')
-            .then(async () => {
-              await setFirstRunOnboardingState(session.user.id, 'completed');
-              setOnboardingGate('ready');
-            })
-            .catch((error) => setOnboardingError(error instanceof Error ? error.message : 'Could not create your first job.'))
-            .finally(() => setOnboardingBusy(false));
-        }}
-        onNotNow={() => {
-          void setFirstRunOnboardingState(session.user.id, 'dismissed').catch(() => {});
-          setOnboardingGate('ready');
-        }}
-      />
-    );
   }
 
   return (
