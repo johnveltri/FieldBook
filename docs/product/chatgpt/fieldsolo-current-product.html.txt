@@ -106,7 +106,6 @@
       <ol>
         <li>Anonymous users see <a href="#screen-sign-in">Sign in / Sign up</a>.</li>
         <li>Authenticated users must pass the <a href="#state-legal-reacceptance">legal-version gate</a> and, when unresolved, the <a href="#state-analytics-consent">analytics choice</a>.</li>
-        <li>Accounts with no jobs and no prior dismissal see the <a href="#state-first-run">first-run job prompt</a> after consent; they may add a real job or choose Not now.</li>
         <li>The persistent main shell contains <a href="#screen-home">Home</a>, <a href="#screen-jobs">Jobs</a>, and <a href="#screen-earnings">Earnings</a>.</li>
         <li><a href="#screen-job-detail">Job Detail</a> and <a href="#state-inbox-notes">Inbox</a> cover the shell but preserve the selected destination tab.</li>
         <li><a href="#screen-profile">Profile</a> stacks over Home; <a href="#state-help">Help</a> and <a href="#state-privacy">Privacy</a> are secondary Profile screens.</li>
@@ -157,7 +156,6 @@
 
       <h3 id="states">Shipped secondary screens and states</h3>
       <div class="grid">
-        <article id="state-first-run" data-state-id="first-run" data-status="shipped"><h4>First-run onboarding</h4><p>Shown once after legal and analytics choices when the account has no jobs. Add my first job creates a blank job and opens editing; Not now dismisses the prompt for that user.</p></article>
         <article id="state-jobs-open" data-state-id="jobs-open" data-status="shipped"><h4>Jobs — Open</h4><p>Incomplete, in-progress, and unpaid completed jobs. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-977">Figma 2028:977</a></p></article>
         <article id="state-jobs-paid" data-state-id="jobs-paid" data-status="shipped"><h4>Jobs — Paid</h4><p>Financially complete, paid jobs grouped by recency. Paid jobs with incomplete records remain under Open. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1152">Figma 2028:1152</a></p></article>
         <article id="state-inbox-notes" data-state-id="inbox-notes" data-status="shipped"><h4>Inbox — Notes</h4><p>Unassigned notes grouped by recency; selecting one opens job assignment. <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2028-1274">Figma 2028:1274</a></p></article>
@@ -179,7 +177,6 @@
         <tbody>
           <tr data-capability-id="auth.sign-in" data-status="shipped"><td>Sign in</td><td>Sign In</td><td>Creates a Supabase email/password session and enters the authenticated shell on Home.</td><td>Errors remain on the form; prior tab and overlay navigation is cleared on sign-out.</td></tr>
           <tr data-capability-id="auth.sign-up" data-status="shipped"><td>Create account</td><td>Sign In mode switch</td><td>Creates account/profile context and records legal acceptance.</td><td>First/last name, valid email, matching password confirmation meeting the new-password policy, and legal checkbox.</td></tr>
-          <tr data-capability-id="onboarding.first-job" data-status="shipped"><td>Start first job</td><td>First-run prompt / Home / Jobs</td><td>Creates a blank job and opens its edit flow.</td><td>First-run state is user-scoped and appears only when no non-deleted job exists.</td></tr>
           <tr data-capability-id="legal.accept" data-status="shipped"><td>Accept current legal versions</td><td>Signup or legal gate</td><td>Persists Privacy and Terms versions/timestamps; local cache is best-effort.</td><td>Server verification remains authoritative; gate fails closed.</td></tr>
           <tr data-capability-id="analytics.choose" data-status="shipped"><td>Choose analytics</td><td>First authenticated run or Privacy</td><td>Grants or withdraws optional analytics and updates client activation.</td><td>Analytics are off before consent; failed writes revert UI.</td></tr>
           <tr data-capability-id="home.review" data-status="shipped"><td>Review current work</td><td>Home</td><td>Loads weekly net, recent work, incomplete jobs, completion review, and pending payment.</td><td>Paginated attention data; loading/error/empty states.</td></tr>
@@ -264,7 +261,6 @@
   "statusRule": "Only shipped is current functionality.",
   "screens": [
     {"id":"sign-in","status":"shipped","parent":null,"capabilities":["auth.sign-in","auth.sign-up","legal.accept"]},
-    {"id":"first-run","status":"shipped","parent":"authenticated-shell","capabilities":["onboarding.first-job"]},
     {"id":"home","status":"shipped","parent":"authenticated-shell","capabilities":["home.review","capture.quick","session.live"]},
     {"id":"jobs","status":"shipped","parent":"authenticated-shell","capabilities":["jobs.browse","jobs.create"]},
     {"id":"jobs-open","status":"shipped","parent":"jobs","capabilities":["jobs.browse"]},
@@ -285,7 +281,6 @@
   "capabilities": [
     {"id":"auth.sign-in","status":"shipped","screen":"sign-in"},
     {"id":"auth.sign-up","status":"shipped","screen":"sign-in"},
-    {"id":"onboarding.first-job","status":"shipped","screen":"first-run"},
     {"id":"legal.accept","status":"shipped","screen":"sign-in"},
     {"id":"analytics.choose","status":"shipped","screen":"privacy"},
     {"id":"home.review","status":"shipped","screen":"home"},
