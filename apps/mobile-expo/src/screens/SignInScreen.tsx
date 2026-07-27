@@ -155,6 +155,11 @@ export function SignInScreen() {
         return;
       }
     }
+
+    // Supabase emits the signed-in state while `signInWithPassword` resolves.
+    // Dismiss the focused native TextInput first so the auth-driven shell swap
+    // cannot unmount the form while it still owns the keyboard responder.
+    Keyboard.dismiss();
     setBusy(true);
     try {
       if (mode === 'signIn') {
@@ -170,7 +175,6 @@ export function SignInScreen() {
           });
           setError(authErrorMessage(err));
         } else {
-          Keyboard.dismiss();
           analytics.capture('sign_in_succeeded', {
             ...emailProperties(trimmed),
           });
@@ -199,8 +203,6 @@ export function SignInScreen() {
         analytics.capture('sign_up_succeeded', {
           ...emailProperties(trimmed),
         });
-        Keyboard.dismiss();
-
         setSignupLegalPending(true);
         try {
           let acceptedUserId = signUpSession?.user.id ?? null;
