@@ -1,21 +1,21 @@
-# FieldSolo Terms of Service
+# FieldSoli Terms of Service
 
-**Effective date:** July 20, 2026
+**Effective date:** July 27, 2026
 
-**Terms version:** 2026-07-20
+**Terms version:** 2026-07-27
 
-FieldSolo is operated by **Veltri Ventures LLC, an Illinois limited liability company** ("FieldSolo," "we," "us," or "our"). These Terms of Service (the "Terms") govern access to and use of:
+FieldSoli™ is a product operated by **Veltri Ventures LLC, an Illinois limited liability company** ("FieldSoli," "we," "us," or "our"). These Terms of Service (the "Terms") govern access to and use of:
 
-- the FieldSolo mobile applications;
-- [fieldsolo.com](https://fieldsolo.com), including the FieldSolo waitlist;
-- account and customer-support interactions with FieldSolo; and
-- any other current FieldSolo service that links to these Terms.
+- the FieldSoli mobile applications;
+- [fieldsoli.com](https://fieldsoli.com), including the FieldSoli waitlist;
+- account and customer-support interactions with FieldSoli; and
+- any other current FieldSoli service that links to these Terms.
 
 We refer to these collectively as the **Services**.
 
 These Terms form a binding agreement when you affirmatively accept them, including when you create an account or submit a waitlist form after being presented with these Terms and an acceptance control. If you do not agree, do not create an account, join the waitlist, or use an account-based portion of the Services.
 
-Our [Privacy Policy](https://fieldsolo.com/privacy) explains how we collect, use, disclose, retain, and protect personal information. By accepting these Terms, you acknowledge that you have had an opportunity to review the Privacy Policy. Acceptance of these Terms is not consent to optional in-app product analytics; analytics requires a separate affirmative choice.
+Our [Privacy Policy](https://fieldsoli.com/privacy) explains how we collect, use, disclose, retain, and protect personal information. By accepting these Terms, you acknowledge that you have had an opportunity to review the Privacy Policy. Acceptance of these Terms is not consent to optional in-app product analytics; analytics requires a separate affirmative choice.
 
 ## 1. Eligibility, Business Use, and Authority
 
@@ -29,7 +29,7 @@ The Services are intended for users in the United States.
 
 ## 2. The Services
 
-FieldSolo provides business-organizing tools that currently allow users to:
+FieldSoli provides business-organizing tools that currently allow users to:
 
 - create and organize jobs, including job descriptions, customer names, service addresses, work status, payment status, and revenue;
 - start, resume, edit, end, and organize live or manually entered work sessions;
@@ -37,7 +37,7 @@ FieldSolo provides business-organizing tools that currently allow users to:
 - record material quantities, units, unit costs, and calculated totals;
 - view estimates and summaries based on entered information, including work duration, material totals, net earnings, net hourly rate, outstanding payments, job rankings, recent work, and items that may need attention;
 - manage account and profile information and available privacy choices; and
-- access the FieldSolo website, waitlist, legal information, and support.
+- access the FieldSoli website, waitlist, legal information, and support.
 
 The Services do not perform trade work, collect payment from your customers, verify that you have been paid, or replace your own business records.
 
@@ -51,9 +51,9 @@ We do not provide a service-level agreement or guarantee that any feature will r
 
 ## 4. Limited Right to Use the Services
 
-Subject to these Terms, FieldSolo grants you a limited, revocable, non-exclusive, non-transferable, and non-sublicensable right to access and use the Services for your internal business purposes while these Terms remain in effect.
+Subject to these Terms, FieldSoli grants you a limited, revocable, non-exclusive, non-transferable, and non-sublicensable right to access and use the Services for your internal business purposes while these Terms remain in effect.
 
-The Services and mobile applications are licensed, not sold. Except for the limited right expressly granted in these Terms and any rights granted under applicable app-store terms, FieldSolo and its licensors reserve all rights in the Services.
+The Services and mobile applications are licensed, not sold. Except for the limited right expressly granted in these Terms and any rights granted under applicable app-store terms, FieldSoli and its licensors reserve all rights in the Services.
 
 You may not make the Services available for use by another person through your account or use the Services to provide hosted, time-sharing, bureau, resale, or similar access to a third party.
 
@@ -68,11 +68,11 @@ You are responsible for:
 - activity occurring through your account to the extent permitted by law; and
 - promptly notifying us if you know or suspect that your account or credentials have been compromised.
 
-You may not share your credentials or permit another person to use your account. Contact [support@fieldsolo.com](mailto:support@fieldsolo.com) if you suspect unauthorized access. We may revoke sessions, require a password change, temporarily restrict access, or take other reasonable protective action.
+You may not share your credentials or permit another person to use your account. Contact [support@fieldsoli.com](mailto:support@fieldsoli.com) if you suspect unauthorized access. We may revoke sessions, require a password change, temporarily restrict access, or take other reasonable protective action.
 
 ## 6. Your Business and Customer Relationships
 
-FieldSolo provides software tools. You control your business, jobs, customers, worksites, pricing, and trade services. FieldSolo is not a party to any agreement or dispute between you and your customers or other third parties.
+FieldSoli provides software tools. You control your business, jobs, customers, worksites, pricing, and trade services. FieldSoli is not a party to any agreement or dispute between you and your customers or other third parties.
 
 You are solely responsible for:
 
@@ -82,14 +82,14 @@ You are solely responsible for:
 - permits, inspections, bonds, insurance, and workplace-safety requirements;
 - customer contracts, estimates, change orders, cancellation notices, warranties, disclosures, invoices, receipts, and other documents required by law or your agreements;
 - employment, independent-contractor, wage, tax, lien, accounting, and recordkeeping obligations;
-- the accuracy and legality of information you enter into FieldSolo; and
+- the accuracy and legality of information you enter into FieldSoli; and
 - obtaining any rights, notices, permissions, or consents needed to enter and process information about customers, properties, jobs, and worksites.
 
-FieldSolo does not verify your identity, credentials, licenses, insurance, work, customer relationships, prices, or compliance. Records created in FieldSolo are internal business-organizing records. They are not customer contracts, legal notices, permits, tax returns, payroll records, safety systems, or other legally required documents.
+FieldSoli does not verify your identity, credentials, licenses, insurance, work, customer relationships, prices, or compliance. Records created in FieldSoli are internal business-organizing records. They are not customer contracts, legal notices, permits, tax returns, payroll records, safety systems, or other legally required documents.
 
-You should maintain independent copies of records you need for taxes, licenses, insurance, customer relationships, disputes, or other legal and business purposes. FieldSolo is not a statutory records archive.
+You should maintain independent copies of records you need for taxes, licenses, insurance, customer relationships, disputes, or other legal and business purposes. FieldSoli is not a statutory records archive.
 
-FieldSolo and you are independent parties. Nothing in these Terms creates an employment, agency, partnership, joint venture, fiduciary, franchise, general-contractor, construction-manager, project-manager, or joint-employer relationship. FieldSolo is not your accountant, tax adviser, financial adviser, insurer, payment processor, or legal adviser.
+FieldSoli and you are independent parties. Nothing in these Terms creates an employment, agency, partnership, joint venture, fiduciary, franchise, general-contractor, construction-manager, project-manager, or joint-employer relationship. FieldSoli is not your accountant, tax adviser, financial adviser, insurer, payment processor, or legal adviser.
 
 ## 7. Acceptable Use
 
@@ -122,77 +122,77 @@ We may investigate suspected misuse and remove or restrict content or access whe
 
 **User Content** means information you enter or store through the Services, including job descriptions, customer names, service addresses, work and payment statuses, revenue, work-session information, notes, material entries, and related business records. **Customer Information** means User Content concerning your own customers, properties, worksites, or jobs.
 
-As between you and FieldSolo, you retain ownership of your User Content. You are responsible for its accuracy, quality, legality, and appropriateness and for the consequences of entering or using it through the Services.
+As between you and FieldSoli, you retain ownership of your User Content. You are responsible for its accuracy, quality, legality, and appropriateness and for the consequences of entering or using it through the Services.
 
 You represent and warrant that:
 
-- you have all rights and authority necessary to enter the User Content and permit FieldSolo to process it as described in these Terms and the Privacy Policy;
+- you have all rights and authority necessary to enter the User Content and permit FieldSoli to process it as described in these Terms and the Privacy Policy;
 - you have provided any notices and obtained any permissions or consents required by applicable law or your agreements; and
 - the User Content and our authorized processing of it do not violate law or another person's rights.
 
-Your customer does not become a FieldSolo user, customer, or party to these Terms merely because you enter information about that customer. You—not FieldSolo—remain responsible for responding to your customer's requests and meeting obligations you owe to that customer. We may assist you with a request where appropriate.
+Your customer does not become a FieldSoli user, customer, or party to these Terms merely because you enter information about that customer. You—not FieldSoli—remain responsible for responding to your customer's requests and meeting obligations you owe to that customer. We may assist you with a request where appropriate.
 
 ## 9. License to User Content
 
-You grant FieldSolo a worldwide, non-exclusive, royalty-free license to host, store, reproduce, process, transmit, and display User Content only as reasonably necessary to:
+You grant FieldSoli a worldwide, non-exclusive, royalty-free license to host, store, reproduce, process, transmit, and display User Content only as reasonably necessary to:
 
 - provide the current Services and features you request;
 - maintain, secure, troubleshoot, and support the Services;
 - allow service providers acting on our behalf to perform those functions;
 - comply with law or legal process;
 - enforce these Terms; and
-- protect the rights, safety, property, security, or integrity of FieldSolo, our users, or others.
+- protect the rights, safety, property, security, or integrity of FieldSoli, our users, or others.
 
-This license includes the limited right to format, organize, calculate from, and technically modify User Content when needed to provide the Services, but it does not transfer ownership to FieldSolo. FieldSolo may sublicense these rights only to service providers acting on our behalf and only to the extent necessary for their services.
+This license includes the limited right to format, organize, calculate from, and technically modify User Content when needed to provide the Services, but it does not transfer ownership to FieldSoli. FieldSoli may sublicense these rights only to service providers acting on our behalf and only to the extent necessary for their services.
 
 The license ends when the relevant User Content is deleted from our active systems, except to the limited extent information remains in backups or must be retained for legal compliance, security, fraud prevention, dispute resolution, enforcement, or service wind-down, as described in the Privacy Policy.
 
-This license does not authorize FieldSolo to publicly display User Content, advertise with your or your customer's name or logo, sell User Content, train a general-purpose artificial-intelligence model on User Content, or create pricing or industry benchmarks from User Content.
+This license does not authorize FieldSoli to publicly display User Content, advertise with your or your customer's name or logo, sell User Content, train a general-purpose artificial-intelligence model on User Content, or create pricing or industry benchmarks from User Content.
 
 ## 10. Aggregated and Deidentified Service Data
 
-FieldSolo may create and use aggregated or deidentified service-usage statistics for product analytics and product improvement. We take measures intended to prevent that information from reasonably identifying you, your customer, or your business, and we do not attempt to reidentify it.
+FieldSoli may create and use aggregated or deidentified service-usage statistics for product analytics and product improvement. We take measures intended to prevent that information from reasonably identifying you, your customer, or your business, and we do not attempt to reidentify it.
 
-FieldSolo does not use names, exact service addresses, or free-text User Content as aggregated statistics. This section does not authorize pricing benchmarks, industry comparisons, commercial reports, generalized job-economics datasets, or artificial-intelligence model training.
+FieldSoli does not use names, exact service addresses, or free-text User Content as aggregated statistics. This section does not authorize pricing benchmarks, industry comparisons, commercial reports, generalized job-economics datasets, or artificial-intelligence model training.
 
 ## 11. Privacy and Optional Product Analytics
 
-Our [Privacy Policy](https://fieldsolo.com/privacy) explains our personal-information practices, service providers, retention and deletion practices, and available privacy choices.
+Our [Privacy Policy](https://fieldsoli.com/privacy) explains our personal-information practices, service providers, retention and deletion practices, and available privacy choices.
 
-In-app product analytics is optional. FieldSolo does not treat acceptance of these Terms as permission to enable optional analytics. Analytics is used only when it is configured and you separately enable it, and you may withdraw that permission as described in the Privacy Policy.
+In-app product analytics is optional. FieldSoli does not treat acceptance of these Terms as permission to enable optional analytics. Analytics is used only when it is configured and you separately enable it, and you may withdraw that permission as described in the Privacy Policy.
 
 ## 12. Third-Party Infrastructure, Services, and Links
 
-FieldSolo uses third-party providers to operate parts of the Services. Current material providers and their functions are described in the Privacy Policy.
+FieldSoli uses third-party providers to operate parts of the Services. Current material providers and their functions are described in the Privacy Policy.
 
-The Services may contain links to websites, app stores, or services operated by third parties. Your independent use of a third-party service is governed by that third party's terms and privacy practices. FieldSolo does not control and, to the extent permitted by law, is not responsible for the availability, security, content, or conduct of third-party services we do not operate.
+The Services may contain links to websites, app stores, or services operated by third parties. Your independent use of a third-party service is governed by that third party's terms and privacy practices. FieldSoli does not control and, to the extent permitted by law, is not responsible for the availability, security, content, or conduct of third-party services we do not operate.
 
-## 13. FieldSolo Intellectual Property
+## 13. FieldSoli Intellectual Property
 
-FieldSolo and its licensors own the Services and all related software, interfaces, designs, documentation, text, graphics, branding, trademarks, and other materials FieldSolo provides, excluding User Content.
+FieldSoli and its licensors own the Services and all related software, interfaces, designs, documentation, text, graphics, branding, trademarks, and other materials FieldSoli provides, excluding User Content.
 
-These Terms do not grant you any right to use FieldSolo's names, trademarks, logos, or brand features except as necessary to identify and use the Services as intended. No rights are granted by implication, estoppel, or otherwise.
+These Terms do not grant you any right to use FieldSoli's names, trademarks, logos, or brand features except as necessary to identify and use the Services as intended. No rights are granted by implication, estoppel, or otherwise.
 
 ## 14. Feedback and Reviews
 
-If you voluntarily send FieldSolo an idea, suggestion, or other feedback specifically for product development, you grant FieldSolo a perpetual, irrevocable, worldwide, royalty-free, transferable, and sublicensable right to use that feedback without restriction or compensation to you. This does not transfer ownership of User Content entered to use the Services.
+If you voluntarily send FieldSoli an idea, suggestion, or other feedback specifically for product development, you grant FieldSoli a perpetual, irrevocable, worldwide, royalty-free, transferable, and sublicensable right to use that feedback without restriction or compensation to you. This does not transfer ownership of User Content entered to use the Services.
 
-The feedback license does not apply to a review or opinion that you publish publicly about FieldSolo. Nothing in these Terms restricts your right to provide an honest review or engage in conduct protected by the Consumer Review Fairness Act or other applicable law.
+The feedback license does not apply to a review or opinion that you publish publicly about FieldSoli. Nothing in these Terms restricts your right to provide an honest review or engage in conduct protected by the Consumer Review Fairness Act or other applicable law.
 
 ## 15. Current Price and Future Paid Services
 
-The current Services are offered without a subscription fee. FieldSolo may later offer paid services or features, but we will not charge you unless we first present the applicable price and payment terms and you accept them.
+The current Services are offered without a subscription fee. FieldSoli may later offer paid services or features, but we will not charge you unless we first present the applicable price and payment terms and you accept them.
 
 These Terms do not authorize automatic renewal, conversion of a free trial to a paid service, or a charge to a payment card, bank account, or app-store account.
 
 ## 16. Suspension, Termination, and Account Deletion
 
-You may stop using the Services at any time. You may delete your account through the in-app **Delete account** control or through [fieldsolo.com/delete-account](https://fieldsolo.com/delete-account). If you cannot use either method, contact [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com) from the email address associated with your account.
+You may stop using the Services at any time. You may delete your account through the in-app **Delete account** control or through [fieldsoli.com/delete-account](https://fieldsoli.com/delete-account). If you cannot use either method, contact [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com) from the email address associated with your account.
 
 We may suspend or terminate your access if:
 
 - you materially breach these Terms;
-- you use the Services unlawfully or in a way that could harm FieldSolo, another user, or a third party;
+- you use the Services unlawfully or in a way that could harm FieldSoli, another user, or a third party;
 - your account or activity creates a security, fraud, or abuse risk;
 - you fail to cooperate with a reasonable investigation of a security or compliance issue;
 - suspension or termination is required by law or legal process; or
@@ -200,17 +200,17 @@ We may suspend or terminate your access if:
 
 Where reasonably appropriate, we will provide notice and an opportunity to cure before suspension or termination. We may act immediately when necessary to address an urgent security, legal, fraud, abuse, or safety risk.
 
-When these Terms or your account terminate, your right to access and use the Services ends. You may lose access to User Content. Account deletion, record deletion, retention, backup, and lawful-retention practices are described in the Privacy Policy. FieldSolo does not promise indefinite restoration or availability of deleted or terminated account data.
+When these Terms or your account terminate, your right to access and use the Services ends. You may lose access to User Content. Account deletion, record deletion, retention, backup, and lawful-retention practices are described in the Privacy Policy. FieldSoli does not promise indefinite restoration or availability of deleted or terminated account data.
 
 Sections that by their nature should continue will survive termination, including Sections 6 through 10, 13, 14, and 18 through 25.
 
 ## 17. Calculations and No Professional Advice
 
-FieldSolo's duration, revenue, material-cost, net-earnings, net-hourly-rate, payment-status, ranking, and other calculations depend on information you enter and on the app's calculation rules. They may be incomplete, delayed, or inaccurate and may not reflect your actual financial or business results.
+FieldSoli's duration, revenue, material-cost, net-earnings, net-hourly-rate, payment-status, ranking, and other calculations depend on information you enter and on the app's calculation rules. They may be incomplete, delayed, or inaccurate and may not reflect your actual financial or business results.
 
-The Services and their calculations are provided for business organization and general informational purposes. FieldSolo does not provide legal, tax, accounting, financial, investment, insurance, payroll, employment, safety, licensing, or pricing advice. The Services do not guarantee payment collection, profitability, work quality, customer outcomes, or compliance with any law, contract, professional standard, or accounting practice.
+The Services and their calculations are provided for business organization and general informational purposes. FieldSoli does not provide legal, tax, accounting, financial, investment, insurance, payroll, employment, safety, licensing, or pricing advice. The Services do not guarantee payment collection, profitability, work quality, customer outcomes, or compliance with any law, contract, professional standard, or accounting practice.
 
-You are responsible for reviewing important information, validating calculations, obtaining appropriate professional advice, and maintaining legally required records outside FieldSolo.
+You are responsible for reviewing important information, validating calculations, obtaining appropriate professional advice, and maintaining legally required records outside FieldSoli.
 
 ## 18. Disclaimer of Warranties
 
@@ -235,7 +235,7 @@ Nothing in these Terms excludes or limits liability to the extent it cannot lawf
 
 ## 20. Indemnification
 
-To the extent permitted by law, you will defend, indemnify, and hold harmless the FieldSolo Parties from and against a third-party claim, demand, action, or proceeding, and resulting liabilities, damages, judgments, settlements, costs, and reasonable attorneys' fees, to the extent arising from:
+To the extent permitted by law, you will defend, indemnify, and hold harmless the FieldSoli Parties from and against a third-party claim, demand, action, or proceeding, and resulting liabilities, damages, judgments, settlements, costs, and reasonable attorneys' fees, to the extent arising from:
 
 - your User Content or your failure to have required rights, authority, notices, permissions, or consents;
 - the trade services you advertise, offer, or perform or a dispute between you and your customer or another third party;
@@ -243,15 +243,15 @@ To the extent permitted by law, you will defend, indemnify, and hold harmless th
 - your infringement or violation of a third party's intellectual-property, privacy, publicity, confidentiality, or other rights; or
 - your material breach of these Terms.
 
-We will provide reasonably prompt notice of a covered claim. A delay in notice will reduce your obligations only to the extent the delay materially prejudices the defense. You will control the defense using counsel reasonably acceptable to us, but we may participate with counsel at our own expense. You may not settle a claim in a way that admits fault by a FieldSolo Party, imposes an obligation on a FieldSolo Party, or does not fully release the FieldSolo Parties without our prior written consent, which will not be unreasonably withheld. We will reasonably cooperate at your expense.
+We will provide reasonably prompt notice of a covered claim. A delay in notice will reduce your obligations only to the extent the delay materially prejudices the defense. You will control the defense using counsel reasonably acceptable to us, but we may participate with counsel at our own expense. You may not settle a claim in a way that admits fault by a FieldSoli Party, imposes an obligation on a FieldSoli Party, or does not fully release the FieldSoli Parties without our prior written consent, which will not be unreasonably withheld. We will reasonably cooperate at your expense.
 
-Your obligations under this Section are reduced to the extent a claim was caused by a FieldSolo Party's fraud, willful misconduct, or gross negligence.
+Your obligations under this Section are reduced to the extent a claim was caused by a FieldSoli Party's fraud, willful misconduct, or gross negligence.
 
 ## 21. Informal Dispute Resolution
 
-Before filing a lawsuit arising out of or relating to these Terms or the Services, you and FieldSolo agree to make a good-faith effort to resolve the dispute informally for 30 days.
+Before filing a lawsuit arising out of or relating to these Terms or the Services, you and FieldSoli agree to make a good-faith effort to resolve the dispute informally for 30 days.
 
-To notify FieldSolo, email [support@fieldsolo.com](mailto:support@fieldsolo.com) with the subject **Legal Dispute Notice** and include your name, account email if applicable, a description of the dispute, and the relief requested. We will send a notice to the email address associated with your account or otherwise provided by you.
+To notify FieldSoli, email [support@fieldsoli.com](mailto:support@fieldsoli.com) with the subject **Legal Dispute Notice** and include your name, account email if applicable, a description of the dispute, and the relief requested. We will send a notice to the email address associated with your account or otherwise provided by you.
 
 This informal process does not prevent either party from:
 
@@ -265,7 +265,7 @@ If an action is filed solely to preserve a limitations period, the parties will 
 
 These Terms and any dispute arising out of or relating to them or the Services are governed by the laws of the State of Illinois, without regard to conflict-of-law principles, except to the extent federal law applies or applicable law requires otherwise.
 
-Except for a qualifying individual small-claims action or the limited relief described in Section 21, you and FieldSolo consent to the exclusive jurisdiction and venue of the state courts located in Cook County, Illinois, and the United States District Court for the Northern District of Illinois.
+Except for a qualifying individual small-claims action or the limited relief described in Section 21, you and FieldSoli consent to the exclusive jurisdiction and venue of the state courts located in Cook County, Illinois, and the United States District Court for the Northern District of Illinois.
 
 Nothing in these Terms waives a right or remedy that cannot be waived under applicable law.
 
@@ -283,17 +283,17 @@ A new mandatory dispute process, paid-service terms, a material expansion of the
 
 You agree to receive account, security, support, legal, and other operational notices electronically at your account email address, in the app, or through the Services. You must keep your account email current.
 
-To the extent permitted by law, electronic notices and records satisfy any requirement that a communication be in writing and are effective when sent or made available through the agreed method. You may save or print the current Terms from [fieldsolo.com/terms](https://fieldsolo.com/terms).
+To the extent permitted by law, electronic notices and records satisfy any requirement that a communication be in writing and are effective when sent or made available through the agreed method. You may save or print the current Terms from [fieldsoli.com/terms](https://fieldsoli.com/terms).
 
 This Section does not enroll you in optional marketing communications or authorize automated calls, text messages, prerecorded voice messages, or optional push notifications.
 
 ## 25. App-Store Terms
 
-If you download a FieldSolo mobile application through an app store, your use of the application is also subject to the app store's applicable terms.
+If you download a FieldSoli mobile application through an app store, your use of the application is also subject to the app store's applicable terms.
 
-For the iOS application, Apple's [Standard Licensed Application End User License Agreement](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/) governs the license to the application unless FieldSolo provides a custom end-user license agreement through Apple. These Terms govern your FieldSolo account and service relationship. To the extent these Terms conflict with Apple's Standard EULA solely concerning the iOS application license, the Standard EULA controls.
+For the iOS application, Apple's [Standard Licensed Application End User License Agreement](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/) governs the license to the application unless FieldSoli provides a custom end-user license agreement through Apple. These Terms govern your FieldSoli account and service relationship. To the extent these Terms conflict with Apple's Standard EULA solely concerning the iOS application license, the Standard EULA controls.
 
-The app-store provider is not a party to these Terms and is not responsible for operating or supporting the FieldSolo Services except as expressly provided in its own terms.
+The app-store provider is not a party to these Terms and is not responsible for operating or supporting the FieldSoli Services except as expressly provided in its own terms.
 
 ## 26. Export and Sanctions Compliance
 
@@ -303,13 +303,13 @@ You may not access, use, export, or re-export the Services in violation of Unite
 
 ### Entire agreement
 
-These Terms and any additional terms you affirmatively accept for a specific FieldSolo feature constitute the entire agreement between you and FieldSolo concerning the Services and supersede prior or contemporaneous communications concerning that subject. The Privacy Policy explains our personal-information practices.
+These Terms and any additional terms you affirmatively accept for a specific FieldSoli feature constitute the entire agreement between you and FieldSoli concerning the Services and supersede prior or contemporaneous communications concerning that subject. The Privacy Policy explains our personal-information practices.
 
 If specific additional terms conflict with these Terms, the additional terms control only for the feature and conflict they expressly address.
 
 ### Assignment
 
-You may not assign or transfer these Terms or your account without our prior written consent. FieldSolo may assign these Terms to a successor in connection with a merger, acquisition, financing, reorganization, sale of the Services, or sale of all or substantially all relevant assets, provided the successor assumes the applicable obligations under these Terms.
+You may not assign or transfer these Terms or your account without our prior written consent. FieldSoli may assign these Terms to a successor in connection with a merger, acquisition, financing, reorganization, sale of the Services, or sale of all or substantially all relevant assets, provided the successor assumes the applicable obligations under these Terms.
 
 ### Severability
 
@@ -321,11 +321,11 @@ A failure or delay in enforcing a provision is not a waiver. A waiver must be ex
 
 ### Force majeure
 
-FieldSolo is not responsible for a failure or delay caused by events beyond our reasonable control, including natural disasters, fire, severe weather, war, terrorism, civil unrest, labor disputes, government action, utility or telecommunications failures, internet disruptions, cyberattacks, or failures of third-party infrastructure despite reasonable precautions.
+FieldSoli is not responsible for a failure or delay caused by events beyond our reasonable control, including natural disasters, fire, severe weather, war, terrorism, civil unrest, labor disputes, government action, utility or telecommunications failures, internet disruptions, cyberattacks, or failures of third-party infrastructure despite reasonable precautions.
 
 ### No third-party beneficiaries
 
-Except as expressly provided by applicable app-store terms, these Terms do not create rights for anyone other than you and FieldSolo.
+Except as expressly provided by applicable app-store terms, these Terms do not create rights for anyone other than you and FieldSoli.
 
 ### Headings and interpretation
 
@@ -335,8 +335,10 @@ Headings are for convenience only. "Including" means "including without limitati
 
 For questions about these Terms or the Services, contact:
 
-**Veltri Ventures LLC, an Illinois limited liability company operating FieldSolo**
+**Veltri Ventures LLC, an Illinois limited liability company operating FieldSoli**
 
-[support@fieldsolo.com](mailto:support@fieldsolo.com)
+[support@fieldsoli.com](mailto:support@fieldsoli.com)
 
-For privacy questions or requests, contact [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com).
+For privacy questions or requests, contact [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com).
+
+FieldSoli™ is a trademark of Veltri Ventures LLC.

@@ -1,33 +1,33 @@
-# FieldSolo Privacy Policy
+# FieldSoli Privacy Policy
 
-**Effective date:** July 20, 2026
+**Effective date:** July 27, 2026
 
-**Policy version:** 2026-07-20
+**Policy version:** 2026-07-27
 
-FieldSolo is operated by **Veltri Ventures LLC, an Illinois limited liability company** ("FieldSolo," "we," "us," or "our"). This Privacy Policy explains how we collect, use, disclose, retain, and protect personal information when you use:
+FieldSoli™ is a product operated by **Veltri Ventures LLC, an Illinois limited liability company** ("FieldSoli," "we," "us," or "our"). This Privacy Policy explains how we collect, use, disclose, retain, and protect personal information when you use:
 
-- the FieldSolo mobile applications;
-- [fieldsolo.com](https://fieldsolo.com), including the FieldSolo waitlist;
+- the FieldSoli mobile applications;
+- [fieldsoli.com](https://fieldsoli.com), including the FieldSoli waitlist;
 - account, support, privacy-request, and other communications with us; and
-- any other current FieldSolo service that links to this Privacy Policy.
+- any other current FieldSoli service that links to this Privacy Policy.
 
 We refer to these collectively as the **Services**. This Privacy Policy is intended for users in the United States.
 
 Third-party websites and services have their own privacy practices. This Privacy Policy does not apply when you leave the Services or interact independently with a third party.
 
-## 1. The Relationship Between FieldSolo, Users, and Their Customers
+## 1. The Relationship Between FieldSoli, Users, and Their Customers
 
-FieldSolo provides job-tracking and business-organizing tools for independent tradespeople and small operators.
+FieldSoli provides job-tracking and business-organizing tools for independent tradespeople and small operators.
 
 In this Privacy Policy:
 
-- a **User** is an individual who creates or uses a FieldSolo account;
+- a **User** is an individual who creates or uses a FieldSoli account;
 - **Customer Information** means information a User enters about the User's own customer, worksite, or job; and
-- **User Content** means job records, Customer Information, notes, material entries, and other content a User enters into FieldSolo.
+- **User Content** means job records, Customer Information, notes, material entries, and other content a User enters into FieldSoli.
 
-Users decide what Customer Information and User Content to enter. FieldSolo processes that information to provide the Services to the User. Users are responsible for having appropriate authority to provide information about their customers and worksites.
+Users decide what Customer Information and User Content to enter. FieldSoli processes that information to provide the Services to the User. Users are responsible for having appropriate authority to provide information about their customers and worksites.
 
-If you are a customer of a FieldSolo User and want to make a request concerning information that User entered about you, contact the User first. We may assist the User with the request where appropriate.
+If you are a customer of a FieldSoli User and want to make a request concerning information that User entered about you, contact the User first. We may assist the User with the request where appropriate.
 
 ## 2. Information We Collect
 
@@ -35,7 +35,7 @@ We collect information you provide, information generated when you use the Servi
 
 ### A. Waitlist and marketing information
 
-When you join the FieldSolo waitlist, we collect your:
+When you join the FieldSoli waitlist, we collect your:
 
 - first name and email address;
 - selected trades;
@@ -55,11 +55,11 @@ When you create and use an account, we collect:
 - your email address;
 - your first and last name;
 - your selected trade or trades;
-- your FieldSolo user identifier;
+- your FieldSoli user identifier;
 - authentication and session information used to sign you in and keep your account secure; and
 - account and profile creation or update timestamps.
 
-Supabase provides FieldSolo's authentication, database, and related cloud infrastructure and processes this information on our behalf. We use it to create, authenticate, secure, and administer your account and to associate your records with you.
+Supabase provides FieldSoli's authentication, database, and related cloud infrastructure and processes this information on our behalf. We use it to create, authenticate, secure, and administer your account and to associate your records with you.
 
 ### C. Legal acceptance and privacy choices
 
@@ -71,7 +71,7 @@ We use these records to apply your choices, determine whether updated terms requ
 
 ### D. Customer, job, and work information
 
-When you use FieldSolo to organize work, we collect the information you choose to enter, including:
+When you use FieldSoli to organize work, we collect the information you choose to enter, including:
 
 - job descriptions, customer names, and service addresses;
 - job status, payment status, revenue, record source, and whether you confirmed that no materials were used;
@@ -86,7 +86,7 @@ We store and process this information to create, organize, retrieve, display, ed
 
 ### E. Calculated information and insights
 
-FieldSolo calculates information from the records you enter, including work duration, material totals, net earnings, net hourly rate, financial-completeness status, weekly, monthly, and yearly earnings summaries, outstanding payments, job rankings, recent-work groupings, and jobs that may need attention.
+FieldSoli calculates information from the records you enter, including work duration, material totals, net earnings, net hourly rate, financial-completeness status, weekly, monthly, and yearly earnings summaries, outstanding payments, job rankings, recent-work groupings, and jobs that may need attention.
 
 We use these calculations to provide the Services. They are business-organizing estimates based on the information you enter and are not bank-account, payment-card, or payment-processing information.
 
@@ -95,20 +95,20 @@ We use these calculations to provide the Services. They are business-organizing 
 In-app product analytics is disabled unless it is configured for the app and you affirmatively enable it. When enabled, PostHog processes product-usage information for us, which may include:
 
 - screen views and feature interactions;
-- FieldSolo user, anonymous, app-session, and record identifiers;
+- FieldSoli user, anonymous, app-session, and record identifiers;
 - email domain and authentication provider after account identification;
 - app version, build number, platform, environment, and current screen;
 - record counts and statuses;
 - coarse ranges or buckets for money, quantity, duration, and text length; and
 - coarse error categories.
 
-We use this information to understand how the app is used, diagnose problems, evaluate reliability, and improve usability. Under FieldSolo's production analytics configuration, PostHog does not receive note text, customer names, service addresses, job descriptions, material descriptions, full email addresses, or detailed error text.
+We use this information to understand how the app is used, diagnose problems, evaluate reliability, and improve usability. Under FieldSoli's production analytics configuration, PostHog does not receive note text, customer names, service addresses, job descriptions, material descriptions, full email addresses, or detailed error text.
 
 You may withdraw analytics permission at any time in the app's Privacy Choices screen. Withdrawal stops new in-app analytics collection and clears the app's locally stored analytics identifier. It does not automatically erase information processed before withdrawal. You may request deletion of personal information as described in Section 10.
 
 ### G. Website usage and technical information
 
-FieldSolo uses Vercel to host the website and provide website traffic analytics. Vercel Web Analytics may process page or route visited, time of the visit, referring page or campaign, filtered query parameters, general browser, operating-system and device type, and coarse geographic information such as city, region, and country.
+FieldSoli uses Vercel to host the website and provide website traffic analytics. Vercel Web Analytics may process page or route visited, time of the visit, referring page or campaign, filtered query parameters, general browser, operating-system and device type, and coarse geographic information such as city, region, and country.
 
 Vercel Web Analytics is designed not to retain a visitor's IP address as an analytics data point. Vercel may separately process IP addresses and other request information in hosting, security, and reliability logs.
 
@@ -120,9 +120,9 @@ We collect the information you provide when you contact us for support, provide 
 
 We use communications to respond, investigate and resolve issues, fulfill requests, secure the Services, and document our response where appropriate.
 
-### I. Information FieldSolo does not currently collect through the mobile app
+### I. Information FieldSoli does not currently collect through the mobile app
 
-The current FieldSolo mobile app does not request or collect precise GPS location, contacts, calendars, camera or photo-library content, audio recordings, microphone data, email-inbox content, payment-card numbers, or bank-account credentials.
+The current FieldSoli mobile app does not request or collect precise GPS location, contacts, calendars, camera or photo-library content, audio recordings, microphone data, email-inbox content, payment-card numbers, or bank-account credentials.
 
 ## 3. How We Use Information
 
@@ -144,7 +144,7 @@ When we create aggregated or deidentified information, we take measures intended
 
 Users retain ownership of their User Content. We process User Content as needed to provide, maintain, secure, and support the Services as described in this Privacy Policy. Our Terms of Service contain the contractual terms governing User Content and the permission necessary for us to operate the Services.
 
-FieldSolo does not use Customer Information to market to a User's customers. Do not enter information into FieldSolo unless you have the right to provide and use it for the intended purpose.
+FieldSoli does not use Customer Information to market to a User's customers. Do not enter information into FieldSoli unless you have the right to provide and use it for the intended purpose.
 
 ## 5. How We Disclose Information
 
@@ -164,7 +164,7 @@ We also use providers for email communications, customer support, and other oper
 
 ### Legal, safety, and enforcement reasons
 
-We may disclose information when we reasonably believe disclosure is necessary to comply with law, regulation, legal process, or an enforceable government request; investigate or prevent fraud, abuse, or security incidents; enforce our agreements; or protect the rights, safety, property, security, or integrity of FieldSolo, our users, or others.
+We may disclose information when we reasonably believe disclosure is necessary to comply with law, regulation, legal process, or an enforceable government request; investigate or prevent fraud, abuse, or security incidents; enforce our agreements; or protect the rights, safety, property, security, or integrity of FieldSoli, our users, or others.
 
 ### Professional advisers
 
@@ -180,7 +180,7 @@ We may disclose information to a recipient when you specifically direct or autho
 
 ## 6. Website Tracking Choices
 
-FieldSolo does not currently use personal information for targeted advertising. Vercel Web Analytics provides aggregated website-usage measurement without advertising cookies. Our hosting and security systems may still use technical mechanisms necessary to deliver and protect the website.
+FieldSoli does not currently use personal information for targeted advertising. Vercel Web Analytics provides aggregated website-usage measurement without advertising cookies. Our hosting and security systems may still use technical mechanisms necessary to deliver and protect the website.
 
 Some browsers offer a "Do Not Track" setting. Because there is no uniform standard for interpreting that signal, the website does not currently respond to it as a separate privacy request. This does not change our practice of not selling personal information or sharing it for cross-context behavioral advertising.
 
@@ -202,11 +202,11 @@ Information may remain for a limited period in backup copies until those backups
 
 You can use available controls in the app to remove individual job records, sessions, notes, and material entries from active use and normal display. These records may remain marked as deleted and associated with your account as described in Section 7.
 
-You can request account deletion through the in-app **Delete account** control or through [fieldsolo.com/delete-account](https://fieldsolo.com/delete-account). If you cannot use either method, contact [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com) from the email address associated with your account.
+You can request account deletion through the in-app **Delete account** control or through [fieldsoli.com/delete-account](https://fieldsoli.com/delete-account). If you cannot use either method, contact [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com) from the email address associated with your account.
 
 We may verify that you control the account before completing an external request. We complete verified account deletion from active systems within 30 days. Account deletion removes the account and associated active-system User Content. When configured, we also request deletion of associated PostHog person and event data. Limited information and backup copies may remain temporarily as described in Section 7.
 
-To delete a waitlist record, email [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com) from the address used to join the waitlist.
+To delete a waitlist record, email [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com) from the address used to join the waitlist.
 
 ## 9. Security
 
@@ -216,7 +216,7 @@ No method of transmission or storage is completely secure. You are responsible f
 
 ## 10. Your Privacy Choices and Rights
 
-FieldSolo offers the following choices to all Users, subject to identity verification and lawful exceptions:
+FieldSoli offers the following choices to all Users, subject to identity verification and lawful exceptions:
 
 - access to personal information associated with your account;
 - correction of inaccurate account or profile information;
@@ -226,21 +226,21 @@ FieldSolo offers the following choices to all Users, subject to identity verific
 - withdrawal of marketing consent and removal of your waitlist record; and
 - appeal of a decision concerning a privacy request.
 
-You can edit available profile and record information, withdraw analytics consent, or initiate account deletion through the app. For another request, email [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com). We may verify your identity using information associated with your account or waitlist record before acting on a request.
+You can edit available profile and record information, withdraw analytics consent, or initiate account deletion through the app. For another request, email [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com). We may verify your identity using information associated with your account or waitlist record before acting on a request.
 
-An authorized agent may submit a request by contacting us and providing proof of authorization. If we deny a request, you may appeal by replying to our decision or emailing [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com) with **Privacy Appeal** in the subject line.
+An authorized agent may submit a request by contacting us and providing proof of authorization. If we deny a request, you may appeal by replying to our decision or emailing [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com) with **Privacy Appeal** in the subject line.
 
 Residents of some states may have additional privacy rights. We will process applicable requests in accordance with the law that applies to the request. We will not unlawfully discriminate against you for exercising an applicable privacy right.
 
 ## 11. Marketing Communications
 
-You can unsubscribe from promotional email using the unsubscribe method provided in the message or by contacting [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com). We may continue to send necessary account, security, legal, privacy-request, or service communications while you have an active account or pending request.
+You can unsubscribe from promotional email using the unsubscribe method provided in the message or by contacting [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com). We may continue to send necessary account, security, legal, privacy-request, or service communications while you have an active account or pending request.
 
 ## 12. Children
 
 The Services are business software intended for adults aged 18 and older. They are not directed to children, and we do not knowingly permit children to create accounts or join the waitlist as Users.
 
-If you believe a child has provided personal information to FieldSolo, contact [privacy@fieldsolo.com](mailto:privacy@fieldsolo.com). We will investigate and take appropriate action.
+If you believe a child has provided personal information to FieldSoli, contact [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com). We will investigate and take appropriate action.
 
 ## 13. Changes to This Privacy Policy
 
@@ -252,6 +252,8 @@ If a change materially expands how we collect, use, disclose, or retain personal
 
 For privacy questions or requests, contact:
 
-**Veltri Ventures LLC, an Illinois limited liability company operating FieldSolo**
+**Veltri Ventures LLC, an Illinois limited liability company operating FieldSoli**
 
-[privacy@fieldsolo.com](mailto:privacy@fieldsolo.com)
+[privacy@fieldsoli.com](mailto:privacy@fieldsoli.com)
+
+FieldSoli™ is a trademark of Veltri Ventures LLC.

@@ -29,7 +29,7 @@ describe("website terms of service", () => {
 
   it("includes account deletion and privacy policy references", () => {
     expect(markdownSource).toContain("Delete account");
-    expect(markdownSource).toContain("https://fieldsolo.com/privacy");
-    expect(markdownSource).toContain("https://fieldsolo.com/delete-account");
+    expect(markdownSource).toContain("https://fieldsoli.com/privacy");
+    expect(markdownSource).toContain("https://fieldsoli.com/delete-account");
   });
 });

@@ -5,7 +5,7 @@ import styles from "../legal.module.css";
 
 export const metadata: Metadata = {
   title: "Delete Account",
-  description: "How to request deletion of your FieldSolo account.",
+  description: "How to request deletion of your FieldSoli account.",
 };
 
 export default function DeleteAccountPage() {
@@ -13,18 +13,18 @@ export default function DeleteAccountPage() {
     <main className={styles.page}>
       <article className={styles.policy}>
         <Link className={styles.back} href="/">
-          ← Back to FieldSolo
+          ← Back to FieldSoli
         </Link>
 
-        <h1>Delete your FieldSolo account</h1>
+        <h1>Delete your FieldSoli account</h1>
         <p>
-          You can request permanent deletion of your FieldSolo account from the mobile app. If you
+          You can request permanent deletion of your FieldSoli account from the mobile app. If you
           cannot access the app, you can request deletion by email.
         </p>
 
         <h2>Delete your account in the app</h2>
         <ol>
-          <li>Sign in to your FieldSolo account.</li>
+          <li>Sign in to your FieldSoli account.</li>
           <li>Open <strong>Profile</strong>.</li>
           <li>Select <strong>Delete account</strong>.</li>
           <li>
@@ -40,7 +40,7 @@ export default function DeleteAccountPage() {
 
         <h2>If you cannot access the app</h2>
         <p>
-          Email <a href="mailto:privacy@fieldsolo.com">privacy@fieldsolo.com</a> from the email
+          Email <a href="mailto:privacy@fieldsoli.com">privacy@fieldsoli.com</a> from the email
           address associated with your account. Use <strong>Account deletion request</strong> as
           the subject. We may verify that you control the account before completing the request.
         </p>
@@ -59,7 +59,7 @@ export default function DeleteAccountPage() {
 
         <h2>Waitlist deletion</h2>
         <p>
-          To remove a waitlist record, email <a href="mailto:privacy@fieldsolo.com">privacy@fieldsolo.com</a>
+          To remove a waitlist record, email <a href="mailto:privacy@fieldsoli.com">privacy@fieldsoli.com</a>
           {" "}from the address used to join the waitlist. The Privacy Policy explains how waitlist
           deletion and marketing choices are handled.
         </p>
