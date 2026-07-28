@@ -27,14 +27,14 @@ export const jobSourceOptions: SelectOption[] = [
 ];
 
 export const faqs = [
-  ["Is FieldSolo free?", "Yes. FieldSolo is a free job and profit tracker for independent tradespeople."],
-  ["Who is FieldSolo for?", "FieldSolo is built for solo and independent tradespeople, including plumbers, handymen, HVAC techs, electricians, appliance repair techs, remodelers, landscapers, painters, mobile mechanics, and other field service pros. Optional features may also support larger teams in the future."],
-  ["Is FieldSolo field service management software?", "No. FieldSolo does not manage dispatch, crew scheduling, CRM pipelines, routing, or office operations. It is focused on job tracking, time, materials, payments, notes, and profit visibility."],
-  ["What if I already use Jobber, Housecall Pro, or another field service tool?", "You can still use FieldSolo to understand job-level profitability. Your current system may help you manage operations. FieldSolo helps you see which jobs, customers, services, and lead sources are actually profitable."],
-  ["Is FieldSolo an invoicing app?", "No. Keep the invoicing process you know and love while tracking the economics behind the job with FieldSolo."],
-  ["Does FieldSolo replace QuickBooks?", "No. FieldSolo is not accounting software. Options to export data and integrations with accounting software are planned for the future."],
+  ["Is FieldSoli free?", "Yes. FieldSoli is a free job and profit tracker for independent tradespeople."],
+  ["Who is FieldSoli for?", "FieldSoli is built for solo and independent tradespeople, including plumbers, handymen, HVAC techs, electricians, appliance repair techs, remodelers, landscapers, painters, mobile mechanics, and other field service pros. Optional features may also support larger teams in the future."],
+  ["Is FieldSoli field service management software?", "No. FieldSoli does not manage dispatch, crew scheduling, CRM pipelines, routing, or office operations. It is focused on job tracking, time, materials, payments, notes, and profit visibility."],
+  ["What if I already use Jobber, Housecall Pro, or another field service tool?", "You can still use FieldSoli to understand job-level profitability. Your current system may help you manage operations. FieldSoli helps you see which jobs, customers, services, and lead sources are actually profitable."],
+  ["Is FieldSoli an invoicing app?", "No. Keep the invoicing process you know and love while tracking the economics behind the job with FieldSoli."],
+  ["Does FieldSoli replace QuickBooks?", "No. FieldSoli is not accounting software. Options to export data and integrations with accounting software are planned for the future."],
   ["Do I need to enter every detail right away?", "No. Start with the basics and add details later."],
-  ["Can I track jobs from Angi, Thumbtack, referrals, and repeat customers?", "Yes. FieldSolo is designed to track work no matter where the job came from."],
-  ["Will FieldSolo help me price better?", "Yes. FieldSolo helps you understand which jobs are profitable and which work may need better pricing next time."],
-  ["Will FieldSolo support larger teams?", "FieldSolo is currently focused on independent tradespeople, but optional features for larger teams and growing businesses are planned as the product evolves."],
+  ["Can I track jobs from Angi, Thumbtack, referrals, and repeat customers?", "Yes. FieldSoli is designed to track work no matter where the job came from."],
+  ["Will FieldSoli help me price better?", "Yes. FieldSoli helps you understand which jobs are profitable and which work may need better pricing next time."],
+  ["Will FieldSoli support larger teams?", "FieldSoli is currently focused on independent tradespeople, but optional features for larger teams and growing businesses are planned as the product evolves."],
 ] as const;

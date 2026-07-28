@@ -4,7 +4,7 @@ import { LegalDocument } from "@/components/LegalDocument";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How FieldSolo collects, uses, retains, and protects personal information.",
+  description: "How FieldSoli collects, uses, retains, and protects personal information.",
 };
 
 export default function PrivacyPage() {

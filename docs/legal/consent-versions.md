@@ -1,11 +1,11 @@
-# FieldSolo Legal Document Versions
+# FieldSoli Legal Document Versions
 
 This file is the canonical source of truth for current legal document version identifiers used across the marketing site, mobile app, and backend consent records.
 
 | Document | Version constant | Effective date |
 | --- | --- | --- |
-| Privacy Policy | `2026-07-20` | July 20, 2026 |
-| Terms of Service | `2026-07-20` | July 20, 2026 |
+| Privacy Policy | `2026-07-27` | July 27, 2026 |
+| Terms of Service | `2026-07-27` | July 27, 2026 |
 
 ## Where versions are referenced
 

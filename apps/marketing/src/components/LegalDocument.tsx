@@ -31,7 +31,7 @@ export function LegalDocument({ fileName }: LegalDocumentProps) {
     <main className={styles.page}>
       <article className={styles.policy}>
         <Link className={styles.back} href="/">
-          ← Back to FieldSolo
+          ← Back to FieldSoli
         </Link>
         <ReactMarkdown>{content}</ReactMarkdown>
       </article>

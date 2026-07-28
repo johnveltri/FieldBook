@@ -3,17 +3,17 @@ import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fieldsolo.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fieldsoli.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "FieldSolo | Job & Profit Tracker for Tradespeople",
-    template: "%s | FieldSolo",
+    default: "FieldSoli | Job & Profit Tracker for Tradespeople",
+    template: "%s | FieldSoli",
   },
   description:
-    "FieldSolo helps skilled trade professionals keep jobs, notes, materials, and profit tracking all in one place. ",
-  applicationName: "FieldSolo",
+    "FieldSoli helps skilled trade professionals keep jobs, notes, materials, and profit tracking all in one place. ",
+  applicationName: "FieldSoli",
   robots: {
     index: false,
     follow: false,
