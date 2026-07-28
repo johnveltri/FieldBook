@@ -1,8 +1,8 @@
-# FieldSolo mobile accessibility and responsive implementation plan
+# FieldSoli mobile accessibility and responsive implementation plan
 
 ## Goal
 
-Bring FieldSolo's Expo mobile app to a legible, responsive baseline on iOS and Android while preserving its current visual identity. The implementation target is:
+Bring FieldSoli's Expo mobile app to a legible, responsive baseline on iOS and Android while preserving its current visual identity. The implementation target is:
 
 - WCAG AA contrast for normal text (4.5:1) and UI components/text where applicable.
 - Comfortable 44 pt touch targets for interactive controls.
@@ -37,7 +37,7 @@ The audit found systemic token and layout problems, so fix the foundations first
 | --- | --- |
 | ![iOS accessibility Dynamic Type clipping](24-ios-native-iphone17-promax-accessibility-large.png) | ![Android 200 percent font scale clipping](26-android-native-pixel10-font-200.png) |
 
-The blue gear in native screenshots is the simulator accessibility overlay, not FieldSolo UI.
+The blue gear in native screenshots is the simulator accessibility overlay, not FieldSoli UI.
 
 ## Findings and implementation priorities
 
@@ -203,7 +203,7 @@ For each screen/component checklist item, verify:
 
 ## Scope guardrails
 
-- Preserve FieldSolo's existing warm-paper visual language, serif display titles, mono utility text, and status vocabulary.
+- Preserve FieldSoli's existing warm-paper visual language, serif display titles, mono utility text, and status vocabulary.
 - Treat this as an accessibility and responsiveness upgrade, not a visual redesign.
 - Do not suppress OS text scaling to make screenshots look tidy.
 - Keep the evidence images redacted; do not add profile or destructive-account screenshots that show personal data.

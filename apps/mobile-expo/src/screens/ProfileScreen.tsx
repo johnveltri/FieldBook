@@ -419,7 +419,7 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
           source: 'profile',
           ...errorProperties(error),
         });
-        Alert.alert('Email unavailable', `Email us directly at support@fieldsolo.com.`);
+        Alert.alert('Email unavailable', `Email us directly at support@fieldsoli.com.`);
       });
   }, [session?.user.id]);
 

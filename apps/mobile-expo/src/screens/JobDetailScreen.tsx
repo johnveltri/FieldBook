@@ -835,7 +835,7 @@ export function JobDetailScreen({
         completed_job_milestone: milestone,
       });
       Alert.alert(
-        "How's FieldSolo working for you?",
+        "How's FieldSoli working for you?",
         `You just completed your ${milestone === 1 ? 'first' : 'third'} job. What felt confusing or missing?`,
         [
           {
@@ -859,7 +859,7 @@ export function JobDetailScreen({
                     source: 'completion_prompt',
                     ...errorProperties(error),
                   });
-                  Alert.alert('Email unavailable', 'Email us directly at support@fieldsolo.com.');
+                  Alert.alert('Email unavailable', 'Email us directly at support@fieldsoli.com.');
                 });
             },
           },

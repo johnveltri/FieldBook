@@ -1,5 +1,5 @@
 /**
- * Shared responsive content-column geometry for FieldSolo (web + mobile).
+ * Shared responsive content-column geometry for FieldSoli (web + mobile).
  *
  * Phone: full width with a 16 pt gutter below 360 pt width, 20 pt at 360+.
  * Large / landscape: one centered column capped at {@link CONTENT_COLUMN_MAX_WIDTH}.

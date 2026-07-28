@@ -199,7 +199,7 @@ export function HomeScreen({
   const insets = useSafeAreaInsets();
   const { columnStyle, fabRight } = useContentColumn();
   const { fontScale } = useWindowDimensions();
-  const brandTitle = fontScale > 1.6 ? 'FIELD\nSOLO' : 'FIELDSOLO';
+  const brandTitle = fontScale > 1.6 ? 'FIELD\nSOLI' : 'FIELDSOLI';
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const scrollRef = useRef<ScrollView>(null);
   const scrollOffsetRef = useRef(0);
@@ -831,7 +831,7 @@ export function HomeScreen({
             <View style={styles.topHeader}>
               <View style={[styles.brandTitle, { minHeight: brandMinHeight }]}>
                 <Text
-                  {...screenHeaderA11y('FieldSolo')}
+                  {...screenHeaderA11y('FieldSoli')}
                   style={[brandTitleStyle, styles.brandTitleText]}
                 >
                   {brandTitle}
@@ -867,17 +867,17 @@ export function HomeScreen({
             <View style={styles.firstJobEmptyState}>
               <Image
                 accessibilityIgnoresInvertColors
-                source={require('../../assets/brand/fieldsolo-solo-notch-light.png')}
+                source={require('../../assets/brand/fieldsoli-solo-notch-light.png')}
                 style={styles.firstJobLogo}
               />
               <Text accessibilityRole="header" style={[typography.headingH2, styles.firstJobTitle, { color: fg.primary }]}>
                 Looks like you don't have any jobs yet
               </Text>
               <Text style={[typography.bodySmall, styles.firstJobBody, { color: fg.primary }]}>
-                FieldSolo is a jobs &amp; earnings tracker for independent tradespeople designed for the field.
+                FieldSoli is a jobs &amp; earnings tracker for independent tradespeople designed for the field.
               </Text>
               <Text style={[typography.bodySmall, styles.firstJobBody, { color: fg.primary }]}>
-                Start with minimal info, and then let FieldSolo guide you to track enough so that you can understand your profitability. Track every job to understand your business and price smarter over time.
+                Start with minimal info, and then let FieldSoli guide you to track enough so that you can understand your profitability. Track every job to understand your business and price smarter over time.
               </Text>
               {firstJobError ? (
                 <Text style={[typography.bodySmall, styles.firstJobError, { color: color('Semantic/Status/Error/Text') }]}>

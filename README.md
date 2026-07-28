@@ -1,22 +1,22 @@
-# FieldSolo
+# FieldSoli
 
 ### Was this job worth it?
 
-**FieldSolo** is a mobile-first job record and earnings intelligence app for independent tradespeople.
+**FieldSoli** is a mobile-first job record and earnings intelligence app for independent tradespeople.
 
 Not invoicing software.  
 Not field service management.  
 Not accounting software.
 
-**FieldSolo is a job receipt layer.**
+**FieldSoli is a job receipt layer.**
 
 It helps solo operators turn every job into a trusted financial record so they can understand what they earned, what they’re owed, and which jobs are actually worth doing.
 
 ---
 
-## What is FieldSolo?
+## What is FieldSoli?
 
-Think of FieldSolo as a **digital field notebook** built around the economic unit that matters most:
+Think of FieldSoli as a **digital field notebook** built around the economic unit that matters most:
 
 **The Job.**
 
@@ -57,7 +57,7 @@ Many can tell you what they billed.
 
 Far fewer can tell you what they netted.
 
-FieldSolo exists to solve that.
+FieldSoli exists to solve that.
 
 ---
 
@@ -71,11 +71,11 @@ Most software starts with:
 - Invoicing  
 - Team operations  
 
-FieldSolo starts somewhere else:
+FieldSoli starts somewhere else:
 
 **the job itself.**
 
-| Most Tools Start With | FieldSolo Starts With |
+| Most Tools Start With | FieldSoli Starts With |
 |-----------------------|------------------------|
 | Scheduling            | The Job                |
 | Invoicing             | Job Economics          |
@@ -140,7 +140,7 @@ Built for:
 
 # Product Principles
 
-FieldSolo is built around a few principles:
+FieldSoli is built around a few principles:
 
 ## Logging should be faster than remembering later
 Capture in seconds.
@@ -170,7 +170,7 @@ The bar is:
 
 # Free First Philosophy
 
-FieldSolo is designed with a strong free foundation.
+FieldSoli is designed with a strong free foundation.
 
 ## Free includes
 Core “capture truth” workflows:
@@ -221,9 +221,9 @@ Especially people running one-person businesses in the field.
 
 ---
 
-# What FieldSolo Is Not
+# What FieldSoli Is Not
 
-FieldSolo is not:
+FieldSoli is not:
 
 - Heavy field service software
 - Dispatch software
@@ -239,7 +239,7 @@ It starts with one thing:
 
 # Long-Term Vision
 
-FieldSolo starts as:
+FieldSoli starts as:
 
 ## 1. Job Receipt Layer
 Capture a reliable financial record for every job.
@@ -293,18 +293,34 @@ Current progress:
 # Getting Started
 
 ```bash
-git clone https://github.com/johnveltri/fieldsolo.git
+git clone https://github.com/johnveltri/fieldsoli.git
 cd fieldsolo
 npm install
 npm run mobile
 ```
 
-## Rename Checklist
+## Rebrand Status (FieldSolo → FieldSoli)
 
-Before release, confirm the FieldSolo name is also updated outside the repo: Expo/EAS project,
-Supabase dashboard display name and `fieldsolo` storage bucket, PostHog project labels, Figma
-file/library names, GitHub repo/project, store listings, domains, support email, and legal or
-marketing copy.
+Done: GitHub repo (`fieldsoli`), local `origin` remote, README product name, Supabase/PostHog
+project display names, marketing site / domains / support email, Expo display name `FieldSoli`,
+in-app copy and legal URLs (`fieldsoli.com` / `support@fieldsoli.com`).
+
+Still confirm before store release:
+- Supabase Auth → URL Configuration (Site URL + dual redirect allowlist), email templates, SMTP sender
+- Auth email smoke: confirmation + password reset land on FieldSoli branding/links
+- App Store / Play listings (name, support URL, privacy URL) when you create them
+- Figma file/library display names (optional)
+
+Keep technical ids unchanged unless intentionally migrating: EAS slug `fieldsolo`,
+storage bucket `fieldsolo`, npm scope `@fieldsolo/*`.
+
+App identity (pre-public TestFlight polish):
+- iOS bundle ID / Android package: `com.veltriventures.fieldsoli`
+- Deep link scheme: `fieldsoli`
+- After creating the new App Store Connect app, replace `ascAppId` in
+  `apps/mobile-expo/eas.json` with the new numeric app id.
+
+Legal versions (`2026-07-27`) left unchanged — no reacceptance bump needed while there are no users.
 
 ---
 

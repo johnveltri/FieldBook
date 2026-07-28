@@ -6,7 +6,7 @@
   <meta name="fieldsolo-source-commit" content="50822e52f3c1b1e3ba758e02a875d624d2983024">
   <meta name="fieldsolo-reviewed-at" content="2026-07-21">
   <meta name="fieldsolo-product-version" content="2026.07.21">
-  <title>FieldSolo Current Product — 2026-07-21</title>
+  <title>FieldSoli Current Product — 2026-07-21</title>
   <style>
     :root { color-scheme: light; --ink:#1c1a17; --muted:#68645c; --paper:#faf7ee; --card:#fff; --line:#d5cebd; --blue:#194776; --green:#1f7549; --gold:#9a6818; --red:#a42c27; }
     * { box-sizing:border-box; }
@@ -55,7 +55,7 @@
 <body>
   <header>
     <p class="kicker">Canonical product source · shipped behavior only</p>
-    <h1>FieldSolo current product</h1>
+    <h1>FieldSoli current product</h1>
     <p>Reviewed 2026-07-21 at source commit <code>50822e52f3c1b1e3ba758e02a875d624d2983024</code>.</p>
     <nav aria-label="Document sections">
       <a href="#purpose">Purpose</a>
@@ -84,7 +84,7 @@
       <div class="grid">
         <div class="panel">
           <h3>Purpose</h3>
-          <p>FieldSolo helps an individual skilled-trade operator rapidly capture job activity, recall what happened, complete the job record, and understand earnings without maintaining a heavyweight field-service system.</p>
+          <p>FieldSoli helps an individual skilled-trade operator rapidly capture job activity, recall what happened, complete the job record, and understand earnings without maintaining a heavyweight field-service system.</p>
         </div>
         <div class="panel">
           <h3>Primary audience</h3>
@@ -120,37 +120,37 @@
           <p class="kicker">Anonymous entry</p>
           <h3>Sign in and sign up</h3>
           <dl><dt>Entry</dt><dd>No authenticated Supabase session.</dd><dt>Actions</dt><dd>Email/password sign in; show or hide the password; switch to account creation; enter first/last name; confirm a new password; accept Privacy Policy and Terms for signup.</dd><dt>Presentation</dt><dd>Branded, mode-specific Welcome back and Create your account states.</dd><dt>Behavior</dt><dd>Inputs provide native autofill hints and keyboard Next/Done behavior; emails are normalized and locally validated; common authentication failures use clear user-facing copy.</dd><dt>Constraints</dt><dd>Signup and password changes require matching new passwords with at least eight characters, one capital letter, and one symbol. Existing passwords remain valid for sign-in. Signup is blocked until legal acceptance is checked and persisted.</dd></dl>
-          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/SignInScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-2">Figma node 2025:2</a></p>
+          <p><a href="https://github.com/johnveltri/fieldsoli/blob/main/apps/mobile-expo/src/screens/SignInScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-2">Figma node 2025:2</a></p>
         </article>
         <article id="screen-home" data-screen-id="home" data-status="shipped">
           <p class="kicker">Main tab</p>
           <h3>Home</h3>
           <dl><dt>Purpose</dt><dd>Fast capture, current work, and attention queue.</dd><dt>Actions</dt><dd>Open Profile, Earnings, or Job Detail; start a live session; quick-capture a note or material to Inbox or a selected job.</dd><dt>States</dt><dd>Weekly net snapshot with zero-earnings guidance, recent jobs, incomplete jobs, work needing completion review, pending payment, loading, error, and a full-page first-job state.</dd></dl>
-          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/HomeScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-19">Figma node 2025:19</a></p>
+          <p><a href="https://github.com/johnveltri/fieldsoli/blob/main/apps/mobile-expo/src/screens/HomeScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-19">Figma node 2025:19</a></p>
         </article>
         <article id="screen-jobs" data-screen-id="jobs" data-status="shipped">
           <p class="kicker">Main tab</p>
           <h3>Jobs</h3>
           <dl><dt>Purpose</dt><dd>Searchable, paginated job list.</dd><dt>Actions</dt><dd>Switch All/Open/Paid; search by job or customer; open Inbox; create a blank job; open Job Detail.</dd><dt>Grouping</dt><dd>All and Paid use recency sections. Paid contains financially complete, paid jobs. Open groups incomplete, in-progress, and completed-but-unpaid jobs, including paid jobs whose records become incomplete.</dd></dl>
-          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/JobsScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-216">Figma node 2025:216</a></p>
+          <p><a href="https://github.com/johnveltri/fieldsoli/blob/main/apps/mobile-expo/src/screens/JobsScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-216">Figma node 2025:216</a></p>
         </article>
         <article id="screen-earnings" data-screen-id="earnings" data-status="shipped">
           <p class="kicker">Main tab</p>
           <h3>Earnings</h3>
           <dl><dt>Windows</dt><dd>Past week (7 days), month (30 days), or year (365 days).</dd><dt>Measures</dt><dd>Net earnings, revenue, materials, hours, job count, and net per hour for completed, financially complete jobs.</dd><dt>Actions</dt><dd>Open ranked jobs; jump from outstanding payments to the Jobs Open tab.</dd></dl>
-          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/EarningsScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-313">Figma node 2025:313</a></p>
+          <p><a href="https://github.com/johnveltri/fieldsoli/blob/main/apps/mobile-expo/src/screens/EarningsScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-313">Figma node 2025:313</a></p>
         </article>
         <article id="screen-job-detail" data-screen-id="job-detail" data-status="shipped">
           <p class="kicker">Shell-covering screen</p>
           <h3>Job Detail</h3>
           <dl><dt>Data</dt><dd>Job identity, customer, address, category, work/payment status, earnings, time, sessions, notes, and materials.</dd><dt>Actions</dt><dd>Edit job; change work status; create/edit/delete sessions, notes, and materials; assign items to sessions; start or manage live work; delete job.</dd><dt>Constraints</dt><dd>Material rows require description and nonzero quantity; units support presets and custom values.</dd></dl>
-          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/JobDetailScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-561">Figma node 2025:561</a></p>
+          <p><a href="https://github.com/johnveltri/fieldsoli/blob/main/apps/mobile-expo/src/screens/JobDetailScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-561">Figma node 2025:561</a></p>
         </article>
         <article id="screen-profile" data-screen-id="profile" data-status="shipped">
           <p class="kicker">Home overlay</p>
           <h3>Profile</h3>
           <dl><dt>Data</dt><dd>Name, email, trade selections, and current free plan label.</dd><dt>Actions</dt><dd>Send feedback from the primary button between Personal Info and Plan; edit profile/trades; change password; open Privacy or Help; log out; or begin permanent account deletion.</dd><dt>Nested screens</dt><dd>Privacy and Help replace Profile until Back is selected.</dd></dl>
-          <p><a href="https://github.com/johnveltri/fieldsolo/blob/main/apps/mobile-expo/src/screens/ProfileScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-958">Figma node 2025:958</a></p>
+          <p><a href="https://github.com/johnveltri/fieldsoli/blob/main/apps/mobile-expo/src/screens/ProfileScreen.tsx">Source</a> · <a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2025-958">Figma node 2025:958</a></p>
         </article>
       </div>
 
@@ -192,7 +192,7 @@
           <tr data-capability-id="inbox.assign" data-status="shipped"><td>Assign Inbox item</td><td>Inbox item</td><td>Updates an unassigned note/material with a selected job and removes it from Inbox.</td><td>Notes and materials have separate tabs.</td></tr>
           <tr data-capability-id="earnings.review" data-status="shipped"><td>Review earnings</td><td>Earnings</td><td>Aggregates job economics for 7/30/365-day windows and lists ranked jobs.</td><td>Only completed, financially complete jobs in the selected work window contribute; Home's weekly snapshot uses the same rule.</td></tr>
           <tr data-capability-id="profile.manage" data-status="shipped"><td>Manage profile/account</td><td>Profile</td><td>Edit name/trades, change password, log out, open Help/Privacy.</td><td>Profile save upserts when an older user lacks a profile row.</td></tr>
-          <tr data-capability-id="feedback.send" data-status="shipped"><td>Send feedback</td><td>Profile / job completion prompt</td><td>Opens a prefilled email to FieldSolo support with short feedback questions and device context.</td><td>Completion prompts are user-scoped and limited to the first and third completed-job milestones; sending feedback suppresses later prompts on that device.</td></tr>
+          <tr data-capability-id="feedback.send" data-status="shipped"><td>Send feedback</td><td>Profile / job completion prompt</td><td>Opens a prefilled email to FieldSoli support with short feedback questions and device context.</td><td>Completion prompts are user-scoped and limited to the first and third completed-job milestones; sending feedback suppresses later prompts on that device.</td></tr>
           <tr data-capability-id="account.delete" data-status="shipped"><td>Delete account</td><td>Profile</td><td>Calls the delete-account Edge Function, clears the session, and reports failures.</td><td>Exact phrase plus system confirmation; permanent.</td></tr>
         </tbody>
       </table>
@@ -218,7 +218,7 @@
     <section id="privacy-and-safety" data-status="shipped">
       <h2>Authentication, consent, privacy, and destructive actions</h2>
       <div class="grid">
-        <div class="panel"><h3>Authentication</h3><p>Supabase email/password authentication controls access. Local migration preserves prior Fieldbook auth storage only when the FieldSolo key does not already exist. Every new authenticated session enters on Home rather than restoring the screen or overlay that was open before sign-out.</p></div>
+        <div class="panel"><h3>Authentication</h3><p>Supabase email/password authentication controls access. Local migration preserves prior Fieldbook auth storage only when the fieldsolo.* auth key does not already exist. Every new authenticated session enters on Home rather than restoring the screen or overlay that was open before sign-out.</p></div>
         <div class="panel"><h3>Legal acceptance</h3><p>Signup and reacceptance persist versioned Privacy/Terms acceptance. A current server record is authoritative; a current user/version-specific cache can bridge temporary server failure.</p></div>
         <div class="panel"><h3>Analytics</h3><p>Optional analytics do not activate before consent. Granting activates identify/events; withdrawal clears the persisted anonymous identifier and stops events.</p></div>
         <div class="panel"><h3>Permanent account deletion</h3><p class="danger">Profile requires the phrase <code>delete account</code>, then a system confirmation. The delete-account Edge Function permanently removes the account and associated data.</p></div>
@@ -236,7 +236,7 @@
         <li><a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2022-4069">Figma maintained current app</a></li>
         <li><a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2022-4070">Figma experiments</a></li>
         <li><a href="https://www.figma.com/design/TdvsllfeXrnkvBqR4qb3fn/Fieldsolo-App---gig-work-for-skilled-trade?node-id=2022-4071">Figma design system next</a></li>
-        <li><a href="https://github.com/johnveltri/fieldsolo/tree/main/apps/mobile-expo">Expo source</a></li>
+        <li><a href="https://github.com/johnveltri/fieldsoli/tree/main/apps/mobile-expo">Expo source</a></li>
       </ul>
     </section>
 

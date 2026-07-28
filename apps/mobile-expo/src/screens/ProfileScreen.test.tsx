@@ -101,7 +101,7 @@ describe('ProfileScreen', () => {
     fireEvent.press(screen.getByText('Send feedback'));
 
     await waitFor(() => {
-      expect(openUrlSpy).toHaveBeenCalledWith(expect.stringContaining('mailto:support@fieldsolo.com'));
+      expect(openUrlSpy).toHaveBeenCalledWith(expect.stringContaining('mailto:support@fieldsoli.com'));
     });
     openUrlSpy.mockRestore();
   });
@@ -137,7 +137,7 @@ describe('ProfileScreen', () => {
     fireEvent.press(screen.getByText('Help'));
     await waitFor(() => {
       expect(screen.getByText('HELP')).toBeTruthy();
-      expect(screen.getByText('support@fieldsolo.com')).toBeTruthy();
+      expect(screen.getByText('support@fieldsoli.com')).toBeTruthy();
     });
   });
 

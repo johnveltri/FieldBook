@@ -10,9 +10,9 @@ describe('accessibility helpers', () => {
 
   it('screenHeaderA11y marks a header with optional label', () => {
     expect(screenHeaderA11y()).toEqual({ accessibilityRole: 'header' });
-    expect(screenHeaderA11y('FieldSolo')).toEqual({
+    expect(screenHeaderA11y('FieldSoli')).toEqual({
       accessibilityRole: 'header',
-      accessibilityLabel: 'FieldSolo',
+      accessibilityLabel: 'FieldSoli',
     });
   });
 

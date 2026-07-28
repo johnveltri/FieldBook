@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Native simulator smoke matrix for FieldSolo mobile UI work (worktree Metro on :8082).
+# Native simulator smoke matrix for FieldSoli mobile UI work (worktree Metro on :8082).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

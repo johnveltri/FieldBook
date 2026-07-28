@@ -1,4 +1,4 @@
-# FieldSolo Mobile App Privacy Backlog
+# FieldSoli Mobile App Privacy Backlog
 
 **Status:** Complete on `marketing/privacy-2` — mobile privacy backlog #1–#9, Help screen, PostHog delete hook
 
@@ -6,7 +6,7 @@
 
 **Related:** [privacy-policy.md](./privacy-policy.md), [terms.md](./terms.md), [consent-versions.md](./consent-versions.md)
 
-This document records the bidirectional audit between the FieldSolo mobile app (`apps/mobile-expo`) and the published Privacy Policy, plus the sequenced work required to align app behavior with policy commitments before store submission.
+This document records the bidirectional audit between the FieldSoli mobile app (`apps/mobile-expo`) and the published Privacy Policy, plus the sequenced work required to align app behavior with policy commitments before store submission.
 
 ## Audit summary
 
@@ -26,7 +26,7 @@ This document records the bidirectional audit between the FieldSolo mobile app (
 
 | Priority | Gap | Policy reference | Current app behavior |
 | --- | --- | --- | --- |
-| P0 | Analytics without consent | "FieldSolo uses product analytics only after you agree to analytics collection" | `AnalyticsClient` initializes at import, creates/persists anonymous ID, fires `app_opened` before sign-in |
+| P0 | Analytics without consent | "FieldSoli uses product analytics only after you agree to analytics collection" | `AnalyticsClient` initializes at import, creates/persists anonymous ID, fires `app_opened` before sign-in |
 | P0 | No privacy/terms acceptance at signup | "privacy-policy acceptance record" | No checkbox, no `legal_acceptances` writes |
 | P0 | No reacceptance on version bump | "request renewed consent before applying the new practice" | No version check on launch |
 | P1 | No Privacy Choices UI | "withdraw analytics permission through the privacy choices described below" | No Privacy Choices screen or analytics toggle |
@@ -49,7 +49,7 @@ Add `REQUIRED_PRIVACY_VERSION` and `REQUIRED_TERMS_VERSION` constants matching [
 On sign-up mode in `SignInScreen.tsx`:
 
 - Add required, unchecked checkbox: "I agree to the Privacy Policy and Terms"
-- Link to `https://fieldsolo.com/privacy` and `https://fieldsolo.com/terms`
+- Link to `https://fieldsoli.com/privacy` and `https://fieldsoli.com/terms`
 - Block signup until checked
 - On successful signup, insert two rows into `legal_acceptances`:
   - `document_type: 'privacy_policy'`, `document_version: REQUIRED_PRIVACY_VERSION`, `source: 'mobile_signup'`
@@ -136,7 +136,7 @@ Waitlist consent remains on `public.waitlist_signups` for marketing signups only
 
 ## Store submission reminders
 
-- Enter `https://fieldsolo.com/delete-account` in Google Play Data Safety form
-- Enter `https://fieldsolo.com/privacy` in App Store Connect and Play Console
+- Enter `https://fieldsoli.com/delete-account` in Google Play Data Safety form
+- Enter `https://fieldsoli.com/privacy` in App Store Connect and Play Console
 - Complete App Privacy / Data Safety labels from shipping build
 - Obtain legal review of Terms before submission

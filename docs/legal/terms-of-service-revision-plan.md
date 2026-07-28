@@ -1,4 +1,4 @@
-# FieldSolo Terms of Service Revision Plan
+# FieldSoli Terms of Service Revision Plan
 
 **Status:** Proposed for approval — planning and research only. This document does not change `terms.md`, the published website Terms, app behavior, backend behavior, or app-store configuration.
 
@@ -6,64 +6,64 @@
 
 ## Purpose
 
-This plan governs a from-scratch revision of FieldSolo's launch Terms of Service. It incorporates the decisions already made for the Privacy Policy, current competitor research, Illinois considerations, nationwide contract issues, and a repository audit of the current FieldSolo app and website.
+This plan governs a from-scratch revision of FieldSoli's launch Terms of Service. It incorporates the decisions already made for the Privacy Policy, current competitor research, Illinois considerations, nationwide contract issues, and a repository audit of the current FieldSoli app and website.
 
 The central drafting rule is:
 
-> The Terms will contract for the FieldSolo service that exists when the Terms take effect. Planned features will be handled through an internal legal-review gate and, when necessary, feature-specific or updated terms before launch.
+> The Terms will contract for the FieldSoli service that exists when the Terms take effect. Planned features will be handled through an internal legal-review gate and, when necessary, feature-specific or updated terms before launch.
 
-The Terms should be durable enough to cover ordinary improvements to existing features, but they should not claim rights for hypothetical AI, voice, location, team, integration, payment, or benchmarking programs that FieldSolo has not launched.
+The Terms should be durable enough to cover ordinary improvements to existing features, but they should not claim rights for hypothetical AI, voice, location, team, integration, payment, or benchmarking programs that FieldSoli has not launched.
 
 This is a product-specific planning document, not legal advice. Counsel should review the drafted Terms, particularly the dispute-resolution, liability, indemnity, state-law, and app-store provisions, before publication.
 
 ## Recommended decisions for approval
 
-1. **Use “FieldSolo Terms of Service” as the formal document title.** “Terms of Service,” “Terms and Conditions,” and “Terms of Use” do not have materially different legal status merely because of their names, but “Terms of Service” most clearly describes FieldSolo's ongoing SaaS relationship. Define the document as the “Terms.” Keep the canonical filename `docs/legal/terms.md` and public route `/terms`; full-title references should say “Terms of Service,” while compact links and buttons may say “Terms.”
+1. **Use “FieldSoli Terms of Service” as the formal document title.** “Terms of Service,” “Terms and Conditions,” and “Terms of Use” do not have materially different legal status merely because of their names, but “Terms of Service” most clearly describes FieldSoli's ongoing SaaS relationship. Define the document as the “Terms.” Keep the canonical filename `docs/legal/terms.md` and public route `/terms`; full-title references should say “Terms of Service,” while compact links and buttons may say “Terms.”
 2. **Use Joist as the primary structural model.** It is the closest contractor-focused SaaS analogue and has a practical sequence for service access, accounts, use restrictions, customer content, intellectual property, termination, disclaimers, liability, and general contract terms.
-3. **Do not copy Joist verbatim.** Its subscriptions, payments, homeowner financing, rewards, integrations, AI, confidentiality, Canadian law, $1,000 cap, and six-month claim deadline do not match FieldSolo. Use its architecture, then rewrite each provision around FieldSolo's facts.
+3. **Do not copy Joist verbatim.** Its subscriptions, payments, homeowner financing, rewards, integrations, AI, confidentiality, Canadian law, $1,000 cap, and six-month claim deadline do not match FieldSoli. Use its architecture, then rewrite each provision around FieldSoli's facts.
 4. **Borrow targeted concepts from other competitors:**
    - Invoice2go for business-use language, authority to bind a business, customer-data permissions, and restrictions on highly sensitive data;
    - Jobber for versioned changes, notice, reacceptance, and responsibility for customer information;
-   - Housecall Pro for a clear statement that FieldSolo is a software provider and is not the user's contractor, employer, agent, project manager, or partner;
+   - Housecall Pro for a clear statement that FieldSoli is a software provider and is not the user's contractor, employer, agent, project manager, or partner;
    - ServiceTitan only for the architecture of a fee-based liability cap and jurisdictional savings language, not its attempt to limit liability for gross negligence or willful misconduct;
    - FieldPulse only as a checklist for mobile-app-store terms, not as a drafting base; and
-   - Kickserv as a simplicity check because its shorter contractor-SaaS format confirms that FieldSolo does not need an enterprise-length agreement.
-5. **Identify the operator as:** “FieldSolo is operated by Veltri Ventures LLC, an Illinois limited liability company.” Do not say the company or app is “licensed in Illinois.”
-6. **Make the service business-use only.** FieldSolo is designed for independent tradespeople and small business operators, not personal, family, or household use. A person accepting for a company must represent that they have authority to bind it.
+   - Kickserv as a simplicity check because its shorter contractor-SaaS format confirms that FieldSoli does not need an enterprise-length agreement.
+5. **Identify the operator as:** “FieldSoli is operated by Veltri Ventures LLC, an Illinois limited liability company.” Do not say the company or app is “licensed in Illinois.”
+6. **Make the service business-use only.** FieldSoli is designed for independent tradespeople and small business operators, not personal, family, or household use. A person accepting for a company must represent that they have authority to bind it.
 7. **Describe current functionality only.** Cover accounts, profiles, jobs, customer/worksite details, live and manual work sessions, Inbox notes and materials, payment status, revenue and material-cost entries, earnings calculations, optional consent-based analytics, support, the website, and the waitlist.
 8. **Do not include current contractual rights for unlaunched features.** Exclude operational provisions for voice or other AI, photos/files, GPS, integrations or mailbox access, teams, payment processing, paid subscriptions, customer communications, invoicing, and pricing or industry benchmarking.
 9. **Defer pricing and industry benchmarking.** The launch Terms may permit narrow aggregated or deidentified service-usage statistics for product analytics and product improvement, consistent with the approved Privacy Policy. They will not authorize pricing benchmarks, industry reports, commercialization of job economics, or generalized AI training.
-10. **Give FieldSolo only the User Content license necessary to operate the current service.** Users retain ownership. The license should be non-exclusive and limited to hosting, storing, reproducing, processing, transmitting, and displaying content to provide, maintain, secure, and support FieldSolo and comply with law.
-11. **Keep the current free-service posture simple.** State that FieldSolo is currently offered without a subscription fee and that no user will be charged without being shown and accepting separate or updated payment terms. Do not include auto-renewal, trial conversion, refund, tax, payment-card, app-store billing, or cancellation provisions until a paid offering is ready.
-12. **Use measured beta and availability language.** If the release remains labeled beta at publication, explain that it may contain errors, change, or be discontinued and that FieldSolo provides no service-level agreement. Do not promise support hours or uptime.
+10. **Give FieldSoli only the User Content license necessary to operate the current service.** Users retain ownership. The license should be non-exclusive and limited to hosting, storing, reproducing, processing, transmitting, and displaying content to provide, maintain, secure, and support FieldSoli and comply with law.
+11. **Keep the current free-service posture simple.** State that FieldSoli is currently offered without a subscription fee and that no user will be charged without being shown and accepting separate or updated payment terms. Do not include auto-renewal, trial conversion, refund, tax, payment-card, app-store billing, or cancellation provisions until a paid offering is ready.
+12. **Use measured beta and availability language.** If the release remains labeled beta at publication, explain that it may contain errors, change, or be discontinued and that FieldSoli provides no service-level agreement. Do not promise support hours or uptime.
 13. **Replace Delaware law and venue with Illinois.** Subject to non-waivable law, use Illinois governing law and an Illinois forum that counsel confirms is appropriate, expected to be state and federal courts located in Cook County.
 14. **Do not retain the current three-sentence arbitration clause.** It omits an administrator, rules, fees, procedure, notice, opt-out, and other mechanics. The recommended launch approach is Illinois courts after a short informal dispute process. If counsel prefers arbitration, use a separately reviewed, conspicuous, complete clause with an opt-out instead.
 15. **Keep the current liability-cap structure, with better safeguards.** The recommended cap is the greater of fees paid in the preceding 12 months or $100, but the provision must preserve liabilities and remedies that cannot lawfully be limited and should not purport to excuse fraud, willful misconduct, or gross negligence.
 16. **Narrow indemnification to third-party claims.** It should cover claims caused by the user's unlawful use, User Content, breach of customer-data permissions, violation of third-party rights, or material breach of the Terms. It should include notice, control-of-defense, cooperation, and settlement protections rather than a one-sentence unlimited obligation.
 17. **Use affirmative clickwrap and versioned acceptance.** At signup, the user should affirmatively agree to the linked Terms. Material updates should receive conspicuous notice and reacceptance. Preserve the accepted version, user, timestamp, source, app version, and platform.
 18. **Separate contractual assent from privacy notice.** Recommended signup language is “I agree to the Terms of Service and acknowledge the Privacy Policy.” Any consent that must be freely given, such as optional product analytics, remains a separate choice.
-19. **Use Apple's Standard EULA for the iOS app license unless counsel deliberately chooses a custom EULA.** The FieldSolo Terms would govern the account and service and state that app use is also subject to applicable app-store terms. A custom Apple EULA would trigger Apple's minimum-term checklist, including a public legal address, telephone number, and email.
+19. **Use Apple's Standard EULA for the iOS app license unless counsel deliberately chooses a custom EULA.** The FieldSoli Terms would govern the account and service and state that app use is also subject to applicable app-store terms. A custom Apple EULA would trigger Apple's minimum-term checklist, including a public legal address, telephone number, and email.
 
 ## Competitor research and recommendation
 
-Competitor terms are useful as issue checklists and structural references. They are not evidence of what is enforceable for FieldSolo, and their wording should not be copied wholesale. Their products, corporate structures, pricing, dispute strategies, and legal jurisdictions differ materially.
+Competitor terms are useful as issue checklists and structural references. They are not evidence of what is enforceable for FieldSoli, and their wording should not be copied wholesale. Their products, corporate structures, pricing, dispute strategies, and legal jurisdictions differ materially.
 
-| Competitor | Useful concepts | What FieldSolo should not copy | Recommendation |
+| Competitor | Useful concepts | What FieldSoli should not copy | Recommendation |
 | --- | --- | --- | --- |
-| [Joist](https://www.joist.com/terms/) | Contractor-focused structure; limited service license; account security; use restrictions; customer-content ownership and operating license; maintenance; suspension; IP; termination; disclaimers; general provisions | Paid trials and subscriptions, auto-renewal, ACH/card terms, rewards, payments, financing, third-party integrations, AI, Canadian law, bilateral confidentiality, customer-logo publicity, $1,000 cap, prevailing-party fees, and a six-month claim deadline | **Primary structural model.** Rebuild each section with FieldSolo facts and remove more than half of Joist's substantive content. |
+| [Joist](https://www.joist.com/terms/) | Contractor-focused structure; limited service license; account security; use restrictions; customer-content ownership and operating license; maintenance; suspension; IP; termination; disclaimers; general provisions | Paid trials and subscriptions, auto-renewal, ACH/card terms, rewards, payments, financing, third-party integrations, AI, Canadian law, bilateral confidentiality, customer-logo publicity, $1,000 cap, prevailing-party fees, and a six-month claim deadline | **Primary structural model.** Rebuild each section with FieldSoli facts and remove more than half of Joist's substantive content. |
 | [Jobber](https://www.getjobber.com/terms-of-service/) | Notice of material changes; possible reacceptance; authority to bind a business; user responsibility for personal information entered about customers | Teams and Account Owners, communications, payments, subscriptions, integrations, Canadian provisions, AI, and its perpetual/irrevocable license for market research, pricing benchmarks, and industry insights | Use the acceptance/update mechanics and customer-data responsibility. Explicitly reject its benchmark license for the launch Terms. |
 | [ServiceTitan](https://www.servicetitan.com/legal/terms-of-use) | Thorough issue spotting; fee-based liability-cap architecture; state-law savings language; electronic notices; export-control checklist | Enterprise order forms, implementation services, employees, franchises, telecom, payments, hardware, integrations, AI, complex attachments, and liability language that expressly reaches gross negligence and willful misconduct | Secondary liability and boilerplate reference only. Do not use as the base. |
 | [Housecall Pro](https://www.housecallpro.com/terms/) | Business-to-business framing; authority; strong separation between the software company and the tradesperson's customer work; customer-dispute indemnity concept | Teams, administrators, payments, websites, communications, AI, customer-logo publicity, extremely broad data-use rights, and enterprise-length arbitration | Borrow the independent-party concept and a carefully narrowed customer-claim provision. |
 | [Invoice2go](https://invoice.2go.com/terms-of-service/) | Business-purpose statement; entity authority; scoped customer-data ownership/license; customer permissions; user recordkeeping; restriction of SSNs, credentials, payment data, health data, and other unnecessary sensitive data | Invoicing, money movement, bank/card products, lending, app subscriptions, international provisions, broad anonymous-data marketing rights, paid-plan mechanics, and publicity rights | Best secondary source for current User Content and responsibility sections. |
-| [Kickserv](https://kickserv.zendesk.com/hc/en-us/articles/25906570185357-Terms-of-Service) | Short contractor-SaaS organization; concise account, restrictions, customer content, IP, termination, disclaimer, and general terms | Subscription and ACH terms, integrations, Colorado law, $1,000 cap, confidentiality, prevailing-party fees, and six-month claims limit | Use as a length and simplicity check, not as an independent source of FieldSolo rights. |
-| [FieldPulse](https://www.fieldpulse.com/terms-of-service) | Mobile-license and Apple-specific issue checklist; eligibility and electronic-communications topics | Personal-use license inconsistent with its field-service product, teams, memberships, paid subscriptions, payments, broad DMCA/public-content provisions, extensive arbitration, stale “Android Market” terminology, and features FieldSolo does not have | Do not use as the base. Prefer Apple's current official terms over its app-store wording. |
+| [Kickserv](https://kickserv.zendesk.com/hc/en-us/articles/25906570185357-Terms-of-Service) | Short contractor-SaaS organization; concise account, restrictions, customer content, IP, termination, disclaimer, and general terms | Subscription and ACH terms, integrations, Colorado law, $1,000 cap, confidentiality, prevailing-party fees, and six-month claims limit | Use as a length and simplicity check, not as an independent source of FieldSoli rights. |
+| [FieldPulse](https://www.fieldpulse.com/terms-of-service) | Mobile-license and Apple-specific issue checklist; eligibility and electronic-communications topics | Personal-use license inconsistent with its field-service product, teams, memberships, paid subscriptions, payments, broad DMCA/public-content provisions, extensive arbitration, stale “Android Market” terminology, and features FieldSoli does not have | Do not use as the base. Prefer Apple's current official terms over its app-store wording. |
 
 ### Recommended source hierarchy
 
 1. **Joist** — section order and contractor-SaaS architecture.
 2. **Invoice2go** — business-use, authority, customer data, sensitive-data restrictions, and user recordkeeping.
 3. **Jobber** — changes, notice, affirmative reacceptance, and customer-information authority.
-4. **Housecall Pro** — FieldSolo is independent from the user's trade business and customer engagements.
+4. **Housecall Pro** — FieldSoli is independent from the user's trade business and customer engagements.
 5. **ServiceTitan** — liability-cap format, jurisdictional savings, electronic-notice and general-contract checklist.
 6. **Apple's official Standard EULA and minimum terms** — app-license strategy.
 7. **Kickserv and FieldPulse** — completeness checks only.
@@ -79,14 +79,14 @@ Do not copy provisions merely because multiple competitors use them. In particul
 - exact-location, route, mileage, camera, photo, document, or audio provisions;
 - pricing, market, or industry benchmarking rights;
 - customer-logo or customer-name publicity rights;
-- blanket confidentiality terms that FieldSolo is not operationally prepared to administer as an enterprise contract;
+- blanket confidentiality terms that FieldSoli is not operationally prepared to administer as an enterprise contract;
 - DMCA repeat-infringer procedures for a service that does not publicly host or distribute user submissions;
 - shortened six-month or one-year claim deadlines;
 - blanket prevailing-party attorneys' fees;
 - non-disparagement, review ownership, or restrictions on honest reviews; and
 - foreign governing law, Delaware law, or another competitor's venue.
 
-## Current FieldSolo product and contract boundary
+## Current FieldSoli product and contract boundary
 
 The eventual Terms should be checked against the release candidate again immediately before publication. The current repository supports the following boundary.
 
@@ -111,7 +111,7 @@ The eventual Terms should be checked against the release candidate again immedia
 - Users can edit and soft-delete individual jobs, sessions, notes, and materials from normal app use.
 - The account-deletion flow calls a backend function that verifies the authenticated user, deletes the Supabase Auth user, cascades owned database rows, and makes a best-effort PostHog deletion request when applicable.
 - The Privacy Policy governs retention and deletion detail. The Terms should not repeat an unverified 90-day backup deadline or create a different deletion promise.
-- The Terms should tell users to maintain independent copies of records they need for taxes, licenses, customer contracts, disputes, insurance, or other legal/business purposes. FieldSolo is not a statutory record archive.
+- The Terms should tell users to maintain independent copies of records they need for taxes, licenses, customer contracts, disputes, insurance, or other legal/business purposes. FieldSoli is not a statutory record archive.
 
 ### Current website and waitlist assent
 
@@ -142,9 +142,9 @@ Dormant database columns or storage structures also do not make a capability cur
 
 Veltri Ventures LLC's Illinois formation has been confirmed from its Articles of Organization. The correct operator language is:
 
-> FieldSolo is operated by Veltri Ventures LLC, an Illinois limited liability company.
+> FieldSoli is operated by Veltri Ventures LLC, an Illinois limited liability company.
 
-Do not say FieldSolo or Veltri Ventures LLC is “licensed in Illinois.” Formation creates an Illinois LLC; it is not an occupational, professional, contractor, or product license. The Terms also do not need an Illinois-resident rights section merely because the operator is an Illinois LLC.
+Do not say FieldSoli or Veltri Ventures LLC is “licensed in Illinois.” Formation creates an Illinois LLC; it is not an occupational, professional, contractor, or product license. The Terms also do not need an Illinois-resident rights section merely because the operator is an Illinois LLC.
 
 ### Governing law and forum
 
@@ -152,7 +152,7 @@ Do not say FieldSolo or Veltri Ventures LLC is “licensed in Illinois.” Forma
 - Recommended launch position: Illinois law, excluding conflict-of-law rules, subject to non-waivable law that applies to the user.
 - Recommended court forum if counsel confirms it: state and federal courts located in Cook County, Illinois.
 - The venue provision should not claim to eliminate non-waivable rights or remedies available under another state's law.
-- Do not publish a residential address merely to establish venue. Use the company's legal identity and an operational email in the service Terms. A physical address and telephone number become a separate issue if FieldSolo submits a custom Apple EULA or uses a dispute process that requires mailed notices.
+- Do not publish a residential address merely to establish venue. Use the company's legal identity and an operational email in the service Terms. A physical address and telephone number become a separate issue if FieldSoli submits a custom Apple EULA or uses a dispute process that requires mailed notices.
 
 ### Electronic contracting
 
@@ -172,7 +172,7 @@ This approach also addresses the Seventh Circuit's warning in *Sgouros v. TransU
 
 ### Illinois consumer-protection posture
 
-Illinois's Consumer Fraud and Deceptive Business Practices Act should shape accurate descriptions, marketing, and limitations. It does not require an Illinois-specific Terms section, but FieldSolo should:
+Illinois's Consumer Fraud and Deceptive Business Practices Act should shape accurate descriptions, marketing, and limitations. It does not require an Illinois-specific Terms section, but FieldSoli should:
 
 - avoid inaccurate feature, security, earnings, savings, or legal-compliance claims;
 - avoid saying the Terms waive rights that cannot be waived;
@@ -188,7 +188,7 @@ A Terms document does not by itself make a product compliant in all 50 states. T
 
 ### Business-purpose boundary
 
-- State that FieldSolo is designed and provided for business purposes and not for personal, family, or household use.
+- State that FieldSoli is designed and provided for business purposes and not for personal, family, or household use.
 - Define “you” as the individual accepting and, if applicable, the business on whose behalf the individual acts.
 - Require authority to bind the business.
 - Do not imply that labeling the relationship business-to-business eliminates every state consumer-protection law. Use “to the extent permitted by law” and preserve rights that cannot be waived.
@@ -196,54 +196,54 @@ A Terms document does not by itself make a product compliant in all 50 states. T
 
 ### User's trade and customer responsibilities
 
-The Terms should establish that the user—not FieldSolo—is responsible for:
+The Terms should establish that the user—not FieldSoli—is responsible for:
 
 - the trade services the user offers or performs;
 - business and occupational licenses, contractor registrations, permits, inspections, and bonding;
 - customer contracts, estimates, change orders, cancellation notices, warranties, disclosures, and invoices required by applicable law;
 - pricing, taxes, insurance, workplace safety, employment, and independent-contractor obligations;
 - lien, recordkeeping, tax, and customer-dispute requirements;
-- the accuracy and legality of job, customer, time, cost, payment-status, and revenue information entered into FieldSolo; and
+- the accuracy and legality of job, customer, time, cost, payment-status, and revenue information entered into FieldSoli; and
 - obtaining the rights, permissions, and notices required to enter information about customers and worksites.
 
-The Terms should not suggest that FieldSolo verifies licenses, work quality, customer agreements, prices, safety, or legal compliance. Current FieldSolo records are internal business-organizing records; they are not a customer contract, invoice, tax return, payroll record, permit, safety system, or legal notice.
+The Terms should not suggest that FieldSoli verifies licenses, work quality, customer agreements, prices, safety, or legal compliance. Current FieldSoli records are internal business-organizing records; they are not a customer contract, invoice, tax return, payroll record, permit, safety system, or legal notice.
 
 ### Relationship of the parties
 
-Adapt Housecall Pro's useful concept in shorter FieldSolo language:
+Adapt Housecall Pro's useful concept in shorter FieldSoli language:
 
-- FieldSolo and the user are independent parties.
-- FieldSolo is a software provider, not a party to agreements between the user and the user's customers.
-- FieldSolo is not the user's general contractor, construction manager, project manager, employer, joint employer, agent, partner, joint venturer, accountant, tax adviser, insurer, payment processor, or legal adviser.
+- FieldSoli and the user are independent parties.
+- FieldSoli is a software provider, not a party to agreements between the user and the user's customers.
+- FieldSoli is not the user's general contractor, construction manager, project manager, employer, joint employer, agent, partner, joint venturer, accountant, tax adviser, insurer, payment processor, or legal adviser.
 - Nothing in the Terms creates employment, agency, partnership, fiduciary, or joint-venture duties.
 
 ### Calculations and reliance
 
-Because FieldSolo shows revenue, costs, net earnings, net hourly rates, outstanding payments, rankings, and time summaries, the Terms should clearly say:
+Because FieldSoli shows revenue, costs, net earnings, net hourly rates, outstanding payments, rankings, and time summaries, the Terms should clearly say:
 
 - calculations depend on user-entered information and app logic;
 - they may be incomplete, delayed, or inaccurate;
 - they are estimates for business organization, not accounting, tax, legal, financial, insurance, payroll, wage, or pricing advice;
 - they are not a guarantee of profit, collection, job performance, or compliance; and
-- users should validate important results and maintain legally required records outside FieldSolo.
+- users should validate important results and maintain legally required records outside FieldSoli.
 
 ### Sensitive-data restrictions
 
-Borrow Invoice2go's concept but tailor it to FieldSolo. Users should not enter information the app does not need, including:
+Borrow Invoice2go's concept but tailor it to FieldSoli. Users should not enter information the app does not need, including:
 
 - Social Security numbers, driver's-license numbers, or government identification numbers;
 - full payment-card numbers, security codes, bank-account credentials, or account passwords;
 - protected health information regulated by HIPAA;
 - biometric identifiers, highly sensitive personal information, or information about children; or
-- content whose storage would make FieldSolo subject to a specialized legal or security regime not supported by the product.
+- content whose storage would make FieldSoli subject to a specialized legal or security regime not supported by the product.
 
-Do not overstate this as proof that FieldSolo could never receive such information in a free-text field. It is a contractual prohibition and product-risk control, not a factual privacy-policy assertion about every character a user might type.
+Do not overstate this as proof that FieldSoli could never receive such information in a free-text field. It is a contractual prohibition and product-risk control, not a factual privacy-policy assertion about every character a user might type.
 
 ### Honest reviews and feedback
 
 The Consumer Review Fairness Act prohibits form-contract provisions that restrict honest reviews, penalize reviewers, or require people to surrender IP rights in reviews. Therefore:
 
-- the feedback license should apply to suggestions deliberately submitted to FieldSolo for product development;
+- the feedback license should apply to suggestions deliberately submitted to FieldSoli for product development;
 - it should expressly exclude public reviews and other content protected by applicable review-fairness law; and
 - the Terms should contain no non-disparagement or negative-review penalty.
 
@@ -273,7 +273,7 @@ The Federal Arbitration Act generally recognizes written arbitration agreements 
 - exclusive state and federal courts in Cook County for other disputes, subject to non-waivable law; and
 - no mandatory arbitration or class-action waiver.
 
-This is simpler for a solo developer and avoids administering arbitration, paying consumer-arbitration fees, and maintaining a complex clause before FieldSolo has paid plans or a large user base. The tradeoff is that disputes may proceed in court and potentially on a class basis where permitted.
+This is simpler for a solo developer and avoids administering arbitration, paying consumer-arbitration fees, and maintaining a complex clause before FieldSoli has paid plans or a large user base. The tradeoff is that disputes may proceed in court and potentially on a class basis where permitted.
 
 **Option B — only if counsel affirmatively recommends arbitration: (keep in plan for future reference, but ignore for actual draft)**
 
@@ -300,29 +300,29 @@ The Terms may disclaim implied warranties and consequential damages to the maxim
 - no limitation applies to the extent prohibited by law; and
 - counsel must define the treatment of fraud, willful misconduct, gross negligence, personal injury, and other liabilities that may not be limited.
 
-Do not copy ServiceTitan's language that expressly places gross negligence and willful misconduct inside the cap. Its New Jersey caveat is a useful reminder that state-specific enforceability varies, not a substitute for FieldSolo's own review.
+Do not copy ServiceTitan's language that expressly places gross negligence and willful misconduct inside the cap. Its New Jersey caveat is a useful reminder that state-specific enforceability varies, not a substitute for FieldSoli's own review.
 
 ### App-store and mobile-license strategy
 
 Apple states that App Store apps are licensed, not sold, and applies its Standard EULA unless a custom EULA is provided. Recommended approach:
 
-1. Do not submit the FieldSolo service Terms as a custom Apple EULA at launch.
+1. Do not submit the FieldSoli service Terms as a custom Apple EULA at launch.
 2. Let Apple's Standard EULA govern the iOS application license.
-3. Make FieldSolo's Terms govern the account, website, waitlist, and FieldSolo service relationship.
-4. State that mobile-app use is also subject to applicable app-store terms and that those third parties are not responsible for FieldSolo's service except as their terms provide.
+3. Make FieldSoli's Terms govern the account, website, waitlist, and FieldSoli service relationship.
+4. State that mobile-app use is also subject to applicable app-store terms and that those third parties are not responsible for FieldSoli's service except as their terms provide.
 5. Avoid terms that conflict with the Apple Standard EULA.
 
 If counsel instead wants one custom EULA, the final Terms must include Apple's current minimum provisions: Apple acknowledgment, license scope, maintenance/support, warranty allocation and refund language, product claims, IP claims, sanctions compliance, developer legal name/address/telephone/email, third-party terms, and Apple third-party-beneficiary rights.
 
-Google Play does not justify copying FieldPulse's stale Android language. FieldSolo should separately keep its developer legal identity and contact details accurate in Play Console and comply with the current Developer Distribution Agreement and Developer Program Policies.
+Google Play does not justify copying FieldPulse's stale Android language. FieldSoli should separately keep its developer legal identity and contact details accurate in Play Console and comply with the current Developer Distribution Agreement and Developer Program Policies.
 
 ### Additional nationwide issues that do not need launch sections
 
 - **DMCA:** no public user-content distribution or sharing feature currently warrants a detailed repeat-infringer/DMCA process.
 - **Communications:** the app does not currently send user-directed SMS, emails, or calls to the user's customers, so do not include TCPA/CAN-SPAM customer-communication clauses. Marketing consent and unsubscribe operations remain separate compliance matters.
-- **Export controls:** a short U.S. sanctions/export-compliance representation is appropriate for mobile distribution, especially if FieldSolo relies on or mirrors Apple's standard license terms.
+- **Export controls:** a short U.S. sanctions/export-compliance representation is appropriate for mobile distribution, especially if FieldSoli relies on or mirrors Apple's standard license terms.
 - **Privacy and security:** detailed collection, disclosure, retention, deletion, and state privacy rights belong in the Privacy Policy and operations. The Terms should link to it and avoid contradictory promises.
-- **Taxes and sales tax:** no service-fee tax clause is needed while FieldSolo is free. Users remain responsible for their own business and trade taxes.
+- **Taxes and sales tax:** no service-fee tax clause is needed while FieldSoli is free. Users remain responsible for their own business and trade taxes.
 
 ## Section-by-section drafting plan
 
@@ -330,15 +330,15 @@ Google Play does not justify copying FieldPulse's stale Android language. FieldS
 
 Include:
 
-- **FieldSolo Terms of Service**;
+- **FieldSoli Terms of Service**;
 - an effective date and a version identifier that match the app, website, and acceptance database;
 - a conspicuous opening note if the final document contains arbitration or another significant waiver; and
 - no statement that this launch version replaces a prior public contract unless publication timing makes that true.
 
 ### 2. Operator, agreement, and scope
 
-- Identify Veltri Ventures LLC as an Illinois limited liability company operating FieldSolo.
-- Define the covered “Services” as the current website, waitlist, iOS/Android app, account functions, support interactions, and other current FieldSolo services linking to the Terms.
+- Identify Veltri Ventures LLC as an Illinois limited liability company operating FieldSoli.
+- Define the covered “Services” as the current website, waitlist, iOS/Android app, account functions, support interactions, and other current FieldSoli services linking to the Terms.
 - State that the Terms form a contract when affirmatively accepted or when another enforceable acceptance method is used.
 - Do not rely on passive website browsing as the sole basis for important waivers.
 - Link to the Privacy Policy as the explanation of data practices.
@@ -346,7 +346,7 @@ Include:
 ### 3. Eligibility, business purpose, and authority
 
 - Users must be at least 18 and legally capable of contracting.
-- FieldSolo is for business use by independent tradespeople and small operators, not personal/family/household use.
+- FieldSoli is for business use by independent tradespeople and small operators, not personal/family/household use.
 - A user accepting for a business represents they have authority to bind that business.
 - “You” should mean both the accepting individual and the represented business where applicable.
 - Do not define team administrators, Account Owners, or Authorized Users.
@@ -381,7 +381,7 @@ Ordinary changes within the existing service should remain governed by the Terms
 
 - Grant a limited, revocable, non-exclusive, non-transferable, non-sublicensable right to access and use the Services for the user's internal business purposes during the agreement.
 - State that the app and service are licensed, not sold.
-- Reserve all FieldSolo and licensor rights not expressly granted.
+- Reserve all FieldSoli and licensor rights not expressly granted.
 - Cover software, interface, designs, documentation, branding, and trademarks.
 - Make the license subject to applicable app-store terms.
 
@@ -390,7 +390,7 @@ Ordinary changes within the existing service should remain governed by the Terms
 - Require accurate signup/profile information and reasonable updates.
 - Keep credentials confidential and do not share accounts.
 - Make the user responsible for activity under the account to the extent permitted by law.
-- Require prompt notice of suspected unauthorized access through `support@fieldsolo.com` or the approved operational contact.
+- Require prompt notice of suspected unauthorized access through `support@fieldsoli.com` or the approved operational contact.
 - Permit reasonable protective action, including session revocation or suspension.
 - Do not add team-account or employee-access rules.
 
@@ -398,8 +398,8 @@ Ordinary changes within the existing service should remain governed by the Terms
 
 - Make clear that users control their jobs and customer relationships.
 - Users remain responsible for licenses, permits, contracts, notices, pricing, taxes, insurance, work quality, safety, and applicable law.
-- FieldSolo does not verify the user or the user's work.
-- Internal records in FieldSolo are not legal forms or required customer documents.
+- FieldSoli does not verify the user or the user's work.
+- Internal records in FieldSoli are not legal forms or required customer documents.
 - Users should independently preserve records needed for legal and business purposes.
 - Include the independent-party language described above.
 
@@ -423,20 +423,20 @@ Define **User Content** using current inputs only: job descriptions, customer na
 
 State that:
 
-- the user retains ownership as between the user and FieldSolo;
+- the user retains ownership as between the user and FieldSoli;
 - the user is responsible for accuracy, legality, and appropriateness;
-- the user has the rights, authority, notices, and permissions needed for FieldSolo to process customer and worksite information under the Terms and Privacy Policy;
-- a user's customer is not a FieldSolo customer or contracting party merely because their information is entered; and
-- FieldSolo may remove or restrict unlawful or prohibited content where reasonably necessary.
+- the user has the rights, authority, notices, and permissions needed for FieldSoli to process customer and worksite information under the Terms and Privacy Policy;
+- a user's customer is not a FieldSoli customer or contracting party merely because their information is entered; and
+- FieldSoli may remove or restrict unlawful or prohibited content where reasonably necessary.
 
 ### 11. Limited User Content license
 
-Grant FieldSolo a worldwide, non-exclusive, royalty-free license, only for as long and to the extent reasonably necessary, to:
+Grant FieldSoli a worldwide, non-exclusive, royalty-free license, only for as long and to the extent reasonably necessary, to:
 
 - host, store, reproduce, process, transmit, and display User Content;
 - provide the current features the user requests;
 - maintain, secure, troubleshoot, and support the Services;
-- use service providers acting for FieldSolo; and
+- use service providers acting for FieldSoli; and
 - comply with law, enforce the Terms, and protect rights and safety.
 
 Avoid “perpetual,” “irrevocable,” “for any business purpose,” public-display, marketing, AI-training, benchmark, industry-insight, data-sale, and customer-publicity rights.
@@ -448,7 +448,7 @@ The license may survive termination only for limited legal retention, backup exp
 Mirror the approved Privacy Policy:
 
 - permit aggregated or deidentified **service-usage statistics** for product analytics and improvement;
-- state that FieldSolo takes measures intended to prevent reasonable identification and does not attempt to reidentify the information;
+- state that FieldSoli takes measures intended to prevent reasonable identification and does not attempt to reidentify the information;
 - do not authorize pricing benchmarks, industry comparisons, commercial reports, generalized job-economics datasets, or AI training;
 - do not use customer names, exact addresses, free-text User Content, or other direct identifiers as aggregate statistics; and
 - do not characterize this as ownership of every derivative of User Content.
@@ -465,29 +465,29 @@ A future pricing or industry benchmarking program requires a Terms and Privacy P
 
 ### 14. Third-party infrastructure and links
 
-- Explain that FieldSolo uses service providers and may contain links to third-party sites.
+- Explain that FieldSoli uses service providers and may contain links to third-party sites.
 - Third-party services are governed by their own terms when users interact with them independently.
-- FieldSolo is not responsible for third-party services it does not control, to the extent permitted by law.
+- FieldSoli is not responsible for third-party services it does not control, to the extent permitted by law.
 - Do not describe optional user-connected integrations, because none currently exist.
 - Do not name infrastructure providers in the Terms; the Privacy Policy supplies current provider detail and can be maintained more accurately.
 
 ### 15. Feedback and reviews
 
-- Permit FieldSolo to use voluntarily submitted product ideas and suggestions without compensation or ownership claims by the submitter.
+- Permit FieldSoli to use voluntarily submitted product ideas and suggestions without compensation or ownership claims by the submitter.
 - Make clear that the feedback license does not claim ownership of public reviews or restrict honest opinions protected by law.
 - Do not include customer-name or logo publicity rights.
 
 ### 16. Current price and future paid services
 
 - State only that the current Services are offered without a subscription fee.
-- FieldSolo may later offer paid services, but a user will not be charged unless the user is shown and accepts the applicable pricing and payment terms.
+- FieldSoli may later offer paid services, but a user will not be charged unless the user is shown and accepts the applicable pricing and payment terms.
 - Do not include billing authorization, auto-renewal, free-trial conversion, cancellation, refund, tax, delinquency, or app-store purchase mechanics.
 - Treat any paid launch as a mandatory Terms, product-flow, state-law, tax, and app-store review.
 
 ### 17. Suspension, termination, and account deletion
 
 - Users may stop using the Services and delete their account using current controls.
-- FieldSolo may suspend or terminate for material breach, illegal activity, security risk, harm, non-cooperation with a security issue, legal requirement, or discontinuation.
+- FieldSoli may suspend or terminate for material breach, illegal activity, security risk, harm, non-cooperation with a security issue, legal requirement, or discontinuation.
 - Give notice and an opportunity to cure where reasonably appropriate; allow immediate action for urgent security, legal, or abuse risks.
 - Explain the effect: access and the service license end, while provisions that by nature survive remain effective.
 - Link deletion and retention details to the Privacy Policy.
@@ -496,7 +496,7 @@ A future pricing or industry benchmarking program requires a Terms and Privacy P
 
 ### 18. Disclaimers and no professional advice
 
-Include measured, conspicuous terms that the Services are provided “as is” and “as available” to the extent permitted by law and that FieldSolo does not guarantee:
+Include measured, conspicuous terms that the Services are provided “as is” and “as available” to the extent permitted by law and that FieldSoli does not guarantee:
 
 - uninterrupted, timely, secure, compatible, complete, or error-free operation;
 - preservation of every record;
@@ -511,10 +511,10 @@ Preserve non-waivable warranties and rights. Avoid “completely secure” or ab
 Proposed structure for counsel review:
 
 - exclusion of indirect, incidental, special, consequential, exemplary, and punitive damages and loss of profits, goodwill, or business opportunities, to the extent permitted by law;
-- an aggregate direct-liability cap equal to the greater of fees paid to FieldSolo in the 12 months before the event or $100;
+- an aggregate direct-liability cap equal to the greater of fees paid to FieldSoli in the 12 months before the event or $100;
 - application regardless of legal theory and even if a remedy fails of its essential purpose, only to the extent permitted by law;
 - a statement that the allocation is part of the basis of the agreement; and
-- explicit preservation of liability and remedies that applicable law does not allow FieldSolo to limit.
+- explicit preservation of liability and remedies that applicable law does not allow FieldSoli to limit.
 
 Counsel must approve the carveouts for fraud, willful misconduct, gross negligence, personal injury, confidentiality/privacy duties, and any statutory remedies. Do not copy a competitor's carveout choices without this review.
 
@@ -524,11 +524,11 @@ Limit the user's obligation to third-party claims arising from:
 
 - User Content or the user's failure to have required rights/permissions;
 - the user's trade services or dispute with the user's customer;
-- unlawful or prohibited use of FieldSolo;
+- unlawful or prohibited use of FieldSoli;
 - infringement or violation of a third party's IP, privacy, publicity, or other rights; or
 - the user's material breach of the Terms.
 
-Include reasonable procedures: prompt notice, cooperation, control of defense, no settlement admitting FieldSolo fault or imposing obligations without consent, and reduction to the extent FieldSolo caused the claim. Counsel should decide whether a free individual-user product should impose a duty to defend or only indemnify.
+Include reasonable procedures: prompt notice, cooperation, control of defense, no settlement admitting FieldSoli fault or imposing obligations without consent, and reduction to the extent FieldSoli caused the claim. Counsel should decide whether a free individual-user product should impose a duty to defend or only indemnify.
 
 ### 21. Disputes, governing law, and venue
 
@@ -558,16 +558,16 @@ Delete the current vague mandatory arbitration, class waiver, jury waiver, and D
 - State that electronic records and notices satisfy writing requirements where permitted.
 - Require the user to keep the account email current.
 - Separate operational/legal notices from optional marketing consent.
-- Do not add consent to autodialed calls, texts, prerecorded voice, or push notifications that FieldSolo does not currently use.
+- Do not add consent to autodialed calls, texts, prerecorded voice, or push notifications that FieldSoli does not currently use.
 
 ### 24. App-store terms
 
 Under the recommended Standard EULA strategy:
 
 - state that use of a downloaded mobile app is also subject to the applicable app store's terms;
-- clarify that the FieldSolo service agreement is between the user and Veltri Ventures LLC;
+- clarify that the FieldSoli service agreement is between the user and Veltri Ventures LLC;
 - reference Apple's Standard EULA for the iOS application license rather than reproducing a custom-EULA addendum; and
-- avoid describing Apple or Google as responsible for FieldSolo support, content, or claims beyond their own terms.
+- avoid describing Apple or Google as responsible for FieldSoli support, content, or claims beyond their own terms.
 
 If App Store Connect is configured with a custom EULA, replace this approach with a complete Apple addendum that meets the official minimum terms.
 
@@ -576,7 +576,7 @@ If App Store Connect is configured with a custom EULA, replace this approach wit
 Include concise provisions for:
 
 - entire agreement and order of precedence with any future feature-specific terms;
-- assignment by the user only with consent and by FieldSolo in connection with a merger, financing, reorganization, or asset transfer;
+- assignment by the user only with consent and by FieldSoli in connection with a merger, financing, reorganization, or asset transfer;
 - severability or reformation to the minimum extent necessary;
 - waiver only when express;
 - force majeure for events outside reasonable control;
@@ -589,9 +589,9 @@ Avoid a unilateral right to assign to anyone for any purpose, customer publicity
 
 ### 26. Contact
 
-- Use the full operator name: Veltri Ventures LLC, operating FieldSolo.
-- Use `support@fieldsolo.com` for general Terms and service questions unless `legal@fieldsolo.com` is created and monitored.
-- Keep `privacy@fieldsolo.com` for privacy requests.
+- Use the full operator name: Veltri Ventures LLC, operating FieldSoli.
+- Use `support@fieldsoli.com` for general Terms and service questions unless `legal@fieldsoli.com` is created and monitored.
+- Keep `privacy@fieldsoli.com` for privacy requests.
 - If arbitration, formal mailed notice, or a custom Apple EULA is selected, approve an appropriate non-residential business or registered-agent mailing address and, for Apple, a telephone number before publication.
 
 ## Existing `terms.md` disposition
@@ -612,7 +612,7 @@ Avoid a unilateral right to assign to anyone for any purpose, customer publicity
 | Future AI section | Remove. Voice/AI will use the future-feature gate. |
 | Third-party services | Retain only for current infrastructure, independent links, and app-store terms; do not imply integrations. |
 | Privacy and optional analytics | Retain but align to the approved Privacy Policy and separate analytics consent. |
-| FieldSolo IP | Retain and add a clear limited app/service license. |
+| FieldSoli IP | Retain and add a clear limited app/service license. |
 | Feedback license | Retain with a Consumer Review Fairness Act carveout. |
 | Disclaimer/no professional advice | Retain and expand for current calculations and user recordkeeping. |
 | Greater-of-fees-or-$100 liability cap | Retain as the recommended commercial position, with counsel-approved non-waivable carveouts. |
@@ -633,14 +633,14 @@ The current-only Terms should be reviewed before enabling any of the following. 
 
 Before launch, determine:
 
-- whether FieldSolo receives audio or only text returned by the operating system;
+- whether FieldSoli receives audio or only text returned by the operating system;
 - whether an AI/transcription provider receives content;
 - provider retention, training, human-review, and output terms;
 - whether transcripts become User Content;
 - whether generated output can affect financial or customer records; and
 - what just-in-time permission and privacy notice is required.
 
-If FieldSolo receives only user-approved text from operating-system dictation, the existing User Content framework may require only a narrow update. If FieldSolo records audio, sends content to an AI provider, or generates advice, update both the Privacy Policy and Terms before launch.
+If FieldSoli receives only user-approved text from operating-system dictation, the existing User Content framework may require only a narrow update. If FieldSoli records audio, sends content to an AI provider, or generates advice, update both the Privacy Policy and Terms before launch.
 
 ### Pricing or industry benchmarking
 
@@ -666,7 +666,7 @@ Add only the provisions needed for the actual permission and use. Terms changes 
 
 ### Customer-facing documents or communications
 
-Before FieldSolo sends quotes, estimates, invoices, contracts, emails, texts, or calls to a user's customer, add responsibility for content, recipients, consent, consumer-contract requirements, electronic communications, unsubscribe/opt-out where applicable, delivery, signatures, and recordkeeping. Make clear that templates are not legal advice.
+Before FieldSoli sends quotes, estimates, invoices, contracts, emails, texts, or calls to a user's customer, add responsibility for content, recipients, consent, consumer-contract requirements, electronic communications, unsubscribe/opt-out where applicable, delivery, signatures, and recordkeeping. Make clear that templates are not legal advice.
 
 ### Payments, banking, subscriptions, or paid plans
 
@@ -701,20 +701,20 @@ After the final Terms text is approved:
 
 The following decisions should be explicitly approved before drafting `terms.md`:
 
-- [x] Adopt **FieldSolo Terms of Service** as the formal title, define it as the “Terms,” and retain `docs/legal/terms.md` and `/terms` as the canonical file and route.
+- [x] Adopt **FieldSoli Terms of Service** as the formal title, define it as the “Terms,” and retain `docs/legal/terms.md` and `/terms` as the canonical file and route.
 - [ ] Use Joist as the primary structural model and the source hierarchy in this plan.
-- [ ] Make FieldSolo business-use only and require authority to bind a business.
+- [ ] Make FieldSoli business-use only and require authority to bind a business.
 - [ ] Describe current features only; exclude planned voice/AI, media, GPS, integrations, teams, payments, and paid subscriptions.
 - [ ] Defer pricing and industry benchmarking and authorize only narrow aggregated/deidentified service-usage analytics and product improvement.
 - [ ] Use a narrow current-service User Content license with no perpetual benchmark, AI-training, marketing, or publicity rights.
 - [ ] Keep the service free in the launch Terms and gate all future billing language.
-- [ ] If still accurate at publication, identify FieldSolo as beta and disclaim an SLA.
+- [ ] If still accurate at publication, identify FieldSoli as beta and disclaim an SLA.
 - [ ] Use Illinois governing law and, subject to counsel confirmation, Cook County courts.
 - [ ] Select dispute **Option A (recommended court process)** or **Option B (counsel-drafted arbitration)**.
 - [ ] Use the greater-of-prior-12-month-fees-or-$100 liability cap with counsel-approved carveouts.
 - [ ] Use a narrowed, procedure-based indemnity for third-party claims.
 - [ ] Rely on Apple's Standard EULA rather than submit these service Terms as a custom EULA.
-- [ ] Use `support@fieldsolo.com` for Terms questions unless a monitored `legal@fieldsolo.com` address is created.
+- [ ] Use `support@fieldsoli.com` for Terms questions unless a monitored `legal@fieldsoli.com` address is created.
 - [ ] After Terms approval, separately approve version/acceptance/publication implementation changes.
 
 ## Primary legal and platform references

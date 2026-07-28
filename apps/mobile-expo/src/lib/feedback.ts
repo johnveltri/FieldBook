@@ -65,7 +65,7 @@ export async function markFeedbackSent(userId: string): Promise<void> {
 }
 
 export function buildFeedbackMailto(source: 'profile' | 'completion_prompt'): string {
-  const subject = encodeURIComponent('FieldSolo feedback');
+  const subject = encodeURIComponent('FieldSoli feedback');
   const body = encodeURIComponent(
     [
       'What were you trying to do?',
@@ -74,7 +74,7 @@ export function buildFeedbackMailto(source: 'profile' | 'completion_prompt'): st
       'What was confusing or missing?',
       '',
       '',
-      'What would make you use FieldSolo again?',
+      'What would make you use FieldSoli again?',
       '',
       '',
       '---',

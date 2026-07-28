@@ -1,4 +1,4 @@
-# Supabase (FieldSolo backend)
+# Supabase (FieldSoli backend)
 
 This folder is the **source of truth** for schema and local tooling. Remote Supabase projects use the same migrations via `db push` / CI.
 
@@ -57,9 +57,10 @@ schema migrations no longer grant direct public-table access to the `anon` role.
 
 ## Storage buckets
 
-New attachment rows default to the Supabase Storage bucket named `fieldsolo`. Existing attachment
-rows can still reference their original bucket value. Before pushing the FieldSolo storage default
-migration to a hosted project, create or confirm the `fieldsolo` bucket in Supabase Storage.
+New attachment rows default to the Supabase Storage bucket named `fieldsolo` (technical id — keep).
+Existing attachment rows can still reference their original bucket value. Before pushing the
+storage default migration to a hosted project, create or confirm the `fieldsolo` bucket in
+Supabase Storage.
 
 ## Jobs in the app
 
@@ -94,6 +95,8 @@ npx supabase db reset --workdir backend
 **Local (`config.toml`):** SMS signup is off (`[auth.sms]` / `enable_signup = false`); OAuth blocks like `[auth.external.apple]` stay `enabled = false`. Email signup is on under `[auth.email]`. Confirmations default to off locally (`enable_confirmations = false`) so new users can sign in immediately—turn confirmations on for production-like testing if needed. Passwords must contain at least eight characters.
 
 **Hosted:** In the [Supabase Dashboard](https://supabase.com/dashboard) → **Authentication** → **Providers**, disable every provider except **Email** (disable Phone, Apple, Google, and any others you do not use). Under **Email**, enable “Email” / password sign-in as required by your app.
+
+**Rebrand / URL Configuration (FieldSoli):** Project display name is FieldSoli. Under **Authentication → URL Configuration**, set Site URL to `https://fieldsoli.com` (or your primary web origin) and include both domains in Redirect URLs during transition (`https://fieldsoli.com/**` and `https://fieldsolo.com/**`). Update Auth email templates and SMTP sender name/address to FieldSoli / `@fieldsoli.com` if custom SMTP is enabled. Do not rename the `fieldsolo` storage bucket.
 
 ## Edge Function: `delete-account`
 

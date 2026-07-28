@@ -1,4 +1,4 @@
-# FieldSolo Privacy Policy Revision & Maintenance Plan
+# FieldSoli Privacy Policy Revision & Maintenance Plan
 
 **Status:** Proposed for approval — planning only. This revision does not change `privacy-policy.md`, the published website policy, app behavior, backend behavior, or store disclosures.
 
@@ -8,19 +8,19 @@
 
 ## Purpose
 
-This plan governs the next revision of FieldSolo's launch privacy policy and establishes the process for keeping the policy accurate as the product changes.
+This plan governs the next revision of FieldSoli's launch privacy policy and establishes the process for keeping the policy accurate as the product changes.
 
 The central drafting rule is:
 
-> The public privacy policy will describe FieldSolo's actual, approved data practices at the time it takes effect. Planned features will be managed through an internal privacy-review process and added to the policy before they introduce a materially different data practice.
+> The public privacy policy will describe FieldSoli's actual, approved data practices at the time it takes effect. Planned features will be managed through an internal privacy-review process and added to the policy before they introduce a materially different data practice.
 
-The policy is not a product roadmap or advance permission for hypothetical collection. It should be specific enough to explain what FieldSolo currently does without needing revision for ordinary product changes that continue using the same data for the same disclosed purposes.
+The policy is not a product roadmap or advance permission for hypothetical collection. It should be specific enough to explain what FieldSoli currently does without needing revision for ordinary product changes that continue using the same data for the same disclosed purposes.
 
 ## Proposed decisions for approval
 
-1. Use one policy for the FieldSolo website, waitlist, mobile application, account interactions, support communications, and other FieldSolo services that link to it.
-2. Present this as FieldSolo's initial launch policy. Do not say it replaces or supersedes an earlier policy.
-3. Identify **Veltri Ventures LLC** as the operator of FieldSolo. If confirmed against the company's formation record, it may be described as “an Illinois limited liability company.” Do not say FieldSolo or Veltri Ventures LLC is “licensed in Illinois” merely because the LLC was formed or registered there, and do not describe FieldSolo as a registered DBA.
+1. Use one policy for the FieldSoli website, waitlist, mobile application, account interactions, support communications, and other FieldSoli services that link to it.
+2. Present this as FieldSoli's initial launch policy. Do not say it replaces or supersedes an earlier policy.
+3. Identify **Veltri Ventures LLC** as the operator of FieldSoli. If confirmed against the company's formation record, it may be described as “an Illinois limited liability company.” Do not say FieldSoli or Veltri Ventures LLC is “licensed in Illinois” merely because the LLC was formed or registered there, and do not describe FieldSoli as a registered DBA.
 4. Describe current production data practices, enabled vendors, permissions, and user controls. Do not list speculative Teams, GPS, mailbox, integration, payment, media, or AI features in the public policy.
 5. Remove the current public-policy subsection titled **Optional and future features** and remove other references that imply unlaunched features already process personal information.
 6. Keep future-feature planning in this internal document. Require privacy review before enabling a feature that changes collection, use, disclosure, retention, deletion, user visibility, or device permissions.
@@ -36,7 +36,7 @@ Use competitor policies as structural references, not as factual source text.
 - **Joist:** use its contractor/end-customer distinction and its concept of feature-specific, just-in-time notices. Do not copy its broad amendment/continued-use language or treat mentions of future product development as permission for future data collection.
 - **Jobber:** use its pattern of describing actual integrations, AI tools, recordings, location, and account roles specifically, followed by a commitment to update the policy before using information for an unidentified purpose.
 - **ServiceTitan:** use only as a secondary reference for customer-versus-service-provider roles and mature team/account-administrator concepts when those features become real.
-- **Housecall Pro:** do not copy its broad statutory data-category inventory; many listed categories reflect a much larger existing product and would be inaccurate for FieldSolo.
+- **Housecall Pro:** do not copy its broad statutory data-category inventory; many listed categories reflect a much larger existing product and would be inaccurate for FieldSoli.
 
 Reference policies:
 
@@ -56,7 +56,7 @@ Use `may` only for a practice that is currently possible within the covered Serv
 Avoid:
 
 - generic statements such as “for any business purpose”;
-- data categories FieldSolo does not collect;
+- data categories FieldSoli does not collect;
 - vendors or provider categories not involved in the current service;
 - claims that all information is anonymous when a provider receives IP addresses or other identifiers;
 - absolute security promises;
@@ -77,7 +77,7 @@ Before drafting, reverify this inventory against the release candidate, deployed
 - Privacy, support, and account-deletion communications sent by email.
 - Hosting, form-processing, database, analytics, and email providers actually used at launch.
 
-Do not call website analytics “anonymous” unless the provider's collection and configuration support that statement. Prefer precise language such as aggregated website-usage statistics while acknowledging technical data actually received by FieldSolo or its provider.
+Do not call website analytics “anonymous” unless the provider's collection and configuration support that statement. Prefer precise language such as aggregated website-usage statistics while acknowledging technical data actually received by FieldSoli or its provider.
 
 ### Current mobile and account practices
 
@@ -97,7 +97,7 @@ Do not call website analytics “anonymous” unless the provider's collection a
 
 At the time this plan was updated, the mobile app configuration did not request camera, microphone, photo-library, location, calendar, notification, payment, or contact permissions, and no voice-recording or transcription dependency was present.
 
-The database contains dormant or currently unused fields and structures, including `jobs.job_type`, `jobs.collected_cents`, `materials.purchase_date`, an `attachments` metadata table, and a default Storage bucket name. Current job creation writes an empty job type, the job editor does not expose job type or amount collected, the material editor does not expose purchase date, and the mobile client does not implement file selection, media capture, file upload, or attachment-record creation. The UI uses the word “attachments” for notes/materials displayed within a work session, not uploaded files. A dormant schema capability is not a current collection practice and should not cause the launch policy to claim that FieldSolo collects job type, amount collected, material purchase date, files, or media.
+The database contains dormant or currently unused fields and structures, including `jobs.job_type`, `jobs.collected_cents`, `materials.purchase_date`, an `attachments` metadata table, and a default Storage bucket name. Current job creation writes an empty job type, the job editor does not expose job type or amount collected, the material editor does not expose purchase date, and the mobile client does not implement file selection, media capture, file upload, or attachment-record creation. The UI uses the word “attachments” for notes/materials displayed within a work session, not uploaded files. A dormant schema capability is not a current collection practice and should not cause the launch policy to claim that FieldSoli collects job type, amount collected, material purchase date, files, or media.
 
 The launch policy should not discuss the following as collected unless the final release audit shows otherwise:
 
@@ -117,13 +117,13 @@ If useful for clarity, the policy may state a short set of especially important 
 
 ### Company description
 
-Formation or registration of an LLC is not the same as a professional, occupational, or product license. The privacy policy does not need to claim that FieldSolo is “licensed in Illinois.”
+Formation or registration of an LLC is not the same as a professional, occupational, or product license. The privacy policy does not need to claim that FieldSoli is “licensed in Illinois.”
 
 Use one of the following only after confirming the Secretary of State record or formation documents:
 
-- **Preferred if Veltri Ventures LLC was formed in Illinois:** “FieldSolo is operated by Veltri Ventures LLC, an Illinois limited liability company.”
+- **Preferred if Veltri Ventures LLC was formed in Illinois:** “FieldSoli is operated by Veltri Ventures LLC, an Illinois limited liability company.”
 - **If it was formed elsewhere but registered in Illinois:** identify Veltri Ventures LLC as the operator and, only if useful, say it is registered to do business in Illinois.
-- **Minimum sufficient wording:** “FieldSolo is operated by Veltri Ventures LLC.”
+- **Minimum sufficient wording:** “FieldSoli is operated by Veltri Ventures LLC.”
 
 Do not use “licensed,” “Illinois-licensed,” “incorporated,” or “registered DBA” unless that distinct statement is independently true. LLC formation state is an operator-identity fact, not a privacy right and not governing-law language.
 
@@ -133,8 +133,8 @@ Do not add a separate Illinois-residents section merely because Veltri Ventures 
 
 The currently relevant Illinois requirements should shape operations and narrowly tailored policy language:
 
-- **Personal Information Protection Act (PIPA), 815 ILCS 530:** maintain reasonable security for Illinois residents' personal information, require reasonable security in applicable disclosure contracts, securely dispose of personal information, and maintain a breach-notification process. These are principally security, vendor-contract, disposal, and incident-response obligations; they do not require FieldSolo to advertise itself as Illinois-licensed.
-- **Biometric Information Privacy Act (BIPA), 740 ILCS 14:** ordinary voice dictation or a recording is not automatically a “voiceprint.” BIPA becomes a specific launch issue if FieldSolo collects or derives a voiceprint or another biometric identifier/information for identification. Do not add a biometric section for ordinary text entry, operating-system dictation where FieldSolo receives only text, or non-identification audio processing without a separate legal analysis.
+- **Personal Information Protection Act (PIPA), 815 ILCS 530:** maintain reasonable security for Illinois residents' personal information, require reasonable security in applicable disclosure contracts, securely dispose of personal information, and maintain a breach-notification process. These are principally security, vendor-contract, disposal, and incident-response obligations; they do not require FieldSoli to advertise itself as Illinois-licensed.
+- **Biometric Information Privacy Act (BIPA), 740 ILCS 14:** ordinary voice dictation or a recording is not automatically a “voiceprint.” BIPA becomes a specific launch issue if FieldSoli collects or derives a voiceprint or another biometric identifier/information for identification. Do not add a biometric section for ordinary text entry, operating-system dictation where FieldSoli receives only text, or non-identification audio processing without a separate legal analysis.
 
 The policy's measured security, retention/deletion, vendor-disclosure, and incident-response descriptions should be consistent with these Illinois obligations without implying that a policy paragraph by itself satisfies the operational requirements.
 
@@ -151,36 +151,36 @@ Primary references:
 
 Include:
 
-- **FieldSolo Privacy Policy**;
+- **FieldSoli Privacy Policy**;
 - the initial effective date;
 - a machine-readable policy version that matches the app, website, and database acceptance record; and
 - no statement about replacing a previous policy.
 
 ### 2. Operator and scope
 
-State that FieldSolo is operated by Veltri Ventures LLC. If its Illinois formation is confirmed, use “an Illinois limited liability company,” not “licensed in Illinois.” Define the covered Services to include only current surfaces:
+State that FieldSoli is operated by Veltri Ventures LLC. If its Illinois formation is confirmed, use “an Illinois limited liability company,” not “licensed in Illinois.” Define the covered Services to include only current surfaces:
 
-- `fieldsolo.com` and the waitlist;
-- FieldSolo's iOS and Android applications;
+- `fieldsoli.com` and the waitlist;
+- FieldSoli's iOS and Android applications;
 - account, privacy, and customer-support interactions; and
-- other current FieldSolo services that link directly to the policy.
+- other current FieldSoli services that link directly to the policy.
 
-Explain that third-party services have their own privacy practices when a user leaves FieldSolo or independently interacts with them.
+Explain that third-party services have their own privacy practices when a user leaves FieldSoli or independently interacts with them.
 
 ### 3. User relationships and customer information
 
 Use simple present-day definitions:
 
-- **User:** the individual who creates and uses a FieldSolo account.
+- **User:** the individual who creates and uses a FieldSoli account.
 - **Customer Information:** information a user enters about the user's own customer or job.
-- **User Content:** job records, notes, materials, and other content the user enters into FieldSolo.
+- **User Content:** job records, notes, materials, and other content the user enters into FieldSoli.
 
 Explain that:
 
 - users choose what customer information to enter;
-- FieldSolo processes it to provide the service to the user;
+- FieldSoli processes it to provide the service to the user;
 - users are responsible for having appropriate authority to provide it; and
-- a tradesperson's customer should generally direct a privacy request first to the tradesperson, while FieldSolo may assist where appropriate.
+- a tradesperson's customer should generally direct a privacy request first to the tradesperson, while FieldSoli may assist where appropriate.
 
 Do not define Account Owners, administrators, Authorized Users, team workspaces, or employee roles until those relationships exist in the product.
 
@@ -220,10 +220,10 @@ Remove operational statements about processing content for AI-assisted actions u
 
 This is a data-use decision, not merely a future-feature decision. Before drafting, approve one of these positions:
 
-- **Recommended if intended from launch:** FieldSolo may create aggregated or deidentified information from current job economics and service-use data for product analytics, product improvement, research, and sufficiently aggregated benchmarks. State that FieldSolo will not attempt to reidentify it.
+- **Recommended if intended from launch:** FieldSoli may create aggregated or deidentified information from current job economics and service-use data for product analytics, product improvement, research, and sufficiently aggregated benchmarks. State that FieldSoli will not attempt to reidentify it.
 - **More conservative if not currently practiced:** limit the launch policy to aggregated service analytics and add benchmarking through a later policy update before beginning that use.
 
-If benchmarking is approved from launch, operationally exclude direct identifiers, exact addresses, free-text notes, raw attachments, raw communications, and cohorts small enough to expose an individual user, customer, or business. Do not describe deidentified data as derived from voice, inbox, integration, photo, or AI data that FieldSolo does not yet collect.
+If benchmarking is approved from launch, operationally exclude direct identifiers, exact addresses, free-text notes, raw attachments, raw communications, and cohorts small enough to expose an individual user, customer, or business. Do not describe deidentified data as derived from voice, inbox, integration, photo, or AI data that FieldSoli does not yet collect.
 
 ### 7. User Content and ownership
 
@@ -255,9 +255,9 @@ Remove AI-provider, future-integration, future-export, and future-team-sharing e
 
 If still accurate, state:
 
-- FieldSolo does not sell personal information;
-- FieldSolo does not share personal information for cross-context behavioral advertising;
-- FieldSolo does not use Customer Information to market to a user's customers;
+- FieldSoli does not sell personal information;
+- FieldSoli does not share personal information for cross-context behavioral advertising;
+- FieldSoli does not use Customer Information to market to a user's customers;
 - users may unsubscribe from promotional email; and
 - necessary transactional or service communications may continue while an account remains active.
 
@@ -299,13 +299,13 @@ Continue offering a practical nationwide baseline, subject to verification and l
 - authorized-agent requests where applicable; and
 - appeal of a denied privacy request.
 
-Explain the available in-app and external request paths. Avoid suggesting that every state statute applies to FieldSolo regardless of thresholds.
+Explain the available in-app and external request paths. Avoid suggesting that every state statute applies to FieldSoli regardless of thresholds.
 
 ### 13. Cookies and website tracking
 
 Identify the actual website analytics and hosting technology, the information it receives, its purpose, and available controls. Confirm whether cookies or similar identifiers are used.
 
-Do not include reCAPTCHA or another anti-bot provider unless it is actually deployed. Do not promise support for Global Privacy Control or another signal unless FieldSolo detects and honors it as described.
+Do not include reCAPTCHA or another anti-bot provider unless it is actually deployed. Do not promise support for Global Privacy Control or another signal unless FieldSoli detects and honors it as described.
 
 ### 14. Security
 
@@ -317,15 +317,15 @@ Use measured language describing reasonable administrative, technical, and organ
 - restricted administrative or service-provider access; and
 - backup or monitoring practices.
 
-Do not claim that FieldSolo is completely secure or use undefined marketing phrases such as “bank-level security.”
+Do not claim that FieldSoli is completely secure or use undefined marketing phrases such as “bank-level security.”
 
 ### 15. Children
 
-State that FieldSolo is business software for adults and is not directed to children. Align the minimum age and contract-capacity wording with the Terms of Service.
+State that FieldSoli is business software for adults and is not directed to children. Align the minimum age and contract-capacity wording with the Terms of Service.
 
 ### 16. Changes to the policy
 
-State that FieldSolo may update the policy as its practices, Services, and legal obligations change. The section should commit to:
+State that FieldSoli may update the policy as its practices, Services, and legal obligations change. The section should commit to:
 
 - posting the new effective date and policy version;
 - additional email, in-app, or similarly conspicuous notice for material changes;
@@ -338,8 +338,8 @@ Do not rely solely on continued use as consent to a materially expanded data pra
 
 Identify:
 
-- Veltri Ventures LLC as the operator of FieldSolo;
-- `privacy@fieldsolo.com` for privacy questions and requests; and
+- Veltri Ventures LLC as the operator of FieldSoli;
+- `privacy@fieldsoli.com` for privacy questions and requests; and
 - a valid business mailing address if counsel determines it should appear in the public policy.
 
 ## Voice dictation launch gate
@@ -348,11 +348,11 @@ Voice dictation is the most likely near-term feature to require a targeted polic
 
 ### Design questions
 
-1. Is dictation supplied entirely by the operating-system keyboard, with FieldSolo receiving only text?
-2. Does FieldSolo itself request microphone permission or receive audio bytes?
+1. Is dictation supplied entirely by the operating-system keyboard, with FieldSoli receiving only text?
+2. Does FieldSoli itself request microphone permission or receive audio bytes?
 3. Is processing performed on-device or transmitted to a transcription provider?
 4. Which provider receives audio, transcripts, prompts, identifiers, or metadata?
-5. Is raw audio stored by FieldSolo or the provider? If so, for how long?
+5. Is raw audio stored by FieldSoli or the provider? If so, for how long?
 6. Is the transcript stored as an ordinary job note or used only transiently?
 7. Can provider personnel access content for support, abuse review, or quality assurance?
 8. Can the provider use content to train or improve a general-purpose model?
@@ -362,13 +362,13 @@ Voice dictation is the most likely near-term feature to require a targeted polic
 
 ### Policy outcome
 
-- **Operating-system dictation only:** if FieldSolo receives only the resulting text and does not receive audio, describe the stored text under existing User Content. Do not claim that FieldSolo collects voice recordings merely because the system keyboard offers dictation.
-- **FieldSolo-managed transcription:** before enabling the feature, add specific audio/transcript collection, purpose, provider disclosure, retention, deletion, security, and user-control language.
+- **Operating-system dictation only:** if FieldSoli receives only the resulting text and does not receive audio, describe the stored text under existing User Content. Do not claim that FieldSoli collects voice recordings merely because the system keyboard offers dictation.
+- **FieldSoli-managed transcription:** before enabling the feature, add specific audio/transcript collection, purpose, provider disclosure, retention, deletion, security, and user-control language.
 - **AI-assisted transformation beyond transcription:** additionally disclose what existing job/customer content is sent, how outputs are used, provider model-training terms, and whether a user must affirmatively invoke each action.
 
 ### Product and store requirements
 
-If FieldSolo accesses the microphone or transmits audio:
+If FieldSoli accesses the microphone or transmits audio:
 
 - present a clear just-in-time explanation before the system permission request;
 - request access only when the user starts dictation;
@@ -429,7 +429,7 @@ These items stay in this internal plan until a release is being designed. They a
 ### Payments, banking, and subscriptions
 
 - Distinguish job-economics information entered by the user from payment credentials or bank data handled by a processor.
-- Document whether FieldSolo receives full credentials, tokens, balances, or transaction records.
+- Document whether FieldSoli receives full credentials, tokens, balances, or transaction records.
 - Review processor terms, financial-data requirements, retention, deletion, and store disclosures before launch.
 
 ## Policy-update workflow
@@ -450,7 +450,7 @@ For every new or changed practice, record:
 - collection trigger;
 - required or optional status;
 - purpose;
-- FieldSolo systems receiving it;
+- FieldSoli systems receiving it;
 - external recipients;
 - location of processing;
 - retention and deletion;

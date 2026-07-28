@@ -310,10 +310,10 @@ export function SignInScreen() {
           <View style={styles.brandBlock}>
             <Image
               accessibilityIgnoresInvertColors
-              source={require('../../assets/brand/fieldsolo-solo-notch-light.png')}
+              source={require('../../assets/brand/fieldsoli-solo-notch-light.png')}
               style={styles.logo}
             />
-            <Text {...screenHeaderA11y('FieldSolo')} style={[typography.displayH1, styles.brandName, { color: fg.primary }]}>FIELDSOLO</Text>
+            <Text {...screenHeaderA11y('FieldSoli')} style={[typography.displayH1, styles.brandName, { color: fg.primary }]}>FIELDSOLI</Text>
           </View>
           <View style={styles.card}>
             <Text accessibilityRole="header" style={[text.title, { color: fg.primary, marginBottom: space('Spacing/8') }]}>
