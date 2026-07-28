@@ -28,7 +28,7 @@ describe('feedback', () => {
 
   it('builds a prefilled support email', () => {
     const mailto = decodeURIComponent(buildFeedbackMailto('profile'));
-    expect(mailto).toContain('mailto:support@fieldsolo.com?subject=FieldSolo feedback');
+    expect(mailto).toContain('mailto:support@fieldsoli.com?subject=FieldSoli feedback');
     expect(mailto).toContain('What was confusing or missing?');
     expect(mailto).toContain('Source: Profile');
   });

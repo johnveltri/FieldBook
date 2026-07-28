@@ -1,4 +1,4 @@
-# Learnings (FieldSolo / Figma / tooling)
+# Learnings (FieldSoli / Figma / tooling)
 
 Short, durable notes from integration work so we do not repeat slow failures.
 

@@ -164,7 +164,7 @@ describe('HomeScreen quick session', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('renders the FieldSolo home header', () => {
+  it('renders the FieldSoli home header', () => {
     const screen = render(
       <HomeScreen
         onOpenProfile={() => undefined}
@@ -177,7 +177,7 @@ describe('HomeScreen quick session', () => {
     expect(screen.getByText(/FIELD\s*SOLO/)).toBeTruthy();
     const title = screen.getByText(/FIELD\s*SOLO/);
     expect(title.props.accessibilityRole).toBe('header');
-    expect(title.props.accessibilityLabel).toBe('FieldSolo');
+    expect(title.props.accessibilityLabel).toBe('FieldSoli');
   });
 
   it('explains zero weekly earnings for an account with jobs', async () => {

@@ -122,7 +122,7 @@ export type FieldSoloCtaButtonProps = {
 };
 
 /**
- * High-emphasis CTAs from FieldSolo (Figma **Button** `1287:1563`):
+ * High-emphasis CTAs from FieldSoli (Figma **Button** `1287:1563`):
  * note / material / job-session tint fills + self-shadow, brand XL, optional delete or more column.
  */
 export function FieldSoloCtaButton({

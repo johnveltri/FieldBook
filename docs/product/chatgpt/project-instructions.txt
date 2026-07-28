@@ -1,4 +1,4 @@
-Treat only content marked data-status="shipped" in fieldsolo-current-product.html as current FieldSolo functionality.
+Treat only content marked data-status="shipped" in fieldsolo-current-product.html as current FieldSoli functionality.
 
 For product-state answers, report the fieldsolo-source-commit and fieldsolo-reviewed-at values from the HTML.
 

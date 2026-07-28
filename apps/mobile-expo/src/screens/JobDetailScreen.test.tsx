@@ -487,7 +487,7 @@ describe('JobDetailScreen manual session and note flows', () => {
       expect(apiClient.countCompletedJobsForCurrentUser).toHaveBeenCalledWith({});
       expect(mockClaimFeedbackPromptMilestone).toHaveBeenCalledWith('user-1', 1);
       expect(alertSpy).toHaveBeenCalledWith(
-        "How's FieldSolo working for you?",
+        "How's FieldSoli working for you?",
         'You just completed your first job. What felt confusing or missing?',
         expect.any(Array),
       );

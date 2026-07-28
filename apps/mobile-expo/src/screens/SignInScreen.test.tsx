@@ -77,13 +77,13 @@ describe('SignInScreen', () => {
   it('marks the brand title as an accessibility header', () => {
     const { getByText } = render(<SignInScreen />);
 
-    expect(getByText('FIELDSOLO').props.accessibilityRole).toBe('header');
+    expect(getByText('FIELDSOLI').props.accessibilityRole).toBe('header');
   });
 
-  it('renders the FieldSolo brand name', () => {
+  it('renders the FieldSoli brand name', () => {
     const { getByText } = render(<SignInScreen />);
 
-    expect(getByText('FIELDSOLO')).toBeTruthy();
+    expect(getByText('FIELDSOLI')).toBeTruthy();
   });
 
   it('rejects an invalid email before calling sign in', async () => {

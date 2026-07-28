@@ -1,4 +1,4 @@
-# FieldSolo Prelaunch Supabase Hardening and Future-Proofing
+# FieldSoli Prelaunch Supabase Hardening and Future-Proofing
 
 ## Summary
 

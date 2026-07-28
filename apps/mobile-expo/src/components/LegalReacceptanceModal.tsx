@@ -67,7 +67,7 @@ export function LegalReacceptanceModal({
         <View style={styles.card}>
           <Text style={styles.title}>Updated legal terms</Text>
           <Text style={styles.body}>
-            FieldSolo&apos;s Privacy Policy and Terms have been updated. Review
+            FieldSoli&apos;s Privacy Policy and Terms have been updated. Review
             the current versions and agree to continue using the app.
           </Text>
           <Text style={styles.links}>

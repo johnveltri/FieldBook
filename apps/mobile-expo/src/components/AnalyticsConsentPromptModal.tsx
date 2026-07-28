@@ -81,9 +81,9 @@ export function AnalyticsConsentPromptModal({
     >
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <Text style={styles.title}>Help improve FieldSolo?</Text>
+          <Text style={styles.title}>Help improve FieldSoli?</Text>
           <Text style={styles.body}>
-            FieldSolo uses optional product analytics to understand reliability
+            FieldSoli uses optional product analytics to understand reliability
             and improve features. Analytics stay off unless you tap Allow
             analytics below.
           </Text>

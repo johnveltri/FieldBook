@@ -27,10 +27,10 @@ describe('HelpScreen', () => {
     expect(
       screen.getByText(/request a copy of your data/i),
     ).toBeTruthy();
-    expect(screen.getByText('support@fieldsolo.com')).toBeTruthy();
+    expect(screen.getByText('support@fieldsoli.com')).toBeTruthy();
 
     await act(async () => {
-      fireEvent.press(screen.getByText('support@fieldsolo.com'));
+      fireEvent.press(screen.getByText('support@fieldsoli.com'));
     });
 
     expect(openUrl).toHaveBeenCalledWith(SUPPORT_MAILTO);

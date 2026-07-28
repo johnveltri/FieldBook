@@ -13,7 +13,7 @@ const POSTHOG_DELETE_TIMEOUT_MS = 5_000;
 /**
  * Queue deletion of a PostHog person (and associated events) by distinct_id.
  *
- * FieldSolo identifies analytics users with the Supabase auth user id after
+ * FieldSoli identifies analytics users with the Supabase auth user id after
  * consent is granted. Requires server-side secrets:
  *   POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID
  * Optional: POSTHOG_API_HOST (defaults to https://us.posthog.com)

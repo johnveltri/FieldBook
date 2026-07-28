@@ -138,7 +138,7 @@ export function PrivacyChoicesScreen({ userId, onBack }: PrivacyChoicesScreenPro
     () => [
       {
         kind: 'toggle',
-        label: 'Help improve FieldSolo',
+        label: 'Help improve FieldSoli',
         value: analyticsEnabled,
         onValueChange: (next) => void onAnalyticsToggle(next),
         disabled: loading || saving,
