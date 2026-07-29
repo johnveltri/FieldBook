@@ -37,11 +37,19 @@ import { cacheLegalAcceptance } from '../lib/legalAcceptanceStorage';
 import { supabase } from '../lib/supabase';
 import { cardShadowRn, createTextStyles, fg, space } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
-import { announceAccessibilityMessage, screenHeaderA11y } from '../lib/accessibility';
+import { announceAccessibilityMessage } from '../lib/accessibility';
 import {
   NEW_PASSWORD_REQUIREMENT,
   newPasswordPolicyError,
 } from '../lib/passwordPolicy';
+
+const BRAND_DISPLAY_FONT_SIZE = 32;
+const BRAND_DISPLAY_LINE_HEIGHT = Math.round(BRAND_DISPLAY_FONT_SIZE * 1.4);
+const BRAND_TM_FONT_SIZE = Math.round(BRAND_DISPLAY_FONT_SIZE * 0.32);
+/** Cap-band offset so TM reads as superscript, not baseline-aligned (subscript). */
+const BRAND_TM_SUPERSCRIPT_MARGIN_TOP = Math.round(
+  (BRAND_DISPLAY_LINE_HEIGHT - BRAND_DISPLAY_FONT_SIZE) / 2,
+);
 
 function authErrorMessage(error: unknown): string {
   const message = error instanceof Error
@@ -313,7 +321,15 @@ export function SignInScreen() {
               source={require('../../assets/brand/fieldsoli-solo-notch-light.png')}
               style={styles.logo}
             />
-            <Text {...screenHeaderA11y('FieldSoli')} style={[typography.displayH1, styles.brandName, { color: fg.primary }]}>FIELDSOLI</Text>
+            <View
+              accessible
+              accessibilityRole="header"
+              accessibilityLabel="FieldSoli"
+              style={styles.brandNameRow}
+            >
+              <Text style={[typography.displayH1, styles.brandName]}>FieldSoli</Text>
+              <Text style={styles.brandTm}>TM</Text>
+            </View>
           </View>
           <View style={styles.card}>
             <Text accessibilityRole="header" style={[text.title, { color: fg.primary, marginBottom: space('Spacing/8') }]}>
@@ -609,7 +625,26 @@ const styles = StyleSheet.create({
   scrollContentTop: { justifyContent: 'flex-start' },
   brandBlock: { alignItems: 'center', marginBottom: space('Spacing/20') },
   logo: { height: 68, resizeMode: 'contain', width: 68 },
-  brandName: { letterSpacing: 1.4, marginTop: space('Spacing/8') },
+  brandNameRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    marginTop: space('Spacing/8'),
+  },
+  brandName: {
+    color: fg.primary,
+    letterSpacing: -0.6,
+    textTransform: 'none',
+  },
+  brandTm: {
+    color: fg.primary,
+    fontFamily: 'PTSerif_700Bold',
+    fontSize: BRAND_TM_FONT_SIZE,
+    fontWeight: '700',
+    letterSpacing: 0,
+    lineHeight: BRAND_TM_FONT_SIZE,
+    marginLeft: 4,
+    marginTop: BRAND_TM_SUPERSCRIPT_MARGIN_TOP,
+  },
   card: {
     width: '100%',
     padding: space('Spacing/24'),

@@ -75,15 +75,16 @@ describe('SignInScreen', () => {
   });
 
   it('marks the brand title as an accessibility header', () => {
-    const { getByText } = render(<SignInScreen />);
+    const { getByLabelText } = render(<SignInScreen />);
 
-    expect(getByText('FIELDSOLI').props.accessibilityRole).toBe('header');
+    expect(getByLabelText('FieldSoli').props.accessibilityRole).toBe('header');
   });
 
-  it('renders the FieldSoli brand name', () => {
-    const { getByText } = render(<SignInScreen />);
+  it('renders a superscript TM on the brand wordmark', () => {
+    const { getByLabelText, getByText } = render(<SignInScreen />);
 
-    expect(getByText('FIELDSOLI')).toBeTruthy();
+    expect(getByLabelText('FieldSoli')).toBeTruthy();
+    expect(getByText('TM')).toBeTruthy();
   });
 
   it('rejects an invalid email before calling sign in', async () => {
