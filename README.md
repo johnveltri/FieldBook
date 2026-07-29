@@ -306,8 +306,8 @@ project display names, marketing site / domains / support email, Expo display na
 in-app copy and legal URLs (`fieldsoli.com` / `support@fieldsoli.com`).
 
 Still confirm before store release:
-- Supabase Auth → URL Configuration (Site URL + dual redirect allowlist), email templates, SMTP sender
-- Auth email smoke: confirmation + password reset land on FieldSoli branding/links
+- Supabase Auth → URL Configuration, branded email templates, **custom SMTP (Resend)** — checklist in [`backend/supabase/README.md`](backend/supabase/README.md#custom-smtp-production-auth-mail)
+- Auth email smoke: confirmation + password reset from `noreply@fieldsoli.com` with FieldSoli HTML templates
 - App Store / Play listings (name, support URL, privacy URL) when you create them
 - Figma file/library display names (optional)
 
