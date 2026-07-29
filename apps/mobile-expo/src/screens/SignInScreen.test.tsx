@@ -190,7 +190,7 @@ describe('SignInScreen', () => {
     expect(screen.getByLabelText('Confirm password').props.autoComplete).toBe('new-password');
   });
 
-  it('requires matching passwords when creating an account', async () => {
+  it('disables create account until passwords match', () => {
     const screen = render(<SignInScreen />);
     fireEvent.press(screen.getByText('Create an account'));
     fireEvent.changeText(screen.getByLabelText('Email'), 'tech@example.com');
@@ -198,16 +198,16 @@ describe('SignInScreen', () => {
     fireEvent.changeText(screen.getByLabelText('Last name'), 'Builder');
     fireEvent.changeText(screen.getByLabelText('Password'), 'Password123!');
     fireEvent.changeText(screen.getByLabelText('Confirm password'), 'Different123!');
+    fireEvent.press(screen.getByRole('checkbox'));
 
-    await act(async () => {
-      fireEvent.press(screen.getByText('Create account'));
-    });
-
+    const createAccount = screen.getByRole('button', { name: 'Create account' });
     expect(screen.getByText('Passwords do not match.')).toBeTruthy();
+    expect(createAccount.props.accessibilityState).toMatchObject({ disabled: true });
+    fireEvent.press(createAccount);
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
-  it('requires a capital letter and symbol for a new account password', async () => {
+  it('disables create account until the password meets policy', () => {
     const screen = render(<SignInScreen />);
     fireEvent.press(screen.getByText('Create an account'));
     fireEvent.changeText(screen.getByLabelText('Email'), 'tech@example.com');
@@ -215,13 +215,30 @@ describe('SignInScreen', () => {
     fireEvent.changeText(screen.getByLabelText('Last name'), 'Builder');
     fireEvent.changeText(screen.getByLabelText('Password'), 'password123');
     fireEvent.changeText(screen.getByLabelText('Confirm password'), 'password123');
+    fireEvent.press(screen.getByRole('checkbox'));
 
-    await act(async () => {
-      fireEvent.press(screen.getByText('Create account'));
-    });
-
-    expect(screen.getByText('Password must be at least 8 characters and include 1 capital letter and 1 symbol.')).toBeTruthy();
+    const createAccount = screen.getByRole('button', { name: 'Create account' });
+    expect(
+      screen.getByText('At least 8 characters, 1 capital letter, and 1 symbol'),
+    ).toBeTruthy();
+    expect(createAccount.props.accessibilityState).toMatchObject({ disabled: true });
+    fireEvent.press(createAccount);
     expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  it('hides the password requirement hint once the password meets policy', () => {
+    const screen = render(<SignInScreen />);
+    fireEvent.press(screen.getByText('Create an account'));
+
+    expect(
+      screen.getByText('At least 8 characters, 1 capital letter, and 1 symbol'),
+    ).toBeTruthy();
+
+    fireEvent.changeText(screen.getByLabelText('Password'), 'Password123!');
+
+    expect(
+      screen.queryByText('At least 8 characters, 1 capital letter, and 1 symbol'),
+    ).toBeNull();
   });
 
   it('shows privacy policy and terms links on sign in', () => {
@@ -241,7 +258,7 @@ describe('SignInScreen', () => {
     expect(screen.getByText('Back to sign in')).toBeTruthy();
   });
 
-  it('requires the legal checkbox before creating an account', async () => {
+  it('disables create account until the legal checkbox is checked', () => {
     const screen = render(<SignInScreen />);
 
     fireEvent.press(screen.getByText('Create an account'));
@@ -251,13 +268,9 @@ describe('SignInScreen', () => {
     fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'Password123!');
     fireEvent.changeText(screen.getByPlaceholderText('Re-enter password'), 'Password123!');
 
-    await act(async () => {
-      fireEvent.press(screen.getByText('Create account'));
-    });
-
-    expect(
-      screen.getByText('Agree to the Privacy Policy and Terms to create an account.'),
-    ).toBeTruthy();
+    const createAccount = screen.getByRole('button', { name: 'Create account' });
+    expect(createAccount.props.accessibilityState).toMatchObject({ disabled: true });
+    fireEvent.press(createAccount);
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
@@ -272,8 +285,11 @@ describe('SignInScreen', () => {
     fireEvent.changeText(screen.getByPlaceholderText('Re-enter password'), 'Password123!');
     fireEvent.press(screen.getByRole('checkbox'));
 
+    const createAccount = screen.getByRole('button', { name: 'Create account' });
+    expect(createAccount.props.accessibilityState).toMatchObject({ disabled: false });
+
     await act(async () => {
-      fireEvent.press(screen.getByText('Create account'));
+      fireEvent.press(createAccount);
     });
 
     await waitFor(() => {

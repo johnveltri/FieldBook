@@ -40,6 +40,7 @@ import { useContentColumn } from '../theme/useContentColumn';
 import { announceAccessibilityMessage } from '../lib/accessibility';
 import {
   NEW_PASSWORD_REQUIREMENT,
+  newPasswordMeetsPolicy,
   newPasswordPolicyError,
 } from '../lib/passwordPolicy';
 
@@ -134,6 +135,14 @@ export function SignInScreen() {
     }),
     [typography],
   );
+
+  const passwordMeetsPolicy = newPasswordMeetsPolicy(password);
+  const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const showPasswordMismatch =
+    mode === 'signUp' && confirmPassword.length > 0 && password !== confirmPassword;
+  const canCreateAccount =
+    passwordMeetsPolicy && passwordsMatch && legalAccepted && !busy;
+  const primaryDisabled = mode === 'signUp' ? !canCreateAccount : busy;
 
   const onSubmit = useCallback(async () => {
     setError(null);
@@ -480,7 +489,19 @@ export function SignInScreen() {
 
             {mode === 'signUp' ? (
               <>
-                <Text style={[text.caption, styles.passwordRequirement, { color: fg.secondary }]}>{NEW_PASSWORD_REQUIREMENT}</Text>
+                {!passwordMeetsPolicy ? (
+                  <Text
+                    style={[
+                      text.caption,
+                      styles.passwordRequirement,
+                      {
+                        color: password.length > 0 ? '#b00020' : fg.secondary,
+                      },
+                    ]}
+                  >
+                    {NEW_PASSWORD_REQUIREMENT}
+                  </Text>
+                ) : null}
                 <Text
                   style={[
                     text.caption,
@@ -503,12 +524,19 @@ export function SignInScreen() {
                   secureTextEntry={!passwordVisible}
                   textContentType="newPassword"
                   returnKeyType="done"
-                  onSubmitEditing={() => void onSubmit()}
+                  onSubmitEditing={() => {
+                    if (canCreateAccount) void onSubmit();
+                  }}
                   placeholder="Re-enter password"
                   placeholderTextColor={fg.secondary}
                   style={[styles.input, text.body, { color: fg.primary }]}
                   editable={!busy}
                 />
+                {showPasswordMismatch ? (
+                  <Text style={[text.caption, { color: '#b00020', marginTop: space('Spacing/8') }]}>
+                    Passwords do not match.
+                  </Text>
+                ) : null}
               </>
             ) : null}
 
@@ -551,12 +579,14 @@ export function SignInScreen() {
 
             <Pressable
               accessibilityRole="button"
-              accessibilityState={{ disabled: busy, busy }}
-              onPress={onSubmit}
-              disabled={busy}
+              accessibilityState={{ disabled: primaryDisabled, busy }}
+              onPress={mode === 'signUp' && !canCreateAccount ? undefined : onSubmit}
+              disabled={primaryDisabled}
               style={({ pressed }) => [
                 styles.primaryButton,
-                { marginTop: gap * 1.5, opacity: busy ? 0.6 : pressed ? 0.85 : 1 },
+                { marginTop: gap * 1.5 },
+                primaryDisabled && styles.primaryButtonDisabled,
+                !primaryDisabled && pressed && styles.primaryButtonPressed,
               ]}
             >
               {busy ? (
@@ -693,6 +723,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.45,
+  },
+  primaryButtonPressed: {
+    opacity: 0.85,
   },
   modeSwitch: {
     alignItems: 'center',
