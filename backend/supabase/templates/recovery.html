@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Reset your FieldSoli password</title>
+  </head>
+  <body style="margin:0;padding:0;background:#faf6f0;-webkit-text-size-adjust:100%;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#faf6f0;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#ffffff;border:1px solid rgba(43,52,65,0.13);border-radius:16px;">
+            <tr>
+              <td style="padding:28px 28px 8px 28px;font-family:Georgia,'PT Serif',Times,serif;">
+                <p style="margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-0.6px;color:#2b3441;">
+                  FieldSoli<sup style="font-size:8px;line-height:0;vertical-align:super;font-weight:700;margin-left:4px;position:relative;top:-3px;">TM</sup>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 28px 0 28px;font-family:Georgia,'PT Serif',Times,serif;">
+                <h1 style="margin:0;font-size:28px;line-height:1.2;letter-spacing:-0.4px;color:#2b3441;font-weight:700;">
+                  Reset your password
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 28px 0 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:15px;line-height:1.6;color:#726f6a;">
+                <p style="margin:0;">
+                  We received a request to reset the password for <strong style="color:#2b3441;">{{ .Email }}</strong>. Use the button below to choose a new one.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:28px 28px 8px 28px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td style="border-radius:999px;background:#c44b2b;">
+                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:15px;font-weight:700;line-height:1;color:#ffffff;text-decoration:none;">
+                        Reset password
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 28px 0 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:13px;line-height:1.6;color:#726f6a;">
+                <p style="margin:0;">
+                  Or copy and paste this link into your browser:
+                </p>
+                <p style="margin:8px 0 0 0;word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#c44b2b;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 28px 28px 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:12px;line-height:1.6;color:#726f6a;">
+                <p style="margin:0;">
+                  If you didn’t ask to reset your password, you can ignore this email. Your password will stay the same.
+                </p>
+                <p style="margin:12px 0 0 0;">
+                  Need help? <a href="mailto:support@fieldsoli.com" style="color:#c44b2b;font-weight:700;text-decoration:underline;">support@fieldsoli.com</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:20px 0 0 0;max-width:560px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:11px;line-height:1.5;color:#726f6a;">
+            FieldSoli<sup style="font-size:7px;line-height:0;vertical-align:super;">TM</sup> is operated by Veltri Ventures LLC.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

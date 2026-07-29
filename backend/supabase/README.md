@@ -98,6 +98,67 @@ npx supabase db reset --workdir backend
 
 **Rebrand / URL Configuration (FieldSoli):** Project display name is FieldSoli. Under **Authentication → URL Configuration**, set Site URL to `https://fieldsoli.com` (or your primary web origin) and include both domains in Redirect URLs during transition (`https://fieldsoli.com/**` and `https://fieldsolo.com/**`). Update Auth email templates and SMTP sender name/address to FieldSoli / `@fieldsoli.com` if custom SMTP is enabled. Do not rename the `fieldsolo` storage bucket.
 
+**Auth email templates:** Branded HTML lives in `backend/supabase/templates/` and is wired for local Auth in `config.toml`:
+
+| Template | Local config key | File |
+| --- | --- | --- |
+| Confirm sign up | `auth.email.template.confirmation` | `templates/confirmation.html` |
+| Reset password | `auth.email.template.recovery` | `templates/recovery.html` |
+| Password changed | `auth.email.notification.password_changed` | `templates/password_changed_notification.html` |
+
+Hosted projects do **not** pick these up from `config.toml`. Paste each file’s HTML into **Authentication → Email Templates** (and enable the password-changed security notification). Keep subjects aligned with local config.
+
+### Custom SMTP (production Auth mail)
+
+Supabase’s built-in Auth mailer is rate-limited (on the order of **2 emails/hour** on hosted projects) and is not intended for production. Configure **custom SMTP** to send from `@fieldsoli.com` and to raise the Auth email rate limit. See [Auth rate limits](https://supabase.com/docs/guides/deployment/going-into-prod#auth-rate-limits) and [Custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+
+**Google Workspace vs transactional mail:** Keep Workspace for human inboxes (`support@fieldsoli.com`, `privacy@fieldsoli.com`). Do **not** use Gmail/Workspace SMTP for Supabase Auth. Use a transactional provider on the same domain.
+
+**Provider:** [Resend](https://resend.com) with verified domain `fieldsoli.com`.
+
+#### Resend setup
+
+1. In Resend → **Domains**, confirm `fieldsoli.com` is **Verified** (SPF/DKIM/DMARC as Resend instructs).
+2. **API Keys → Add API Key**
+   - **Name:** `FieldSoli Supabase Auth`
+   - **Permission:** Sending access (or Full access)
+   - **Domain:** `fieldsoli.com` (not “All domains”)
+3. Copy the key once; it is the SMTP **password** (never commit it to git).
+
+#### Supabase hosted project (FieldSoli)
+
+Dashboard → **Project Settings → Authentication → SMTP** (or **Authentication → SMTP Settings**):
+
+| Field | Value |
+| --- | --- |
+| Enable custom SMTP | On |
+| Host | `smtp.resend.com` |
+| Port | `465` (SSL) or `587` (STARTTLS) |
+| Username | `resend` |
+| Password | Resend API key from step above |
+| Sender email | `noreply@fieldsoli.com` |
+| Sender name | `FieldSoli` |
+
+Secrets live **only** in the Supabase dashboard, not in this repo.
+
+#### Branded templates (hosted)
+
+After SMTP works, ensure hosted templates match the repo (paste HTML from `templates/`):
+
+- **Confirm sign up** → `confirmation.html`
+- **Reset password** → `recovery.html`
+- **Security notifications → Password changed** → `password_changed_notification.html`
+
+#### Verify delivery and rate limits
+
+1. Send a test Auth email (e.g. sign up with a throwaway address when email confirmation is enabled, or trigger **Reset password** from the dashboard/API).
+2. Confirm the message is from **FieldSoli** / `noreply@fieldsoli.com`, not default Supabase Auth copy.
+3. Dashboard → **Authentication → Rate Limits** → increase **email sending** to a sensible beta cap (custom SMTP must be enabled first).
+
+#### Local development
+
+Default local Auth email goes to **Mailpit** (CLI `supabase start`). To test real Resend delivery locally, uncomment `[auth.email.smtp]` in `config.toml` and set `RESEND_API_KEY` in your environment (see commented block there). Day-to-day dev can stay on Mailpit.
+
 ## Edge Function: `delete-account`
 
 The mobile app calls `delete-account` to remove the authenticated user. When PostHog analytics is enabled in production, set these **function secrets** (Project Settings → Edge Functions → Secrets) so account deletion also queues PostHog person/event removal:
