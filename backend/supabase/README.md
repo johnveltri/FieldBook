@@ -96,7 +96,7 @@ npx supabase db reset --workdir backend
 
 **Hosted:** In the [Supabase Dashboard](https://supabase.com/dashboard) → **Authentication** → **Providers**, disable every provider except **Email** (disable Phone, Apple, Google, and any others you do not use). Under **Email**, enable “Email” / password sign-in as required by your app.
 
-**Rebrand / URL Configuration (FieldSoli):** Project display name is FieldSoli. Under **Authentication → URL Configuration**, set Site URL to `https://fieldsoli.com` (or your primary web origin) and include both domains in Redirect URLs during transition (`https://fieldsoli.com/**` and `https://fieldsolo.com/**`). Update Auth email templates and SMTP sender name/address to FieldSoli / `@fieldsoli.com` if custom SMTP is enabled. Do not rename the `fieldsolo` storage bucket.
+**Rebrand / URL Configuration (FieldSoli):** Project display name is FieldSoli. Under **Authentication → URL Configuration**, set Site URL to `https://fieldsoli.com` (or your primary web origin) and include both domains in Redirect URLs during transition (`https://fieldsoli.com/**` and `https://fieldsolo.com/**`). The mobile app passes `emailRedirectTo: https://fieldsoli.com/auth/confirmed` on signup so confirmation emails land on the marketing **Email confirmed** page (not the homepage). After deploy, smoke: create account → confirm email → `/auth/confirmed` → **Open FieldSoli & log in** deep link. Update Auth email templates and SMTP sender name/address to FieldSoli / `@fieldsoli.com` if custom SMTP is enabled. Do not rename the `fieldsolo` storage bucket.
 
 **Auth email templates:** Branded HTML lives in `backend/supabase/templates/` and is wired for local Auth in `config.toml`:
 

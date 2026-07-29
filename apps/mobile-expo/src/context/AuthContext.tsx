@@ -9,6 +9,7 @@ import {
 import { analytics, errorProperties } from '../lib/analytics';
 import { clearAnalyticsConsentCache } from '../lib/analytics/consentStorage';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { AUTH_CONFIRM_URL } from '../lib/authUrls';
 import { newPasswordPolicyError } from '../lib/passwordPolicy';
 
 export type SignUpProfileSeed = {
@@ -100,18 +101,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp: async (email, password, profile) => {
         const policyError = newPasswordPolicyError(password);
         if (policyError) return { error: new Error(policyError), session: null };
-        const options = profile
-          ? {
-              data: {
-                first_name: profile.firstName.trim(),
-                last_name: profile.lastName.trim(),
-              },
-            }
-          : undefined;
+        const signUpOptions: {
+          emailRedirectTo: string;
+          data?: { first_name: string; last_name: string };
+        } = {
+          emailRedirectTo: AUTH_CONFIRM_URL,
+        };
+        if (profile) {
+          signUpOptions.data = {
+            first_name: profile.firstName.trim(),
+            last_name: profile.lastName.trim(),
+          };
+        }
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          ...(options ? { options } : {}),
+          options: signUpOptions,
         });
         return { error, session: data.session };
       },
