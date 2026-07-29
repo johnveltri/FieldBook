@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { describe, expect, it, jest, beforeEach } from '@jest/globals';
-import { Keyboard } from 'react-native';
+import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
+import { Keyboard, Linking } from 'react-native';
 
 import { SignInScreen } from './SignInScreen';
 
@@ -37,6 +37,7 @@ jest.mock('../lib/analytics', () => ({
 
 const mockRecordSignupLegalAcceptances = jest.fn(async () => undefined);
 const mockCacheLegalAcceptance = jest.fn(async () => undefined);
+const mockResend = jest.fn(async () => ({ error: null }));
 
 jest.mock('@fieldsolo/api-client', () => ({
   recordSignupLegalAcceptances: (...args: unknown[]) =>
@@ -44,7 +45,11 @@ jest.mock('@fieldsolo/api-client', () => ({
 }));
 
 jest.mock('../lib/supabase', () => ({
-  supabase: {},
+  supabase: {
+    auth: {
+      resend: (...args: unknown[]) => mockResend(...(args as [])),
+    },
+  },
 }));
 
 jest.mock('../lib/legalAcceptanceStorage', () => ({
@@ -53,10 +58,20 @@ jest.mock('../lib/legalAcceptanceStorage', () => ({
 }));
 
 describe('SignInScreen', () => {
+  let linkingSubscription: { remove: jest.Mock };
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockSignIn.mockResolvedValue({ error: null, session: null });
     mockSignUp.mockResolvedValue({ error: null, session: { user: { id: 'user-1' } } });
+    mockResend.mockResolvedValue({ error: null });
+    linkingSubscription = { remove: jest.fn() };
+    jest.spyOn(Linking, 'getInitialURL').mockResolvedValue(null);
+    jest.spyOn(Linking, 'addEventListener').mockReturnValue(linkingSubscription);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('shows sign-in instructions in sign-in mode', () => {
@@ -300,6 +315,77 @@ describe('SignInScreen', () => {
         privacyVersion: '2026-07-27',
         termsVersion: '2026-07-27',
       });
+    });
+  });
+
+  it('shows check your email after signup when confirmation is required', async () => {
+    mockSignUp.mockResolvedValueOnce({ error: null, session: null });
+    mockSignIn.mockResolvedValueOnce({
+      error: new Error('Email not confirmed'),
+      session: null,
+    });
+    const screen = render(<SignInScreen />);
+
+    fireEvent.press(screen.getByText('Create an account'));
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'tech@example.com');
+    fireEvent.changeText(screen.getByPlaceholderText('Alex'), 'Alex');
+    fireEvent.changeText(screen.getByPlaceholderText('Builder'), 'Builder');
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'Password123!');
+    fireEvent.changeText(screen.getByPlaceholderText('Re-enter password'), 'Password123!');
+    fireEvent.press(screen.getByRole('checkbox'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
+    });
+
+    expect(screen.getByText('Check your email')).toBeTruthy();
+    expect(screen.getByText('tech@example.com')).toBeTruthy();
+    expect(screen.queryByText('Welcome back')).toBeNull();
+    expect(mockRecordSignupLegalAcceptances).not.toHaveBeenCalled();
+    expect(mockSetSignupLegalPending).not.toHaveBeenCalled();
+  });
+
+  it('resends the confirmation email from the check your email screen', async () => {
+    mockSignUp.mockResolvedValueOnce({ error: null, session: null });
+    mockSignIn.mockResolvedValueOnce({
+      error: new Error('Email not confirmed'),
+      session: null,
+    });
+    const screen = render(<SignInScreen />);
+
+    fireEvent.press(screen.getByText('Create an account'));
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'tech@example.com');
+    fireEvent.changeText(screen.getByPlaceholderText('Alex'), 'Alex');
+    fireEvent.changeText(screen.getByPlaceholderText('Builder'), 'Builder');
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'Password123!');
+    fireEvent.changeText(screen.getByPlaceholderText('Re-enter password'), 'Password123!');
+    fireEvent.press(screen.getByRole('checkbox'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'Resend email' }));
+    });
+
+    await waitFor(() => {
+      expect(mockResend).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'signup',
+          email: 'tech@example.com',
+        }),
+      );
+      expect(screen.getByText('Confirmation email sent. Check your inbox.')).toBeTruthy();
+    });
+  });
+
+  it('opens sign in when the app receives the sign-in deep link', async () => {
+    jest.spyOn(Linking, 'getInitialURL').mockResolvedValue('fieldsoli://sign-in');
+    const screen = render(<SignInScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Welcome back')).toBeTruthy();
     });
   });
 });

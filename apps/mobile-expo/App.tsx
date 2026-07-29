@@ -426,7 +426,7 @@ function AuthenticatedShell() {
 
   if (
     loading
-    || signupLegalPending
+    || (signupLegalPending && session)
     || (session && legalGate === 'loading')
     || (session && legalGate === 'ready' && analyticsConsentGate === 'loading')
   ) {

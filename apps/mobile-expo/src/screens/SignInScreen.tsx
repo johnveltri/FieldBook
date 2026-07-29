@@ -43,6 +43,7 @@ import {
   newPasswordMeetsPolicy,
   newPasswordPolicyError,
 } from '../lib/passwordPolicy';
+import { AUTH_CONFIRM_URL, isAppSignInDeepLink } from '../lib/authUrls';
 
 const BRAND_DISPLAY_FONT_SIZE = 32;
 const BRAND_DISPLAY_LINE_HEIGHT = Math.round(BRAND_DISPLAY_FONT_SIZE * 1.4);
@@ -80,7 +81,10 @@ export function SignInScreen() {
   const [lastName, setLastName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [mode, setMode] = useState<'signIn' | 'signUp' | 'checkEmail'>('signIn');
+  const [pendingConfirmEmail, setPendingConfirmEmail] = useState('');
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendNotice, setResendNotice] = useState<string | null>(null);
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
@@ -107,6 +111,20 @@ export function SignInScreen() {
     });
     previousModeRef.current = mode;
   }, [mode]);
+
+  useEffect(() => {
+    const openSignInFromDeepLink = (url: string | null) => {
+      if (!url || !isAppSignInDeepLink(url)) return;
+      setMode('signIn');
+      setError(null);
+      setResendNotice(null);
+    };
+    void Linking.getInitialURL().then(openSignInFromDeepLink);
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      openSignInFromDeepLink(url);
+    });
+    return () => subscription.remove();
+  }, []);
 
   const [fontsLoaded] = useFonts({
     PTSerif_700Bold,
@@ -143,6 +161,29 @@ export function SignInScreen() {
   const canCreateAccount =
     passwordMeetsPolicy && passwordsMatch && legalAccepted && !busy;
   const primaryDisabled = mode === 'signUp' ? !canCreateAccount : busy;
+
+  const onResendConfirmation = useCallback(async () => {
+    const targetEmail = pendingConfirmEmail || email.trim().toLowerCase();
+    if (!targetEmail) return;
+    setResendNotice(null);
+    setResendBusy(true);
+    try {
+      const { error: resendErr } = await supabase.auth.resend({
+        type: 'signup',
+        email: targetEmail,
+        options: { emailRedirectTo: AUTH_CONFIRM_URL },
+      });
+      if (resendErr) {
+        setResendNotice(authErrorMessage(resendErr));
+        return;
+      }
+      setResendNotice('Confirmation email sent. Check your inbox.');
+    } catch (e) {
+      setResendNotice(authErrorMessage(e));
+    } finally {
+      setResendBusy(false);
+    }
+  }, [email, pendingConfirmEmail]);
 
   const onSubmit = useCallback(async () => {
     setError(null);
@@ -222,29 +263,31 @@ export function SignInScreen() {
         analytics.capture('sign_up_succeeded', {
           ...emailProperties(trimmed),
         });
-        setSignupLegalPending(true);
-        try {
-          let acceptedUserId = signUpSession?.user.id ?? null;
-          if (!signUpSession) {
-            const { error: signInErr, session: immediateSession } = await signIn(
-              trimmed,
-              password,
-            );
+        // Do not set signupLegalPending until we have a session. That flag
+        // replaces SignInScreen with a spinner in App.tsx; flipping it early
+        // unmounts this screen and drops the check-email state.
+        let acceptedUserId = signUpSession?.user.id ?? null;
+        if (!signUpSession) {
+          const { error: signInErr, session: immediateSession } = await signIn(
+            trimmed,
+            password,
+          );
             if (signInErr) {
-              analytics.capture('sign_up_failed', {
-                stage: 'immediate_sign_in',
-                ...emailProperties(trimmed),
-                ...errorProperties(signInErr),
-              });
-              setError(
-                'Account created. Check your email to confirm your account, then sign in.',
+              setPassword('');
+              setConfirmPassword('');
+              setPendingConfirmEmail(trimmed);
+              setResendNotice(null);
+              setMode('checkEmail');
+              announceAccessibilityMessage(
+                `Check your email. We sent a confirmation link to ${trimmed}.`,
               );
-              setMode('signIn');
               return;
             }
-            acceptedUserId = immediateSession?.user.id ?? null;
-          }
+          acceptedUserId = immediateSession?.user.id ?? null;
+        }
 
+        setSignupLegalPending(true);
+        try {
           await recordSignupLegalAcceptances(supabase, {
             privacyVersion: REQUIRED_PRIVACY_VERSION,
             termsVersion: REQUIRED_TERMS_VERSION,
@@ -315,7 +358,7 @@ export function SignInScreen() {
           scrollEventThrottle={16}
           contentContainerStyle={[
             styles.scrollContent,
-            mode === 'signIn' ? styles.scrollContentCentered : styles.scrollContentTop,
+            mode === 'signIn' || mode === 'checkEmail' ? styles.scrollContentCentered : styles.scrollContentTop,
             {
               paddingTop: insets.top + gap,
               paddingBottom: insets.bottom + gap,
@@ -341,6 +384,64 @@ export function SignInScreen() {
             </View>
           </View>
           <View style={styles.card}>
+            {mode === 'checkEmail' ? (
+              <>
+                <Text
+                  accessibilityRole="header"
+                  style={[text.title, { color: fg.primary, marginBottom: space('Spacing/8') }]}
+                >
+                  Check your email
+                </Text>
+                <Text style={[text.body, { color: fg.secondary, marginBottom: space('Spacing/24') }]}>
+                  We sent a confirmation link to{' '}
+                  <Text style={[text.bodySemi, { color: fg.primary }]}>{pendingConfirmEmail}</Text>.
+                  Open the email and tap Confirm email to activate your account.
+                </Text>
+                {resendNotice ? (
+                  <Text
+                    style={[
+                      text.caption,
+                      {
+                        color: resendNotice.includes('sent') ? fg.secondary : '#b00020',
+                        marginBottom: gap,
+                      },
+                    ]}
+                  >
+                    {resendNotice}
+                  </Text>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: resendBusy, busy: resendBusy }}
+                  onPress={() => void onResendConfirmation()}
+                  disabled={resendBusy}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    resendBusy && styles.primaryButtonDisabled,
+                    !resendBusy && pressed && styles.primaryButtonPressed,
+                  ]}
+                >
+                  {resendBusy ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={[text.bodySemi, { color: '#fff' }]}>Resend email</Text>
+                  )}
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setMode('signIn');
+                    setResendNotice(null);
+                    setError(null);
+                  }}
+                  disabled={resendBusy}
+                  style={styles.modeSwitch}
+                >
+                  <Text style={[text.bodySemi, { color: fg.primary }]}>Back to sign in</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
             <Text accessibilityRole="header" style={[text.title, { color: fg.primary, marginBottom: space('Spacing/8') }]}>
               {mode === 'signUp' ? 'Create your account' : 'Welcome back'}
             </Text>
@@ -638,6 +739,8 @@ export function SignInScreen() {
                 </Text>
               </Text>
             ) : null}
+              </>
+            )}
           </View>
           </View>
         </Animated.ScrollView>

@@ -1,0 +1,46 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin-top: 1.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: var(--radius-md);
+  background: var(--navy-950);
+  box-shadow: var(--shadow-card);
+  color: var(--cream-50);
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.primaryCta:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.primaryCta:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.secondary {
+  margin-top: 1.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.secondary a {
+  color: var(--rust-700);
+  font-weight: 700;
+  text-decoration: underline;
+}
