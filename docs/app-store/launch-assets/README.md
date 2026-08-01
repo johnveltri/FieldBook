@@ -1,6 +1,8 @@
 # FieldSoli App Store launch assets
 
-The six final iPhone screenshots are in [`screenshots/`](./screenshots/). Each is an opaque RGB PNG at 1320×2868, ready for App Store Connect.
+The six full-resolution iPhone screenshots are in [`screenshots/`](./screenshots/). Each is an opaque RGB PNG at 1320×2868 for App Store Connect's 6.9-inch display slot.
+
+For the 6.5-inch display slot, use [`screenshots-6.5-inch/`](./screenshots-6.5-inch/). These are matching opaque RGB PNGs at 1284×2778, one of the sizes accepted by that slot.
 
 | Order | Asset | Message |
 | --- | --- | --- |
