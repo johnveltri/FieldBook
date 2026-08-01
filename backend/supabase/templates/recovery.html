@@ -3,9 +3,35 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light" />
-    <meta name="supported-color-schemes" content="light" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
     <title>Reset your FieldSoli password</title>
+    <style>
+      .body-text {
+        color: #2b3441 !important;
+      }
+      a.link {
+        color: #0563c1 !important;
+      }
+      a.cta-button {
+        background-color: #c44b2b !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+      }
+      @media (prefers-color-scheme: dark) {
+        .body-text {
+          color: #2b3441 !important;
+        }
+        a.link {
+          color: #0563c1 !important;
+        }
+        a.cta-button {
+          background-color: #c44b2b !important;
+          color: #ffffff !important;
+          -webkit-text-fill-color: #ffffff !important;
+        }
+      }
+    </style>
   </head>
   <body style="margin:0;padding:0;background:#faf6f0;-webkit-text-size-adjust:100%;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#faf6f0;">
@@ -27,8 +53,8 @@
               </td>
             </tr>
             <tr>
-              <td style="padding:16px 28px 0 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:15px;line-height:1.6;color:#726f6a;">
-                <p style="margin:0;">
+              <td class="body-text" style="padding:16px 28px 0 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:15px;line-height:1.6;color:#2b3441;">
+                <p style="margin:0;color:#2b3441;">
                   We received a request to reset the password for <strong style="color:#2b3441;">{{ .Email }}</strong>. Use the button below to choose a new one.
                 </p>
               </td>
@@ -37,8 +63,12 @@
               <td align="center" style="padding:28px 28px 8px 28px;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td style="border-radius:999px;background:#c44b2b;">
-                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:15px;font-weight:700;line-height:1;color:#ffffff;text-decoration:none;">
+                    <td style="border-radius:999px;">
+                      <a
+                        class="cta-button"
+                        href="{{ .ConfirmationURL }}"
+                        style="display:inline-block;padding:14px 28px;border-radius:999px;background-color:#c44b2b;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:15px;font-weight:700;line-height:1;color:#ffffff !important;-webkit-text-fill-color:#ffffff;text-decoration:none;"
+                      >
                         Reset password
                       </a>
                     </td>
@@ -47,27 +77,27 @@
               </td>
             </tr>
             <tr>
-              <td style="padding:16px 28px 0 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:13px;line-height:1.6;color:#726f6a;">
-                <p style="margin:0;">
+              <td class="body-text" style="padding:16px 28px 0 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:13px;line-height:1.6;color:#2b3441;">
+                <p style="margin:0;color:#2b3441;">
                   Or copy and paste this link into your browser:
                 </p>
                 <p style="margin:8px 0 0 0;word-break:break-all;">
-                  <a href="{{ .ConfirmationURL }}" style="color:#c44b2b;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                  <a class="link" href="{{ .ConfirmationURL }}" style="color:#0563c1;text-decoration:underline;">{{ .ConfirmationURL }}</a>
                 </p>
               </td>
             </tr>
             <tr>
-              <td style="padding:24px 28px 28px 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:12px;line-height:1.6;color:#726f6a;">
-                <p style="margin:0;">
+              <td class="body-text" style="padding:24px 28px 28px 28px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:12px;line-height:1.6;color:#2b3441;">
+                <p style="margin:0;color:#2b3441;">
                   If you didn’t ask to reset your password, you can ignore this email. Your password will stay the same.
                 </p>
-                <p style="margin:12px 0 0 0;">
-                  Need help? <a href="mailto:support@fieldsoli.com" style="color:#c44b2b;font-weight:700;text-decoration:underline;">support@fieldsoli.com</a>
+                <p style="margin:12px 0 0 0;color:#2b3441;">
+                  Need help? <a class="link" href="mailto:support@fieldsoli.com" style="color:#0563c1;font-weight:700;text-decoration:underline;">support@fieldsoli.com</a>
                 </p>
               </td>
             </tr>
           </table>
-          <p style="margin:20px 0 0 0;max-width:560px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:11px;line-height:1.5;color:#726f6a;">
+          <p class="body-text" style="margin:20px 0 0 0;max-width:560px;font-family:'Ubuntu Sans Mono','Courier New',Courier,monospace;font-size:11px;line-height:1.5;color:#2b3441;">
             FieldSoli<sup style="font-size:7px;line-height:0;vertical-align:super;">TM</sup> is operated by Veltri Ventures LLC.
           </p>
         </td>
