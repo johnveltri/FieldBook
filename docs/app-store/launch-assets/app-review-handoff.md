@@ -2,7 +2,7 @@
 
 ## Ready
 
-- Six iPhone screenshots at 1320×2868, opaque RGB PNG.
+- Six iPhone screenshots at 1320×2868 for the 6.9-inch slot, plus matching 1284×2778 exports for the 6.5-inch slot; all are opaque RGB PNGs.
 - App name, subtitle, promotional text, keywords, full description, categories, territory, price, and release preference.
 - Editable Figma campaign master and Buzz bulk-create workbook.
 
