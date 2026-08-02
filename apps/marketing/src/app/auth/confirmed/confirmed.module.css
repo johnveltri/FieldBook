@@ -23,6 +23,28 @@
   line-height: 1.6;
 }
 
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-family: "Ubuntu Sans Mono", "Courier New", Courier, monospace;
+  font-size: 0.875rem;
+}
+
+.form input {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(43, 52, 65, 0.13);
+  border-radius: 10px;
+  font: inherit;
+}
+
 .secondary a {
   color: var(--rust-700);
   font-weight: 700;

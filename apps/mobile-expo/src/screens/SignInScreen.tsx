@@ -69,11 +69,29 @@ function authErrorMessage(error: unknown): string {
   return message || 'Something went wrong. Try again.';
 }
 
+function isInvalidLoginCredentials(error: unknown): boolean {
+  const message = error instanceof Error
+    ? error.message
+    : typeof error === 'object' && error !== null && 'message' in error
+      ? String((error as { message: unknown }).message)
+      : String(error);
+  return message.toLowerCase().includes('invalid login credentials');
+}
+
+function isEmailNotConfirmed(error: unknown): boolean {
+  const message = error instanceof Error
+    ? error.message
+    : typeof error === 'object' && error !== null && 'message' in error
+      ? String((error as { message: unknown }).message)
+      : String(error);
+  return message.toLowerCase().includes('email not confirmed');
+}
+
 export function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
-  const { signIn, signUp, setSignupLegalPending } = useAuth();
+  const { signIn, signUp, requestPasswordReset, setSignupLegalPending } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -81,8 +99,11 @@ export function SignInScreen() {
   const [lastName, setLastName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'signIn' | 'signUp' | 'checkEmail'>('signIn');
+  const [mode, setMode] = useState<
+    'signIn' | 'signUp' | 'checkEmail' | 'forgotPassword' | 'resetEmailSent'
+  >('signIn');
   const [pendingConfirmEmail, setPendingConfirmEmail] = useState('');
+  const [pendingResetEmail, setPendingResetEmail] = useState('');
   const [resendBusy, setResendBusy] = useState(false);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
   const [legalAccepted, setLegalAccepted] = useState(false);
@@ -160,7 +181,46 @@ export function SignInScreen() {
     mode === 'signUp' && confirmPassword.length > 0 && password !== confirmPassword;
   const canCreateAccount =
     passwordMeetsPolicy && passwordsMatch && legalAccepted && !busy;
-  const primaryDisabled = mode === 'signUp' ? !canCreateAccount : busy;
+  const primaryDisabled =
+    mode === 'signUp' ? !canCreateAccount : mode === 'forgotPassword' ? busy : busy;
+
+  const onForgotPasswordSubmit = useCallback(async () => {
+    setError(null);
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed) {
+      setError('Enter your email address.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError('Enter a valid email address.');
+      return;
+    }
+    Keyboard.dismiss();
+    setBusy(true);
+    try {
+      analytics.capture('password_reset_requested', {
+        ...emailProperties(trimmed),
+      });
+      const { error: resetErr } = await requestPasswordReset(trimmed);
+      if (resetErr) {
+        analytics.capture('password_reset_request_failed', {
+          ...emailProperties(trimmed),
+          ...errorProperties(resetErr),
+        });
+        setError(authErrorMessage(resetErr));
+        return;
+      }
+      setPendingResetEmail(trimmed);
+      setMode('resetEmailSent');
+      announceAccessibilityMessage(
+        `If an account exists for ${trimmed}, we sent a password reset link.`,
+      );
+    } catch (e) {
+      setError(authErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [email, requestPasswordReset]);
 
   const onResendConfirmation = useCallback(async () => {
     const targetEmail = pendingConfirmEmail || email.trim().toLowerCase();
@@ -273,14 +333,24 @@ export function SignInScreen() {
             password,
           );
             if (signInErr) {
-              setPassword('');
-              setConfirmPassword('');
-              setPendingConfirmEmail(trimmed);
-              setResendNotice(null);
-              setMode('checkEmail');
-              announceAccessibilityMessage(
-                `Check your email. We sent a confirmation link to ${trimmed}.`,
-              );
+              if (isInvalidLoginCredentials(signInErr)) {
+                setError(
+                  'An account already exists for this email. Sign in or reset your password.',
+                );
+                return;
+              }
+              if (isEmailNotConfirmed(signInErr)) {
+                setPassword('');
+                setConfirmPassword('');
+                setPendingConfirmEmail(trimmed);
+                setResendNotice(null);
+                setMode('checkEmail');
+                announceAccessibilityMessage(
+                  `Check your email. We sent a confirmation link to ${trimmed}.`,
+                );
+                return;
+              }
+              setError(authErrorMessage(signInErr));
               return;
             }
           acceptedUserId = immediateSession?.user.id ?? null;
@@ -330,7 +400,7 @@ export function SignInScreen() {
     } finally {
       setBusy(false);
     }
-  }, [email, password, confirmPassword, firstName, lastName, legalAccepted, mode, setSignupLegalPending, signIn, signUp]);
+  }, [email, password, confirmPassword, firstName, lastName, legalAccepted, mode, setSignupLegalPending, signIn, signUp, requestPasswordReset]);
 
   if (!fontsLoaded) {
     return (
@@ -358,7 +428,9 @@ export function SignInScreen() {
           scrollEventThrottle={16}
           contentContainerStyle={[
             styles.scrollContent,
-            mode === 'signIn' || mode === 'checkEmail' ? styles.scrollContentCentered : styles.scrollContentTop,
+            mode === 'signIn' || mode === 'checkEmail' || mode === 'resetEmailSent'
+              ? styles.scrollContentCentered
+              : styles.scrollContentTop,
             {
               paddingTop: insets.top + gap,
               paddingBottom: insets.bottom + gap,
@@ -440,15 +512,45 @@ export function SignInScreen() {
                   <Text style={[text.bodySemi, { color: fg.primary }]}>Back to sign in</Text>
                 </Pressable>
               </>
+            ) : mode === 'resetEmailSent' ? (
+              <>
+                <Text
+                  accessibilityRole="header"
+                  style={[text.title, { color: fg.primary, marginBottom: space('Spacing/8') }]}
+                >
+                  Check your email
+                </Text>
+                <Text style={[text.body, { color: fg.secondary, marginBottom: space('Spacing/24') }]}>
+                  If an account exists for{' '}
+                  <Text style={[text.bodySemi, { color: fg.primary }]}>{pendingResetEmail}</Text>,
+                  we sent a password reset link. Open the email and choose a new password.
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setMode('signIn');
+                    setError(null);
+                  }}
+                  style={styles.modeSwitch}
+                >
+                  <Text style={[text.bodySemi, { color: fg.primary }]}>Back to sign in</Text>
+                </Pressable>
+              </>
             ) : (
               <>
             <Text accessibilityRole="header" style={[text.title, { color: fg.primary, marginBottom: space('Spacing/8') }]}>
-              {mode === 'signUp' ? 'Create your account' : 'Welcome back'}
+              {mode === 'signUp'
+                ? 'Create your account'
+                : mode === 'forgotPassword'
+                  ? 'Reset password'
+                  : 'Welcome back'}
             </Text>
             <Text style={[text.body, { color: fg.secondary, marginBottom: space('Spacing/24') }]}>
               {mode === 'signUp'
                 ? 'Start with one real job. You can add the rest as you go.'
-                : 'Sign in to keep track of your jobs, time & earnings.'}
+                : mode === 'forgotPassword'
+                  ? 'Enter the email for your account and we will send a reset link.'
+                  : 'Sign in to keep track of your jobs, time & earnings.'}
             </Text>
 
             {mode === 'signUp' ? (
@@ -532,14 +634,19 @@ export function SignInScreen() {
               autoCorrect={false}
               keyboardType="email-address"
               textContentType="emailAddress"
-              returnKeyType="next"
-              onSubmitEditing={() => passwordInputRef.current?.focus()}
+              returnKeyType={mode === 'forgotPassword' ? 'done' : 'next'}
+              onSubmitEditing={() => {
+                if (mode === 'forgotPassword') void onForgotPasswordSubmit();
+                else passwordInputRef.current?.focus();
+              }}
               placeholder={emailFocused ? undefined : 'you@example.com'}
               placeholderTextColor={fg.secondary}
               style={[styles.input, text.body, { color: fg.primary }]}
               editable={!busy}
             />
 
+            {mode !== 'forgotPassword' ? (
+              <>
             <Text
               style={[
                 text.caption,
@@ -587,6 +694,23 @@ export function SignInScreen() {
                 </Text>
               </Pressable>
             </View>
+
+            {mode === 'signIn' ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  setMode('forgotPassword');
+                  setPassword('');
+                  setError(null);
+                }}
+                disabled={busy}
+                style={{ marginTop: space('Spacing/12'), alignSelf: 'flex-start' }}
+              >
+                <Text style={[text.caption, styles.consentLink, { color: fg.secondary }]}>
+                  Forgot password?
+                </Text>
+              </Pressable>
+            ) : null}
 
             {mode === 'signUp' ? (
               <>
@@ -640,6 +764,8 @@ export function SignInScreen() {
                 ) : null}
               </>
             ) : null}
+              </>
+            ) : null}
 
             {error ? (
               <Text style={[text.caption, { color: '#b00020', marginTop: gap }]}>{error}</Text>
@@ -681,7 +807,13 @@ export function SignInScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ disabled: primaryDisabled, busy }}
-              onPress={mode === 'signUp' && !canCreateAccount ? undefined : onSubmit}
+              onPress={
+                mode === 'forgotPassword'
+                  ? () => void onForgotPasswordSubmit()
+                  : mode === 'signUp' && !canCreateAccount
+                    ? undefined
+                    : () => void onSubmit()
+              }
               disabled={primaryDisabled}
               style={({ pressed }) => [
                 styles.primaryButton,
@@ -694,7 +826,11 @@ export function SignInScreen() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={[text.bodySemi, { color: '#fff' }]}>
-                  {mode === 'signIn' ? 'Sign in' : 'Create account'}
+                  {mode === 'forgotPassword'
+                    ? 'Send reset link'
+                    : mode === 'signIn'
+                      ? 'Sign in'
+                      : 'Create account'}
                 </Text>
               )}
             </Pressable>
@@ -702,6 +838,11 @@ export function SignInScreen() {
             <Pressable
               accessibilityRole="button"
               onPress={() => {
+                if (mode === 'forgotPassword') {
+                  setMode('signIn');
+                  setError(null);
+                  return;
+                }
                 setMode((m) => {
                   const next = m === 'signIn' ? 'signUp' : 'signIn';
                   if (next === 'signUp') {
@@ -718,7 +859,11 @@ export function SignInScreen() {
               style={styles.modeSwitch}
             >
               <Text style={[text.bodySemi, { color: fg.primary }]}>
-                {mode === 'signIn' ? 'Create an account' : 'Back to sign in'}
+                {mode === 'forgotPassword'
+                  ? 'Back to sign in'
+                  : mode === 'signIn'
+                    ? 'Create an account'
+                    : 'Back to sign in'}
               </Text>
             </Pressable>
 

@@ -3,13 +3,12 @@
 ## Ready
 
 - Six iPhone screenshots at 1320×2868 for the 6.9-inch slot, plus matching 1284×2778 exports for the 6.5-inch slot; all are opaque RGB PNGs.
+- Opaque 1024×1024 App Store icons in `apps/mobile-expo/assets/brand/fieldsoli-solo-notch-light.png` and `fieldsoli-solo-notch-dark.png` (RGB, no alpha).
+- Live support page at `https://fieldsoli.com/support` with contact, response expectation, troubleshooting, privacy link, and account-deletion instructions.
 - App name, subtitle, promotional text, keywords, full description, categories, territory, price, and release preference.
 - Editable Figma campaign master and Buzz bulk-create workbook.
 
 ## Still needed before submission
-
-- Final opaque 1024×1024 App Store icon.
-- Live support page at `https://fieldsoli.com/support` with a contact method, response expectation, troubleshooting, privacy link, and account-deletion instructions.
 - App privacy answers that match the production build and consent behavior.
 - Age-rating questionnaire.
 - Copyright holder and year.

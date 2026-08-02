@@ -876,6 +876,17 @@ export function JobDetailScreen({
   const onPrimaryStatusCta = useCallback(async () => {
     if (!job || statusActionPending) return;
     const next = nextStatusAfterPrimaryAction(job.workStatus);
+    if (next === 'paid' && job.earnings.revenueCents <= 0) {
+      Alert.alert(
+        'Add revenue first',
+        'Enter job revenue before marking this job paid.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Edit job', onPress: onEdit },
+        ],
+      );
+      return;
+    }
     setStatusActionPending(true);
     try {
       await updateJobStatusById(supabase, job.id, next);
@@ -904,7 +915,7 @@ export function JobDetailScreen({
     } finally {
       setStatusActionPending(false);
     }
-  }, [job, statusActionPending, refetchJob, formatErrorMessage, maybeShowCompletionFeedbackPrompt]);
+  }, [job, statusActionPending, refetchJob, formatErrorMessage, maybeShowCompletionFeedbackPrompt, onEdit]);
 
   const onSelectJobStatusFromSheet = useCallback(
     async (value: string) => {

@@ -1,6 +1,9 @@
 /** Post-email-confirmation landing page on the marketing site. */
 export const AUTH_CONFIRM_URL = 'https://fieldsoli.com/auth/confirmed';
 
+/** Post-recovery-email landing page where the user sets a new password. */
+export const AUTH_RESET_PASSWORD_URL = 'https://fieldsoli.com/auth/reset-password';
+
 /** Opens the native app on the sign-in screen (see SignInScreen deep-link handler). */
 export const APP_SIGN_IN_DEEP_LINK = 'fieldsoli://sign-in';
 

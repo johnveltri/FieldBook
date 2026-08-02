@@ -76,7 +76,11 @@ jest.mock('../components/figma-icons/JobDetailScreenIcons', () => ({
 }));
 
 jest.mock('../components/ds', () => ({
-  nextStatusAfterPrimaryAction: () => 'completed',
+  nextStatusAfterPrimaryAction: (status: string) => {
+    if (status === 'inProgress') return 'completed';
+    if (status === 'completed') return 'paid';
+    return 'completed';
+  },
   EditJobBottomSheet: () => null,
   JobDetailCtaRow: ({ onPrimaryPress }: { onPrimaryPress: () => void }) => {
     const { Text } = require('react-native');
@@ -878,5 +882,32 @@ describe('JobDetailScreen manual session and note flows', () => {
     await waitFor(() => {
       expect(apiClient.deleteMaterial).toHaveBeenCalledWith({}, 'mat-1');
     });
+  });
+
+  it('blocks mark paid when revenue is zero', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    apiClient.fetchJobDetail.mockResolvedValue({
+      ...baseJob,
+      workStatus: 'completed',
+      earnings: {
+        ...baseJob.earnings,
+        revenueCents: 0,
+        netEarningsCents: 0,
+      },
+    });
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => expect(screen.getByText('Primary status action')).toBeTruthy());
+    fireEvent.press(screen.getByText('Primary status action'));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Add revenue first',
+        'Enter job revenue before marking this job paid.',
+        expect.any(Array),
+      );
+    });
+    expect(apiClient.updateJobStatusById).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
   });
 });

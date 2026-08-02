@@ -9,7 +9,7 @@ import {
 import { analytics, errorProperties } from '../lib/analytics';
 import { clearAnalyticsConsentCache } from '../lib/analytics/consentStorage';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { AUTH_CONFIRM_URL } from '../lib/authUrls';
+import { AUTH_CONFIRM_URL, AUTH_RESET_PASSWORD_URL } from '../lib/authUrls';
 import { newPasswordPolicyError } from '../lib/passwordPolicy';
 
 export type SignUpProfileSeed = {
@@ -41,6 +41,8 @@ type AuthContextValue = {
     profile?: SignUpProfileSeed,
   ) => Promise<{ error: Error | null; session: Session | null }>;
   signOut: () => Promise<void>;
+  /** Sends a password recovery email (anti-enumeration: always treat as success in UI). */
+  requestPasswordReset: (email: string) => Promise<{ error: Error | null }>;
   /** Wraps `auth.updateUser({ password })`. Throws on failure. */
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   /**
@@ -127,6 +129,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         await analytics.onSignOut();
         await clearAnalyticsConsentCache();
+      },
+      requestPasswordReset: async (email) => {
+        const trimmed = email.trim().toLowerCase();
+        const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+          redirectTo: AUTH_RESET_PASSWORD_URL,
+        });
+        return {
+          error: error ? new Error(error.message) : null,
+        };
       },
       updatePassword: async (newPassword) => {
         const policyError = newPasswordPolicyError(newPassword);

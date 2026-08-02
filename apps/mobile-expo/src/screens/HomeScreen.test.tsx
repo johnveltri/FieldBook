@@ -174,8 +174,8 @@ describe('HomeScreen quick session', () => {
       />,
     );
 
-    expect(screen.getByText(/FIELD\s*SOLO/)).toBeTruthy();
-    const title = screen.getByText(/FIELD\s*SOLO/);
+    expect(screen.getByText(/FIELD\s*SOLI/)).toBeTruthy();
+    const title = screen.getByText(/FIELD\s*SOLI/);
     expect(title.props.accessibilityRole).toBe('header');
     expect(title.props.accessibilityLabel).toBe('FieldSoli');
   });
