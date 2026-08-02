@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.veltriventures.fieldsoli",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "icon": {
         "light": "./assets/brand/fieldsoli-solo-notch-light.png",
         "dark": "./assets/brand/fieldsoli-solo-notch-dark.png"
