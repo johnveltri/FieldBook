@@ -10,7 +10,7 @@
     "ios:go": "expo start --ios",
     "prebuild:android": "expo prebuild --platform android --clean",
     "web": "expo start --web",
-    "export:ios:production": "FIELDSOLO_RELEASE_EXPORT=true EXPO_PUBLIC_APP_ENV=production EXPO_PUBLIC_IS_TESTFLIGHT=true EXPO_PUBLIC_ANALYTICS_DEBUG_RICH=false expo export --platform ios",
+    "export:ios:production": "FIELDSOLO_RELEASE_EXPORT=true EXPO_PUBLIC_APP_ENV=production EXPO_PUBLIC_IS_TESTFLIGHT=false EXPO_PUBLIC_ANALYTICS_DEBUG_RICH=false expo export --platform ios",
     "test": "jest --config ./jest.config.js",
     "test:watch": "jest --config ./jest.config.js --watch"
   },

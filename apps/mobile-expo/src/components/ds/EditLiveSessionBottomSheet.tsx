@@ -122,6 +122,7 @@ export function EditLiveSessionBottomSheet({
   const [endTime, setEndTime] = useState<Date | null>(null);
   /** Spinner seed for optional end time; opening the picker alone is not a selection. */
   const [draftEndTime, setDraftEndTime] = useState<Date | null>(null);
+  const [timeError, setTimeError] = useState<string | null>(null);
   const [activePicker, setActivePicker] = useState<PickerKind | null>(null);
 
   // Re-seed every time the sheet opens so reopening after a minimize→edit
@@ -132,6 +133,7 @@ export function EditLiveSessionBottomSheet({
     setStartTime(initialStart);
     setEndTime(null);
     setDraftEndTime(null);
+    setTimeError(null);
     setActivePicker(null);
   }, [initialDate, initialStart, visible]);
 
@@ -191,9 +193,20 @@ export function EditLiveSessionBottomSheet({
   );
 
   const handleSave = useCallback(() => {
-    const startedAtIso = combineDateAndTime(date, startTime).toISOString();
+    setTimeError(null);
+    const startedAtDate = combineDateAndTime(date, startTime);
+    if (startedAtDate.getTime() > Date.now()) {
+      setTimeError("Start time can't be in the future.");
+      return;
+    }
+    const startedAtIso = startedAtDate.toISOString();
     if (endTime) {
-      const endedAtIso = combineDateAndTime(date, endTime).toISOString();
+      const endedAtDate = combineDateAndTime(date, endTime);
+      if (endedAtDate.getTime() < startedAtDate.getTime()) {
+        setTimeError('End time must be after the start time.');
+        return;
+      }
+      const endedAtIso = endedAtDate.toISOString();
       onSavePress?.({ kind: 'endSession', startedAt: startedAtIso, endedAt: endedAtIso });
       return;
     }
@@ -326,6 +339,12 @@ export function EditLiveSessionBottomSheet({
               textColor={fg.primary}
             />
           </View>
+        ) : null}
+
+        {timeError ? (
+          <Text style={[typography.bodySmall, { color: '#b00020', marginTop: space('Spacing/12') }]}>
+            {timeError}
+          </Text>
         ) : null}
 
         <SheetPrimaryDeleteActions

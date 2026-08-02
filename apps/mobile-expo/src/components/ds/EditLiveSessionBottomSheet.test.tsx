@@ -8,10 +8,23 @@ import { createTextStyles } from '../../theme/nativeTokens';
 
 jest.mock('@react-native-community/datetimepicker', () => ({
   __esModule: true,
-  default: () => {
+  default: ({
+    onChange,
+  }: {
+    onChange?: (event: { type: string }, date?: Date) => void;
+  }) => {
     const React = require('react');
-    const { View } = require('react-native');
-    return <View testID="date-time-picker" />;
+    const { Pressable, Text } = require('react-native');
+    return (
+      <Pressable
+        testID="date-time-picker"
+        onPress={() =>
+          onChange?.({ type: 'set' }, new Date('2026-04-25T14:00:00.000Z'))
+        }
+      >
+        <Text>picker</Text>
+      </Pressable>
+    );
   },
   DateTimePickerAndroid: { open: jest.fn() },
 }));
@@ -70,6 +83,56 @@ describe('EditLiveSessionBottomSheet', () => {
       });
     } finally {
       restorePlatform();
+    }
+  });
+
+  it('rejects an end time before the start time', () => {
+    const restorePlatform = setPlatformOS('ios');
+    const onSavePress = jest.fn();
+    try {
+      const screen = render(
+        <EditLiveSessionBottomSheet
+          {...baseProps}
+          onSavePress={onSavePress}
+        />,
+      );
+
+      fireEvent.press(
+        screen.getByLabelText(
+          'End time (optional — saving with a value ends the session)',
+        ),
+      );
+      fireEvent.press(screen.getByTestId('date-time-picker'));
+      fireEvent.press(screen.getByLabelText('SAVE CHANGES'));
+
+      expect(screen.getByText('End time must be after the start time.')).toBeTruthy();
+      expect(onSavePress).not.toHaveBeenCalled();
+    } finally {
+      restorePlatform();
+    }
+  });
+
+  it('rejects a start time in the future', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-04-25T10:00:00.000Z'));
+    const restorePlatform = setPlatformOS('ios');
+    const onSavePress = jest.fn();
+    try {
+      const screen = render(
+        <EditLiveSessionBottomSheet
+          {...baseProps}
+          startedAt="2026-04-25T15:00:00.000Z"
+          onSavePress={onSavePress}
+        />,
+      );
+
+      fireEvent.press(screen.getByLabelText('SAVE CHANGES'));
+
+      expect(screen.getByText("Start time can't be in the future.")).toBeTruthy();
+      expect(onSavePress).not.toHaveBeenCalled();
+    } finally {
+      restorePlatform();
+      jest.useRealTimers();
     }
   });
 });

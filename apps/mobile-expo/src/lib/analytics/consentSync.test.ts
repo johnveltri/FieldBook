@@ -47,4 +47,14 @@ describe('analytics consent sync', () => {
     expect(mockGrantConsent).toHaveBeenCalled();
     expect(mockIdentify).toHaveBeenCalledWith('user-1');
   });
+
+  it('applies granted consent locally when the server upsert fails', async () => {
+    mockUpsertAnalyticsConsentStatus.mockRejectedValueOnce(new Error('offline'));
+
+    await grantAnalyticsConsent('user-1');
+
+    expect(mockWriteAnalyticsConsentCache).toHaveBeenCalledWith('user-1', 'granted');
+    expect(mockGrantConsent).toHaveBeenCalled();
+    expect(mockIdentify).toHaveBeenCalledWith('user-1');
+  });
 });

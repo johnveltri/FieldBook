@@ -9,6 +9,7 @@ const mockSignIn = jest.fn<
   (...args: unknown[]) => Promise<{ error: Error | null; session: null }>
 >(async () => ({ error: null, session: null }));
 const mockSignUp = jest.fn(async () => ({ error: null, session: { user: { id: 'user-1' } } }));
+const mockRequestPasswordReset = jest.fn(async () => ({ error: null }));
 const mockSetSignupLegalPending = jest.fn();
 
 jest.mock('expo-font', () => ({
@@ -19,6 +20,7 @@ jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     signIn: mockSignIn,
     signUp: mockSignUp,
+    requestPasswordReset: mockRequestPasswordReset,
     setSignupLegalPending: mockSetSignupLegalPending,
   }),
 }));
@@ -387,5 +389,50 @@ describe('SignInScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('Welcome back')).toBeTruthy();
     });
+  });
+
+  it('requests a password reset from forgot password mode', async () => {
+    const screen = render(<SignInScreen />);
+
+    fireEvent.press(screen.getByText('Forgot password?'));
+    fireEvent.changeText(screen.getByLabelText('Email'), 'tech@example.com');
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'Send reset link' }));
+    });
+
+    await waitFor(() => {
+      expect(mockRequestPasswordReset).toHaveBeenCalledWith('tech@example.com');
+      expect(screen.getByText('Check your email')).toBeTruthy();
+      expect(screen.getByText('tech@example.com')).toBeTruthy();
+    });
+  });
+
+  it('shows an existing-account error instead of check email when signup sign-in fails with invalid credentials', async () => {
+    mockSignUp.mockResolvedValueOnce({ error: null, session: null });
+    mockSignIn.mockResolvedValueOnce({
+      error: new Error('Invalid login credentials'),
+      session: null,
+    });
+    const screen = render(<SignInScreen />);
+
+    fireEvent.press(screen.getByText('Create an account'));
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'tech@example.com');
+    fireEvent.changeText(screen.getByPlaceholderText('Alex'), 'Alex');
+    fireEvent.changeText(screen.getByPlaceholderText('Builder'), 'Builder');
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'Password123!');
+    fireEvent.changeText(screen.getByPlaceholderText('Re-enter password'), 'Password123!');
+    fireEvent.press(screen.getByRole('checkbox'));
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
+    });
+
+    expect(
+      screen.getByText(
+        'An account already exists for this email. Sign in or reset your password.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Check your email')).toBeNull();
   });
 });

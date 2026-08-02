@@ -57,14 +57,22 @@ export async function resolveAnalyticsConsentForUser(
 }
 
 export async function grantAnalyticsConsent(userId: string): Promise<void> {
-  await upsertAnalyticsConsentStatus(supabase, 'granted');
+  try {
+    await upsertAnalyticsConsentStatus(supabase, 'granted');
+  } catch {
+    // Best-effort server sync; local consent still applies when offline.
+  }
   await writeAnalyticsConsentCache(userId, 'granted');
   await analytics.grantConsent();
   analytics.identify(userId);
 }
 
 export async function withdrawAnalyticsConsent(userId: string): Promise<void> {
-  await upsertAnalyticsConsentStatus(supabase, 'withdrawn');
+  try {
+    await upsertAnalyticsConsentStatus(supabase, 'withdrawn');
+  } catch {
+    // Best-effort server sync; local consent still applies when offline.
+  }
   await writeAnalyticsConsentCache(userId, 'withdrawn');
   await analytics.withdrawConsent();
 }
