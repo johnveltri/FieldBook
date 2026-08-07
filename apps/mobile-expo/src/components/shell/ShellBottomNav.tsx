@@ -28,11 +28,13 @@ import {
 
 export type ShellMainTab = 'home' | 'jobs' | 'earnings';
 
-function shellBottomNavBottomPadding(insetsBottom: number): number {
+export function shellBottomNavBottomPadding(insetsBottom: number): number {
   const stripPad = space('Spacing/8');
+  if (Platform.OS === 'android') {
+    return Math.max(space('Spacing/12'), insetsBottom + stripPad);
+  }
   const adjusted = insetsBottom + stripPad - space('Spacing/32');
-  const floor = Platform.OS === 'android' ? space('Spacing/12') : 0;
-  return Math.max(floor, adjusted);
+  return Math.max(0, adjusted);
 }
 
 /** Matches `ShellBottomNav` outer height (main content bottom → screen bottom). */

@@ -15,6 +15,7 @@ import {
   Linking,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -48,6 +49,9 @@ import { AUTH_CONFIRM_URL, isAppSignInDeepLink } from '../lib/authUrls';
 const BRAND_DISPLAY_FONT_SIZE = 32;
 const BRAND_DISPLAY_LINE_HEIGHT = Math.round(BRAND_DISPLAY_FONT_SIZE * 1.4);
 const BRAND_TM_FONT_SIZE = Math.round(BRAND_DISPLAY_FONT_SIZE * 0.32);
+// Leave enough room below the focused field to expose the next form control
+// above taller Android keyboards (including Samsung's keyboard toolbar).
+const AUTH_KEYBOARD_FOCUS_OFFSET = 160;
 /** Cap-band offset so TM reads as superscript, not baseline-aligned (subscript). */
 const BRAND_TM_SUPERSCRIPT_MARGIN_TOP = Math.round(
   (BRAND_DISPLAY_LINE_HEIGHT - BRAND_DISPLAY_FONT_SIZE) / 2,
@@ -111,10 +115,20 @@ export function SignInScreen() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const previousModeRef = useRef(mode);
+  const scrollViewRef = useRef<ScrollView>(null);
   const lastNameInputRef = useRef<TextInput>(null);
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const confirmPasswordInputRef = useRef<TextInput>(null);
+
+  const scrollInputIntoView = useCallback((nativeTarget?: number) => {
+    if (nativeTarget == null) return;
+    scrollViewRef.current?.scrollResponderScrollNativeHandleToKeyboard?.(
+      nativeTarget,
+      AUTH_KEYBOARD_FOCUS_OFFSET,
+      true,
+    );
+  }, []);
 
   useEffect(() => {
     analytics.capture('auth_screen_viewed', { mode });
@@ -417,10 +431,11 @@ export function SignInScreen() {
     <View style={styles.root}>
       <CanvasTiledBackground scrollY={scrollY} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
       >
         <Animated.ScrollView
+          ref={scrollViewRef}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
             { useNativeDriver: true },
@@ -437,6 +452,7 @@ export function SignInScreen() {
             },
           ]}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           <View style={columnStyle}>
           <View style={styles.brandBlock}>
@@ -575,6 +591,7 @@ export function SignInScreen() {
                   autoCorrect={false}
                   textContentType="givenName"
                   returnKeyType="next"
+                  onFocus={(event) => scrollInputIntoView(event?.nativeEvent.target)}
                   onSubmitEditing={() => lastNameInputRef.current?.focus()}
                   placeholder="Alex"
                   placeholderTextColor={fg.secondary}
@@ -606,6 +623,7 @@ export function SignInScreen() {
                   autoCorrect={false}
                   textContentType="familyName"
                   returnKeyType="next"
+                  onFocus={(event) => scrollInputIntoView(event?.nativeEvent.target)}
                   onSubmitEditing={() => emailInputRef.current?.focus()}
                   placeholder="Builder"
                   placeholderTextColor={fg.secondary}
@@ -626,7 +644,10 @@ export function SignInScreen() {
                 setEmail(value);
                 if (error) setError(null);
               }}
-              onFocus={() => setEmailFocused(true)}
+              onFocus={(event) => {
+                setEmailFocused(true);
+                scrollInputIntoView(event?.nativeEvent.target);
+              }}
               onBlur={() => setEmailFocused(false)}
               accessibilityLabel="Email"
               autoCapitalize="none"
@@ -663,7 +684,10 @@ export function SignInScreen() {
                   setPassword(value);
                   if (error) setError(null);
                 }}
-                onFocus={() => setPasswordFocused(true)}
+                onFocus={(event) => {
+                  setPasswordFocused(true);
+                  scrollInputIntoView(event?.nativeEvent.target);
+                }}
                 onBlur={() => setPasswordFocused(false)}
                 accessibilityLabel="Password"
                 autoCapitalize="none"
@@ -749,6 +773,7 @@ export function SignInScreen() {
                   secureTextEntry={!passwordVisible}
                   textContentType="newPassword"
                   returnKeyType="done"
+                  onFocus={(event) => scrollInputIntoView(event?.nativeEvent.target)}
                   onSubmitEditing={() => {
                     if (canCreateAccount) void onSubmit();
                   }}

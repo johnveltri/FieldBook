@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
-import { Keyboard, Linking } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Linking, Platform } from 'react-native';
 
 import { SignInScreen } from './SignInScreen';
 
@@ -81,6 +81,23 @@ describe('SignInScreen', () => {
 
     expect(getByText('Welcome back')).toBeTruthy();
     expect(getByText('Sign in to keep track of your jobs, time & earnings.')).toBeTruthy();
+  });
+
+  it('shrinks the auth viewport above the Android keyboard', () => {
+    const originalPlatformOS = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' });
+
+    try {
+      const screen = render(<SignInScreen />);
+
+      expect(screen.UNSAFE_getByType(KeyboardAvoidingView).props.behavior).toBe('height');
+      expect(screen.UNSAFE_getByProps({ keyboardDismissMode: 'on-drag' })).toBeTruthy();
+    } finally {
+      Object.defineProperty(Platform, 'OS', {
+        configurable: true,
+        value: originalPlatformOS,
+      });
+    }
   });
 
   it('shows sign-up instructions in sign-up mode', () => {
