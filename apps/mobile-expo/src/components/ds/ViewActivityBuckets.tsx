@@ -2,10 +2,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type {
   JobDetailMaterialBucket,
   JobDetailNoteBucket,
+  JobDetailOtherCostBucket,
 } from '@fieldsolo/shared-types';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
-import type { LocalOtherCostBucket } from '../../lib/otherCostTypes';
 import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { JobDetailIconViewNote } from '../figma-icons/JobDetailScreenIcons';
@@ -93,7 +93,7 @@ export function ViewOtherCostsBuckets({
   typography,
   onOtherCostPress,
 }: {
-  buckets: LocalOtherCostBucket[];
+  buckets: JobDetailOtherCostBucket[];
   typography: TextStyles;
   onOtherCostPress?: (otherCostId: string) => void;
 }) {

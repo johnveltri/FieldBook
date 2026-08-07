@@ -241,19 +241,21 @@ otp_expiry = 3600
 # Dashboard → Authentication → Email Templates for production.
 [auth.email.template.confirmation]
 subject = "Confirm your FieldSoli email"
-content_path = "./templates/confirmation.html"
+# Paths are resolved relative to --workdir (backend/), not this config file.
+content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.recovery]
 subject = "Reset your FieldSoli password"
-content_path = "./templates/recovery.html"
+content_path = "./supabase/templates/recovery.html"
 
 # [auth.email.template.invite]
 # subject = "You have been invited"
-# content_path = "./templates/invite.html"
+# content_path = "./supabase/templates/invite.html"
 
 [auth.email.notification.password_changed]
 enabled = true
 subject = "Your FieldSoli password was changed"
+# Notification content_path is resolved under supabase/; email templates use workdir-relative paths.
 content_path = "./templates/password_changed_notification.html"
 
 [auth.sms]

@@ -89,8 +89,12 @@ import {
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
+  createOtherCost,
+  deleteOtherCost,
   updateJobCostsReviewed,
+  updateJobOtherCostsReviewed,
   updateJobStatusById,
+  updateOtherCost,
   updateMaterial,
   updateNote,
   updateSessionTimes,
@@ -147,18 +151,12 @@ import {
   type FinancialCompletenessGap,
 } from '../lib/jobFinancialCompleteness';
 import {
-  buildLocalOtherCostBuckets,
   OTHER_COST_TYPE_OPTIONS,
   type JobOtherCostType,
-  type LocalOtherCostLine,
 } from '../lib/otherCostTypes';
 
 /** Vertical gap between stacked blocks in the main column (`Spacing/20` = 16 + 4). */
 const SLOT_GAP = space('Spacing/24');
-
-function newLocalOtherCostId(): string {
-  return `local-oc-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
 
 function supabaseApiHostLabel(): string {
   const u = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
@@ -169,22 +167,12 @@ function supabaseApiHostLabel(): string {
   }
 }
 
-function jobFinancialContext(
-  job: JobDetailViewModel,
-  localOtherCostLines: LocalOtherCostLine[],
-  noOtherCostsConfirmed: boolean,
-) {
-  return { job, localOtherCostLines, noOtherCostsConfirmed };
+function jobFinancialContext(job: JobDetailViewModel) {
+  return { job };
 }
 
-function jobDetailIsFinanciallyComplete(
-  job: JobDetailViewModel,
-  localOtherCostLines: LocalOtherCostLine[],
-  noOtherCostsConfirmed: boolean,
-): boolean {
-  return isJobFinanciallyComplete(
-    jobFinancialContext(job, localOtherCostLines, noOtherCostsConfirmed),
-  );
+function jobDetailIsFinanciallyComplete(job: JobDetailViewModel): boolean {
+  return isJobFinanciallyComplete(jobFinancialContext(job));
 }
 
 export type JobDetailCloseOptions = {
@@ -450,14 +438,9 @@ export function JobDetailScreen({
   const [materialSheetMounted, setMaterialSheetMounted] = useState(false);
   const [materialSaving, setMaterialSaving] = useState(false);
   const [noMaterialsSaving, setNoMaterialsSaving] = useState(false);
+  const [noOtherCostsSaving, setNoOtherCostsSaving] = useState(false);
+  const [otherCostSaving, setOtherCostSaving] = useState(false);
 
-  /** Phase 1 — other costs stored locally per job until API writers ship. */
-  const [localOtherCostsByJobId, setLocalOtherCostsByJobId] = useState<
-    Record<string, LocalOtherCostLine[]>
-  >({});
-  const [noOtherCostsConfirmedByJobId, setNoOtherCostsConfirmedByJobId] = useState<
-    Record<string, boolean>
-  >({});
 
   type OtherCostFlow =
     | 'closed'
@@ -495,43 +478,10 @@ export function JobDetailScreen({
     setSessionWizardBanner(undefined);
   }, []);
 
-  const localOtherCostLines = useMemo(
-    () => (job ? localOtherCostsByJobId[job.id] ?? [] : []),
-    [job, localOtherCostsByJobId],
-  );
-  const noOtherCostsConfirmed = job ? noOtherCostsConfirmedByJobId[job.id] ?? false : false;
-
   const financialCompletenessCtx = useMemo(
-    () =>
-      job
-        ? jobFinancialContext(job, localOtherCostLines, noOtherCostsConfirmed)
-        : null,
-    [job, localOtherCostLines, noOtherCostsConfirmed],
+    () => (job ? jobFinancialContext(job) : null),
+    [job],
   );
-
-  const displayEarnings = useMemo(() => {
-    if (!job) return null;
-    const localOtherSpend = localOtherCostLines.reduce((s, line) => s + line.costCents, 0);
-    const otherCostsCents = -localOtherSpend;
-    const netEarningsCents =
-      job.earnings.revenueCents +
-      job.earnings.materialsCents +
-      otherCostsCents +
-      job.earnings.feesCents;
-    return {
-      ...job.earnings,
-      otherCostsCents,
-      netEarningsCents,
-    };
-  }, [job, localOtherCostLines]);
-
-  const otherCostBuckets = useMemo(() => {
-    if (!job) return [];
-    const sessionDateById = new Map(
-      job.allSessions.map((s) => [s.id, s.dateLabel] as const),
-    );
-    return buildLocalOtherCostBuckets(localOtherCostLines, sessionDateById);
-  }, [job, localOtherCostLines]);
 
   const costTypeOptions = useMemo<DropdownBottomSheetOption[]>(
     () =>
@@ -590,11 +540,7 @@ export function JobDetailScreen({
             source: entrySource,
             job_id: j.id,
             job_status: j.workStatus,
-            financially_complete: jobDetailIsFinanciallyComplete(
-              j,
-              localOtherCostsByJobId[j.id] ?? [],
-              noOtherCostsConfirmedByJobId[j.id] ?? false,
-            ),
+            financially_complete: jobDetailIsFinanciallyComplete(j),
             has_sessions: j.displaySessions.length > 0,
             has_materials: j.materialBuckets.some((b) => b.items.length > 0),
             has_notes: j.noteBuckets.some((b) => b.notes.length > 0),
@@ -644,11 +590,7 @@ export function JobDetailScreen({
       analytics.capture('job_edit_opened', {
         source: 'job_detail',
         job_id: job.id,
-        existing_completeness: jobDetailIsFinanciallyComplete(
-          job,
-          localOtherCostLines,
-          noOtherCostsConfirmed,
-        )
+        existing_completeness: jobDetailIsFinanciallyComplete(job)
           ? 'complete'
           : 'incomplete',
         job_status: job.workStatus,
@@ -656,10 +598,18 @@ export function JobDetailScreen({
     }
     setEditSheetMounted(true);
     setEditSheetVisible(true);
-  }, [job, localOtherCostLines, noOtherCostsConfirmed]);
-  const onCloseEditSheet = useCallback(() => {
-    setEditSheetVisible(false);
-  }, []);
+  }, [job]);
+  const onCloseEditSheet = useCallback(
+    (options?: MarkCompleteWizardCloseOptions) => {
+      if (completeWizardActiveRef.current && !options?.keepWizardActive) {
+        cancelMarkCompleteWizard();
+      } else if (options?.keepWizardActive) {
+        setEditJobRevenueError(undefined);
+      }
+      setEditSheetVisible(false);
+    },
+    [cancelMarkCompleteWizard],
+  );
 
   const toEditValues = useCallback((j: JobDetailViewModel): EditJobBottomSheetValues => {
     const revenue = (j.earnings.revenueCents / 100).toLocaleString('en-US', {
@@ -701,20 +651,12 @@ export function JobDetailScreen({
         analytics.capture('job_saved', {
           job_id: job.id,
           changed_fields: changedFields(before, values),
-          completeness_before: jobDetailIsFinanciallyComplete(
-            job,
-            localOtherCostLines,
-            noOtherCostsConfirmed,
-          )
+          completeness_before: jobDetailIsFinanciallyComplete(job)
             ? 'complete'
             : 'incomplete',
           completeness_after:
             refreshed &&
-            jobDetailIsFinanciallyComplete(
-              refreshed,
-              localOtherCostLines,
-              noOtherCostsConfirmed,
-            )
+            jobDetailIsFinanciallyComplete(refreshed)
               ? 'complete'
               : 'incomplete',
           revenue_bucket: moneyBucket(revenueCents),
@@ -979,11 +921,7 @@ export function JobDetailScreen({
   useEffect(() => {
     if (!job || jobLoading || !supabaseReady) return;
 
-    const nowComplete = jobDetailIsFinanciallyComplete(
-      job,
-      localOtherCostLines,
-      noOtherCostsConfirmed,
-    );
+    const nowComplete = jobDetailIsFinanciallyComplete(job);
     const previousComplete = financialCompleteSnapshotRef.current;
     const shouldDemote = shouldDemoteCompletedOrPaidForIncompleteFinancials({
       previousFinanciallyComplete: previousComplete,
@@ -1014,11 +952,7 @@ export function JobDetailScreen({
         const refreshed = await fetchJobDetail(supabase, job.id);
         if (refreshed) {
           setJob(refreshed);
-          financialCompleteSnapshotRef.current = jobDetailIsFinanciallyComplete(
-            refreshed,
-            localOtherCostLines,
-            noOtherCostsConfirmed,
-          );
+          financialCompleteSnapshotRef.current = jobDetailIsFinanciallyComplete(refreshed);
         }
         analytics.capture('job_status_changed', {
           job_id: job.id,
@@ -1047,8 +981,6 @@ export function JobDetailScreen({
     invalidateJobsList,
     job,
     jobLoading,
-    localOtherCostLines,
-    noOtherCostsConfirmed,
     statusActionPending,
     supabaseReady,
   ]);
@@ -1939,19 +1871,9 @@ export function JobDetailScreen({
   );
 
   const advanceMarkCompleteWizard = useCallback(
-    (
-      refreshedJob: JobDetailViewModel,
-      overrides?: {
-        localOtherCostLines?: LocalOtherCostLine[];
-        noOtherCostsConfirmed?: boolean;
-      },
-    ) => {
+    (refreshedJob: JobDetailViewModel) => {
       if (!completeWizardActiveRef.current) return;
-      const ctx = jobFinancialContext(
-        refreshedJob,
-        overrides?.localOtherCostLines ?? localOtherCostLines,
-        overrides?.noOtherCostsConfirmed ?? noOtherCostsConfirmed,
-      );
+      const ctx = jobFinancialContext(refreshedJob);
       const gaps = financialCompletenessGaps(ctx);
       if (gaps.length === 0) {
         completeWizardActiveRef.current = false;
@@ -1960,7 +1882,7 @@ export function JobDetailScreen({
       }
       openMarkCompleteGap(gaps[0]);
     },
-    [localOtherCostLines, noOtherCostsConfirmed, openMarkCompleteGap, performMarkJobCompleted],
+    [openMarkCompleteGap, performMarkJobCompleted],
   );
 
   useEffect(() => {
@@ -1978,25 +1900,71 @@ export function JobDetailScreen({
     setMinimumInfoGateVisible(false);
   }, []);
 
-  const onConfirmNoOtherCosts = useCallback(() => {
-    if (!job) return;
-    setNoOtherCostsConfirmedByJobId((cur) => ({ ...cur, [job.id]: true }));
-    if (completeWizardActiveRef.current) {
-      advanceMarkCompleteWizard(job);
+  const onConfirmNoOtherCosts = useCallback(async () => {
+    if (!job || noOtherCostsSaving || !supabaseReady) return;
+    setNoOtherCostsSaving(true);
+    try {
+      await updateJobOtherCostsReviewed(supabase, job.id, true);
+      await refetchJob();
+      invalidateJobsList();
+      if (completeWizardActiveRef.current) {
+        const refreshed = await fetchJobDetail(supabase, job.id);
+        if (refreshed) advanceMarkCompleteWizard(refreshed);
+      }
+    } catch (e) {
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not confirm other costs.',
+      );
+    } finally {
+      setNoOtherCostsSaving(false);
     }
-  }, [advanceMarkCompleteWizard, job]);
+  }, [
+    advanceMarkCompleteWizard,
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noOtherCostsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
 
-  const onUndoNoOtherCosts = useCallback(() => {
-    if (!job) return;
-    setNoOtherCostsConfirmedByJobId((cur) => ({ ...cur, [job.id]: false }));
-  }, [job]);
+  const onUndoNoOtherCosts = useCallback(async () => {
+    if (!job || noOtherCostsSaving || !supabaseReady) return;
+    setNoOtherCostsSaving(true);
+    try {
+      await updateJobOtherCostsReviewed(supabase, job.id, false);
+      await refetchJob();
+      invalidateJobsList();
+    } catch (e) {
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not undo other costs confirmation.',
+      );
+    } finally {
+      setNoOtherCostsSaving(false);
+    }
+  }, [
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noOtherCostsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
 
-  // --- Other cost add/edit flow (Phase 1 local) ---
+  // --- Other cost add/edit flow ---
 
-  const findLocalOtherCost = useCallback(
-    (otherCostId: string): LocalOtherCostLine | null =>
-      localOtherCostLines.find((line) => line.id === otherCostId) ?? null,
-    [localOtherCostLines],
+  const findOtherCostLine = useCallback(
+    (otherCostId: string) => {
+      if (!job) return null;
+      for (const bucket of job.otherCostBuckets) {
+        const item = bucket.items.find((line) => line.id === otherCostId);
+        if (item) return item;
+      }
+      return null;
+    },
+    [job],
   );
 
   const closeOtherCostFlow = useCallback(
@@ -2024,17 +1992,17 @@ export function JobDetailScreen({
 
   const openEditOtherCost = useCallback(
     (otherCostId: string) => {
-      const line = findLocalOtherCost(otherCostId);
+      const line = findOtherCostLine(otherCostId);
       if (!line) return;
       setEditingOtherCostId(otherCostId);
-      setOcDraftCostType(line.costType);
+      setOcDraftCostType(line.costType as JobOtherCostType);
       setOcDraftCostCents(line.costCents);
       setOcDraftDescription(line.description);
       setOcDraftSessionId(line.sessionId);
       setOtherCostSheetMounted(true);
       setOtherCostFlow('editOtherCost');
     },
-    [findLocalOtherCost],
+    [findOtherCostLine],
   );
 
   const returnToOtherCostSheet = useCallback(() => {
@@ -2070,80 +2038,134 @@ export function JobDetailScreen({
     [returnToOtherCostSheet],
   );
 
-  const persistLocalOtherCostLine = useCallback(
-    (values: EditOtherCostBottomSheetValues, lineId: string | null) => {
-      if (!job) return;
-      const line: LocalOtherCostLine = {
-        id: lineId ?? newLocalOtherCostId(),
-        sessionId: ocDraftSessionId,
-        costType: values.costType,
-        description: values.description,
-        costCents: values.costCents,
-      };
-      const prev = localOtherCostsByJobId[job.id] ?? [];
-      const nextLines = lineId
-        ? prev.map((l) => (l.id === lineId ? line : l))
-        : [...prev, line];
-      setLocalOtherCostsByJobId((cur) => ({ ...cur, [job.id]: nextLines }));
-      setNoOtherCostsConfirmedByJobId((cur) => ({ ...cur, [job.id]: false }));
-      const keepWizard = completeWizardActiveRef.current;
-      closeOtherCostFlow({ keepWizardActive: keepWizard });
-      if (keepWizard) {
-        advanceMarkCompleteWizard(job, {
-          localOtherCostLines: nextLines,
-          noOtherCostsConfirmed: false,
-        });
+  const saveOtherCostLine = useCallback(
+    async (values: EditOtherCostBottomSheetValues, lineId: string | null) => {
+      if (!job || otherCostSaving || !supabaseReady) return;
+      setOtherCostSaving(true);
+      try {
+        if (lineId) {
+          await updateOtherCost(supabase, lineId, {
+            costType: values.costType,
+            description: values.description,
+            costCents: values.costCents,
+            sessionId: ocDraftSessionId,
+            jobId: ocDraftSessionId ? null : job.id,
+          });
+        } else {
+          await createOtherCost(supabase, {
+            jobId: ocDraftSessionId ? null : job.id,
+            sessionId: ocDraftSessionId,
+            costType: values.costType,
+            description: values.description,
+            costCents: values.costCents,
+          });
+        }
+        await refetchJob();
+        invalidateJobsList();
+        const keepWizard = completeWizardActiveRef.current;
+        closeOtherCostFlow({ keepWizardActive: keepWizard });
+        const refreshed = await fetchJobDetail(supabase, job.id);
+        if (refreshed && keepWizard) {
+          advanceMarkCompleteWizard(refreshed);
+        }
+      } catch (e) {
+        Alert.alert(
+          'Save failed',
+          formatErrorMessage(e) || 'Could not save other cost.',
+        );
+      } finally {
+        setOtherCostSaving(false);
       }
     },
     [
       advanceMarkCompleteWizard,
       closeOtherCostFlow,
+      formatErrorMessage,
+      invalidateJobsList,
       job,
-      localOtherCostsByJobId,
       ocDraftSessionId,
+      otherCostSaving,
+      refetchJob,
+      supabaseReady,
     ],
   );
 
   const onSaveNewOtherCost = useCallback(
     (values: EditOtherCostBottomSheetValues) => {
-      persistLocalOtherCostLine(values, null);
+      void saveOtherCostLine(values, null);
     },
-    [persistLocalOtherCostLine],
+    [saveOtherCostLine],
   );
 
   const onSaveOtherCostChanges = useCallback(
     (values: EditOtherCostBottomSheetValues) => {
       if (!editingOtherCostId) return;
-      persistLocalOtherCostLine(values, editingOtherCostId);
+      void saveOtherCostLine(values, editingOtherCostId);
     },
-    [editingOtherCostId, persistLocalOtherCostLine],
+    [editingOtherCostId, saveOtherCostLine],
   );
 
-  const onDeleteEditingOtherCost = useCallback(() => {
-    if (!job) {
+  const onDeleteEditingOtherCost = useCallback(async () => {
+    if (!job || !editingOtherCostId) {
       closeOtherCostFlow();
       return;
     }
-    if (!editingOtherCostId) {
+    if (otherCostSaving) return;
+    setOtherCostSaving(true);
+    try {
+      await deleteOtherCost(supabase, editingOtherCostId);
+      await refetchJob();
+      invalidateJobsList();
       closeOtherCostFlow();
-      return;
+    } catch (e) {
+      Alert.alert(
+        'Delete failed',
+        formatErrorMessage(e) || 'Could not delete other cost.',
+      );
+    } finally {
+      setOtherCostSaving(false);
     }
-    setLocalOtherCostsByJobId((cur) => ({
-      ...cur,
-      [job.id]: (cur[job.id] ?? []).filter((l) => l.id !== editingOtherCostId),
-    }));
-    closeOtherCostFlow();
-  }, [closeOtherCostFlow, editingOtherCostId, job]);
+  }, [
+    closeOtherCostFlow,
+    editingOtherCostId,
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    otherCostSaving,
+    refetchJob,
+  ]);
 
-  const onConfirmNoOtherCostsFromWizard = useCallback(() => {
-    if (!job) return;
-    setNoOtherCostsConfirmedByJobId((cur) => ({ ...cur, [job.id]: true }));
-    const keepWizard = completeWizardActiveRef.current;
-    closeOtherCostFlow({ keepWizardActive: keepWizard });
-    if (keepWizard) {
-      advanceMarkCompleteWizard(job, { noOtherCostsConfirmed: true });
+  const onConfirmNoOtherCostsFromWizard = useCallback(async () => {
+    if (!job || noOtherCostsSaving || !supabaseReady) return;
+    setNoOtherCostsSaving(true);
+    try {
+      await updateJobOtherCostsReviewed(supabase, job.id, true);
+      await refetchJob();
+      invalidateJobsList();
+      const keepWizard = completeWizardActiveRef.current;
+      closeOtherCostFlow({ keepWizardActive: keepWizard });
+      const refreshed = await fetchJobDetail(supabase, job.id);
+      if (refreshed && keepWizard) {
+        advanceMarkCompleteWizard(refreshed);
+      }
+    } catch (e) {
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not confirm other costs.',
+      );
+    } finally {
+      setNoOtherCostsSaving(false);
     }
-  }, [advanceMarkCompleteWizard, closeOtherCostFlow, job]);
+  }, [
+    advanceMarkCompleteWizard,
+    closeOtherCostFlow,
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noOtherCostsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
 
   const onConfirmNoMaterialsFromWizard = useCallback(async () => {
     if (!job || noMaterialsSaving || !supabaseReady) return;
@@ -2435,7 +2457,7 @@ export function JobDetailScreen({
             typography={typography}
           />
           <JobDetailSummaryCard
-            earnings={displayEarnings ?? job.earnings}
+            earnings={job.earnings}
             typography={typography}
           />
           <JobDetailCtaRow
@@ -2451,7 +2473,7 @@ export function JobDetailScreen({
           />
           <JobDetailMetricTertiary
             metrics={job.metrics}
-            netEarningsCents={(displayEarnings ?? job.earnings).netEarningsCents}
+            netEarningsCents={job.earnings.netEarningsCents}
             typography={typography}
           />
         </View>
@@ -2528,8 +2550,8 @@ export function JobDetailScreen({
           showAdd
           onAddPress={openAddOtherCost}
         />
-        {otherCostBuckets.length === 0 ? (
-          noOtherCostsConfirmed ? (
+        {job.otherCostBuckets.length === 0 ? (
+          job.noOtherCostsConfirmed ? (
             <OtherCostsConfirmedNoUseCard
               typography={typography}
               onUndo={onUndoNoOtherCosts}
@@ -2542,7 +2564,7 @@ export function JobDetailScreen({
           )
         ) : (
           <ViewOtherCostsBuckets
-            buckets={otherCostBuckets}
+            buckets={job.otherCostBuckets}
             typography={typography}
             onOtherCostPress={openEditOtherCost}
           />

@@ -123,5 +123,7 @@ export const mockJobDetail: JobDetailViewModel = {
       ],
     },
   ],
+  otherCostBuckets: [],
   noMaterialsConfirmed: false,
+  noOtherCostsConfirmed: false,
 };

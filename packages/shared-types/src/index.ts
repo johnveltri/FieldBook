@@ -4,6 +4,8 @@ export type {
   JobDetailMock,
   JobDetailNote,
   JobDetailNoteBucket,
+  JobDetailOtherCostBucket,
+  JobDetailOtherCostLine,
   JobDetailSession,
   JobDetailSessionAttachment,
   JobDetailViewModel,

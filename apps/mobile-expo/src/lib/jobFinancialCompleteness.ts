@@ -1,11 +1,7 @@
-import type { JobDetailViewModel, JobDetailWorkStatus } from '@fieldsolo/shared-types';
-
-import type { LocalOtherCostLine } from './otherCostTypes';
+import type { JobDetailViewModel } from '@fieldsolo/shared-types';
 
 export type JobFinancialCompletenessContext = {
   job: JobDetailViewModel;
-  localOtherCostLines: LocalOtherCostLine[];
-  noOtherCostsConfirmed: boolean;
 };
 
 export type FinancialCompletenessGap = 'revenue' | 'session' | 'materials' | 'otherCosts';
@@ -20,21 +16,19 @@ function hasMaterialsComplete(job: JobDetailViewModel): boolean {
   return hasMaterials || job.noMaterialsConfirmed;
 }
 
-function hasOtherCostsComplete(
-  localOtherCostLines: LocalOtherCostLine[],
-  noOtherCostsConfirmed: boolean,
-): boolean {
-  return localOtherCostLines.length > 0 || noOtherCostsConfirmed;
+function hasOtherCostsComplete(job: JobDetailViewModel): boolean {
+  const hasOtherCosts = job.otherCostBuckets.some((bucket) => bucket.items.length > 0);
+  return hasOtherCosts || job.noOtherCostsConfirmed;
 }
 
 export function isJobFinanciallyComplete(ctx: JobFinancialCompletenessContext): boolean {
-  const { job, localOtherCostLines, noOtherCostsConfirmed } = ctx;
+  const { job } = ctx;
   return (
     hasNamedJob(job) &&
     job.earnings.revenueCents > 0 &&
     job.metrics.sessionCount > 0 &&
     hasMaterialsComplete(job) &&
-    hasOtherCostsComplete(localOtherCostLines, noOtherCostsConfirmed)
+    hasOtherCostsComplete(job)
   );
 }
 
@@ -42,7 +36,7 @@ export function isJobFinanciallyComplete(ctx: JobFinancialCompletenessContext): 
 export function financialCompletenessGaps(
   ctx: JobFinancialCompletenessContext,
 ): FinancialCompletenessGap[] {
-  const { job, localOtherCostLines, noOtherCostsConfirmed } = ctx;
+  const { job } = ctx;
   const gaps: FinancialCompletenessGap[] = [];
   if (!hasNamedJob(job) || job.earnings.revenueCents <= 0) {
     gaps.push('revenue');
@@ -53,7 +47,7 @@ export function financialCompletenessGaps(
   if (!hasMaterialsComplete(job)) {
     gaps.push('materials');
   }
-  if (!hasOtherCostsComplete(localOtherCostLines, noOtherCostsConfirmed)) {
+  if (!hasOtherCostsComplete(job)) {
     gaps.push('otherCosts');
   }
   return gaps;
@@ -62,11 +56,17 @@ export function financialCompletenessGaps(
 export function jobCostsIncompleteForListPill(job: {
   hasMaterials: boolean;
   noMaterialsConfirmed: boolean;
+  hasOtherCosts: boolean;
+  noOtherCostsConfirmed: boolean;
 }): boolean {
-  return !job.hasMaterials && !job.noMaterialsConfirmed;
+  const materialsIncomplete = !job.hasMaterials && !job.noMaterialsConfirmed;
+  const otherIncomplete = !job.hasOtherCosts && !job.noOtherCostsConfirmed;
+  return materialsIncomplete || otherIncomplete;
 }
 
-export function isCompletedOrPaidWorkStatus(status: JobDetailWorkStatus): boolean {
+export function isCompletedOrPaidWorkStatus(
+  status: JobDetailViewModel['workStatus'],
+): boolean {
   return status === 'completed' || status === 'paid';
 }
 
@@ -75,12 +75,12 @@ export function isCompletedOrPaidWorkStatus(status: JobDetailWorkStatus): boolea
  * marked completed/paid, revert work status to in progress.
  *
  * `previousFinanciallyComplete === null` skips the first observation (e.g. job
- * load) so stale Phase-1 local other-cost state does not demote on open.
+ * load) so stale state does not demote on open.
  */
 export function shouldDemoteCompletedOrPaidForIncompleteFinancials(input: {
   previousFinanciallyComplete: boolean | null;
   nowFinanciallyComplete: boolean;
-  workStatus: JobDetailWorkStatus;
+  workStatus: JobDetailViewModel['workStatus'];
 }): boolean {
   const { previousFinanciallyComplete, nowFinanciallyComplete, workStatus } = input;
   if (previousFinanciallyComplete !== true || nowFinanciallyComplete) return false;

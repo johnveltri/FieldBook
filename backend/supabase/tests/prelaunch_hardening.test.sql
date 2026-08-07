@@ -68,10 +68,10 @@ begin
     (user_a, 'hardening-a-' || user_a || '@example.com'),
     (user_b, 'hardening-b-' || user_b || '@example.com');
 
-  insert into public.jobs (user_id, short_description, revenue_cents, costs_reviewed_at)
-  values (user_a, 'First owned job', 10000, now()) returning id into job_a;
-  insert into public.jobs (user_id, short_description, revenue_cents, costs_reviewed_at)
-  values (user_a, 'Second owned job', 20000, now()) returning id into job_a_2;
+  insert into public.jobs (user_id, short_description, revenue_cents, materials_reviewed_at, other_costs_reviewed_at)
+  values (user_a, 'First owned job', 10000, now(), now()) returning id into job_a;
+  insert into public.jobs (user_id, short_description, revenue_cents, materials_reviewed_at, other_costs_reviewed_at)
+  values (user_a, 'Second owned job', 20000, now(), now()) returning id into job_a_2;
   insert into public.jobs (user_id, short_description)
   values (user_b, 'Other owner job') returning id into job_b;
 
@@ -114,8 +114,11 @@ begin
     (user_id, job_id, description, total_cost_cents, cost_type)
   values (user_a, job_a_2, 'Permit', 1200, 'permit');
 
-  if (select costs_reviewed_at from public.jobs where id = job_a_2) is not null then
-    raise exception 'new active cost did not clear costs_reviewed_at';
+  if (select other_costs_reviewed_at from public.jobs where id = job_a_2) is not null then
+    raise exception 'new active other cost did not clear other_costs_reviewed_at';
+  end if;
+  if (select materials_reviewed_at from public.jobs where id = job_a_2) is null then
+    raise exception 'new other cost should not clear materials_reviewed_at';
   end if;
 
   begin

@@ -100,6 +100,23 @@ export type JobDetailNoteBucket = {
   notes: JobDetailNote[];
 };
 
+export type JobDetailOtherCostLine = {
+  id: string;
+  sessionId: string | null;
+  costType: string;
+  typeLabel: string;
+  description: string;
+  costCents: number;
+  priceLabel: string;
+};
+
+export type JobDetailOtherCostBucket = {
+  id: string;
+  kind: 'unassigned' | 'session';
+  sessionDateLabel?: string;
+  items: JobDetailOtherCostLine[];
+};
+
 /** Full payload for `JobDetailScreen`. */
 export type JobDetailViewModel = {
   id: string;
@@ -129,12 +146,18 @@ export type JobDetailViewModel = {
   /** Current in-progress session when present. */
   inProgressSession: JobDetailSession | null;
   materialBuckets: JobDetailMaterialBucket[];
+  otherCostBuckets: JobDetailOtherCostBucket[];
   noteBuckets: JobDetailNoteBucket[];
   /**
    * User confirmed there were no materials for this job; satisfies the materials
-   * leg of `is_financially_complete` until a material row is added.
+   * leg of financial completeness until a material row is added.
    */
   noMaterialsConfirmed: boolean;
+  /**
+   * User confirmed there were no other costs for this job; satisfies the other-costs
+   * leg of financial completeness until a non-material cost row is added.
+   */
+  noOtherCostsConfirmed: boolean;
 };
 
 /** @deprecated Use JobDetailViewModel */

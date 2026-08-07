@@ -545,7 +545,7 @@ describe('jobs api client', () => {
 
     await updateJobCostsReviewed(client as never, 'job-1', true);
 
-    expect(patch).toEqual({ costs_reviewed_at: expect.any(String) });
+    expect(patch).toEqual({ materials_reviewed_at: expect.any(String) });
   });
 
   it('updateJobById rejects blank titles and invalid revenue', async () => {

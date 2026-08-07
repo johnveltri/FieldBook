@@ -388,6 +388,10 @@ jest.mock('@fieldsolo/api-client', () => ({
   updateJobById: jest.fn(),
   updateJobNoMaterialsConfirmed: jest.fn(),
   updateJobCostsReviewed: jest.fn(),
+  updateJobOtherCostsReviewed: jest.fn(),
+  createOtherCost: jest.fn(),
+  updateOtherCost: jest.fn(),
+  deleteOtherCost: jest.fn(),
   isNoMaterialsConfirmedColumnMissingError: jest.fn(() => false),
   updateJobStatusById: jest.fn(),
   updateMaterial: jest.fn(),
@@ -463,6 +467,8 @@ describe('JobDetailScreen manual session and note flows', () => {
       },
     ],
     noMaterialsConfirmed: false,
+    otherCostBuckets: [],
+    noOtherCostsConfirmed: false,
   };
 
   beforeEach(() => {
@@ -478,7 +484,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     apiClient.updateMaterial.mockResolvedValue(undefined);
     apiClient.deleteMaterial.mockResolvedValue(undefined);
     apiClient.updateJobNoMaterialsConfirmed.mockResolvedValue(undefined);
-    apiClient.updateJobCostsReviewed.mockResolvedValue(undefined);
+    apiClient.updateJobOtherCostsReviewed.mockResolvedValue(undefined);
+    apiClient.createOtherCost.mockResolvedValue('oc-new-1');
+    apiClient.updateOtherCost.mockResolvedValue(undefined);
+    apiClient.deleteOtherCost.mockResolvedValue(undefined);
     apiClient.updateJobStatusById.mockResolvedValue(undefined);
     apiClient.countCompletedJobsForCurrentUser.mockResolvedValue(1);
     mockClaimFeedbackPromptMilestone.mockResolvedValue(null);
@@ -489,14 +498,23 @@ describe('JobDetailScreen manual session and note flows', () => {
   it('offers feedback after the first completed job', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     mockClaimFeedbackPromptMilestone.mockResolvedValueOnce(1);
-    apiClient.fetchJobDetail.mockResolvedValue({
+    let jobState: JobDetailViewModel = {
       ...baseJob,
       noMaterialsConfirmed: true,
+      noOtherCostsConfirmed: false,
+    };
+    apiClient.updateJobOtherCostsReviewed.mockImplementation(async () => {
+      jobState = { ...jobState, noOtherCostsConfirmed: true };
     });
+    apiClient.fetchJobDetail.mockImplementation(async () => ({ ...jobState }));
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
 
     await waitFor(() => expect(screen.getByText('CONFIRM NO OTHER COSTS')).toBeTruthy());
     fireEvent.press(screen.getByText('CONFIRM NO OTHER COSTS'));
+
+    await waitFor(() =>
+      expect(apiClient.updateJobOtherCostsReviewed).toHaveBeenCalledWith({}, 'job-1', true),
+    );
 
     await waitFor(() => expect(screen.getByText('Primary status action')).toBeTruthy());
     fireEvent.press(screen.getByText('Primary status action'));
@@ -926,29 +944,30 @@ describe('JobDetailScreen manual session and note flows', () => {
   });
 
   it('sets completed job back to in progress when other costs confirmation is undone', async () => {
-    apiClient.fetchJobDetail.mockResolvedValue({
+    let jobState: JobDetailViewModel = {
       ...baseJob,
       workStatus: 'completed',
       noMaterialsConfirmed: true,
-    });
+      noOtherCostsConfirmed: true,
+    };
+    apiClient.fetchJobDetail.mockImplementation(async () => ({ ...jobState }));
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
-
-    await waitFor(() => expect(screen.getByText('CONFIRM NO OTHER COSTS')).toBeTruthy());
-    fireEvent.press(screen.getByText('CONFIRM NO OTHER COSTS'));
 
     await waitFor(() =>
       expect(screen.getByLabelText('Undo no other costs confirmation')).toBeTruthy(),
     );
 
-    apiClient.fetchJobDetail.mockResolvedValue({
-      ...baseJob,
-      workStatus: 'inProgress',
-      noMaterialsConfirmed: true,
-    });
+    jobState = {
+      ...jobState,
+      noOtherCostsConfirmed: false,
+    };
     fireEvent.press(screen.getByLabelText('Undo no other costs confirmation'));
 
     await waitFor(() => {
+      expect(apiClient.updateJobOtherCostsReviewed).toHaveBeenCalledWith({}, 'job-1', false);
       expect(apiClient.updateJobStatusById).toHaveBeenCalledWith({}, 'job-1', 'inProgress');
     });
+
+    jobState = { ...jobState, workStatus: 'inProgress' };
   });
 });
