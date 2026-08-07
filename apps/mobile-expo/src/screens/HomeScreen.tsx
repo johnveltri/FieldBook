@@ -801,7 +801,7 @@ export function HomeScreen({
       <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
       <View
         pointerEvents="none"
-        style={[styles.safeAreaTopAccentWrap, { top: 0 }, columnStyle]}
+        style={[styles.safeAreaTopAccentWrap, { top: 0 }]}
       >
         <View style={styles.topAccent} />
       </View>

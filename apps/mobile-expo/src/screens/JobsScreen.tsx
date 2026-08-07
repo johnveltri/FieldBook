@@ -948,7 +948,7 @@ export function JobsScreen({
       <CanvasTiledBackground scrollY={scrollY} contentHeight={listContentHeight} />
       <View
         pointerEvents="none"
-        style={[styles.safeAreaTopAccentWrap, { top: 0 }, columnStyle]}
+        style={[styles.safeAreaTopAccentWrap, { top: 0 }]}
       >
         <View style={styles.topAccent} />
       </View>
