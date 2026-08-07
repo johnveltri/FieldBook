@@ -81,6 +81,10 @@ type EditMaterialBottomSheetProps = {
    * note on `onSessionPillPress`).
    */
   onUnitPress?: (currentValues: EditMaterialBottomSheetValues) => void;
+  /** Shown under the sheet title (e.g. mark-complete wizard). */
+  materialError?: string;
+  noneConfirmLabel?: string;
+  onNoneConfirmPress?: () => void;
   /** @default true — set false when this sheet replaces another (e.g. live session) without stacking. */
   registerInGlobalStack?: boolean;
 };
@@ -169,6 +173,9 @@ export function EditMaterialBottomSheet({
   onDeletePress,
   onSessionPillPress,
   onUnitPress,
+  materialError,
+  noneConfirmLabel,
+  onNoneConfirmPress,
   registerInGlobalStack = true,
 }: EditMaterialBottomSheetProps) {
   const [description, setDescription] = useState<string>(
@@ -273,6 +280,12 @@ export function EditMaterialBottomSheet({
           ) : null}
         </View>
 
+        {materialError ? (
+          <Text style={[typography.bodySmall, { color: color('Semantic/Status/Error/Text') }]}>
+            {materialError}
+          </Text>
+        ) : null}
+
         <Text style={[typography.bodySmall, styles.subtitle]}>
           {subtitle ??
             (assignedSession
@@ -339,6 +352,19 @@ export function EditMaterialBottomSheet({
           onPrimaryPress={() => onSavePress?.(currentDraft())}
           onDeletePress={onDeletePress}
         />
+
+        {noneConfirmLabel && onNoneConfirmPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={noneConfirmLabel}
+            onPress={onNoneConfirmPress}
+            style={({ pressed }) => [styles.noneConfirm, pressed && styles.pressed]}
+          >
+            <Text style={[typography.metricSLabel, { color: color('Semantic/Status/Success/Text') }]}>
+              {noneConfirmLabel}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </BottomSheetShell>
   );
@@ -429,5 +455,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
+  },
+  noneConfirm: {
+    alignItems: 'center',
+    paddingVertical: space('Spacing/8'),
   },
 });

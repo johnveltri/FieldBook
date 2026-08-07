@@ -12,7 +12,7 @@ export type EarningsSnapshotCardProps = {
   /** Pre-formatted currency, e.g. `$639,375.00`. */
   revenue: string;
   /** Pre-formatted currency with sign, e.g. `-$148,767.00`. */
-  materials: string;
+  costs: string;
   /** Pre-formatted hours, e.g. `102.0h`. */
   time: string;
   /** Pre-formatted net/hr, e.g. `$6,337/hr` or `—`. */
@@ -25,13 +25,13 @@ export type EarningsSnapshotCardProps = {
 
 /**
  * Earnings snapshot — 3-row metric card (Figma `258:1457`): hero NET EARNINGS,
- * REVENUE / MATERIALS row, then TIME / NET/HR / JOBS row.
+ * REVENUE / COSTS row, then TIME / NET/HR / JOBS row.
  */
 export function EarningsSnapshotCard({
   netEarnings,
   netEarningsCents,
   revenue,
-  materials,
+  costs,
   time,
   netPerHr,
   netPerHrCents,
@@ -47,7 +47,7 @@ export function EarningsSnapshotCard({
     <View
       style={styles.card}
       accessibilityRole="summary"
-      accessibilityLabel={`Net earnings ${netEarnings}. Revenue ${revenue}. Materials ${materials}. Time ${time}. Net per hour ${netPerHr}. Jobs ${jobs}.`}
+      accessibilityLabel={`Net earnings ${netEarnings}. Revenue ${revenue}. Costs ${costs}. Time ${time}. Net per hour ${netPerHr}. Jobs ${jobs}.`}
     >
       <View style={styles.primary}>
         <Text style={[typography.labelHeadingSecondary, styles.center]}>NET EARNINGS</Text>
@@ -60,9 +60,9 @@ export function EarningsSnapshotCard({
           <Text style={[typography.metric, { color: fg.primary, textTransform: 'none' }]}>{revenue}</Text>
         </View>
         <View style={styles.colEnd}>
-          <Text style={[typography.labelHeadingSecondary, styles.alignRight]}>MATERIALS</Text>
+          <Text style={[typography.labelHeadingSecondary, styles.alignRight]}>COSTS</Text>
           <Text style={[typography.metric, styles.alignRight, { color: brand, textTransform: 'none' }]}>
-            {materials}
+            {costs}
           </Text>
         </View>
       </View>

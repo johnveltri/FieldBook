@@ -5,6 +5,7 @@ import type {
 } from '@fieldsolo/shared-types';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
+import type { LocalOtherCostBucket } from '../../lib/otherCostTypes';
 import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { JobDetailIconViewNote } from '../figma-icons/JobDetailScreenIcons';
@@ -75,6 +76,67 @@ export function ViewMaterialsBuckets({
                   <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/4') }]}>
                     {item.quantityLabel}
                   </Text>
+                </View>
+                <Text style={[typography.bodyBold, { color: fg.primary }]}>{item.priceLabel}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** Session-bucketed other cost rows (Phase 1 local state). */
+export function ViewOtherCostsBuckets({
+  buckets,
+  typography,
+  onOtherCostPress,
+}: {
+  buckets: LocalOtherCostBucket[];
+  typography: TextStyles;
+  onOtherCostPress?: (otherCostId: string) => void;
+}) {
+  if (buckets.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.viewCardOuter}>
+      <View style={styles.viewCardBorder}>
+        {buckets.map((bucket, bi) => (
+          <View
+            key={bucket.id}
+            style={bi > 0 ? { borderTopWidth: 1, borderTopColor: color('Foundation/Border/Subtle') } : undefined}
+          >
+            <View style={[styles.bucketHeader, bi === 0 && styles.bucketHeaderFirst]}>
+              {bucket.kind === 'unassigned' ? (
+                <Text style={[typography.labelHeadingSecondary, styles.bucketHeaderText]}>UNASSIGNED</Text>
+              ) : (
+                <Text style={[typography.labelHeadingSecondary, styles.bucketHeaderText]}>
+                  {bucketSessionHeaderTitle(bucket.sessionDateLabel)}
+                </Text>
+              )}
+            </View>
+            {bucket.items.map((item, ii) => (
+              <Pressable
+                key={`${bucket.id}-${item.id}`}
+                accessibilityRole="button"
+                accessibilityLabel="Edit other cost"
+                onPress={onOtherCostPress ? () => onOtherCostPress(item.id) : undefined}
+                style={({ pressed }) => [
+                  styles.materialRow,
+                  ii > 0 && { borderTopWidth: 1, borderTopColor: color('Foundation/Border/Subtle') },
+                  pressed && onOtherCostPress ? styles.pressed : null,
+                ]}
+              >
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[typography.bodyBold, { color: fg.primary }]}>{item.typeLabel}</Text>
+                  {item.description ? (
+                    <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/4') }]}>
+                      {item.description}
+                    </Text>
+                  ) : null}
                 </View>
                 <Text style={[typography.bodyBold, { color: fg.primary }]}>{item.priceLabel}</Text>
               </Pressable>

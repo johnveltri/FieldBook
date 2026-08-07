@@ -69,6 +69,7 @@ jest.mock('../components/figma-icons/JobDetailScreenIcons', () => ({
   JobDetailIconSectionAdd: () => null,
   JobDetailIconSectionMaterials: () => null,
   JobDetailIconSectionNotes: () => null,
+  JobDetailIconSectionOtherCosts: () => null,
   JobDetailIconSectionSessions: () => null,
   JobDetailIconTopClose: () => null,
   JobDetailIconTopEdit: () => null,
@@ -82,6 +83,8 @@ jest.mock('../components/ds', () => ({
     return 'completed';
   },
   EditJobBottomSheet: () => null,
+  ConfirmMinimumInfoBottomSheet: () => null,
+  EditOtherCostBottomSheet: () => null,
   JobDetailCtaRow: ({ onPrimaryPress }: { onPrimaryPress: () => void }) => {
     const { Text } = require('react-native');
     return <Text onPress={onPrimaryPress}>Primary status action</Text>;
@@ -306,6 +309,7 @@ jest.mock('../components/ds', () => ({
       </View>
     );
   },
+  ViewOtherCostsBuckets: () => null,
   ViewNotesBuckets: ({
     buckets,
     onNotePress,
@@ -383,6 +387,7 @@ jest.mock('@fieldsolo/api-client', () => ({
   fetchJobDetail: jest.fn(),
   updateJobById: jest.fn(),
   updateJobNoMaterialsConfirmed: jest.fn(),
+  updateJobCostsReviewed: jest.fn(),
   isNoMaterialsConfirmedColumnMissingError: jest.fn(() => false),
   updateJobStatusById: jest.fn(),
   updateMaterial: jest.fn(),
@@ -409,6 +414,7 @@ describe('JobDetailScreen manual session and note flows', () => {
     earnings: {
       revenueCents: 10000,
       materialsCents: -500,
+      otherCostsCents: 0,
       feesCents: 0,
       netEarningsCents: 9500,
     },
@@ -472,6 +478,7 @@ describe('JobDetailScreen manual session and note flows', () => {
     apiClient.updateMaterial.mockResolvedValue(undefined);
     apiClient.deleteMaterial.mockResolvedValue(undefined);
     apiClient.updateJobNoMaterialsConfirmed.mockResolvedValue(undefined);
+    apiClient.updateJobCostsReviewed.mockResolvedValue(undefined);
     apiClient.updateJobStatusById.mockResolvedValue(undefined);
     apiClient.countCompletedJobsForCurrentUser.mockResolvedValue(1);
     mockClaimFeedbackPromptMilestone.mockResolvedValue(null);
@@ -482,7 +489,14 @@ describe('JobDetailScreen manual session and note flows', () => {
   it('offers feedback after the first completed job', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     mockClaimFeedbackPromptMilestone.mockResolvedValueOnce(1);
+    apiClient.fetchJobDetail.mockResolvedValue({
+      ...baseJob,
+      noMaterialsConfirmed: true,
+    });
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => expect(screen.getByText('CONFIRM NO OTHER COSTS')).toBeTruthy());
+    fireEvent.press(screen.getByText('CONFIRM NO OTHER COSTS'));
 
     await waitFor(() => expect(screen.getByText('Primary status action')).toBeTruthy());
     fireEvent.press(screen.getByText('Primary status action'));
@@ -909,5 +923,32 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
     expect(apiClient.updateJobStatusById).not.toHaveBeenCalled();
     alertSpy.mockRestore();
+  });
+
+  it('sets completed job back to in progress when other costs confirmation is undone', async () => {
+    apiClient.fetchJobDetail.mockResolvedValue({
+      ...baseJob,
+      workStatus: 'completed',
+      noMaterialsConfirmed: true,
+    });
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => expect(screen.getByText('CONFIRM NO OTHER COSTS')).toBeTruthy());
+    fireEvent.press(screen.getByText('CONFIRM NO OTHER COSTS'));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Undo no other costs confirmation')).toBeTruthy(),
+    );
+
+    apiClient.fetchJobDetail.mockResolvedValue({
+      ...baseJob,
+      workStatus: 'inProgress',
+      noMaterialsConfirmed: true,
+    });
+    fireEvent.press(screen.getByLabelText('Undo no other costs confirmation'));
+
+    await waitFor(() => {
+      expect(apiClient.updateJobStatusById).toHaveBeenCalledWith({}, 'job-1', 'inProgress');
+    });
   });
 });

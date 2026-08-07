@@ -80,6 +80,21 @@ export function JobDetailIconSectionMaterials({ color }: StrokeProps) {
   );
 }
 
+/** OTHER COSTS — dollar sign — 16×16 */
+export function JobDetailIconSectionOtherCosts({ color }: StrokeProps) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+      <Path
+        d="M8 1.33333V14.6667M10.6667 3.66667H6.66667C5.5621 3.66667 4.66667 4.5621 4.66667 5.66667C4.66667 6.77124 5.5621 7.66667 6.66667 7.66667H9.33333C10.4379 7.66667 11.3333 8.5621 11.3333 9.66667C11.3333 10.7712 10.4379 11.6667 9.33333 11.6667H4.66667"
+        stroke={color}
+        strokeWidth={S}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /** NOTES — `371:2171` — 16×16.25 viewBox */
 export function JobDetailIconSectionNotes({ color }: StrokeProps) {
   return (

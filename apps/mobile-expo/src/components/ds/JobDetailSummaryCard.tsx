@@ -22,10 +22,12 @@ export function JobDetailSummaryCard({
     ? color('Semantic/Financial/Positive')
     : color('Semantic/Financial/Negative');
   const matTone = color('Semantic/Financial/Negative');
+  const otherTone = color('Semantic/Financial/Negative');
   const feesTone =
     earnings.feesCents < 0 ? color('Semantic/Financial/Negative') : fg.primary;
   const showFees = earnings.feesCents !== 0;
   const materialsDisplay = `-${formatUsdCombined(Math.abs(earnings.materialsCents))}`;
+  const otherCostsDisplay = `-${formatUsdCombined(Math.abs(earnings.otherCostsCents))}`;
 
   return (
     <View style={styles.cardOuter}>
@@ -40,6 +42,12 @@ export function JobDetailSummaryCard({
         <Text style={[typography.body, { color: fg.secondary, flex: 1 }]}>Materials</Text>
         <Text style={[typography.bodyBold, styles.summaryMoney, { color: matTone }]}>
           {materialsDisplay}
+        </Text>
+      </View>
+      <View style={styles.summaryRow}>
+        <Text style={[typography.body, { color: fg.secondary, flex: 1 }]}>Other Costs</Text>
+        <Text style={[typography.bodyBold, styles.summaryMoney, { color: otherTone }]}>
+          {otherCostsDisplay}
         </Text>
       </View>
       {showFees ? (

@@ -112,6 +112,8 @@ export type JobDetailViewModel = {
   earnings: {
     revenueCents: number;
     materialsCents: number;
+    /** Non-material job costs (Phase 2 API); Phase 1 may supply from local UI state. */
+    otherCostsCents: number;
     feesCents: number;
     netEarningsCents: number;
   };

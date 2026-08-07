@@ -288,8 +288,12 @@ export async function fetchJobDetail(
 
   const revenueCents = j.revenue_cents ?? 0;
   const materialsSpend = materials.reduce((s, m) => s + m.total_cost_cents, 0);
+  const otherCostsSpend = allCosts
+    .filter((cost) => cost.cost_type != null && cost.cost_type !== 'material')
+    .reduce((s, cost) => s + cost.total_cost_cents, 0);
   const allCostsSpend = allCosts.reduce((s, cost) => s + cost.total_cost_cents, 0);
   const materialsCents = -materialsSpend;
+  const otherCostsCents = -otherCostsSpend;
   const feesCents = 0;
   const netEarningsCents = revenueCents - allCostsSpend + feesCents;
 
@@ -405,6 +409,7 @@ export async function fetchJobDetail(
     earnings: {
       revenueCents,
       materialsCents,
+      otherCostsCents,
       feesCents,
       netEarningsCents,
     },

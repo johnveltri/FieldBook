@@ -11,6 +11,14 @@ export {
 export { EditJobBottomSheet } from './EditJobBottomSheet';
 export type { EditJobBottomSheetValues } from './EditJobBottomSheet';
 export {
+  ConfirmMinimumInfoBottomSheet,
+} from './ConfirmMinimumInfoBottomSheet';
+export {
+  EditOtherCostBottomSheet,
+  type EditOtherCostBottomSheetAssignedSession,
+  type EditOtherCostBottomSheetValues,
+} from './EditOtherCostBottomSheet';
+export {
   EditMaterialBottomSheet,
   type EditMaterialBottomSheetAssignedSession,
   type EditMaterialBottomSheetValues,
@@ -64,6 +72,7 @@ export { SectionHeader } from './SectionHeader';
 export {
   ViewMaterialsBuckets,
   ViewNotesBuckets,
+  ViewOtherCostsBuckets,
   bucketSessionHeaderTitle,
 } from './ViewActivityBuckets';
 export {

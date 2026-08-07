@@ -114,7 +114,7 @@ function incompletePillsFor(job: ListJobsForCurrentUserItem): string[] {
   const desc = job.shortDescription.trim();
   if (desc === '' || desc === 'Untitled Job') pills.push('NO SHORT DESCRIPTION');
   if (job.revenueCents == null || job.revenueCents === 0) pills.push('NO REVENUE');
-  if (!job.hasMaterials && !job.noMaterialsConfirmed) pills.push('NO MATERIALS');
+  if (!job.hasMaterials && !job.noMaterialsConfirmed) pills.push('NO COSTS');
   if (!job.hasSessions) pills.push('NO SESSIONS');
   return pills;
 }
