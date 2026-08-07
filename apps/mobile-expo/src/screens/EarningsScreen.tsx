@@ -434,7 +434,7 @@ export function EarningsScreen({
                   netEarnings={formatUsd(snapshot.netEarningsCents)}
                   netEarningsCents={snapshot.netEarningsCents}
                   revenue={formatUsd(snapshot.revenueCents)}
-                  materials={formatUsd(snapshot.materialsCents)}
+                  costs={formatUsd(snapshot.materialsCents)}
                   time={`${snapshot.totalHours.toFixed(1)}h`}
                   netPerHr={formatNetPerHr(snapshot.netPerHrCents)}
                   netPerHrCents={snapshot.netPerHrCents}

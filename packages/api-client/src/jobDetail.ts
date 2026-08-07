@@ -3,6 +3,8 @@ import type {
   JobDetailMaterialLine,
   JobDetailNote,
   JobDetailNoteBucket,
+  JobDetailOtherCostBucket,
+  JobDetailOtherCostLine,
   JobDetailSession,
   JobDetailSessionAttachment,
   JobDetailViewModel,
@@ -32,7 +34,8 @@ type JobRow = {
   collected_cents: number | null;
   updated_at: string;
   last_worked_at: string | null;
-  costs_reviewed_at: string | null;
+  materials_reviewed_at: string | null;
+  other_costs_reviewed_at: string | null;
 };
 
 type SessionRow = {
@@ -68,7 +71,24 @@ type MaterialRow = {
 };
 
 const JOB_DETAIL_JOB_SELECT_BASE =
-  'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at, last_worked_at, costs_reviewed_at';
+  'id, short_description, customer_name, service_address, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, updated_at, last_worked_at, materials_reviewed_at, other_costs_reviewed_at';
+
+const OTHER_COST_TYPE_LABELS: Record<string, string> = {
+  helper_labor: 'Helper Labor',
+  equipment_rental: 'Equipment Rental',
+  permit: 'Permit',
+  disposal: 'Disposal',
+  travel_parking: 'Travel / Parking',
+  other: 'Other',
+};
+
+function isMaterialCostRow(costType: string | null | undefined): boolean {
+  return costType == null || costType === 'material';
+}
+
+function otherCostTypeLabel(costType: string): string {
+  return OTHER_COST_TYPE_LABELS[costType] ?? costType;
+}
 
 const moneyFmt = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -212,6 +232,20 @@ function materialLine(row: MaterialRow): JobDetailMaterialLine {
   };
 }
 
+function otherCostLine(row: MaterialRow): JobDetailOtherCostLine {
+  const costType = row.cost_type;
+  const description = row.description?.trim() ?? '';
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    costType,
+    typeLabel: otherCostTypeLabel(costType),
+    description,
+    costCents: row.total_cost_cents,
+    priceLabel: formatUsd(row.total_cost_cents),
+  };
+}
+
 /** Loads job graph and maps to `JobDetailViewModel`. */
 export async function fetchJobDetail(
   client: FieldSoloSupabaseClient,
@@ -280,16 +314,17 @@ export async function fetchJobDetail(
   for (const m of (matsJob ?? []) as MaterialRow[]) matById.set(m.id, m);
   for (const m of (matsSess ?? []) as MaterialRow[]) matById.set(m.id, m);
   const allCosts = [...matById.values()];
-  const materials = allCosts.filter(
-    (cost) => cost.cost_type == null || cost.cost_type === 'material',
-  );
+  const materials = allCosts.filter((cost) => isMaterialCostRow(cost.cost_type));
+  const otherCosts = allCosts.filter((cost) => !isMaterialCostRow(cost.cost_type));
 
   const notes = (notesRaw ?? []) as NoteRow[];
 
   const revenueCents = j.revenue_cents ?? 0;
   const materialsSpend = materials.reduce((s, m) => s + m.total_cost_cents, 0);
+  const otherCostsSpend = otherCosts.reduce((s, cost) => s + cost.total_cost_cents, 0);
   const allCostsSpend = allCosts.reduce((s, cost) => s + cost.total_cost_cents, 0);
   const materialsCents = -materialsSpend;
+  const otherCostsCents = -otherCostsSpend;
   const feesCents = 0;
   const netEarningsCents = revenueCents - allCostsSpend + feesCents;
 
@@ -343,6 +378,36 @@ export async function fetchJobDetail(
         kind: 'session',
         sessionDateLabel: formatDateLabel(s.started_at),
         items: ms.sort((a, b) => a.created_at.localeCompare(b.created_at)).map(materialLine),
+      });
+    }
+  }
+
+  const ocUnassigned = otherCosts.filter((c) => c.session_id == null);
+  const ocBySession = new Map<string, MaterialRow[]>();
+  for (const c of otherCosts) {
+    if (c.session_id) {
+      const list = ocBySession.get(c.session_id) ?? [];
+      list.push(c);
+      ocBySession.set(c.session_id, list);
+    }
+  }
+
+  const otherCostBuckets: JobDetailOtherCostBucket[] = [];
+  if (ocUnassigned.length) {
+    otherCostBuckets.push({
+      id: 'oc-unassigned',
+      kind: 'unassigned',
+      items: ocUnassigned.sort((a, b) => a.created_at.localeCompare(b.created_at)).map(otherCostLine),
+    });
+  }
+  for (const s of activeSessions) {
+    const lines = ocBySession.get(s.id);
+    if (lines?.length) {
+      otherCostBuckets.push({
+        id: `oc-${s.id}`,
+        kind: 'session',
+        sessionDateLabel: formatDateLabel(s.started_at),
+        items: lines.sort((a, b) => a.created_at.localeCompare(b.created_at)).map(otherCostLine),
       });
     }
   }
@@ -405,6 +470,7 @@ export async function fetchJobDetail(
     earnings: {
       revenueCents,
       materialsCents,
+      otherCostsCents,
       feesCents,
       netEarningsCents,
     },
@@ -425,7 +491,9 @@ export async function fetchJobDetail(
       ? mapSession(inProgressSession, attachmentBySessionId.get(inProgressSession.id) ?? [])
       : null,
     materialBuckets,
+    otherCostBuckets,
     noteBuckets,
-    noMaterialsConfirmed: j.costs_reviewed_at != null,
+    noMaterialsConfirmed: j.materials_reviewed_at != null,
+    noOtherCostsConfirmed: j.other_costs_reviewed_at != null,
   };
 }

@@ -26,6 +26,7 @@ export const mockJobDetail: JobDetailViewModel = {
   earnings: {
     revenueCents: 2_220_000,
     materialsCents: -2_220_000,
+    otherCostsCents: 0,
     feesCents: -20_000,
     netEarningsCents: 2_220_000,
   },
@@ -122,5 +123,7 @@ export const mockJobDetail: JobDetailViewModel = {
       ],
     },
   ],
+  otherCostBuckets: [],
   noMaterialsConfirmed: false,
+  noOtherCostsConfirmed: false,
 };

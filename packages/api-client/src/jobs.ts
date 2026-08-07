@@ -106,6 +106,10 @@ export type ListJobsForCurrentUserItem = {
   hasMaterials: boolean;
   /** True when the user confirmed “no materials used” on the job (no material rows). */
   noMaterialsConfirmed: boolean;
+  /** True when the job has at least one active non-material cost line. */
+  hasOtherCosts: boolean;
+  /** True when the user confirmed “no other costs” on the job. */
+  noOtherCostsConfirmed: boolean;
   /** True when the job has at least one non-deleted session. */
   hasSessions: boolean;
 };
@@ -123,7 +127,8 @@ type ListJobsRow = {
   revenue_cents: number | null;
   collected_cents: number | null;
   is_job_record_complete: boolean;
-  costs_reviewed_at: string | null;
+  materials_reviewed_at: string | null;
+  other_costs_reviewed_at: string | null;
 };
 
 type ListJobSessionRow = {
@@ -170,7 +175,7 @@ export type ListJobsForCurrentUserTab = 'all' | 'open' | 'paid';
 
 /** Current list contract; migration drift is treated as an error. */
 const JOB_LIST_SELECT_FULL =
-  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_job_record_complete, costs_reviewed_at';
+  'id, short_description, customer_name, updated_at, created_at, last_worked_at, job_type, job_work_status, job_payment_state, revenue_cents, collected_cents, is_job_record_complete, materials_reviewed_at, other_costs_reviewed_at';
 
 /**
  * One page of jobs ordered by `list_recency_at` desc (`coalesce(last_worked_at, created_at)`), then `id` desc.
@@ -297,6 +302,7 @@ async function enrichJobsRowsWithSessionRollups(
   const materialsSpendByJobId = new Map<string, number>();
   const totalCostsSpendByJobId = new Map<string, number>();
   const jobsWithMaterialLines = new Set<string>();
+  const jobsWithOtherCostLines = new Set<string>();
   for (const m of materialById.values()) {
     const materialJobId =
       m.job_id ??
@@ -312,6 +318,8 @@ async function enrichJobsRowsWithSessionRollups(
         materialJobId,
         (materialsSpendByJobId.get(materialJobId) ?? 0) + m.total_cost_cents,
       );
+    } else {
+      jobsWithOtherCostLines.add(materialJobId);
     }
   }
 
@@ -344,7 +352,9 @@ async function enrichJobsRowsWithSessionRollups(
       collectedCents: row.collected_cents,
       isFinanciallyComplete,
       hasMaterials,
-      noMaterialsConfirmed: row.costs_reviewed_at != null,
+      noMaterialsConfirmed: row.materials_reviewed_at != null,
+      hasOtherCosts: jobsWithOtherCostLines.has(row.id),
+      noOtherCostsConfirmed: row.other_costs_reviewed_at != null,
       hasSessions,
     };
   });
@@ -887,9 +897,36 @@ export async function updateJobCostsReviewed(
   id: JobId,
   reviewed: boolean,
 ): Promise<void> {
+  await updateJobMaterialsReviewed(client, id, reviewed);
+}
+
+export async function updateJobMaterialsReviewed(
+  client: FieldSoloSupabaseClient,
+  id: JobId,
+  reviewed: boolean,
+): Promise<void> {
   const { data, error } = await client
     .from('jobs')
-    .update({ costs_reviewed_at: reviewed ? new Date().toISOString() : null })
+    .update({ materials_reviewed_at: reviewed ? new Date().toISOString() : null })
+    .eq('id', id)
+    .is('deleted_at', null)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) {
+    throw new Error('Update affected no rows (check RLS: job must be owned by you).');
+  }
+}
+
+export async function updateJobOtherCostsReviewed(
+  client: FieldSoloSupabaseClient,
+  id: JobId,
+  reviewed: boolean,
+): Promise<void> {
+  const { data, error } = await client
+    .from('jobs')
+    .update({ other_costs_reviewed_at: reviewed ? new Date().toISOString() : null })
     .eq('id', id)
     .is('deleted_at', null)
     .select('id')

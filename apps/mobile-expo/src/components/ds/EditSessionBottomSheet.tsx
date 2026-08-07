@@ -45,6 +45,8 @@ type EditSessionBottomSheetProps = {
   onSavePress?: (values: EditSessionBottomSheetValues) => void;
   /** Trash icon — for add flow this deletes unsaved draft; for edit flow this soft-deletes. */
   onDeletePress?: () => void;
+  /** Shown under the session date field (e.g. mark-complete wizard). */
+  sessionError?: string;
 };
 
 type PickerKind = 'date' | 'startTime' | 'endTime';
@@ -98,6 +100,7 @@ export function EditSessionBottomSheet({
   title,
   primaryLabel,
   values,
+  sessionError,
   onClose,
   onClosed,
   onBack,
@@ -206,6 +209,12 @@ export function EditSessionBottomSheet({
             {title}
           </Text>
         </View>
+
+        {sessionError ? (
+          <Text style={[typography.bodySmall, { color: color('Semantic/Status/Error/Text') }]}>
+            {sessionError}
+          </Text>
+        ) : null}
 
         <View style={styles.fields}>
           <FieldShell

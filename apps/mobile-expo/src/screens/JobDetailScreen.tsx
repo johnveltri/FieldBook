@@ -39,10 +39,12 @@ import {
 
 import {
   ChooseSessionBottomSheet,
+  ConfirmMinimumInfoBottomSheet,
   DropdownBottomSheet,
   EditJobBottomSheet,
   EditMaterialBottomSheet,
   EditNoteBottomSheet,
+  EditOtherCostBottomSheet,
   EditSessionBottomSheet,
   JobDetailCtaRow,
   JobDetailJobHeader,
@@ -53,10 +55,12 @@ import {
   SessionCard,
   ViewMaterialsBuckets,
   ViewNotesBuckets,
+  ViewOtherCostsBuckets,
   type ChooseSessionBottomSheetSession,
   type DropdownBottomSheetOption,
   type EditMaterialBottomSheetValues,
   type EditNoteBottomSheetValues,
+  type EditOtherCostBottomSheetValues,
   type EditSessionBottomSheetValues,
 } from '../components/ds';
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
@@ -65,6 +69,7 @@ import {
   JobDetailIconSectionAdd,
   JobDetailIconSectionMaterials,
   JobDetailIconSectionNotes,
+  JobDetailIconSectionOtherCosts,
   JobDetailIconSectionSessions,
   JobDetailIconTopClose,
   JobDetailIconTopEdit,
@@ -84,8 +89,12 @@ import {
   fetchFirstJobIdForCurrentUser,
   fetchJobDetail,
   updateJobById,
+  createOtherCost,
+  deleteOtherCost,
   updateJobCostsReviewed,
+  updateJobOtherCostsReviewed,
   updateJobStatusById,
+  updateOtherCost,
   updateMaterial,
   updateNote,
   updateSessionTimes,
@@ -131,6 +140,21 @@ import type { TextStyles } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
 import type { EditJobBottomSheetValues } from '../components/ds/EditJobBottomSheet';
 
+type MarkCompleteWizardCloseOptions = {
+  /** Successful wizard step — keep advancing instead of cancelling mark-complete. */
+  keepWizardActive?: boolean;
+};
+import {
+  financialCompletenessGaps,
+  isJobFinanciallyComplete,
+  shouldDemoteCompletedOrPaidForIncompleteFinancials,
+  type FinancialCompletenessGap,
+} from '../lib/jobFinancialCompleteness';
+import {
+  OTHER_COST_TYPE_OPTIONS,
+  type JobOtherCostType,
+} from '../lib/otherCostTypes';
+
 /** Vertical gap between stacked blocks in the main column (`Spacing/20` = 16 + 4). */
 const SLOT_GAP = space('Spacing/24');
 
@@ -143,16 +167,12 @@ function supabaseApiHostLabel(): string {
   }
 }
 
+function jobFinancialContext(job: JobDetailViewModel) {
+  return { job };
+}
+
 function jobDetailIsFinanciallyComplete(job: JobDetailViewModel): boolean {
-  const title = job.shortDescription.trim();
-  const hasNamedJob = title.length > 0 && title !== 'Untitled Job';
-  const hasMaterials = job.materialBuckets.some((bucket) => bucket.items.length > 0);
-  return (
-    hasNamedJob &&
-    job.earnings.revenueCents > 0 &&
-    job.metrics.sessionCount > 0 &&
-    (hasMaterials || job.noMaterialsConfirmed)
-  );
+  return isJobFinanciallyComplete(jobFinancialContext(job));
 }
 
 export type JobDetailCloseOptions = {
@@ -418,6 +438,61 @@ export function JobDetailScreen({
   const [materialSheetMounted, setMaterialSheetMounted] = useState(false);
   const [materialSaving, setMaterialSaving] = useState(false);
   const [noMaterialsSaving, setNoMaterialsSaving] = useState(false);
+  const [noOtherCostsSaving, setNoOtherCostsSaving] = useState(false);
+  const [otherCostSaving, setOtherCostSaving] = useState(false);
+
+
+  type OtherCostFlow =
+    | 'closed'
+    | 'addOtherCost'
+    | 'editOtherCost'
+    | 'attachSession'
+    | 'editSession'
+    | 'chooseCostType';
+  const [otherCostFlow, setOtherCostFlow] = useState<OtherCostFlow>('closed');
+  const [editingOtherCostId, setEditingOtherCostId] = useState<string | null>(null);
+  const [ocDraftCostType, setOcDraftCostType] = useState<JobOtherCostType>('helper_labor');
+  const [ocDraftCostCents, setOcDraftCostCents] = useState(0);
+  const [ocDraftDescription, setOcDraftDescription] = useState('');
+  const [ocDraftSessionId, setOcDraftSessionId] = useState<string | null>(null);
+  const [otherCostSheetMounted, setOtherCostSheetMounted] = useState(false);
+
+  const completeWizardActiveRef = useRef(false);
+  const advanceMarkCompleteWizardRef = useRef<(refreshedJob: JobDetailViewModel) => void>(() => {});
+  const [minimumInfoGateMounted, setMinimumInfoGateMounted] = useState(false);
+  const [minimumInfoGateVisible, setMinimumInfoGateVisible] = useState(false);
+  const [editJobRevenueError, setEditJobRevenueError] = useState<string | undefined>();
+  const [sessionWizardBanner, setSessionWizardBanner] = useState<string | undefined>();
+  const [materialWizardMode, setMaterialWizardMode] = useState(false);
+  const [materialWizardError, setMaterialWizardError] = useState<string | undefined>();
+  const [otherCostWizardMode, setOtherCostWizardMode] = useState(false);
+  const [otherCostWizardError, setOtherCostWizardError] = useState<string | undefined>();
+
+  const cancelMarkCompleteWizard = useCallback(() => {
+    completeWizardActiveRef.current = false;
+    setMaterialWizardMode(false);
+    setMaterialWizardError(undefined);
+    setOtherCostWizardMode(false);
+    setOtherCostWizardError(undefined);
+    setEditJobRevenueError(undefined);
+    setSessionWizardBanner(undefined);
+  }, []);
+
+  const financialCompletenessCtx = useMemo(
+    () => (job ? jobFinancialContext(job) : null),
+    [job],
+  );
+
+  const costTypeOptions = useMemo<DropdownBottomSheetOption[]>(
+    () =>
+      OTHER_COST_TYPE_OPTIONS.map((o) => ({
+        id: o.id,
+        label: o.label,
+        value: o.value,
+      })),
+    [],
+  );
+
   /** Set when Supabase is configured but fetch returns null or throws (no silent mock). */
   const [jobLoadError, setJobLoadError] = useState<string | null>(null);
   /** Ensures we only auto-open the edit sheet once per navigation (see `initialEditOpen`). */
@@ -515,16 +590,26 @@ export function JobDetailScreen({
       analytics.capture('job_edit_opened', {
         source: 'job_detail',
         job_id: job.id,
-        existing_completeness: jobDetailIsFinanciallyComplete(job) ? 'complete' : 'incomplete',
+        existing_completeness: jobDetailIsFinanciallyComplete(job)
+          ? 'complete'
+          : 'incomplete',
         job_status: job.workStatus,
       });
     }
     setEditSheetMounted(true);
     setEditSheetVisible(true);
   }, [job]);
-  const onCloseEditSheet = useCallback(() => {
-    setEditSheetVisible(false);
-  }, []);
+  const onCloseEditSheet = useCallback(
+    (options?: MarkCompleteWizardCloseOptions) => {
+      if (completeWizardActiveRef.current && !options?.keepWizardActive) {
+        cancelMarkCompleteWizard();
+      } else if (options?.keepWizardActive) {
+        setEditJobRevenueError(undefined);
+      }
+      setEditSheetVisible(false);
+    },
+    [cancelMarkCompleteWizard],
+  );
 
   const toEditValues = useCallback((j: JobDetailViewModel): EditJobBottomSheetValues => {
     const revenue = (j.earnings.revenueCents / 100).toLocaleString('en-US', {
@@ -557,14 +642,23 @@ export function JobDetailScreen({
         });
         const refreshed = await fetchJobDetail(supabase, job.id);
         if (refreshed) setJob(refreshed);
-        onCloseEditSheet();
+        const keepWizard = completeWizardActiveRef.current;
+        onCloseEditSheet({ keepWizardActive: keepWizard });
         invalidateJobsList();
+        if (keepWizard && refreshed) {
+          advanceMarkCompleteWizardRef.current(refreshed);
+        }
         analytics.capture('job_saved', {
           job_id: job.id,
           changed_fields: changedFields(before, values),
-          completeness_before: jobDetailIsFinanciallyComplete(job) ? 'complete' : 'incomplete',
+          completeness_before: jobDetailIsFinanciallyComplete(job)
+            ? 'complete'
+            : 'incomplete',
           completeness_after:
-            refreshed && jobDetailIsFinanciallyComplete(refreshed) ? 'complete' : 'incomplete',
+            refreshed &&
+            jobDetailIsFinanciallyComplete(refreshed)
+              ? 'complete'
+              : 'incomplete',
           revenue_bucket: moneyBucket(revenueCents),
         });
       } catch (e) {
@@ -599,9 +693,17 @@ export function JobDetailScreen({
     setEditingSessionId(null);
   }, [job]);
 
-  const closeSessionFlow = useCallback(() => {
-    setSessionFlow('closed');
-  }, []);
+  const closeSessionFlow = useCallback(
+    (options?: MarkCompleteWizardCloseOptions) => {
+      if (completeWizardActiveRef.current && !options?.keepWizardActive) {
+        cancelMarkCompleteWizard();
+      } else if (options?.keepWizardActive) {
+        setSessionWizardBanner(undefined);
+      }
+      setSessionFlow('closed');
+    },
+    [cancelMarkCompleteWizard],
+  );
 
   const openAddSession = useCallback(() => {
     setSessionFlow('addForm');
@@ -796,6 +898,13 @@ export function JobDetailScreen({
     if (refreshed) setJob(refreshed);
   }, [job]);
 
+  const financialCompleteSnapshotRef = useRef<boolean | null>(null);
+  const demoteStatusInFlightRef = useRef(false);
+
+  useEffect(() => {
+    financialCompleteSnapshotRef.current = null;
+  }, [job?.id]);
+
   const formatErrorMessage = useCallback((e: unknown): string => {
     if (e instanceof Error) return e.message;
     if (
@@ -808,6 +917,73 @@ export function JobDetailScreen({
     }
     return String(e);
   }, []);
+
+  useEffect(() => {
+    if (!job || jobLoading || !supabaseReady) return;
+
+    const nowComplete = jobDetailIsFinanciallyComplete(job);
+    const previousComplete = financialCompleteSnapshotRef.current;
+    const shouldDemote = shouldDemoteCompletedOrPaidForIncompleteFinancials({
+      previousFinanciallyComplete: previousComplete,
+      nowFinanciallyComplete: nowComplete,
+      workStatus: job.workStatus,
+    });
+
+    if (!shouldDemote) {
+      financialCompleteSnapshotRef.current = nowComplete;
+      return;
+    }
+
+    if (
+      statusActionPending ||
+      completeWizardActiveRef.current ||
+      demoteStatusInFlightRef.current
+    ) {
+      return;
+    }
+
+    financialCompleteSnapshotRef.current = nowComplete;
+    demoteStatusInFlightRef.current = true;
+    const fromStatus = job.workStatus;
+    void (async () => {
+      try {
+        await updateJobStatusById(supabase, job.id, 'inProgress');
+        invalidateJobsList();
+        const refreshed = await fetchJobDetail(supabase, job.id);
+        if (refreshed) {
+          setJob(refreshed);
+          financialCompleteSnapshotRef.current = jobDetailIsFinanciallyComplete(refreshed);
+        }
+        analytics.capture('job_status_changed', {
+          job_id: job.id,
+          from_status: fromStatus,
+          to_status: 'inProgress',
+          source: 'financial_incompleteness',
+        });
+      } catch (e) {
+        analytics.capture('job_status_change_failed', {
+          job_id: job.id,
+          from_status: fromStatus,
+          attempted_status: 'inProgress',
+          source: 'financial_incompleteness',
+          ...errorProperties(e),
+        });
+        Alert.alert(
+          'Status update failed',
+          formatErrorMessage(e) || 'Could not set job back to in progress.',
+        );
+      } finally {
+        demoteStatusInFlightRef.current = false;
+      }
+    })();
+  }, [
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    jobLoading,
+    statusActionPending,
+    supabaseReady,
+  ]);
 
   const closeStatusSheet = useCallback(() => {
     setStatusSheetVisible(false);
@@ -887,6 +1063,15 @@ export function JobDetailScreen({
       );
       return;
     }
+    if (
+      next === 'completed' &&
+      financialCompletenessCtx &&
+      !isJobFinanciallyComplete(financialCompletenessCtx)
+    ) {
+      setMinimumInfoGateMounted(true);
+      setMinimumInfoGateVisible(true);
+      return;
+    }
     setStatusActionPending(true);
     try {
       await updateJobStatusById(supabase, job.id, next);
@@ -915,13 +1100,23 @@ export function JobDetailScreen({
     } finally {
       setStatusActionPending(false);
     }
-  }, [job, statusActionPending, refetchJob, formatErrorMessage, maybeShowCompletionFeedbackPrompt, onEdit]);
+  }, [job, statusActionPending, refetchJob, formatErrorMessage, maybeShowCompletionFeedbackPrompt, onEdit, financialCompletenessCtx]);
 
   const onSelectJobStatusFromSheet = useCallback(
     async (value: string) => {
       if (!job || statusActionPending) return;
       if (!isJobDetailWorkStatus(value)) return;
       const next = value;
+      if (
+        next === 'completed' &&
+        financialCompletenessCtx &&
+        !isJobFinanciallyComplete(financialCompletenessCtx)
+      ) {
+        closeStatusSheet();
+        setMinimumInfoGateMounted(true);
+        setMinimumInfoGateVisible(true);
+        return;
+      }
       setStatusActionPending(true);
       try {
         await updateJobStatusById(supabase, job.id, next);
@@ -952,7 +1147,7 @@ export function JobDetailScreen({
         setStatusActionPending(false);
       }
     },
-    [job, statusActionPending, refetchJob, formatErrorMessage, closeStatusSheet, maybeShowCompletionFeedbackPrompt],
+    [job, statusActionPending, refetchJob, formatErrorMessage, closeStatusSheet, maybeShowCompletionFeedbackPrompt, financialCompletenessCtx],
   );
 
   const onSaveNewSession = useCallback(
@@ -967,7 +1162,12 @@ export function JobDetailScreen({
         });
         await refetchJob();
         invalidateJobsList();
-        closeSessionFlow();
+        const keepWizard = completeWizardActiveRef.current;
+        closeSessionFlow({ keepWizardActive: keepWizard });
+        if (keepWizard) {
+          const refreshed = await fetchJobDetail(supabase, job.id);
+          if (refreshed) advanceMarkCompleteWizardRef.current(refreshed);
+        }
         analytics.capture('manual_session_created', {
           job_id: job.id,
           session_id: sessionId,
@@ -1271,9 +1471,18 @@ export function JobDetailScreen({
     [job],
   );
 
-  const closeMaterialFlow = useCallback(() => {
-    setMaterialFlow('closed');
-  }, []);
+  const closeMaterialFlow = useCallback(
+    (options?: MarkCompleteWizardCloseOptions) => {
+      if (completeWizardActiveRef.current && !options?.keepWizardActive) {
+        cancelMarkCompleteWizard();
+      } else if (options?.keepWizardActive) {
+        setMaterialWizardMode(false);
+        setMaterialWizardError(undefined);
+      }
+      setMaterialFlow('closed');
+    },
+    [cancelMarkCompleteWizard],
+  );
 
   const openAddMaterial = useCallback(() => {
     if (job) {
@@ -1376,7 +1585,12 @@ export function JobDetailScreen({
         });
         await refetchJob();
         invalidateJobsList();
-        closeMaterialFlow();
+        const keepWizard = completeWizardActiveRef.current;
+        closeMaterialFlow({ keepWizardActive: keepWizard });
+        if (keepWizard) {
+          const refreshed = await fetchJobDetail(supabase, job.id);
+          if (refreshed) advanceMarkCompleteWizardRef.current(refreshed);
+        }
         analytics.capture('material_created', {
           source: 'job_detail',
           material_id: materialId,
@@ -1575,6 +1789,416 @@ export function JobDetailScreen({
     supabaseReady,
   ]);
 
+  const performMarkJobCompleted = useCallback(async () => {
+    if (!job) return;
+    setStatusActionPending(true);
+    try {
+      const fromStatus = job.workStatus;
+      await updateJobStatusById(supabase, job.id, 'completed');
+      await refetchJob();
+      analytics.capture('job_status_changed', {
+        job_id: job.id,
+        from_status: fromStatus,
+        to_status: 'completed',
+        source: 'primary_cta',
+      });
+      if (fromStatus !== 'completed') {
+        void maybeShowCompletionFeedbackPrompt();
+      }
+    } catch (e) {
+      analytics.capture('job_status_change_failed', {
+        job_id: job.id,
+        from_status: job.workStatus,
+        attempted_status: 'completed',
+        source: 'mark_complete_wizard',
+        ...errorProperties(e),
+      });
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not update job status.',
+      );
+    } finally {
+      setStatusActionPending(false);
+      setMaterialWizardMode(false);
+      setMaterialWizardError(undefined);
+      setOtherCostWizardMode(false);
+      setOtherCostWizardError(undefined);
+      setEditJobRevenueError(undefined);
+      setSessionWizardBanner(undefined);
+    }
+  }, [formatErrorMessage, job, maybeShowCompletionFeedbackPrompt, refetchJob]);
+
+  const openMarkCompleteGap = useCallback(
+    (gap: FinancialCompletenessGap) => {
+      switch (gap) {
+        case 'revenue':
+          setEditJobRevenueError('Missing Revenue');
+          setEditSheetMounted(true);
+          setEditSheetVisible(true);
+          break;
+        case 'session':
+          setSessionWizardBanner('Missing Session');
+          setSessionSheetMounted(true);
+          setSessionFlow('addForm');
+          setEditingSessionId(null);
+          break;
+        case 'materials':
+          setMaterialWizardMode(true);
+          setMaterialWizardError('Missing materials');
+          setEditingMaterialId(null);
+          setMatDraftDescription('');
+          setMatDraftUnitCostCents(0);
+          setMatDraftQuantity(1);
+          setMatDraftUnit('ea');
+          setMatDraftSessionId(null);
+          setMaterialSheetMounted(true);
+          setMaterialFlow('addMaterial');
+          break;
+        case 'otherCosts':
+          setOtherCostWizardMode(true);
+          setOtherCostWizardError('Missing other costs');
+          setEditingOtherCostId(null);
+          setOcDraftCostType('helper_labor');
+          setOcDraftCostCents(0);
+          setOcDraftDescription('');
+          setOcDraftSessionId(null);
+          setOtherCostSheetMounted(true);
+          setOtherCostFlow('addOtherCost');
+          break;
+      }
+    },
+    [],
+  );
+
+  const advanceMarkCompleteWizard = useCallback(
+    (refreshedJob: JobDetailViewModel) => {
+      if (!completeWizardActiveRef.current) return;
+      const ctx = jobFinancialContext(refreshedJob);
+      const gaps = financialCompletenessGaps(ctx);
+      if (gaps.length === 0) {
+        completeWizardActiveRef.current = false;
+        void performMarkJobCompleted();
+        return;
+      }
+      openMarkCompleteGap(gaps[0]);
+    },
+    [openMarkCompleteGap, performMarkJobCompleted],
+  );
+
+  useEffect(() => {
+    advanceMarkCompleteWizardRef.current = advanceMarkCompleteWizard;
+  }, [advanceMarkCompleteWizard]);
+
+  const onConfirmMinimumInfo = useCallback(() => {
+    if (!job) return;
+    completeWizardActiveRef.current = true;
+    setMinimumInfoGateVisible(false);
+    advanceMarkCompleteWizard(job);
+  }, [advanceMarkCompleteWizard, job]);
+
+  const closeMinimumInfoGate = useCallback(() => {
+    setMinimumInfoGateVisible(false);
+  }, []);
+
+  const onConfirmNoOtherCosts = useCallback(async () => {
+    if (!job || noOtherCostsSaving || !supabaseReady) return;
+    setNoOtherCostsSaving(true);
+    try {
+      await updateJobOtherCostsReviewed(supabase, job.id, true);
+      await refetchJob();
+      invalidateJobsList();
+      if (completeWizardActiveRef.current) {
+        const refreshed = await fetchJobDetail(supabase, job.id);
+        if (refreshed) advanceMarkCompleteWizard(refreshed);
+      }
+    } catch (e) {
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not confirm other costs.',
+      );
+    } finally {
+      setNoOtherCostsSaving(false);
+    }
+  }, [
+    advanceMarkCompleteWizard,
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noOtherCostsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
+
+  const onUndoNoOtherCosts = useCallback(async () => {
+    if (!job || noOtherCostsSaving || !supabaseReady) return;
+    setNoOtherCostsSaving(true);
+    try {
+      await updateJobOtherCostsReviewed(supabase, job.id, false);
+      await refetchJob();
+      invalidateJobsList();
+    } catch (e) {
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not undo other costs confirmation.',
+      );
+    } finally {
+      setNoOtherCostsSaving(false);
+    }
+  }, [
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noOtherCostsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
+
+  // --- Other cost add/edit flow ---
+
+  const findOtherCostLine = useCallback(
+    (otherCostId: string) => {
+      if (!job) return null;
+      for (const bucket of job.otherCostBuckets) {
+        const item = bucket.items.find((line) => line.id === otherCostId);
+        if (item) return item;
+      }
+      return null;
+    },
+    [job],
+  );
+
+  const closeOtherCostFlow = useCallback(
+    (options?: MarkCompleteWizardCloseOptions) => {
+      if (completeWizardActiveRef.current && !options?.keepWizardActive) {
+        cancelMarkCompleteWizard();
+      } else if (options?.keepWizardActive) {
+        setOtherCostWizardMode(false);
+        setOtherCostWizardError(undefined);
+      }
+      setOtherCostFlow('closed');
+    },
+    [cancelMarkCompleteWizard],
+  );
+
+  const openAddOtherCost = useCallback(() => {
+    setEditingOtherCostId(null);
+    setOcDraftCostType('helper_labor');
+    setOcDraftCostCents(0);
+    setOcDraftDescription('');
+    setOcDraftSessionId(null);
+    setOtherCostSheetMounted(true);
+    setOtherCostFlow('addOtherCost');
+  }, []);
+
+  const openEditOtherCost = useCallback(
+    (otherCostId: string) => {
+      const line = findOtherCostLine(otherCostId);
+      if (!line) return;
+      setEditingOtherCostId(otherCostId);
+      setOcDraftCostType(line.costType as JobOtherCostType);
+      setOcDraftCostCents(line.costCents);
+      setOcDraftDescription(line.description);
+      setOcDraftSessionId(line.sessionId);
+      setOtherCostSheetMounted(true);
+      setOtherCostFlow('editOtherCost');
+    },
+    [findOtherCostLine],
+  );
+
+  const returnToOtherCostSheet = useCallback(() => {
+    setOtherCostFlow(editingOtherCostId ? 'editOtherCost' : 'addOtherCost');
+  }, [editingOtherCostId]);
+
+  const openSessionPickerFromOtherCostSheet = useCallback(() => {
+    setOtherCostFlow(ocDraftSessionId ? 'editSession' : 'attachSession');
+  }, [ocDraftSessionId]);
+
+  const openCostTypePickerFromOtherCostSheet = useCallback(() => {
+    setOtherCostFlow('chooseCostType');
+  }, []);
+
+  const onSelectOtherCostSession = useCallback(
+    (sessionId: string) => {
+      setOcDraftSessionId(sessionId);
+      returnToOtherCostSheet();
+    },
+    [returnToOtherCostSheet],
+  );
+
+  const onRemoveOtherCostSession = useCallback(() => {
+    setOcDraftSessionId(null);
+    returnToOtherCostSheet();
+  }, [returnToOtherCostSheet]);
+
+  const onSelectOtherCostType = useCallback(
+    (value: string) => {
+      setOcDraftCostType((value as JobOtherCostType) || 'other');
+      returnToOtherCostSheet();
+    },
+    [returnToOtherCostSheet],
+  );
+
+  const saveOtherCostLine = useCallback(
+    async (values: EditOtherCostBottomSheetValues, lineId: string | null) => {
+      if (!job || otherCostSaving || !supabaseReady) return;
+      setOtherCostSaving(true);
+      try {
+        if (lineId) {
+          await updateOtherCost(supabase, lineId, {
+            costType: values.costType,
+            description: values.description,
+            costCents: values.costCents,
+            sessionId: ocDraftSessionId,
+            jobId: ocDraftSessionId ? null : job.id,
+          });
+        } else {
+          await createOtherCost(supabase, {
+            jobId: ocDraftSessionId ? null : job.id,
+            sessionId: ocDraftSessionId,
+            costType: values.costType,
+            description: values.description,
+            costCents: values.costCents,
+          });
+        }
+        await refetchJob();
+        invalidateJobsList();
+        const keepWizard = completeWizardActiveRef.current;
+        closeOtherCostFlow({ keepWizardActive: keepWizard });
+        const refreshed = await fetchJobDetail(supabase, job.id);
+        if (refreshed && keepWizard) {
+          advanceMarkCompleteWizard(refreshed);
+        }
+      } catch (e) {
+        Alert.alert(
+          'Save failed',
+          formatErrorMessage(e) || 'Could not save other cost.',
+        );
+      } finally {
+        setOtherCostSaving(false);
+      }
+    },
+    [
+      advanceMarkCompleteWizard,
+      closeOtherCostFlow,
+      formatErrorMessage,
+      invalidateJobsList,
+      job,
+      ocDraftSessionId,
+      otherCostSaving,
+      refetchJob,
+      supabaseReady,
+    ],
+  );
+
+  const onSaveNewOtherCost = useCallback(
+    (values: EditOtherCostBottomSheetValues) => {
+      void saveOtherCostLine(values, null);
+    },
+    [saveOtherCostLine],
+  );
+
+  const onSaveOtherCostChanges = useCallback(
+    (values: EditOtherCostBottomSheetValues) => {
+      if (!editingOtherCostId) return;
+      void saveOtherCostLine(values, editingOtherCostId);
+    },
+    [editingOtherCostId, saveOtherCostLine],
+  );
+
+  const onDeleteEditingOtherCost = useCallback(async () => {
+    if (!job || !editingOtherCostId) {
+      closeOtherCostFlow();
+      return;
+    }
+    if (otherCostSaving) return;
+    setOtherCostSaving(true);
+    try {
+      await deleteOtherCost(supabase, editingOtherCostId);
+      await refetchJob();
+      invalidateJobsList();
+      closeOtherCostFlow();
+    } catch (e) {
+      Alert.alert(
+        'Delete failed',
+        formatErrorMessage(e) || 'Could not delete other cost.',
+      );
+    } finally {
+      setOtherCostSaving(false);
+    }
+  }, [
+    closeOtherCostFlow,
+    editingOtherCostId,
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    otherCostSaving,
+    refetchJob,
+  ]);
+
+  const onConfirmNoOtherCostsFromWizard = useCallback(async () => {
+    if (!job || noOtherCostsSaving || !supabaseReady) return;
+    setNoOtherCostsSaving(true);
+    try {
+      await updateJobOtherCostsReviewed(supabase, job.id, true);
+      await refetchJob();
+      invalidateJobsList();
+      const keepWizard = completeWizardActiveRef.current;
+      closeOtherCostFlow({ keepWizardActive: keepWizard });
+      const refreshed = await fetchJobDetail(supabase, job.id);
+      if (refreshed && keepWizard) {
+        advanceMarkCompleteWizard(refreshed);
+      }
+    } catch (e) {
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not confirm other costs.',
+      );
+    } finally {
+      setNoOtherCostsSaving(false);
+    }
+  }, [
+    advanceMarkCompleteWizard,
+    closeOtherCostFlow,
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noOtherCostsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
+
+  const onConfirmNoMaterialsFromWizard = useCallback(async () => {
+    if (!job || noMaterialsSaving || !supabaseReady) return;
+    setNoMaterialsSaving(true);
+    try {
+      await updateJobCostsReviewed(supabase, job.id, true);
+      await refetchJob();
+      invalidateJobsList();
+      const keepWizard = completeWizardActiveRef.current;
+      closeMaterialFlow({ keepWizardActive: keepWizard });
+      const refreshed = await fetchJobDetail(supabase, job.id);
+      if (refreshed && keepWizard) {
+        advanceMarkCompleteWizard(refreshed);
+      }
+    } catch (e) {
+      Alert.alert(
+        'Update failed',
+        formatErrorMessage(e) || 'Could not confirm materials.',
+      );
+    } finally {
+      setNoMaterialsSaving(false);
+    }
+  }, [
+    advanceMarkCompleteWizard,
+    closeMaterialFlow,
+    formatErrorMessage,
+    invalidateJobsList,
+    job,
+    noMaterialsSaving,
+    refetchJob,
+    supabaseReady,
+  ]);
+
   /** Sessions visible in current Job Detail UI (completed only). */
   const visibleSessions = useMemo(
     () => job?.displaySessions ?? [],
@@ -1615,6 +2239,13 @@ export function JobDetailScreen({
     if (!s) return null;
     return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
   }, [matDraftSessionId, allSessionsList]);
+
+  const ocDraftAssignedSession = useMemo(() => {
+    if (!ocDraftSessionId) return null;
+    const s = allSessionsList.find((x) => x.id === ocDraftSessionId);
+    if (!s) return null;
+    return { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel };
+  }, [ocDraftSessionId, allSessionsList]);
 
   /** Preset UOM options for the unit-of-measure dropdown (Figma `1882:1781`). */
   const unitOptions = useMemo<DropdownBottomSheetOption[]>(
@@ -1825,7 +2456,10 @@ export function JobDetailScreen({
             workStatus={job.workStatus}
             typography={typography}
           />
-          <JobDetailSummaryCard earnings={job.earnings} typography={typography} />
+          <JobDetailSummaryCard
+            earnings={job.earnings}
+            typography={typography}
+          />
           <JobDetailCtaRow
             workStatus={job.workStatus}
             typography={typography}
@@ -1910,6 +2544,33 @@ export function JobDetailScreen({
         )}
 
         <SectionHeaderFigma
+          title="Other Costs"
+          icon={<JobDetailIconSectionOtherCosts color={color('Brand/Accent')} />}
+          typography={typography}
+          showAdd
+          onAddPress={openAddOtherCost}
+        />
+        {job.otherCostBuckets.length === 0 ? (
+          job.noOtherCostsConfirmed ? (
+            <OtherCostsConfirmedNoUseCard
+              typography={typography}
+              onUndo={onUndoNoOtherCosts}
+            />
+          ) : (
+            <OtherCostsEmptyStateCard
+              typography={typography}
+              onConfirmNoOtherCosts={onConfirmNoOtherCosts}
+            />
+          )
+        ) : (
+          <ViewOtherCostsBuckets
+            buckets={job.otherCostBuckets}
+            typography={typography}
+            onOtherCostPress={openEditOtherCost}
+          />
+        )}
+
+        <SectionHeaderFigma
           title="Notes"
           icon={<JobDetailIconSectionNotes color={color('Brand/Accent')} />}
           typography={typography}
@@ -1932,6 +2593,7 @@ export function JobDetailScreen({
         <EditJobBottomSheet
           typography={typography}
           values={job ? toEditValues(job) : undefined}
+          revenueError={editJobRevenueError}
           visible={editSheetVisible}
           onClose={onCloseEditSheet}
           onClosed={() => setEditSheetMounted(false)}
@@ -2072,6 +2734,17 @@ export function JobDetailScreen({
               setMatDraftUnit(values.unit);
               openUnitPickerFromMaterialSheet();
             }}
+            materialError={materialWizardError}
+            noneConfirmLabel={
+              materialWizardMode ? 'CONFIRM NO MATERIALS USED' : undefined
+            }
+            onNoneConfirmPress={
+              materialWizardMode
+                ? () => {
+                    void onConfirmNoMaterialsFromWizard();
+                  }
+                : undefined
+            }
           />
           <ChooseSessionBottomSheet
             typography={typography}
@@ -2125,6 +2798,7 @@ export function JobDetailScreen({
             // where sessionFlow has already flipped to 'closed'.
             title={editingSessionId ? 'Edit Session' : 'Add Session'}
             primaryLabel={editingSessionId ? 'SAVE CHANGES' : 'SAVE NEW SESSION'}
+            sessionError={sessionWizardBanner}
             values={
               editingSessionId && editingSession
                 ? {
@@ -2163,6 +2837,100 @@ export function JobDetailScreen({
             }}
           />
         </>
+      ) : null}
+      {otherCostSheetMounted ? (
+        <>
+          <EditOtherCostBottomSheet
+            typography={typography}
+            visible={
+              otherCostFlow === 'addOtherCost' || otherCostFlow === 'editOtherCost'
+            }
+            title={editingOtherCostId ? 'Edit Other Cost' : 'Add Other Cost'}
+            primaryLabel={editingOtherCostId ? 'SAVE CHANGES' : 'SAVE NEW COST'}
+            values={{
+              costType: ocDraftCostType,
+              costCents: ocDraftCostCents,
+              description: ocDraftDescription,
+            }}
+            assignedSession={ocDraftAssignedSession}
+            canAttachSession={chooserSessions.length > 0}
+            otherCostError={otherCostWizardError}
+            noneConfirmLabel={
+              otherCostWizardMode ? 'CONFIRM NO OTHER COSTS' : undefined
+            }
+            onNoneConfirmPress={
+              otherCostWizardMode ? onConfirmNoOtherCostsFromWizard : undefined
+            }
+            onClose={closeOtherCostFlow}
+            onClosed={() => {
+              if (otherCostFlow === 'closed') setOtherCostSheetMounted(false);
+            }}
+            onBack={closeOtherCostFlow}
+            onSavePress={(values) => {
+              setOcDraftCostType(values.costType);
+              setOcDraftCostCents(values.costCents);
+              setOcDraftDescription(values.description);
+              if (editingOtherCostId) {
+                onSaveOtherCostChanges(values);
+              } else {
+                onSaveNewOtherCost(values);
+              }
+            }}
+            onDeletePress={onDeleteEditingOtherCost}
+            onSessionPillPress={(values) => {
+              setOcDraftCostType(values.costType);
+              setOcDraftCostCents(values.costCents);
+              setOcDraftDescription(values.description);
+              openSessionPickerFromOtherCostSheet();
+            }}
+            onCostTypePress={(values) => {
+              setOcDraftCostType(values.costType);
+              setOcDraftCostCents(values.costCents);
+              setOcDraftDescription(values.description);
+              openCostTypePickerFromOtherCostSheet();
+            }}
+          />
+          <ChooseSessionBottomSheet
+            typography={typography}
+            visible={
+              otherCostFlow === 'attachSession' || otherCostFlow === 'editSession'
+            }
+            mode={otherCostFlow === 'editSession' ? 'edit' : 'attach'}
+            sessions={chooserSessions}
+            currentSessionId={ocDraftSessionId}
+            onClose={closeOtherCostFlow}
+            onClosed={() => {
+              if (otherCostFlow === 'closed') setOtherCostSheetMounted(false);
+            }}
+            onBack={returnToOtherCostSheet}
+            onSelect={onSelectOtherCostSession}
+            onRemove={onRemoveOtherCostSession}
+          />
+          <DropdownBottomSheet
+            typography={typography}
+            visible={otherCostFlow === 'chooseCostType'}
+            options={costTypeOptions}
+            currentValue={ocDraftCostType}
+            allowCustom={false}
+            onClose={closeOtherCostFlow}
+            onClosed={() => {
+              if (otherCostFlow === 'closed') setOtherCostSheetMounted(false);
+            }}
+            onBack={returnToOtherCostSheet}
+            onSelect={onSelectOtherCostType}
+          />
+        </>
+      ) : null}
+      {minimumInfoGateMounted ? (
+        <ConfirmMinimumInfoBottomSheet
+          typography={typography}
+          visible={minimumInfoGateVisible}
+          onClose={closeMinimumInfoGate}
+          onClosed={() => {
+            if (!minimumInfoGateVisible) setMinimumInfoGateMounted(false);
+          }}
+          onConfirmPress={onConfirmMinimumInfo}
+        />
       ) : null}
     </Animated.View>
     </PanGestureHandler>
@@ -2242,6 +3010,84 @@ function MaterialsConfirmedNoUseCard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Undo no materials confirmation"
+          onPress={onUndo}
+          disabled={undoDisabled}
+          style={({ pressed }) => [pressed && !undoDisabled && styles.pressed, undoDisabled ? { opacity: 0.5 } : null]}
+        >
+          <Text
+            style={[
+              typography.bodySmall,
+              {
+                color: fg.secondary,
+                textDecorationLine: 'underline',
+                textAlign: 'center',
+                marginTop: space('Spacing/12'),
+              },
+            ]}
+          >
+            Undo
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function OtherCostsEmptyStateCard({
+  typography,
+  onConfirmNoOtherCosts,
+  confirmDisabled,
+}: {
+  typography: TextStyles;
+  onConfirmNoOtherCosts: () => void;
+  confirmDisabled?: boolean;
+}) {
+  const ctaColor = color('Foundation/Surface/White');
+  return (
+    <View style={styles.viewCardOuter}>
+      <View style={[styles.viewCardBorder, cardShadowRn, styles.materialsEmptyCardPad]}>
+        <Text style={[typography.body, { color: fg.secondary, textAlign: 'center' }]}>
+          No other costs recorded.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Confirm no other costs"
+          onPress={onConfirmNoOtherCosts}
+          disabled={confirmDisabled}
+          style={({ pressed }) => [
+            styles.materialsConfirmCta,
+            pressed && !confirmDisabled && styles.pressed,
+            confirmDisabled ? { opacity: 0.5 } : null,
+          ]}
+        >
+          <Text style={[typography.metricSLabel, styles.materialsConfirmCtaLabel, { color: ctaColor }]}>
+            CONFIRM NO OTHER COSTS
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function OtherCostsConfirmedNoUseCard({
+  typography,
+  onUndo,
+  undoDisabled,
+}: {
+  typography: TextStyles;
+  onUndo: () => void;
+  undoDisabled?: boolean;
+}) {
+  const ok = color('Semantic/Status/Success/Text');
+  return (
+    <View style={styles.viewCardOuter}>
+      <View style={[styles.viewCardBorder, cardShadowRn, styles.materialsEmptyCardPad]}>
+        <Text style={[typography.bodyBold, { color: ok, textAlign: 'center' }]}>
+          ✓ No other costs
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Undo no other costs confirmation"
           onPress={onUndo}
           disabled={undoDisabled}
           style={({ pressed }) => [pressed && !undoDisabled && styles.pressed, undoDisabled ? { opacity: 0.5 } : null]}

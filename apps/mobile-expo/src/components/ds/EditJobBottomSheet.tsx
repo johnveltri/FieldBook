@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { fg, border, space } from '../../theme/nativeTokens';
+import { color } from '@fieldsolo/design-system/lib/tokens';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -27,6 +28,8 @@ type EditJobBottomSheetProps = {
   typography: TextStyles;
   values?: Partial<EditJobBottomSheetValues>;
   visible: boolean;
+  /** Shown under the revenue field (e.g. mark-complete wizard). */
+  revenueError?: string;
   onClose?: () => void;
   onClosed?: () => void;
   onSavePress?: (values: EditJobBottomSheetValues) => void;
@@ -79,6 +82,7 @@ export function EditJobBottomSheet({
   typography,
   values,
   visible,
+  revenueError,
   onClose,
   onClosed,
   onSavePress,
@@ -186,6 +190,11 @@ export function EditJobBottomSheet({
               />
             </View>
           </InputShell>
+          {revenueError ? (
+            <Text style={[typography.bodySmall, { color: color('Semantic/Status/Error/Text') }]}>
+              {revenueError}
+            </Text>
+          ) : null}
         </View>
 
         <SheetPrimaryDeleteActions

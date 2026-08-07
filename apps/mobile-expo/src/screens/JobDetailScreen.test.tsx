@@ -69,6 +69,7 @@ jest.mock('../components/figma-icons/JobDetailScreenIcons', () => ({
   JobDetailIconSectionAdd: () => null,
   JobDetailIconSectionMaterials: () => null,
   JobDetailIconSectionNotes: () => null,
+  JobDetailIconSectionOtherCosts: () => null,
   JobDetailIconSectionSessions: () => null,
   JobDetailIconTopClose: () => null,
   JobDetailIconTopEdit: () => null,
@@ -82,6 +83,8 @@ jest.mock('../components/ds', () => ({
     return 'completed';
   },
   EditJobBottomSheet: () => null,
+  ConfirmMinimumInfoBottomSheet: () => null,
+  EditOtherCostBottomSheet: () => null,
   JobDetailCtaRow: ({ onPrimaryPress }: { onPrimaryPress: () => void }) => {
     const { Text } = require('react-native');
     return <Text onPress={onPrimaryPress}>Primary status action</Text>;
@@ -306,6 +309,7 @@ jest.mock('../components/ds', () => ({
       </View>
     );
   },
+  ViewOtherCostsBuckets: () => null,
   ViewNotesBuckets: ({
     buckets,
     onNotePress,
@@ -383,6 +387,11 @@ jest.mock('@fieldsolo/api-client', () => ({
   fetchJobDetail: jest.fn(),
   updateJobById: jest.fn(),
   updateJobNoMaterialsConfirmed: jest.fn(),
+  updateJobCostsReviewed: jest.fn(),
+  updateJobOtherCostsReviewed: jest.fn(),
+  createOtherCost: jest.fn(),
+  updateOtherCost: jest.fn(),
+  deleteOtherCost: jest.fn(),
   isNoMaterialsConfirmedColumnMissingError: jest.fn(() => false),
   updateJobStatusById: jest.fn(),
   updateMaterial: jest.fn(),
@@ -409,6 +418,7 @@ describe('JobDetailScreen manual session and note flows', () => {
     earnings: {
       revenueCents: 10000,
       materialsCents: -500,
+      otherCostsCents: 0,
       feesCents: 0,
       netEarningsCents: 9500,
     },
@@ -457,6 +467,8 @@ describe('JobDetailScreen manual session and note flows', () => {
       },
     ],
     noMaterialsConfirmed: false,
+    otherCostBuckets: [],
+    noOtherCostsConfirmed: false,
   };
 
   beforeEach(() => {
@@ -472,6 +484,10 @@ describe('JobDetailScreen manual session and note flows', () => {
     apiClient.updateMaterial.mockResolvedValue(undefined);
     apiClient.deleteMaterial.mockResolvedValue(undefined);
     apiClient.updateJobNoMaterialsConfirmed.mockResolvedValue(undefined);
+    apiClient.updateJobOtherCostsReviewed.mockResolvedValue(undefined);
+    apiClient.createOtherCost.mockResolvedValue('oc-new-1');
+    apiClient.updateOtherCost.mockResolvedValue(undefined);
+    apiClient.deleteOtherCost.mockResolvedValue(undefined);
     apiClient.updateJobStatusById.mockResolvedValue(undefined);
     apiClient.countCompletedJobsForCurrentUser.mockResolvedValue(1);
     mockClaimFeedbackPromptMilestone.mockResolvedValue(null);
@@ -482,7 +498,23 @@ describe('JobDetailScreen manual session and note flows', () => {
   it('offers feedback after the first completed job', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     mockClaimFeedbackPromptMilestone.mockResolvedValueOnce(1);
+    let jobState: JobDetailViewModel = {
+      ...baseJob,
+      noMaterialsConfirmed: true,
+      noOtherCostsConfirmed: false,
+    };
+    apiClient.updateJobOtherCostsReviewed.mockImplementation(async () => {
+      jobState = { ...jobState, noOtherCostsConfirmed: true };
+    });
+    apiClient.fetchJobDetail.mockImplementation(async () => ({ ...jobState }));
     const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() => expect(screen.getByText('CONFIRM NO OTHER COSTS')).toBeTruthy());
+    fireEvent.press(screen.getByText('CONFIRM NO OTHER COSTS'));
+
+    await waitFor(() =>
+      expect(apiClient.updateJobOtherCostsReviewed).toHaveBeenCalledWith({}, 'job-1', true),
+    );
 
     await waitFor(() => expect(screen.getByText('Primary status action')).toBeTruthy());
     fireEvent.press(screen.getByText('Primary status action'));
@@ -909,5 +941,33 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
     expect(apiClient.updateJobStatusById).not.toHaveBeenCalled();
     alertSpy.mockRestore();
+  });
+
+  it('sets completed job back to in progress when other costs confirmation is undone', async () => {
+    let jobState: JobDetailViewModel = {
+      ...baseJob,
+      workStatus: 'completed',
+      noMaterialsConfirmed: true,
+      noOtherCostsConfirmed: true,
+    };
+    apiClient.fetchJobDetail.mockImplementation(async () => ({ ...jobState }));
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Undo no other costs confirmation')).toBeTruthy(),
+    );
+
+    jobState = {
+      ...jobState,
+      noOtherCostsConfirmed: false,
+    };
+    fireEvent.press(screen.getByLabelText('Undo no other costs confirmation'));
+
+    await waitFor(() => {
+      expect(apiClient.updateJobOtherCostsReviewed).toHaveBeenCalledWith({}, 'job-1', false);
+      expect(apiClient.updateJobStatusById).toHaveBeenCalledWith({}, 'job-1', 'inProgress');
+    });
+
+    jobState = { ...jobState, workStatus: 'inProgress' };
   });
 });

@@ -19,6 +19,8 @@ export {
   bumpJobToInProgressIfNotStarted,
   tryBumpJobToInProgressIfNotStarted,
   updateJobCostsReviewed,
+  updateJobMaterialsReviewed,
+  updateJobOtherCostsReviewed,
   updateJobStatusById,
   type ListJobsForCurrentUserItem,
   type ListJobsForCurrentUserPageResult,
@@ -64,6 +66,16 @@ export {
   type MaterialId,
   type UpdateMaterialInput,
 } from './materials';
+export {
+  createOtherCost,
+  deleteOtherCost,
+  updateOtherCost,
+  OTHER_COST_TYPE_VALUES,
+  type CreateOtherCostInput,
+  type OtherCostId,
+  type OtherCostTypeDb,
+  type UpdateOtherCostInput,
+} from './otherCosts';
 export {
   countInboxItems,
   listInboxMaterials,

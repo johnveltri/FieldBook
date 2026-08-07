@@ -117,7 +117,7 @@ export function JobCard({
               </Text>
             </View>
             <View style={styles.metricCol}>
-              <Text style={typography.jobDetailMetricColumnLabel}>MAT</Text>
+              <Text style={typography.jobDetailMetricColumnLabel}>COST</Text>
               <Text
                 style={[
                   typography.metric,

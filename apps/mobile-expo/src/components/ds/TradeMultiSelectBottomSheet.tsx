@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -140,7 +141,12 @@ export function TradeMultiSelectBottomSheet({
           </Text>
         </View>
 
-        <View style={styles.listScroll}>
+        <ScrollView
+          style={styles.listScroll}
+          contentContainerStyle={styles.listScrollContent}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+        >
           {presets.map((opt, i) => {
             const sel = isSelected(opt.value);
             return (
@@ -222,7 +228,7 @@ export function TradeMultiSelectBottomSheet({
               ))}
             </View>
           ) : null}
-        </View>
+        </ScrollView>
 
         <Pressable
           accessibilityRole="button"
@@ -268,6 +274,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   listScroll: {
+    width: '100%',
+    flexGrow: 0,
+  },
+  listScrollContent: {
     width: '100%',
   },
   row: {
