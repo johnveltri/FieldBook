@@ -1,0 +1,9 @@
+---
+description: Enforce human-readable branch naming rules without random IDs
+globs: *
+---
+CRITICAL ACTION RULES FOR GIT BRANCHES:
+1. NEVER append random alphanumeric strings, hashes, or unique IDs (like "0a6fb435") to branch names.
+2. ALWAYS use a short, hyphen-separated summary of the feature or task.
+3. Your template format MUST strictly be: `cursor/task-summary` (e.g., `cursor/add-login-button`).
+4. Keep the summary under 4 words, using lowercase and kebab-case.
