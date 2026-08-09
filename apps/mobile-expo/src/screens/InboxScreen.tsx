@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius } from '@fieldsolo/design-system/lib/tokens';
 
+import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
 import {
   listInboxMaterials,
   listInboxNotes,
@@ -40,7 +41,7 @@ import {
   ViewNotesBuckets,
   type ChooseJobBottomSheetJob,
 } from '../components/ds';
-import { SessionSheetBackIcon } from '../components/figma-icons/JobDetailScreenIcons';
+import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
 import {
   ShellBottomNav,
   shellBottomNavOuterHeight,
@@ -369,15 +370,12 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
       >
         <View style={columnStyle}>
         <View style={styles.topHeader}>
-          <Pressable
-            accessibilityRole="button"
+          <PlatformHeaderAction
             accessibilityLabel="Back"
             onPress={onRequestClose}
-            hitSlop={12}
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
           >
-            <SessionSheetBackIcon color={fg.primary} />
-          </Pressable>
+            <TopHeaderBackIcon color={fg.primary} size={28} />
+          </PlatformHeaderAction>
           <Text {...screenHeaderA11y()} style={typography.displayH1}>
             INBOX
           </Text>
@@ -527,13 +525,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: space('Spacing/12'),
-  },
-  backButton: {
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -space('Spacing/8'),
   },
   tabsWrap: {
     width: '100%',

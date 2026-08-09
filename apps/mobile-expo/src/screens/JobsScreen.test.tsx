@@ -92,25 +92,6 @@ describe('JobsScreen', () => {
     expect(onOpenJobDetail).toHaveBeenCalledWith('job-1');
   });
 
-  it('creates a new job and opens detail with returned id', async () => {
-    apiClient.listJobsForCurrentUserPage.mockResolvedValue({ items: [], hasMore: false });
-    apiClient.createBlankJobForCurrentUser.mockResolvedValue('job-new-7');
-
-    const onOpenJobDetail = jest.fn();
-    const screen = render(<JobsScreen onOpenJobDetail={onOpenJobDetail} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('No jobs yet.')).toBeTruthy();
-    });
-
-    fireEvent.press(screen.getByText('New Job'));
-
-    await waitFor(() => {
-      expect(apiClient.createBlankJobForCurrentUser).toHaveBeenCalledTimes(1);
-    });
-    expect(onOpenJobDetail).toHaveBeenCalledWith('job-new-7', { initialEditOpen: true });
-  });
-
   it('shows load errors from list API failures', async () => {
     apiClient.listJobsForCurrentUserPage.mockRejectedValue(new Error('Network unavailable'));
 

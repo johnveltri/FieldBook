@@ -64,6 +64,7 @@ import {
   type EditSessionBottomSheetValues,
 } from '../components/ds';
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
+import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
 import {
   JobDetailIconCtaMore,
   JobDetailIconSectionAdd,
@@ -2317,14 +2318,11 @@ export function JobDetailScreen({
             ]}
           >
             <View style={styles.topHeaderRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-                onPress={onClose}
-                style={({ pressed }) => [styles.closeCircle, pressed && styles.pressed]}
-              >
-                <JobDetailIconTopClose color={fg.primary} />
-              </Pressable>
+              <View style={styles.closeChromeOffset}>
+                <PlatformHeaderAction accessibilityLabel="Close" onPress={onClose}>
+                  <JobDetailIconTopClose color={fg.primary} />
+                </PlatformHeaderAction>
+              </View>
             </View>
           </View>
         ) : null}
@@ -2424,14 +2422,11 @@ export function JobDetailScreen({
         {/* `TopHeader` variant `X (Close &Edit)` (`231:858`) */}
         <View style={[styles.topHeader, styles.topHeaderModal]}>
           <View style={styles.topHeaderRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-              onPress={onClose}
-              style={({ pressed }) => [styles.closeCircle, pressed && styles.pressed]}
-            >
-              <JobDetailIconTopClose color={fg.primary} />
-            </Pressable>
+            <View style={styles.closeChromeOffset}>
+              <PlatformHeaderAction accessibilityLabel="Close" onPress={onClose}>
+                <JobDetailIconTopClose color={fg.primary} />
+              </PlatformHeaderAction>
+            </View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Edit job"
@@ -3214,13 +3209,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingBottom: space('Spacing/4'),
   },
-  closeCircle: {
-    width: space('Spacing/32'),
-    height: space('Spacing/32'),
-    borderRadius: radius('Radius/16'),
-    backgroundColor: bg.subtle,
-    alignItems: 'center',
-    justifyContent: 'center',
+  closeChromeOffset: {
     transform: [{ translateY: -space('Spacing/12') }],
   },
   editButton: {

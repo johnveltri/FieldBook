@@ -44,6 +44,7 @@ import {
   ProfilePlanIcon,
   ProfileTrashIcon,
 } from '../components/figma-icons/ProfileScreenIcons';
+import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
 import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
 import { useAuth } from '../context/AuthContext';
 import { analytics, changedFields, emailProperties, errorProperties } from '../lib/analytics';
@@ -479,15 +480,12 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
       >
         <View style={columnStyle}>
           <View style={styles.topHeaderRow}>
-            <Pressable
-              accessibilityRole="button"
+            <PlatformHeaderAction
               accessibilityLabel="Back"
               onPress={onBack}
-              hitSlop={12}
-              style={({ pressed }) => [styles.backHit, pressed && styles.pressed]}
             >
               <TopHeaderBackIcon color={fg.secondary} size={PROFILE_BACK_ICON_SIZE} />
-            </Pressable>
+            </PlatformHeaderAction>
             <Text {...screenHeaderA11y()} style={[typography.displayH1, styles.profileTitle]}>
               PROFILE
             </Text>
@@ -680,12 +678,6 @@ const styles = StyleSheet.create({
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
     gap: space('Spacing/8'),
-  },
-  backHit: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
   },
   profileTitle: {
     flex: 1,

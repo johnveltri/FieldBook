@@ -1,8 +1,7 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { waitFor } from '@testing-library/react-native';
+import { renderRouter } from 'expo-router/testing-library';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-
-import App from './App';
 
 const mockFetchLatestLegalAcceptanceVersions = jest.fn(async () => ({
   privacy_policy: '2026-01-01',
@@ -132,9 +131,16 @@ jest.mock('./src/screens/JobDetailScreen', () => ({
   JobDetailScreen: () => null,
 }));
 
-jest.mock('./src/components/shell/ShellBottomNav', () => ({
-  ShellBottomNav: () => null,
-  shellBottomNavOuterHeight: () => 0,
+jest.mock('./src/components/shell/PrimaryActionOverlay', () => ({
+  PrimaryActionOverlay: () => null,
+}));
+
+jest.mock('./src/shell/QuickActionsFlowContext', () => ({
+  QuickActionsFlowProvider: ({ children }: { children: React.ReactNode }) => children,
+  useQuickActionsFlow: () => ({
+    handlePrimaryAction: jest.fn(),
+    quickActionsVisible: false,
+  }),
 }));
 
 describe('App legal reacceptance gate', () => {
@@ -146,7 +152,7 @@ describe('App legal reacceptance gate', () => {
   });
 
   it('shows the reacceptance modal when required versions are not accepted', async () => {
-    const screen = render(<App />);
+    const screen = renderRouter('./app', { initialUrl: '/' });
 
     await waitFor(() => {
       expect(screen.getByTestId('legal-reacceptance-modal')).toBeTruthy();
@@ -161,7 +167,7 @@ describe('App legal reacceptance gate', () => {
     );
     mockHasCachedLegalAcceptance.mockResolvedValueOnce(true);
 
-    const screen = render(<App />);
+    const screen = renderRouter('./app', { initialUrl: '/' });
 
     await waitFor(() => {
       expect(screen.getByTestId('home-screen')).toBeTruthy();
@@ -179,7 +185,7 @@ describe('App legal reacceptance gate', () => {
       new Error('network unavailable'),
     );
 
-    const screen = render(<App />);
+    const screen = renderRouter('./app', { initialUrl: '/' });
 
     await waitFor(() => {
       expect(screen.getByTestId('legal-reacceptance-modal')).toBeTruthy();
@@ -196,7 +202,7 @@ describe('App legal reacceptance gate', () => {
       }),
     );
 
-    render(<App />);
+    renderRouter('./app', { initialUrl: '/' });
 
     await waitFor(() => {
       expect(mockResolveAnalyticsConsentForUser).toHaveBeenCalledWith('user-77');

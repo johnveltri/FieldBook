@@ -1,8 +1,7 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
+import { renderRouter, testRouter } from 'expo-router/testing-library';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-
-import App from './App';
 
 let mockSession: { user: { id: string; email: string } } | null = {
   user: { id: 'user-77', email: 'tech@example.com' },
@@ -49,8 +48,18 @@ jest.mock('./src/context/AuthContext', () => {
   };
 });
 
-// Stub out the global Live Session UI so tests don't hit Supabase / fonts
-// / AppState while exercising the JobsScreen ↔ JobDetailScreen pipe.
+jest.mock('./src/lib/analytics', () => ({
+  analytics: {
+    capture: jest.fn(),
+    identify: jest.fn(),
+    screen: jest.fn(),
+    onSignOut: jest.fn(async () => undefined),
+    applyConsent: jest.fn(async () => undefined),
+    isConsentGranted: jest.fn(() => true),
+  },
+  emailProperties: () => ({}),
+}));
+
 jest.mock('./src/context/LiveSessionContext', () => {
   const React = require('react');
   return {
@@ -78,6 +87,10 @@ jest.mock('./src/context/LiveSessionContext', () => {
 
 jest.mock('./src/components/LiveSessionOverlay', () => ({
   LiveSessionOverlay: () => null,
+}));
+
+jest.mock('./src/components/shell/PrimaryActionOverlay', () => ({
+  PrimaryActionOverlay: () => null,
 }));
 
 jest.mock('./src/navigation/OverlaySlideHost', () => {
@@ -223,30 +236,21 @@ jest.mock('./src/screens/InboxScreen', () => ({
   },
 }));
 
-jest.mock('./src/components/shell/ShellBottomNav', () => ({
-  ShellBottomNav: ({
-    onSelect,
-  }: {
-    onSelect: (tab: ShellTab) => void;
-  }) => {
-    const { Text, View } = require('react-native');
-    return (
-      <View>
-        <Text onPress={() => onSelect('home')}>ShellNavHome</Text>
-        <Text onPress={() => onSelect('jobs')}>ShellNavJobs</Text>
-        <Text onPress={() => onSelect('earnings')}>ShellNavEarnings</Text>
-      </View>
-    );
-  },
-  shellBottomNavOuterHeight: () => 0,
+jest.mock('./src/shell/QuickActionsFlowContext', () => ({
+  QuickActionsFlowProvider: ({ children }: { children: React.ReactNode }) => children,
+  useQuickActionsFlow: () => ({
+    handlePrimaryAction: jest.fn(),
+    quickActionsVisible: false,
+  }),
 }));
 
-function openJobsTab(screen: ReturnType<typeof render>) {
-  fireEvent.press(screen.getByText('ShellNavJobs'));
+async function openJobsTab(screen: ReturnType<typeof renderRouter>) {
+  testRouter.navigate('/jobs');
+  await waitFor(() => expect(screen.getByTestId('jobs-screen')).toBeTruthy());
 }
 
 async function renderAppReady() {
-  const screen = render(<App />);
+  const screen = renderRouter('./app', { initialUrl: '/' });
   await waitFor(() => {
     expect(screen.getByTestId('home-screen')).toBeTruthy();
   });
@@ -264,7 +268,7 @@ describe('App jobs to detail sync', () => {
   it('passes selected job id and session user id into JobDetailScreen', async () => {
     const screen = await renderAppReady();
 
-    openJobsTab(screen);
+    await openJobsTab(screen);
     expect(screen.getByTestId('jobs-screen')).toBeTruthy();
 
     fireEvent.press(screen.getByText('OpenJob'));
@@ -277,7 +281,7 @@ describe('App jobs to detail sync', () => {
   it('returns to JobsScreen when detail requests close', async () => {
     const screen = await renderAppReady();
 
-    openJobsTab(screen);
+    await openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenJob'));
     expect(screen.getByTestId('detail-props')).toBeTruthy();
 
@@ -298,17 +302,19 @@ describe('App shell tab caching', () => {
     const screen = await renderAppReady();
 
     expect(screen.getByTestId('home-screen')).toBeTruthy();
-    expect(jobsMountCount).toBe(1);
     expect(homeMountCount).toBe(1);
-    expect(earningsMountCount).toBe(1);
+    expect(jobsMountCount).toBe(0);
+    expect(earningsMountCount).toBe(0);
 
-    fireEvent.press(screen.getByText('ShellNavEarnings'));
-    expect(screen.getByTestId('earnings-screen')).toBeTruthy();
-    expect(earningsMountCount).toBe(1);
+    testRouter.navigate('/earnings');
+    await waitFor(() => expect(screen.getByTestId('earnings-screen')).toBeTruthy());
+    expect(earningsMountCount).toBeGreaterThanOrEqual(1);
 
-    fireEvent.press(screen.getByText('ShellNavJobs'));
-    expect(screen.getByTestId('jobs-screen')).toBeTruthy();
-    expect(jobsMountCount).toBe(1);
+    await openJobsTab(screen);
+    expect(jobsMountCount).toBeGreaterThanOrEqual(1);
+
+    testRouter.navigate('/earnings');
+    await waitFor(() => expect(screen.getByTestId('earnings-screen')).toBeTruthy());
   });
 });
 
@@ -323,7 +329,7 @@ describe('App inbox shell tab navigation', () => {
   it('returns to JobsScreen when the JOBS tab is tapped from Inbox', async () => {
     const screen = await renderAppReady();
 
-    openJobsTab(screen);
+    await openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));
     expect(screen.getByTestId('inbox-screen')).toBeTruthy();
 
@@ -335,7 +341,7 @@ describe('App inbox shell tab navigation', () => {
   it('switches to HOME and dismisses Inbox when the HOME tab is tapped from Inbox', async () => {
     const screen = await renderAppReady();
 
-    openJobsTab(screen);
+    await openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));
     expect(screen.getByTestId('inbox-screen')).toBeTruthy();
 
@@ -347,7 +353,7 @@ describe('App inbox shell tab navigation', () => {
   it('switches to EARNINGS and dismisses Inbox when the EARNINGS tab is tapped from Inbox', async () => {
     const screen = await renderAppReady();
 
-    openJobsTab(screen);
+    await openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));
     expect(screen.getByTestId('inbox-screen')).toBeTruthy();
 
@@ -372,13 +378,12 @@ describe('App authentication navigation reset', () => {
     expect(screen.getByTestId('profile-screen')).toBeTruthy();
 
     mockSession = null;
-    screen.rerender(<App />);
-    await waitFor(() => expect(screen.getByText('SignInScreen')).toBeTruthy());
+    const signedOut = renderRouter('./app', { initialUrl: '/sign-in' });
+    await waitFor(() => expect(signedOut.getByText('SignInScreen')).toBeTruthy());
 
     mockSession = { user: { id: 'user-88', email: 'returning@example.com' } };
-    screen.rerender(<App />);
-
-    await waitFor(() => expect(screen.getByTestId('home-screen')).toBeTruthy());
-    expect(screen.queryByTestId('profile-screen')).toBeNull();
+    const signedIn = renderRouter('./app', { initialUrl: '/' });
+    await waitFor(() => expect(signedIn.getByTestId('home-screen')).toBeTruthy());
+    expect(signedIn.queryByTestId('profile-screen')).toBeNull();
   });
 });

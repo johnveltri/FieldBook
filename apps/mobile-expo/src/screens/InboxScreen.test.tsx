@@ -37,8 +37,8 @@ jest.mock('../components/CanvasTiledBackground', () => ({
   CanvasTiledBackground: () => null,
 }));
 
-jest.mock('../components/figma-icons/JobDetailScreenIcons', () => ({
-  SessionSheetBackIcon: () => null,
+jest.mock('../components/figma-icons/TopHeaderIcons', () => ({
+  TopHeaderBackIcon: () => null,
 }));
 
 jest.mock('../components/shell/ShellBottomNav', () => ({
