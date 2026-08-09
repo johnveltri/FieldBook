@@ -3,6 +3,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -43,7 +44,7 @@ export function PlatformHeaderAction({
       onPress={onPress}
       hitSlop={6}
       style={({ pressed }) => [
-        useFloatingChrome ? styles.hitFill : styles.hitStandalone,
+        styles.hitFill,
         pressed && styles.pressed,
         !useFloatingChrome ? style : null,
       ]}
@@ -57,15 +58,20 @@ export function PlatformHeaderAction({
   }
 
   // Both platforms get floating circular chrome (Slack top-right capsule language).
+  // Always keep a fixed 44×44 box so Liquid Glass / fallback can't stretch the header.
   if (useGlass || Platform.OS === 'android') {
     return (
-      <PlatformFloatingSurface interactive={useGlass} style={[styles.chromeWrap, style]}>
+      <PlatformFloatingSurface
+        tone="dock"
+        interactive={useGlass}
+        style={[styles.chromeWrap, style]}
+      >
         {hit}
       </PlatformFloatingSurface>
     );
   }
 
-  return hit;
+  return <View style={[styles.chromeWrap, style]}>{hit}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -76,13 +82,6 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  hitStandalone: {
-    minWidth: MIN_TOUCH,
-    minHeight: MIN_TOUCH,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius('Radius/Full'),
   },
   chromeWrap: {
     borderRadius: radius('Radius/Full'),

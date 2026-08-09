@@ -882,7 +882,7 @@ export function JobsScreen({
   const scrollBottomPad = bottomNavReservedHeight + space('Spacing/20');
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} collapsable={false}>
       <CanvasTiledBackground scrollY={scrollY} contentHeight={listContentHeight} />
       <View
         pointerEvents="none"

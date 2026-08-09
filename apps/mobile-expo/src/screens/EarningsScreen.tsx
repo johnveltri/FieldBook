@@ -349,7 +349,7 @@ export function EarningsScreen({
   }
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} collapsable={false}>
       <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
       <View
         pointerEvents="none"

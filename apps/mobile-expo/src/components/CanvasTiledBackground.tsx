@@ -1,4 +1,4 @@
-import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { bg } from '../theme/nativeTokens';
 
@@ -51,7 +51,9 @@ export function CanvasTiledBackground({
 const styles = StyleSheet.create({
   layer: {
     ...absoluteFill,
-    zIndex: 0,
+    // When the canvas is a sibling after the scroll view, Android still paints
+    // later siblings on top unless we push this layer behind.
+    zIndex: Platform.OS === 'android' ? -1 : 0,
     elevation: 0,
   },
 });

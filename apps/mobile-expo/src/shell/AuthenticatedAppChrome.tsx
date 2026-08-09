@@ -99,7 +99,7 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
   const { session, signupLegalPending } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  /** Android Modal blur samples this tree (expo-blur BlurTargetView). */
+  /** Android FAB-menu BlurView samples this tree (expo-blur BlurTargetView). */
   const shellBlurTargetRef = useRef<View>(null);
   const mainTab = shellMainTabFromPathname(pathname);
 
@@ -198,28 +198,6 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
       cancelled = true;
     };
   }, [session?.user.id, signupLegalPending, legalGate]);
-
-  useEffect(() => {
-    if (session) return;
-    let cancelled = false;
-    void analytics.onSignOut();
-    // Defer resets so we never update during the unmount race with auth Redirect.
-    queueMicrotask(() => {
-      if (cancelled) return;
-      setAnalyticsConsentGate('idle');
-      setProfileOpen(false);
-      setProfileMounted(false);
-      setInboxOpen(false);
-      setInboxMounted(false);
-      setJobDetailOpen(false);
-      setJobDetailMounted(false);
-      setSelectedJobId(null);
-      setLegalGate('loading');
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
 
   const navigateToJobsOpenSection = useCallback(
     (section: JobsOpenSectionKind) => {
@@ -583,10 +561,22 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
               </OverlaySlideHost>
             ) : (
               <View style={styles.shellColumn}>
-                <BlurTargetView ref={shellBlurTargetRef} style={styles.shellMain}>
-                  {children}
-                </BlurTargetView>
-                <PrimaryActionOverlay blurTargetRef={shellBlurTargetRef} />
+                {/*
+                  Android needs BlurTargetView for dimezis Modal blur. Wrap with an
+                  inner flex View — native BlurTargetView alone can collapse Slot height.
+                */}
+                {Platform.OS === 'android' ? (
+                  <BlurTargetView ref={shellBlurTargetRef} style={styles.shellMain}>
+                    <View style={styles.shellMainInner} collapsable={false}>
+                      {children}
+                    </View>
+                  </BlurTargetView>
+                ) : (
+                  <View style={styles.shellMain}>{children}</View>
+                )}
+                <PrimaryActionOverlay
+                  blurTargetRef={Platform.OS === 'android' ? shellBlurTargetRef : undefined}
+                />
                 {profileMounted ? (
                   <View style={styles.profileOverlayPane}>
                     <OverlaySlideHost
@@ -684,7 +674,14 @@ const styles = StyleSheet.create({
   },
   shellMain: {
     flex: 1,
+    width: '100%',
+    minHeight: 0,
     backgroundColor: bg.canvasWarm,
+  },
+  shellMainInner: {
+    flex: 1,
+    width: '100%',
+    minHeight: 0,
   },
   profileOverlayPane: {
     ...StyleSheet.absoluteFill,

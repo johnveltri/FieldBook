@@ -109,13 +109,13 @@ export function PrimaryActionOverlay({ blurTargetRef }: PrimaryActionOverlayProp
             (BlurView has been known to eat gestures on New Arch).
           */}
           <BlurView
-            intensity={Platform.OS === 'ios' ? 64 : 48}
+            intensity={Platform.OS === 'ios' ? 64 : 64}
             tint="dark"
             pointerEvents="none"
             blurMethod={androidBlurReady ? 'dimezisBlurViewSdk31Plus' : undefined}
             blurTarget={androidBlurReady ? blurTargetRef : undefined}
-            // Higher factor = weaker Android blur. Default is 4; 2 was milky/opaque vs iOS.
-            blurReductionFactor={androidBlurReady ? 5 : undefined}
+            // Default Android factor is 4; 3 keeps blur visible without milky wash.
+            blurReductionFactor={androidBlurReady ? 3 : undefined}
             style={StyleSheet.absoluteFill}
           />
           <View pointerEvents="none" style={styles.dimOverlay} />

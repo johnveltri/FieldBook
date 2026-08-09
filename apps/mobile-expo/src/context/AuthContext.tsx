@@ -65,26 +65,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    let mounted = true;
+
     void supabase.auth
       .getSession()
       .then(({ data: { session: s } }) => {
-        setSession(s);
+        if (mounted) setSession(s);
       })
       .catch(() => {
-        // Offline/unreachable API should not hard-fail local UI development.
-        setSession(null);
+        if (mounted) setSession(null);
       })
       .finally(() => {
-        setLoading(false);
+        if (mounted) setLoading(false);
       });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
+      if (mounted) setSession(next);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

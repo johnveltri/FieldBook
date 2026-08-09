@@ -1,4 +1,5 @@
-import { Redirect, Slot, useRootNavigationState } from 'expo-router';
+import { useEffect } from 'react';
+import { Slot, useRootNavigationState, useRouter } from 'expo-router';
 
 import { useAuth } from '../../src/context/AuthContext';
 import { AuthenticatedAppChrome } from '../../src/shell/AuthenticatedAppChrome';
@@ -7,14 +8,21 @@ import { RootSpinner } from '../../src/shell/RootSpinner';
 export default function AppGroupLayout() {
   const { session, loading, signupLegalPending } = useAuth();
   const rootNav = useRootNavigationState();
+  const router = useRouter();
 
-  // Avoid Redirect/navigation state updates before ExpoRoot's navigator is mounted
-  // (Android LogBox: "state update on a component that hasn't mounted yet").
+  useEffect(() => {
+    if (!rootNav?.key || loading) return;
+    if (signupLegalPending && session) return;
+    if (!session) {
+      router.replace('/sign-in');
+    }
+  }, [rootNav?.key, loading, session, signupLegalPending, router]);
+
   if (!rootNav?.key || loading || (signupLegalPending && session)) {
     return <RootSpinner />;
   }
   if (!session) {
-    return <Redirect href="/sign-in" />;
+    return <RootSpinner />;
   }
 
   return (
