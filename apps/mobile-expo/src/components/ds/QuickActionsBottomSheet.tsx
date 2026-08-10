@@ -8,16 +8,12 @@ import {
 } from 'react-native';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
-import {
-  SessionChooserRowPlayIcon,
-  SessionSheetBackIcon,
-} from '../figma-icons/JobDetailScreenIcons';
+import { SessionChooserRowPlayIcon } from '../figma-icons/JobDetailScreenIcons';
 import {
   QuickCaptureNewMaterialIcon,
   QuickCaptureNewNoteIcon,
-  QuickCaptureStartSessionIcon,
 } from '../figma-icons/QuickActionsSheetIcons';
-import { bg, border, cardShadowRn, fg } from '../../theme/nativeTokens';
+import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { screenHeaderA11y } from '../../lib/accessibility';
 import { BottomSheetShell } from './BottomSheetShell';
@@ -31,18 +27,13 @@ export type QuickActionsRecentJob = {
 /** Which sub-action the chooser step is attaching to. */
 export type QuickCaptureKind = 'note' | 'material';
 
-export type QuickActionsStep =
-  | 'quickCapture'
-  | 'chooseJob'
-  | 'noteCapture'
-  | 'materialCapture';
+export type QuickActionsStep = 'chooseJob' | 'noteCapture' | 'materialCapture';
 
 type QuickActionsBottomSheetProps = {
   typography: TextStyles;
   visible: boolean;
-  /** Controlled step — owned by the parent so it can return here after a sub-sheet's Back. */
+  /** Chooser selected directly from the primary FAB menu. */
   step: QuickActionsStep;
-  onStepChange: (step: QuickActionsStep) => void;
   recentJobs: QuickActionsRecentJob[];
   recentJobsLoading: boolean;
   recentJobsError: string | null;
@@ -62,16 +53,13 @@ type QuickActionsBottomSheetProps = {
 };
 
 /**
- * Home Quick Capture flow: action tiles, then a per-action chooser (Start
- * Session / New Note / New Material). Single BottomSheetShell; steps swap so
- * height follows the active step. The step is controlled by the parent so the
- * capture sub-sheets (Edit Note / Material) can return to the matching chooser.
+ * Primary FAB chooser for Start Session, New Note, or New Material. The FAB
+ * selects the active step directly; there is no parent Quick Capture sheet.
  */
 export function QuickActionsBottomSheet({
   typography,
   visible,
   step,
-  onStepChange,
   recentJobs,
   recentJobsLoading,
   recentJobsError,
@@ -85,13 +73,11 @@ export function QuickActionsBottomSheet({
   onCreateQuickCapture,
 }: QuickActionsBottomSheetProps) {
   const sheetAccessibilityTitle =
-    step === 'quickCapture'
-      ? 'Quick Capture'
-      : step === 'chooseJob'
-        ? 'Start session'
-        : step === 'noteCapture'
-          ? 'New note'
-          : 'New material';
+    step === 'chooseJob'
+      ? 'Start session'
+      : step === 'noteCapture'
+        ? 'New note'
+        : 'New material';
 
   return (
     <BottomSheetShell
@@ -101,122 +87,25 @@ export function QuickActionsBottomSheet({
       accessibilityTitle={sheetAccessibilityTitle}
     >
       <View style={styles.stack}>
-        {step === 'quickCapture' ? (
-          <QuickCaptureStepContent
-            typography={typography}
-            onStartSessionPress={() => onStepChange('chooseJob')}
-            onNewNotePress={() => onStepChange('noteCapture')}
-            onNewMaterialPress={() => onStepChange('materialCapture')}
-          />
-        ) : (
-          <AttachChooserStepContent
-            variant={step}
-            typography={typography}
-            recentJobs={recentJobs}
-            recentJobsLoading={recentJobsLoading}
-            recentJobsError={recentJobsError}
-            actionError={actionError}
-            starting={starting}
-            onBack={() => onStepChange('quickCapture')}
-            onSelectExistingJob={onSelectExistingJob}
-            onStartNewSession={onStartNewSession}
-            onSelectJobForCapture={onSelectJobForCapture}
-            onCreateQuickCapture={onCreateQuickCapture}
-          />
-        )}
+        <AttachChooserStepContent
+          variant={step}
+          typography={typography}
+          recentJobs={recentJobs}
+          recentJobsLoading={recentJobsLoading}
+          recentJobsError={recentJobsError}
+          actionError={actionError}
+          starting={starting}
+          onSelectExistingJob={onSelectExistingJob}
+          onStartNewSession={onStartNewSession}
+          onSelectJobForCapture={onSelectJobForCapture}
+          onCreateQuickCapture={onCreateQuickCapture}
+        />
       </View>
     </BottomSheetShell>
   );
 }
 
-function QuickCaptureStepContent({
-  typography,
-  onStartSessionPress,
-  onNewNotePress,
-  onNewMaterialPress,
-}: {
-  typography: TextStyles;
-  onStartSessionPress: () => void;
-  onNewNotePress: () => void;
-  onNewMaterialPress: () => void;
-}) {
-  return (
-    <View style={styles.quickBody}>
-      <Text
-        {...screenHeaderA11y()}
-        style={[typography.headingH2, styles.quickTitle, { color: fg.primary }]}
-      >
-        Quick Capture
-      </Text>
-      <View style={styles.tileRow}>
-        <QuickCaptureTile
-          typography={typography}
-          iconCircleColor={color('Semantic/Status/Error/Text')}
-          icon={<QuickCaptureStartSessionIcon color={bg.surfaceWhite} size={20} />}
-          label="SESSION"
-          accessibilityLabel="Start session"
-          onPress={onStartSessionPress}
-        />
-        <QuickCaptureTile
-          typography={typography}
-          iconCircleColor={color('Semantic/Activity/Note')}
-          icon={<QuickCaptureNewNoteIcon color={bg.surfaceWhite} size={20} />}
-          label="NOTE"
-          accessibilityLabel="New note"
-          onPress={onNewNotePress}
-        />
-        <QuickCaptureTile
-          typography={typography}
-          iconCircleColor={color('Semantic/Activity/Material')}
-          icon={<QuickCaptureNewMaterialIcon color={bg.surfaceWhite} size={20} />}
-          label="MATERIAL"
-          accessibilityLabel="New material"
-          onPress={onNewMaterialPress}
-        />
-      </View>
-    </View>
-  );
-}
-
-function QuickCaptureTile({
-  typography,
-  iconCircleColor,
-  icon,
-  label,
-  accessibilityLabel,
-  onPress,
-  disabled,
-}: {
-  typography: TextStyles;
-  iconCircleColor: string;
-  icon: ReactNode;
-  label: string;
-  accessibilityLabel: string;
-  onPress?: () => void;
-  disabled?: boolean;
-}) {
-  const inactive = Boolean(disabled);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled }}
-      onPress={inactive ? undefined : onPress}
-      disabled={inactive}
-      style={({ pressed }) => [styles.tile, pressed && !inactive ? styles.pressed : null]}
-    >
-      <View style={[styles.tileIconCircle, { backgroundColor: iconCircleColor }]}>{icon}</View>
-      <Text
-        style={[typography.metricSLabel, styles.tileLabel, { color: fg.primary }]}
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-type ChooserVariant = Exclude<QuickActionsStep, 'quickCapture'>;
+type ChooserVariant = QuickActionsStep;
 
 type ChooserConfig = {
   title: string;
@@ -264,7 +153,6 @@ function AttachChooserStepContent({
   recentJobsError,
   actionError,
   starting,
-  onBack,
   onSelectExistingJob,
   onStartNewSession,
   onSelectJobForCapture,
@@ -277,7 +165,6 @@ function AttachChooserStepContent({
   recentJobsError: string | null;
   actionError: string | null;
   starting: boolean;
-  onBack: () => void;
   onSelectExistingJob: (job: QuickActionsRecentJob) => void;
   onStartNewSession: () => void;
   onSelectJobForCapture: (job: QuickActionsRecentJob, kind: QuickCaptureKind) => void;
@@ -309,17 +196,10 @@ function AttachChooserStepContent({
 
   return (
     <View style={styles.chooseBody}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Back"
-        onPress={onBack}
-        style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+      <Text
+        {...screenHeaderA11y()}
+        style={[typography.titleH3, styles.chooseTitle, { color: fg.primary }]}
       >
-        <SessionSheetBackIcon color={fg.secondary} />
-        <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
-      </Pressable>
-
-      <Text {...screenHeaderA11y()} style={[typography.titleH3, styles.chooseTitle, { color: fg.primary }]}>
         {cfg.title}
       </Text>
 
@@ -418,57 +298,13 @@ const styles = StyleSheet.create({
   stack: {
     width: '100%',
   },
-  quickBody: {
-    width: '100%',
-    gap: space('Spacing/16'),
-    paddingTop: 0,
-  },
-  quickTitle: {
-    textAlign: 'center',
-    textTransform: 'none',
-  },
-  tileRow: {
-    flexDirection: 'row',
-    gap: space('Spacing/12'),
-    width: '100%',
-  },
-  tile: {
-    ...cardShadowRn,
-    flex: 1,
-    minWidth: 0,
-    minHeight: 112,
-    borderRadius: radius('Radius/16'),
-    backgroundColor: bg.surfaceWhite,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space('Spacing/16'),
-    paddingHorizontal: space('Spacing/4'),
-    gap: space('Spacing/8'),
-  },
-  tileIconCircle: {
-    width: space('Spacing/40'),
-    height: space('Spacing/40'),
-    borderRadius: radius('Radius/Full'),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tileLabel: {
-    textAlign: 'center',
-  },
   chooseBody: {
     width: '100%',
     gap: space('Spacing/12'),
     paddingTop: 0,
   },
-  back: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space('Spacing/4'),
-    alignSelf: 'flex-start',
-  },
   chooseTitle: {
     textAlign: 'center',
-    marginTop: space('Spacing/8'),
   },
   primaryRow: {
     flexDirection: 'row',
