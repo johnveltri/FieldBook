@@ -18,6 +18,7 @@ import {
   ActivityIndicator,
   Animated,
   Image,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -42,7 +43,12 @@ import {
 } from '../components/ds';
 import { HomeJumpBackInIcon, HomeNeedsAttentionIcon } from '../components/figma-icons/HomeSectionIcons';
 import { TopHeaderProfileIcon } from '../components/figma-icons/TopHeaderIcons';
-import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
+import { PlatformHeaderAction, platformHeaderActionIconColor } from '../components/platform/PlatformHeaderAction';
+import {
+  platformHeaderDisplayTitleStyle,
+  platformHeaderRowStyle,
+  platformHeaderTitleSlotStyle,
+} from '../components/platform/platformHeaderMetrics';
 import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import {
@@ -131,7 +137,7 @@ export function HomeScreen({
   const brandDisplay = typography.displayH1;
   const brandTitleStyle = dynamicTypeTextStyle(brandDisplay, fontScale, {
     letterSpacingUntilScale: 99,
-    padRatio: 0.08,
+    padRatio: Platform.OS === 'android' ? 0 : 0.08,
   });
   const brandLineCount = brandTitle.includes('\n') ? 2 : 1;
   const brandMinHeight = dynamicTypeLineMinHeight(
@@ -283,20 +289,38 @@ export function HomeScreen({
         <View style={columnStyle}>
           <View style={styles.headerBand}>
             <View style={styles.topHeader}>
-              <View style={[styles.brandTitle, { minHeight: brandMinHeight }]}>
-                <Text
-                  {...screenHeaderA11y('FieldSoli')}
-                  style={[brandTitleStyle, styles.brandTitleText]}
-                >
-                  {brandTitle}
-                </Text>
-              </View>
-              <PlatformHeaderAction
-                accessibilityLabel="Profile"
-                onPress={onOpenProfile}
+              <View
+                style={platformHeaderRowStyle(styles.topHeaderChromeRow, {
+                  fixedHeight: brandLineCount === 1,
+                })}
               >
-                <TopHeaderProfileIcon color={fg.primary} size={20} />
-              </PlatformHeaderAction>
+                <View
+                  style={
+                    Platform.OS === 'android' && brandLineCount === 1
+                      ? platformHeaderTitleSlotStyle(styles.brandTitleFlex)
+                      : [styles.brandTitle, { minHeight: brandMinHeight }]
+                  }
+                >
+                  <Text
+                    {...screenHeaderA11y('FieldSoli')}
+                    style={[
+                      platformHeaderDisplayTitleStyle(brandTitleStyle, {
+                        allowWrap: brandLineCount > 1,
+                      }),
+                      styles.brandTitleText,
+                    ]}
+                  >
+                    {brandTitle}
+                  </Text>
+                </View>
+                <PlatformHeaderAction
+                  accessibilityLabel="Profile"
+                  variant="primary"
+                  onPress={onOpenProfile}
+                >
+                  <TopHeaderProfileIcon color={platformHeaderActionIconColor} size={20} />
+                </PlatformHeaderAction>
+              </View>
             </View>
           </View>
 
@@ -547,16 +571,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/8'),
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  },
+  topHeaderChromeRow: {
+    width: '100%',
     justifyContent: 'space-between',
     gap: space('Spacing/12'),
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   brandTitle: {
     flex: 1,
     minWidth: 0,
     overflow: 'visible',
     justifyContent: 'center',
+  },
+  brandTitleFlex: {
+    minWidth: 0,
+    overflow: 'visible',
   },
   brandTitleText: {
     width: '100%',

@@ -29,7 +29,11 @@ import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/toke
 import { jobCostsIncompleteForListPill } from '../lib/jobFinancialCompleteness';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
-import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
+import { PlatformHeaderAction, platformHeaderActionIconColor } from '../components/platform/PlatformHeaderAction';
+import {
+  PlatformHeaderTitle,
+  platformHeaderRowStyle,
+} from '../components/platform/platformHeaderMetrics';
 import {
   JobsInboxIcon,
   JobsSearchClearIcon,
@@ -620,25 +624,35 @@ export function JobsScreen({
       <View style={styles.listHeaderBand}>
         <View style={columnStyle}>
         <View style={styles.topHeader}>
-          <Text {...screenHeaderA11y()} style={typography.displayH1}>
-            JOBS
-          </Text>
-          <PlatformHeaderAction
+          <View style={platformHeaderRowStyle(styles.topHeaderChromeRow)}>
+            <PlatformHeaderTitle
+              {...screenHeaderA11y()}
+              typography={typography.displayH1}
+            >
+              JOBS
+            </PlatformHeaderTitle>
+            <PlatformHeaderAction
             accessibilityLabel={`Inbox${inboxCount > 0 ? `, ${inboxCount} unassigned` : ''}`}
+            variant="primary"
             onPress={() => onOpenInbox?.()}
             style={styles.inboxWrap}
           >
-            <JobsInboxIcon color={fg.primary} />
+            <JobsInboxIcon color={platformHeaderActionIconColor} />
             {inboxCount > 0 ? (
               <View style={styles.inboxBadge}>
                 <Text
-                  style={[typography.bodySmall, styles.inboxBadgeText, { color: bg.canvasWarm }]}
+                  style={[
+                    typography.bodySmall,
+                    styles.inboxBadgeText,
+                    { color: color('Brand/Primary') },
+                  ]}
                 >
                   {inboxCount > 99 ? '99+' : inboxCount}
                 </Text>
               </View>
             ) : null}
           </PlatformHeaderAction>
+          </View>
         </View>
 
         <View style={styles.searchBarOuter}>
@@ -964,8 +978,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
-    flexDirection: 'row',
-    alignItems: 'center',
+  },
+  topHeaderChromeRow: {
+    width: '100%',
     justifyContent: 'space-between',
   },
   inboxWrap: {
@@ -978,7 +993,7 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Brand/Primary'),
+    backgroundColor: color('Foundation/Surface/White'),
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 3,

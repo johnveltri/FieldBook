@@ -15,14 +15,22 @@ type PlatformFloatingSurfaceProps = {
   interactive?: boolean;
   /**
    * `fab` — primary + circle: Liquid Glass tint on iOS, Material 3 brand FAB on Android.
-   * `menu` — action pills: Liquid Glass on iOS, Material 3 elevated surface on Android.
-   * `dock` — legacy floating chrome fallback (headers, etc.).
+   * `menu` — action pills: white-tinted Liquid Glass on iOS, Material 3 elevated surface on Android.
+   * `dock` — transparent Liquid Glass (`clear`) for header back/X — closer to system tab-bar glass.
    */
   tone?: 'fab' | 'menu' | 'dock';
+  /**
+   * `fill` — fixed circles (header chrome, FAB). `intrinsic` — FAB-menu pills that size to children.
+   * @default `fill` for `fab`, `intrinsic` for `menu`
+   */
+  contentLayout?: 'fill' | 'intrinsic';
   testID?: string;
 };
 
 const brandPrimary = color('Brand/Primary');
+
+/** Header back/X on iOS — faint tint so `clear` glass reads airy, not milky white. */
+const dockGlassTint = colorWithAlpha('Foundation/Surface/White', 0.05);
 
 /**
  * Floating chrome for FAB, quick-action pills, and related shell controls.
@@ -33,9 +41,11 @@ export function PlatformFloatingSurface({
   shape = 'pill',
   interactive = false,
   tone = 'fab',
+  contentLayout,
   testID,
 }: PlatformFloatingSurfaceProps) {
   const { useGlass } = usePlatformGlass();
+  const fillContent = contentLayout === 'fill' || (contentLayout !== 'intrinsic' && tone === 'fab');
   const radiusStyle: ViewStyle =
     shape === 'pill'
       ? { borderRadius: radius('Radius/Full') }
@@ -59,8 +69,8 @@ export function PlatformFloatingSurface({
       >
         <View
           style={[
-            isMenu ? styles.glassContentIntrinsic : styles.glassContentFixed,
-            radiusStyle,
+            fillContent ? styles.glassContentFixed : styles.glassContentIntrinsic,
+            fillContent ? radiusStyle : null,
           ]}
           pointerEvents="box-none"
         >
@@ -87,22 +97,35 @@ export function PlatformFloatingSurface({
           style,
         ]}
       >
-        {children}
+        {fillContent ? (
+          <View style={[styles.glassContentFixed, radiusStyle]} pointerEvents="box-none">
+            {children}
+          </View>
+        ) : (
+          children
+        )}
       </View>
     );
   }
 
-  // Legacy dock / header chrome.
+  // Transparent Liquid Glass (header back/X) — `clear` + minimal tint (not menu white).
   if (useGlass) {
     return (
       <GlassView
         testID={testID}
         style={[radiusStyle, styles.glassHost, style]}
-        glassEffectStyle="regular"
-        colorScheme="light"
-        isInteractive={interactive}
+        glassEffectStyle="clear"
+        colorScheme="auto"
+        tintColor={dockGlassTint}
+        isInteractive={false}
       >
-        <View style={[styles.glassContentFixed, radiusStyle]} pointerEvents="box-none">
+        <View
+          style={[
+            fillContent ? styles.glassContentFixed : styles.glassContentIntrinsic,
+            fillContent ? radiusStyle : null,
+          ]}
+          pointerEvents="box-none"
+        >
           {children}
         </View>
       </GlassView>
@@ -114,12 +137,18 @@ export function PlatformFloatingSurface({
       testID={testID}
       style={[
         radiusStyle,
-        styles.fallbackSurface,
-        Platform.OS === 'android' ? styles.m3FabElevation : styles.iosFallbackShadow,
+        styles.fallbackSurfaceClear,
+        Platform.OS === 'android' ? styles.m3MenuElevation : styles.iosDockFallbackShadow,
         style,
       ]}
     >
-      {children}
+      {fillContent ? (
+        <View style={[styles.glassContentFixed, radiusStyle]} pointerEvents="box-none">
+          {children}
+        </View>
+      ) : (
+        children
+      )}
     </View>
   );
 }
@@ -149,6 +178,7 @@ const styles = StyleSheet.create({
   m3Fab: {
     overflow: 'hidden',
     backgroundColor: brandPrimary,
+    position: 'relative',
   },
   /**
    * Material 3 FAB-menu item: elevated surface-container (readable over the scrim).
@@ -158,6 +188,7 @@ const styles = StyleSheet.create({
     backgroundColor: colorWithAlpha('Foundation/Surface/White', 0.92),
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colorWithAlpha('Foundation/Text/Primary', 0.08),
+    position: 'relative',
   },
   m3FabElevation: {
     elevation: 6,
@@ -171,10 +202,24 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(43, 52, 65, 0.16)',
   },
+  /** iOS reduce-transparency / pre-glass fallback for header back/X. */
+  fallbackSurfaceClear: {
+    overflow: 'hidden',
+    backgroundColor: colorWithAlpha('Foundation/Surface/White', 0.22),
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colorWithAlpha('Foundation/Text/Primary', 0.06),
+  },
   iosFallbackShadow: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.22,
     shadowRadius: 16,
+  },
+  /** Softer lift for translucent header chrome (not FAB/menu cards). */
+  iosDockFallbackShadow: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
   },
 });

@@ -20,6 +20,10 @@ import { color, radius } from '@fieldsolo/design-system/lib/tokens';
 
 import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
 import {
+  PlatformHeaderTitle,
+  platformHeaderRowStyle,
+} from '../components/platform/platformHeaderMetrics';
+import {
   listInboxMaterials,
   listInboxNotes,
   updateMaterial,
@@ -365,15 +369,20 @@ export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
       >
         <View style={columnStyle}>
         <View style={styles.topHeader}>
-          <PlatformHeaderAction
-            accessibilityLabel="Back"
-            onPress={onRequestClose}
-          >
-            <TopHeaderBackIcon color={fg.primary} size={28} />
-          </PlatformHeaderAction>
-          <Text {...screenHeaderA11y()} style={typography.displayH1}>
-            INBOX
-          </Text>
+          <View style={platformHeaderRowStyle(styles.topHeaderChromeRow)}>
+            <PlatformHeaderAction
+              accessibilityLabel="Back"
+              onPress={onRequestClose}
+            >
+              <TopHeaderBackIcon size={28} color={fg.primary} />
+            </PlatformHeaderAction>
+            <PlatformHeaderTitle
+              {...screenHeaderA11y()}
+              typography={typography.displayH1}
+            >
+              INBOX
+            </PlatformHeaderTitle>
+          </View>
         </View>
 
         <View style={styles.tabsWrap}>
@@ -513,8 +522,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: space('Spacing/16'),
     paddingBottom: space('Spacing/8'),
-    flexDirection: 'row',
-    alignItems: 'center',
+  },
+  topHeaderChromeRow: {
+    width: '100%',
     justifyContent: 'flex-start',
     gap: space('Spacing/12'),
   },

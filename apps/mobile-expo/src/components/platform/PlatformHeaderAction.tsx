@@ -1,4 +1,10 @@
-import type { ReactNode } from 'react';
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import {
   Platform,
   Pressable,
@@ -8,25 +14,55 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { radius } from '../../theme/nativeTokens';
+import { fg } from '../../theme/nativeTokens';
 import { PlatformFloatingSurface } from './PlatformFloatingSurface';
-import { usePlatformGlass } from './usePlatformGlass';
+
+/** Icons on orange brand FAB header chrome (profile, jobs inbox). */
+export const platformHeaderActionIconColor = '#FFFFFF';
+
+export type PlatformHeaderActionVariant = 'primary' | 'surface';
 
 type PlatformHeaderActionProps = {
   accessibilityLabel: string;
   onPress: () => void;
   children: ReactNode;
-  /** Applied to the outer chrome (not the inner hit), so icons stay centered. */
+  /** Applied to the outer 44×44 hit target (e.g. inbox badge positioning). */
   style?: StyleProp<ViewStyle>;
   /** When false, skip the floating chrome wrapper (icon-only hit target). */
   useFloatingChrome?: boolean;
+  /**
+   * `surface` — clear Liquid Glass on iOS (dock-like), white M3 surface on Android (back, close).
+   * `primary` — brand orange FAB chrome (profile, inbox entry).
+   * @default 'surface'
+   */
+  variant?: PlatformHeaderActionVariant;
 };
 
 const MIN_TOUCH = 44;
+const CHROME_RADIUS = MIN_TOUCH / 2;
+
+const chromeSizeStyle = {
+  width: MIN_TOUCH,
+  height: MIN_TOUCH,
+  borderRadius: CHROME_RADIUS,
+} as const;
+
+function iconColorForVariant(variant: PlatformHeaderActionVariant): string {
+  return variant === 'primary' ? platformHeaderActionIconColor : fg.primary;
+}
+
+function withIconColor(children: ReactNode, color: string): ReactNode {
+  return Children.map(children, (child) => {
+    if (!isValidElement(child)) return child;
+    const props = child.props as { color?: string };
+    if (!('color' in props)) return child;
+    return cloneElement(child as ReactElement<{ color?: string }>, { color });
+  });
+}
 
 /**
- * Slack-like circular header chrome for Back / Close / Inbox / Profile.
- * iOS: Liquid Glass circle. Android: elevated white circle.
+ * Circular header control (back, close, inbox, profile).
+ * `surface` back/close: iOS clear Liquid Glass (`dock`), Android white M3 surface (`menu`).
  */
 export function PlatformHeaderAction({
   accessibilityLabel,
@@ -34,61 +70,81 @@ export function PlatformHeaderAction({
   children,
   style,
   useFloatingChrome = true,
+  variant = 'surface',
 }: PlatformHeaderActionProps) {
-  const { useGlass } = usePlatformGlass();
+  const surfaceTone =
+    variant === 'primary' ? 'fab' : Platform.OS === 'ios' ? 'dock' : 'menu';
+  const iconColor = iconColorForVariant(variant);
+  const rippleColor =
+    variant === 'primary' ? 'rgba(255, 255, 255, 0.22)' : 'rgba(43, 52, 65, 0.10)';
 
-  const hit = (
+  if (!useFloatingChrome) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        onPress={onPress}
+        hitSlop={6}
+        style={({ pressed }) => [styles.bareHit, style, pressed && styles.pressedIos]}
+      >
+        {withIconColor(children, iconColor)}
+      </Pressable>
+    );
+  }
+
+  return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
       hitSlop={6}
+      android_ripple={{
+        color: rippleColor,
+        borderless: true,
+        radius: CHROME_RADIUS,
+      }}
       style={({ pressed }) => [
-        styles.hitFill,
-        pressed && styles.pressed,
-        !useFloatingChrome ? style : null,
+        styles.pressableOuter,
+        style,
+        pressed && Platform.OS === 'ios' && styles.pressedIos,
       ]}
     >
-      {children}
+      <PlatformFloatingSurface
+        tone={surfaceTone}
+        contentLayout="fill"
+        style={chromeSizeStyle}
+      >
+        <View style={styles.iconSlot} pointerEvents="none">
+          {withIconColor(children, iconColor)}
+        </View>
+      </PlatformFloatingSurface>
     </Pressable>
   );
-
-  if (!useFloatingChrome) {
-    return hit;
-  }
-
-  // Both platforms get floating circular chrome (Slack top-right capsule language).
-  // Always keep a fixed 44×44 box so Liquid Glass / fallback can't stretch the header.
-  if (useGlass || Platform.OS === 'android') {
-    return (
-      <PlatformFloatingSurface
-        tone="dock"
-        interactive={useGlass}
-        style={[styles.chromeWrap, style]}
-      >
-        {hit}
-      </PlatformFloatingSurface>
-    );
-  }
-
-  return <View style={[styles.chromeWrap, style]}>{hit}</View>;
 }
 
 const styles = StyleSheet.create({
-  /** Fills the 44×44 chrome and keeps the glyph optically centered. */
-  hitFill: {
-    flex: 1,
+  pressableOuter: {
+    width: MIN_TOUCH,
+    height: MIN_TOUCH,
+    overflow: 'visible',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+    ...(Platform.OS === 'android' ? { backgroundColor: 'transparent' } : null),
+  },
+  /** Match PlatformPrimaryAction — center glyph in the full chrome circle. */
+  iconSlot: {
     width: '100%',
     height: '100%',
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chromeWrap: {
-    borderRadius: radius('Radius/Full'),
-    width: MIN_TOUCH,
-    height: MIN_TOUCH,
+  bareHit: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  pressed: {
+  pressedIos: {
     opacity: 0.75,
   },
 });

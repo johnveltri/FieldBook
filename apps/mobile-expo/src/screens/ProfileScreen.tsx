@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Animated,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -40,6 +41,10 @@ import {
   ProfileTrashIcon,
 } from '../components/figma-icons/ProfileScreenIcons';
 import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
+import {
+  PlatformHeaderTitle,
+  platformHeaderRowStyle,
+} from '../components/platform/platformHeaderMetrics';
 import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
 import { useAuth } from '../context/AuthContext';
 import { analytics, changedFields, emailProperties, errorProperties } from '../lib/analytics';
@@ -481,15 +486,18 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {  const insets = 
       >
         <View style={columnStyle}>
           <View style={styles.topHeaderRow}>
-            <PlatformHeaderAction
-              accessibilityLabel="Back"
-              onPress={onBack}
-            >
-              <TopHeaderBackIcon color={fg.secondary} size={PROFILE_BACK_ICON_SIZE} />
-            </PlatformHeaderAction>
-            <Text {...screenHeaderA11y()} style={[typography.displayH1, styles.profileTitle]}>
-              PROFILE
-            </Text>
+            <View style={platformHeaderRowStyle(styles.topHeaderChromeRow)}>
+              <PlatformHeaderAction accessibilityLabel="Back" onPress={onBack}>
+                <TopHeaderBackIcon size={PROFILE_BACK_ICON_SIZE} color={fg.primary} />
+              </PlatformHeaderAction>
+              <PlatformHeaderTitle
+                {...screenHeaderA11y()}
+                typography={typography.displayH1}
+                style={styles.profileTitle}
+              >
+                PROFILE
+              </PlatformHeaderTitle>
+            </View>
           </View>
 
           <View style={styles.bodyWrap}>
@@ -640,7 +648,14 @@ function ProfileSectionHeader({
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderLead}>
         {icon}
-        <Text style={typography.titleH3}>{title}</Text>
+        <Text
+          style={[
+            typography.titleH3,
+            Platform.OS === 'android' ? styles.sectionTitleAndroid : null,
+          ]}
+        >
+          {title}
+        </Text>
       </View>
       {actionLabel ? (
         <Pressable
@@ -669,15 +684,15 @@ const styles = StyleSheet.create({
   /** Title + Back — no accent strip (`231:817` variant `Title + Back`). */
   topHeaderRow: {
     width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
+  },
+  topHeaderChromeRow: {
+    width: '100%',
     gap: space('Spacing/8'),
   },
   profileTitle: {
-    flex: 1,
     color: fg.primary,
   },
   bodyWrap: {
@@ -712,6 +727,15 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
     flex: 1,
     minWidth: 0,
+  },
+  sectionTitleAndroid: {
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    lineHeight: 20,
+    marginTop: 0,
+    marginBottom: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   actionButton: {
     flexDirection: 'row',
