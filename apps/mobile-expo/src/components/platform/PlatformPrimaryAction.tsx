@@ -255,6 +255,9 @@ const styles = StyleSheet.create({
   menuItemSurface: {
     borderRadius: 22,
     minWidth: 196,
+    // GlassView does not reliably derive an intrinsic frame from children in
+    // an iOS transparent Modal. Give the effect a real drawable row height.
+    minHeight: 54,
   },
   menuItem: {
     flexDirection: 'row',
