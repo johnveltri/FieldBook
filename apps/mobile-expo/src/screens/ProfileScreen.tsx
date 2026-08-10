@@ -23,13 +23,8 @@ import {
 import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
-import {
-  ShellBottomNav,
-  shellBottomNavOuterHeight,
-  type ShellMainTab,
-} from '../components/shell/ShellBottomNav';
-import {
-  ChangePasswordBottomSheet,
+import { shellBottomNavOuterHeight } from '../components/platform/shellDockMetrics';
+import {  ChangePasswordBottomSheet,
   DeleteAccountBottomSheet,
   ProfileRowsCard,
   TradeMultiSelectBottomSheet,
@@ -65,6 +60,7 @@ import type { TextStyles } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
 import { screenHeaderA11y } from '../lib/accessibility';
 import { markFeedbackSent, openFeedbackEmail } from '../lib/feedback';
+import { useShellChromeOptional } from '../shell/ShellChromeContext';
 
 /** Page back control — scale up Figma `231:837` (24×24 artboard). */
 const PROFILE_BACK_ICON_SIZE = 28;
@@ -96,12 +92,9 @@ type ProfileFlow =
 
 export type ProfileScreenProps = {
   onBack: () => void;
-  /** Tab bar lives on Profile (full-screen overlay covers the shell nav). */
-  onSelectShellTab: (tab: ShellMainTab) => void;
 };
 
-export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) {
-  const insets = useSafeAreaInsets();
+export function ProfileScreen({ onBack }: ProfileScreenProps) {  const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
@@ -181,6 +174,14 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
   const [changePasswordMounted, setChangePasswordMounted] = useState(false);
   const [deleteAccountMounted, setDeleteAccountMounted] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const profileSheetsMounted =
+    editProfileMounted || changePasswordMounted || deleteAccountMounted;
+  const shellChrome = useShellChromeOptional();
+  useEffect(() => {
+    shellChrome?.setProfileSheetsMounted(profileSheetsMounted);
+    return () => shellChrome?.setProfileSheetsMounted(false);
+  }, [profileSheetsMounted, shellChrome]);
 
   /**
    * Parent-owned draft for the Update Profile sheet. The trade picker
@@ -528,14 +529,10 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
             <ProfileRowsCard typography={typography} rows={accountRows} />
 
             <View style={styles.deleteSpacer} />
-            <ProfileRowsCard typography={typography} rows={deleteRows} />
+            <ProfileRowsCard typography={typography} rows={deleteRows} plain framed={false} />
           </View>
         </View>
       </Animated.ScrollView>
-
-      {/* Fixed in the column (not overlaid) so tab taps reach the nav on Android.
-          Profile is a full-screen overlay above the shell nav, so it owns a copy. */}
-      <ShellBottomNav selected="home" onSelect={onSelectShellTab} />
 
       {editProfileMounted ? (
         <>

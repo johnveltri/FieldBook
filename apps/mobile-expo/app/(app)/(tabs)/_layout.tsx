@@ -1,7 +1,11 @@
+import { useCallback } from 'react';
 import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { useShellOverlays } from '../../../src/shell/ShellOverlayContext';
+import { useShellChromeOptional } from '../../../src/shell/ShellChromeContext';
+import type { ShellMainTab } from '../../../src/shell/shellTabRoutes';
 import { bg, fg } from '../../../src/theme/nativeTokens';
 
 /** Foundation/Text/Primary — ink for icons + labels. */
@@ -19,9 +23,23 @@ const iconHome = require('../../../assets/tab-icons/home.png');
 const iconJobs = require('../../../assets/tab-icons/jobs.png');
 const iconEarnings = require('../../../assets/tab-icons/earnings.png');
 
+function useDismissOverlaysOnTabPress() {
+  const overlays = useShellOverlays();
+  return useCallback(
+    (destination: ShellMainTab) => {
+      overlays?.dismissOverlaysForTabPress(destination);
+    },
+    [overlays],
+  );
+}
+
 function NativeTabsLayout() {
+  const dismissOverlays = useDismissOverlaysOnTabPress();
+  const hideBottomChrome = useShellChromeOptional()?.hideBottomChrome ?? false;
+
   return (
     <NativeTabs
+      hidden={hideBottomChrome}
       // iOS: leave background unset/transparent so Liquid Glass owns the chrome;
       // forcing a fill creates the opaque slab under Reduce Transparency.
       backgroundColor={Platform.OS === 'android' ? androidTabBarBg : 'transparent'}
@@ -44,15 +62,34 @@ function NativeTabsLayout() {
       disableTransparentOnScrollEdge
       minimizeBehavior="never"
     >
-      <NativeTabs.Trigger name="index" disableTransparentOnScrollEdge>
+      <NativeTabs.Trigger
+        name="index"
+        disableTransparentOnScrollEdge
+        listeners={{
+          // Re-tap Home while Profile is open must dismiss — route does not change.
+          tabPress: () => dismissOverlays('home'),
+        }}
+      >
         <NativeTabs.Trigger.Label>HOME</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon src={iconHome} renderingMode="template" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="jobs" disableTransparentOnScrollEdge>
+      <NativeTabs.Trigger
+        name="jobs"
+        disableTransparentOnScrollEdge
+        listeners={{
+          tabPress: () => dismissOverlays('jobs'),
+        }}
+      >
         <NativeTabs.Trigger.Label>JOBS</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon src={iconJobs} renderingMode="template" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="earnings" disableTransparentOnScrollEdge>
+      <NativeTabs.Trigger
+        name="earnings"
+        disableTransparentOnScrollEdge
+        listeners={{
+          tabPress: () => dismissOverlays('earnings'),
+        }}
+      >
         <NativeTabs.Trigger.Label>EARNINGS</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon src={iconEarnings} renderingMode="template" />
       </NativeTabs.Trigger>
@@ -62,11 +99,28 @@ function NativeTabsLayout() {
 
 /** Jest cannot host native tab navigators — use a stack with the same routes. */
 function JestTabsLayout() {
+  const dismissOverlays = useDismissOverlaysOnTabPress();
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="jobs" />
-      <Stack.Screen name="earnings" />
+      <Stack.Screen
+        name="index"
+        listeners={{
+          focus: () => dismissOverlays('home'),
+        }}
+      />
+      <Stack.Screen
+        name="jobs"
+        listeners={{
+          focus: () => dismissOverlays('jobs'),
+        }}
+      />
+      <Stack.Screen
+        name="earnings"
+        listeners={{
+          focus: () => dismissOverlays('earnings'),
+        }}
+      />
     </Stack>
   );
 }

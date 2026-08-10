@@ -8,8 +8,6 @@ import {
   Platform,
   StyleSheet,
   View,
-  type StyleProp,
-  type ViewStyle,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -18,6 +16,8 @@ import { BlurTargetView } from 'expo-blur';
 import { LiveSessionOverlay } from '../components/LiveSessionOverlay';
 import { PrimaryActionOverlay } from '../components/shell/PrimaryActionOverlay';
 import { QuickActionsFlowProvider } from './QuickActionsFlowContext';
+import { ShellChromeProvider } from './ShellChromeContext';
+import { ShellOverlayProvider, type ShellOverlayContextValue } from './ShellOverlayContext';
 import { useAuth } from '../context/AuthContext';
 import {
   useBottomSheetStackWriters,
@@ -45,9 +45,7 @@ import {
 import { AnalyticsConsentPromptModal } from '../components/AnalyticsConsentPromptModal';
 import { LegalReacceptanceModal } from '../components/LegalReacceptanceModal';
 import type { EarningsWindow } from '../screens/EarningsScreen';
-import { InboxScreen } from '../screens/InboxScreen';
 import { JobDetailScreen } from '../screens/JobDetailScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
 import { OverlaySlideHost } from '../navigation/OverlaySlideHost';
 import { color } from '@fieldsolo/design-system/lib/tokens';
 import { bg } from '../theme/nativeTokens';
@@ -325,24 +323,6 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
   const skipNextTabAnalyticsRef = useRef(false);
   const prevMainTabRef = useRef<ShellMainTab | null>(null);
 
-  const onShellTabSelect = useCallback(
-    (tab: ShellMainTab) => {
-      analytics.capture('shell_tab_selected', {
-        from_tab: mainTab,
-        to_tab: tab,
-        has_live_session: liveSession.hasLiveSession,
-      });
-      skipNextTabAnalyticsRef.current = true;
-      if (jobDetailOpen) {
-        closeJobDetail();
-      }
-      if (inboxOpen) setInboxOpen(false);
-      if (tab === 'home') setProfileOpen(false);
-      router.navigate(SHELL_TAB_HREF[tab]);
-    },
-    [closeJobDetail, inboxOpen, jobDetailOpen, liveSession.hasLiveSession, mainTab, router],
-  );
-
   useEffect(() => {
     if (legalGate !== 'ready' || analyticsConsentGate !== 'ready') return;
     if (skipNextTabAnalyticsRef.current) {
@@ -351,7 +331,11 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
       return;
     }
     const prev = prevMainTabRef.current;
-    if (prev !== null && prev !== mainTab && !inboxOpen) {
+    if (prev !== null && prev !== mainTab) {
+      if (inboxOpen) {
+        analytics.capture('inbox_closed', { destination: mainTab });
+        setInboxOpen(false);
+      }
       analytics.capture('shell_tab_selected', {
         from_tab: prev,
         to_tab: mainTab,
@@ -450,6 +434,54 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
     return () => sub.remove();
   }, [liveSession.hasLiveSession, session]);
 
+  const closeInbox = useCallback(() => {
+    setInboxOpen(false);
+  }, []);
+
+  const closeProfile = useCallback(() => {
+    setProfileOpen(false);
+  }, []);
+
+  const dismissOverlaysForTabPress = useCallback(
+    (destinationTab: ShellMainTab) => {
+      if (inboxOpen) {
+        analytics.capture('inbox_closed', { destination: destinationTab });
+        setInboxOpen(false);
+      }
+      if (profileOpen) {
+        setProfileOpen(false);
+      }
+    },
+    [inboxOpen, profileOpen],
+  );
+
+  const shellOverlayValue = useMemo(
+    (): ShellOverlayContextValue => ({
+      mainTab,
+      inboxOpen,
+      inboxMounted,
+      inboxLoadKey,
+      closeInbox,
+      onInboxExited: () => setInboxMounted(false),
+      profileOpen,
+      profileMounted,
+      closeProfile,
+      onProfileExited: () => setProfileMounted(false),
+      dismissOverlaysForTabPress,
+    }),
+    [
+      closeInbox,
+      closeProfile,
+      dismissOverlaysForTabPress,
+      inboxLoadKey,
+      inboxMounted,
+      inboxOpen,
+      mainTab,
+      profileMounted,
+      profileOpen,
+    ],
+  );
+
   const shellContextValue = useMemo(
     (): ShellAppContextValue => ({
       mainTab,
@@ -530,70 +562,28 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
       {legalGate === 'ready' && analyticsConsentGate === 'ready' ? (
         <QuickActionsFlowProvider onCreateJob={() => createJobAndOpen('primary_action')}>
           <ShellAppContext.Provider value={shellContextValue}>
-            {inboxMounted ? (
-              <OverlaySlideHost
-                visible={inboxOpen}
-                axis="horizontal"
-                onRequestClose={() => {
-                  analytics.capture('inbox_closed', { destination: mainTab });
-                  setInboxOpen(false);
-                }}
-                onExited={() => setInboxMounted(false)}
-              >
-                <InboxScreen
-                  loadKey={inboxLoadKey}
-                  onRequestClose={() => {
-                    analytics.capture('inbox_closed', { destination: mainTab });
-                    setInboxOpen(false);
-                  }}
-                  onSelectShellTab={(tab) => {
-                    analytics.capture('shell_tab_selected', {
-                      from_tab: 'inbox',
-                      to_tab: tab,
-                      has_live_session: liveSession.hasLiveSession,
-                    });
-                    analytics.capture('inbox_closed', { destination: tab });
-                    setInboxOpen(false);
-                    if (tab === 'home') setProfileOpen(false);
-                    router.navigate(SHELL_TAB_HREF[tab]);
-                  }}
-                />
-              </OverlaySlideHost>
-            ) : (
-              <View style={styles.shellColumn}>
-                {/*
-                  Android needs BlurTargetView for dimezis Modal blur. Wrap with an
-                  inner flex View — native BlurTargetView alone can collapse Slot height.
-                */}
-                {Platform.OS === 'android' ? (
-                  <BlurTargetView ref={shellBlurTargetRef} style={styles.shellMain}>
-                    <View style={styles.shellMainInner} collapsable={false}>
-                      {children}
-                    </View>
-                  </BlurTargetView>
-                ) : (
-                  <View style={styles.shellMain}>{children}</View>
-                )}
-                <PrimaryActionOverlay
-                  blurTargetRef={Platform.OS === 'android' ? shellBlurTargetRef : undefined}
-                />
-                {profileMounted ? (
-                  <View style={styles.profileOverlayPane}>
-                    <OverlaySlideHost
-                      visible={profileOpen}
-                      axis="horizontal"
-                      onRequestClose={() => setProfileOpen(false)}
-                      onExited={() => setProfileMounted(false)}
-                    >
-                      <ProfileScreen
-                        onBack={() => setProfileOpen(false)}
-                        onSelectShellTab={onShellTabSelect}
-                      />
-                    </OverlaySlideHost>
+            <ShellOverlayProvider value={shellOverlayValue}>
+            <ShellChromeProvider>
+            <View style={styles.shellColumn}>
+              {/*
+                Android needs BlurTargetView for dimezis Modal blur. Wrap with an
+                inner flex View — native BlurTargetView alone can collapse Slot height.
+                Profile/Inbox overlays mount inside each focused tab scene
+                (ShellSceneOverlays) so they cannot cover the native tab bar.
+              */}
+              {Platform.OS === 'android' ? (
+                <BlurTargetView ref={shellBlurTargetRef} style={styles.shellMain}>
+                  <View style={styles.shellMainInner} collapsable={false}>
+                    {children}
                   </View>
-                ) : null}
-              </View>
-            )}
+                </BlurTargetView>
+              ) : (
+                <View style={styles.shellMain}>{children}</View>
+              )}
+              <PrimaryActionOverlay
+                blurTargetRef={Platform.OS === 'android' ? shellBlurTargetRef : undefined}
+              />
+            </View>
 
             <LiveSessionOverlay onSessionEnded={({ jobId }) => onLiveSessionEnded(jobId)} />
 
@@ -655,6 +645,8 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
                 </GestureHandlerRootView>
               </Modal>
             ) : null}
+            </ShellChromeProvider>
+            </ShellOverlayProvider>
           </ShellAppContext.Provider>
         </QuickActionsFlowProvider>
       ) : null}
@@ -682,11 +674,6 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     minHeight: 0,
-  },
-  profileOverlayPane: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 20,
-    elevation: 20,
   },
   jobDetailOverlayHost: {
     ...StyleSheet.absoluteFill,

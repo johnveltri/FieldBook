@@ -1,8 +1,7 @@
-import { useHasLiveSession } from '../../context/LiveSessionContext';
-import { useQuickActionsFlow } from '../../shell/QuickActionsFlowContext';
-import type { ShellMainTab } from '../../shell/shellTabRoutes';
-import { PlatformBottomDock } from '../platform/PlatformBottomDock';
-
+/**
+ * Scroll / FAB clearance helpers for the native tab bar + primary-action overlay.
+ * The old Slack floating dock UI was removed; metrics live in `shellDockMetrics`.
+ */
 export type { ShellMainTab } from '../../shell/shellTabRoutes';
 
 export {
@@ -11,24 +10,6 @@ export {
   shellDockBottomPadding,
   shellDockOuterHeight,
   shellLiveSessionBarBottom,
+  shellNativeTabBarHeight,
+  shellPrimaryActionBottomOffset,
 } from '../platform/shellDockMetrics';
-
-export type ShellBottomNavProps = {
-  selected: ShellMainTab;
-  onSelect: (tab: ShellMainTab) => void;
-};
-
-/** Floating platform dock: connected Home / Jobs / Earnings + primary action. */
-export function ShellBottomNav({ selected, onSelect }: ShellBottomNavProps) {
-  const { handlePrimaryAction } = useQuickActionsFlow();
-  const hasLiveSession = useHasLiveSession();
-
-  return (
-    <PlatformBottomDock
-      selected={selected}
-      onSelect={onSelect}
-      hidePrimaryAction={hasLiveSession}
-      onPrimaryAction={handlePrimaryAction}
-    />
-  );
-}

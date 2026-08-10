@@ -83,17 +83,35 @@ type ProfileRowsCardProps = {
    * omitted — useful when nesting in another framed surface.
    */
   framed?: boolean;
+  /**
+   * No surface fill or card chrome — for destructive actions that should not
+   * read as a list row (e.g. Delete account).
+   */
+  plain?: boolean;
 };
 
 export function ProfileRowsCard({
   typography,
   rows,
   framed = true,
+  plain = false,
 }: ProfileRowsCardProps) {
   return (
-    <View style={[styles.card, framed && styles.cardFramed]}>
+    <View
+      style={[
+        styles.card,
+        plain && styles.cardPlain,
+        framed && !plain && styles.cardFramed,
+      ]}
+    >
       {rows.map((row, i) => (
-        <Row key={`profile-row-${i}`} row={row} typography={typography} index={i} />
+        <Row
+          key={`profile-row-${i}`}
+          row={row}
+          typography={typography}
+          index={i}
+          plain={plain}
+        />
       ))}
     </View>
   );
@@ -103,10 +121,12 @@ function Row({
   row,
   typography,
   index,
+  plain,
 }: {
   row: ProfileRowsCardRow;
   typography: TextStyles;
   index: number;
+  plain: boolean;
 }) {
   // The Figma cards top-stroke every row except the first — visually all
   // rows are separated by a single 1px hairline (the card border + the
@@ -212,6 +232,7 @@ function Row({
     const labelColor =
       row.tone === 'danger' ? color('Semantic/Status/Error/Text') : fg.primary;
     const interactive = !!row.onPress;
+    const rowStyle = plain ? styles.linkRowPlain : styles.linkRow;
     const Body = (
       <View style={styles.linkIconInner}>
         {row.icon}
@@ -221,14 +242,14 @@ function Row({
       </View>
     );
     if (!interactive) {
-      return <View style={[styles.linkRow, topBorder]}>{Body}</View>;
+      return <View style={[rowStyle, !plain && topBorder]}>{Body}</View>;
     }
     return (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={row.label}
         onPress={row.onPress}
-        style={({ pressed }) => [styles.linkRow, topBorder, pressed && styles.pressed]}
+        style={({ pressed }) => [rowStyle, !plain && topBorder, pressed && styles.pressed]}
       >
         {Body}
       </Pressable>
@@ -270,6 +291,11 @@ const styles = StyleSheet.create({
     borderColor: border.subtle,
     ...cardShadowRn,
   },
+  cardPlain: {
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    overflow: 'visible',
+  },
   rowTopBorder: {
     borderTopWidth: 1,
     borderTopColor: border.subtle,
@@ -282,6 +308,11 @@ const styles = StyleSheet.create({
   linkRow: {
     paddingHorizontal: space('Spacing/16'),
     minHeight: 70,
+    justifyContent: 'center',
+  },
+  linkRowPlain: {
+    paddingHorizontal: space('Spacing/16'),
+    paddingVertical: space('Spacing/8'),
     justifyContent: 'center',
   },
   linkRowInner: {

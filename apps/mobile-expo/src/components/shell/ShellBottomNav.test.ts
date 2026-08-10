@@ -20,7 +20,7 @@ afterEach(() => {
   });
 });
 
-describe('ShellBottomNav safe-area padding', () => {
+describe('shell dock metrics safe-area padding', () => {
   it('keeps Android tab content above the full system-navigation inset', () => {
     setPlatformOS('android');
 

@@ -75,7 +75,6 @@ import {
   JobDetailIconTopClose,
   JobDetailIconTopEdit,
 } from '../components/figma-icons/JobDetailScreenIcons';
-import type { ShellMainTab } from '../components/shell/ShellBottomNav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/tokens';
 import {
@@ -195,13 +194,6 @@ export type JobDetailScreenProps = {
   onSwipeDismissStart?: () => void;
   /** Called if the swipe exit animation is interrupted before close. */
   onSwipeDismissCancel?: () => void;
-  /**
-   * Tab nav handler — closes Job Detail and switches the parent shell to the
-   * tapped tab (HOME / JOBS / EARNINGS). Owned by the parent because Job
-   * Detail covers the shell entirely while open and needs the parent to flip
-   * `mainTab` + dismiss this screen in one update.
-   */
-  onSelectShellTab?: (tab: ShellMainTab) => void;
   /** Signed-in user (refetch job list when this changes). */
   sessionUserId?: string | null;
   sessionEmail?: string | null;
@@ -219,7 +211,6 @@ export function JobDetailScreen({
   onRequestClose,
   onSwipeDismissStart,
   onSwipeDismissCancel,
-  onSelectShellTab,
   sessionUserId,
   sessionEmail,
   jobId,
@@ -3154,10 +3145,7 @@ function SectionHeaderFigma({
 // helper now live in `components/ds/ViewActivityBuckets` so the Inbox can reuse
 // the same UNASSIGNED card + rows.
 
-// Bottom nav (Figma `225:12089`) is rendered via the shared
-// `ShellBottomNav` component (see imports above). The local
-// `BottomNavTabCell` / `BottomNavJobs` placeholders that used to live here
-// were removed when the tabs were wired for cross-screen navigation.
+// Bottom chrome is the shell NativeTabs + PrimaryActionOverlay (Slack dock removed).
 
 // -----------------------------------------------------------------------------
 // Styles — grouped roughly top-to-bottom to match the component tree

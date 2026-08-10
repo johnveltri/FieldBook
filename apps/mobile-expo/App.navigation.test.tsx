@@ -152,22 +152,17 @@ jest.mock('./src/screens/JobDetailScreen', () => ({
     loadKey,
     sessionUserId,
     onRequestClose,
-    onSelectShellTab,
   }: {
     jobId?: string | null;
     loadKey?: number;
     sessionUserId?: string;
     onRequestClose?: () => void;
-    onSelectShellTab?: (tab: ShellTab) => void;
   }) => {
     const { Text, View } = require('react-native');
     return (
       <View>
         <Text testID="detail-props">{`jobId:${jobId ?? 'null'}|loadKey:${loadKey ?? 0}|user:${sessionUserId ?? ''}`}</Text>
         <Text onPress={() => onRequestClose?.()}>CloseDetail</Text>
-        <Text onPress={() => onSelectShellTab?.('home')}>DetailNavHome</Text>
-        <Text onPress={() => onSelectShellTab?.('jobs')}>DetailNavJobs</Text>
-        <Text onPress={() => onSelectShellTab?.('earnings')}>DetailNavEarnings</Text>
       </View>
     );
   },
@@ -218,19 +213,14 @@ jest.mock('./src/screens/ProfileScreen', () => {
 jest.mock('./src/screens/InboxScreen', () => ({
   InboxScreen: ({
     onRequestClose,
-    onSelectShellTab,
   }: {
     onRequestClose?: () => void;
-    onSelectShellTab?: (tab: ShellTab) => void;
   }) => {
     const { Text, View } = require('react-native');
     return (
       <View>
         <Text testID="inbox-screen">InboxScreen</Text>
         <Text onPress={() => onRequestClose?.()}>CloseInbox</Text>
-        <Text onPress={() => onSelectShellTab?.('home')}>InboxNavHome</Text>
-        <Text onPress={() => onSelectShellTab?.('jobs')}>InboxNavJobs</Text>
-        <Text onPress={() => onSelectShellTab?.('earnings')}>InboxNavEarnings</Text>
       </View>
     );
   },
@@ -326,40 +316,42 @@ describe('App inbox shell tab navigation', () => {
     earningsMountCount = 0;
   });
 
-  it('returns to JobsScreen when the JOBS tab is tapped from Inbox', async () => {
+  it('returns to JobsScreen when navigating to JOBS while Inbox is open', async () => {
     const screen = await renderAppReady();
 
     await openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));
     expect(screen.getByTestId('inbox-screen')).toBeTruthy();
 
-    fireEvent.press(screen.getByText('InboxNavJobs'));
+    testRouter.navigate('/');
+    await waitFor(() => expect(screen.getByTestId('home-screen')).toBeTruthy());
+    testRouter.navigate('/jobs');
+    await waitFor(() => expect(screen.getByTestId('jobs-screen')).toBeTruthy());
     expect(screen.queryByTestId('inbox-screen')).toBeNull();
-    expect(screen.getByTestId('jobs-screen')).toBeTruthy();
   });
 
-  it('switches to HOME and dismisses Inbox when the HOME tab is tapped from Inbox', async () => {
+  it('switches to HOME and dismisses Inbox when navigating via native tabs', async () => {
     const screen = await renderAppReady();
 
     await openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));
     expect(screen.getByTestId('inbox-screen')).toBeTruthy();
 
-    fireEvent.press(screen.getByText('InboxNavHome'));
+    testRouter.navigate('/');
+    await waitFor(() => expect(screen.getByTestId('home-screen')).toBeTruthy());
     expect(screen.queryByTestId('inbox-screen')).toBeNull();
-    expect(screen.getByTestId('home-screen')).toBeTruthy();
   });
 
-  it('switches to EARNINGS and dismisses Inbox when the EARNINGS tab is tapped from Inbox', async () => {
+  it('switches to EARNINGS and dismisses Inbox when navigating via native tabs', async () => {
     const screen = await renderAppReady();
 
     await openJobsTab(screen);
     fireEvent.press(screen.getByText('OpenInbox'));
     expect(screen.getByTestId('inbox-screen')).toBeTruthy();
 
-    fireEvent.press(screen.getByText('InboxNavEarnings'));
+    testRouter.navigate('/earnings');
+    await waitFor(() => expect(screen.getByTestId('earnings-screen')).toBeTruthy());
     expect(screen.queryByTestId('inbox-screen')).toBeNull();
-    expect(screen.getByTestId('earnings-screen')).toBeTruthy();
   });
 });
 

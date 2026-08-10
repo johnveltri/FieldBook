@@ -42,11 +42,7 @@ import {
   type ChooseJobBottomSheetJob,
 } from '../components/ds';
 import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
-import {
-  ShellBottomNav,
-  shellBottomNavOuterHeight,
-  type ShellMainTab,
-} from '../components/shell/ShellBottomNav';
+import { shellBottomNavOuterHeight } from '../components/platform/shellDockMetrics';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { analytics, errorProperties } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -74,7 +70,6 @@ export type InboxScreenProps = {
   /** Bump to force a refetch when the screen is (re)opened. */
   loadKey?: number;
   onRequestClose: () => void;
-  onSelectShellTab: (tab: ShellMainTab) => void;
 };
 
 type AssignTarget = { kind: InboxTab; id: string } | null;
@@ -127,7 +122,7 @@ function groupByRecency<T extends { createdAt: string }>(
  * `timeBuckets` logic. Tapping an item opens the "Add to Job" sheet; assigning
  * removes it from the Inbox.
  */
-export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: InboxScreenProps) {
+export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
   const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
@@ -494,9 +489,6 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
         )}
         </View>
       </Animated.ScrollView>
-
-      {/* Fixed in the column (not overlaid) so tab taps reach the nav on Android. */}
-      <ShellBottomNav selected="jobs" onSelect={onSelectShellTab} />
 
       <ChooseJobBottomSheet
         typography={typography}
