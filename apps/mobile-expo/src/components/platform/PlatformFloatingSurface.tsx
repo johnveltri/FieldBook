@@ -57,7 +57,12 @@ export function PlatformFloatingSurface({
     return (
       <GlassView
         testID={testID}
-        style={[radiusStyle, styles.glassHost, style]}
+        style={[
+          radiusStyle,
+          styles.glassHost,
+          isMenu ? styles.iosMenuGlassSurface : null,
+          style,
+        ]}
         // Menu: regular glass + strong white tint so pills read closer to Android’s white surfaces.
         glassEffectStyle="regular"
         colorScheme="light"
@@ -156,6 +161,18 @@ export function PlatformFloatingSurface({
 const styles = StyleSheet.create({
   glassHost: {
     overflow: 'hidden',
+  },
+  /**
+   * Keep FAB-menu rows legible when UIKit does not paint UIGlassEffect inside
+   * the transparent modal. The translucent token surface sits behind Liquid
+   * Glass, so supported devices retain the effect while release builds still
+   * have a visible pill background.
+   */
+  iosMenuGlassSurface: {
+    backgroundColor: colorWithAlpha('Foundation/Surface/White', 0.72),
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colorWithAlpha('Foundation/Text/Primary', 0.1),
+    position: 'relative',
   },
   /** Circle FAB: fill the explicit width/height from the caller. */
   glassContentFixed: {
