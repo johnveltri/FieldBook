@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Animated,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -23,13 +24,8 @@ import {
 import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
-import {
-  ShellBottomNav,
-  shellBottomNavOuterHeight,
-  type ShellMainTab,
-} from '../components/shell/ShellBottomNav';
-import {
-  ChangePasswordBottomSheet,
+import { shellBottomNavOuterHeight } from '../components/platform/shellDockMetrics';
+import {  ChangePasswordBottomSheet,
   DeleteAccountBottomSheet,
   ProfileRowsCard,
   TradeMultiSelectBottomSheet,
@@ -44,6 +40,11 @@ import {
   ProfilePlanIcon,
   ProfileTrashIcon,
 } from '../components/figma-icons/ProfileScreenIcons';
+import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
+import {
+  PlatformHeaderTitle,
+  platformHeaderRowStyle,
+} from '../components/platform/platformHeaderMetrics';
 import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
 import { useAuth } from '../context/AuthContext';
 import { analytics, changedFields, emailProperties, errorProperties } from '../lib/analytics';
@@ -64,6 +65,7 @@ import type { TextStyles } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
 import { screenHeaderA11y } from '../lib/accessibility';
 import { markFeedbackSent, openFeedbackEmail } from '../lib/feedback';
+import { useShellChromeOptional } from '../shell/ShellChromeContext';
 
 /** Page back control — scale up Figma `231:837` (24×24 artboard). */
 const PROFILE_BACK_ICON_SIZE = 28;
@@ -95,12 +97,9 @@ type ProfileFlow =
 
 export type ProfileScreenProps = {
   onBack: () => void;
-  /** Tab bar lives on Profile (full-screen overlay covers the shell nav). */
-  onSelectShellTab: (tab: ShellMainTab) => void;
 };
 
-export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) {
-  const insets = useSafeAreaInsets();
+export function ProfileScreen({ onBack }: ProfileScreenProps) {  const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
@@ -180,6 +179,14 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
   const [changePasswordMounted, setChangePasswordMounted] = useState(false);
   const [deleteAccountMounted, setDeleteAccountMounted] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const profileSheetsMounted =
+    editProfileMounted || changePasswordMounted || deleteAccountMounted;
+  const shellChrome = useShellChromeOptional();
+  useEffect(() => {
+    shellChrome?.setProfileSheetsMounted(profileSheetsMounted);
+    return () => shellChrome?.setProfileSheetsMounted(false);
+  }, [profileSheetsMounted, shellChrome]);
 
   /**
    * Parent-owned draft for the Update Profile sheet. The trade picker
@@ -479,18 +486,18 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
       >
         <View style={columnStyle}>
           <View style={styles.topHeaderRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              onPress={onBack}
-              hitSlop={12}
-              style={({ pressed }) => [styles.backHit, pressed && styles.pressed]}
-            >
-              <TopHeaderBackIcon color={fg.secondary} size={PROFILE_BACK_ICON_SIZE} />
-            </Pressable>
-            <Text {...screenHeaderA11y()} style={[typography.displayH1, styles.profileTitle]}>
-              PROFILE
-            </Text>
+            <View style={platformHeaderRowStyle(styles.topHeaderChromeRow)}>
+              <PlatformHeaderAction accessibilityLabel="Back" onPress={onBack}>
+                <TopHeaderBackIcon size={PROFILE_BACK_ICON_SIZE} color={fg.primary} />
+              </PlatformHeaderAction>
+              <PlatformHeaderTitle
+                {...screenHeaderA11y()}
+                typography={typography.displayH1}
+                style={styles.profileTitle}
+              >
+                PROFILE
+              </PlatformHeaderTitle>
+            </View>
           </View>
 
           <View style={styles.bodyWrap}>
@@ -530,14 +537,10 @@ export function ProfileScreen({ onBack, onSelectShellTab }: ProfileScreenProps) 
             <ProfileRowsCard typography={typography} rows={accountRows} />
 
             <View style={styles.deleteSpacer} />
-            <ProfileRowsCard typography={typography} rows={deleteRows} />
+            <ProfileRowsCard typography={typography} rows={deleteRows} plain framed={false} />
           </View>
         </View>
       </Animated.ScrollView>
-
-      {/* Fixed in the column (not overlaid) so tab taps reach the nav on Android.
-          Profile is a full-screen overlay above the shell nav, so it owns a copy. */}
-      <ShellBottomNav selected="home" onSelect={onSelectShellTab} />
 
       {editProfileMounted ? (
         <>
@@ -645,7 +648,14 @@ function ProfileSectionHeader({
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderLead}>
         {icon}
-        <Text style={typography.titleH3}>{title}</Text>
+        <Text
+          style={[
+            typography.titleH3,
+            Platform.OS === 'android' ? styles.sectionTitleAndroid : null,
+          ]}
+        >
+          {title}
+        </Text>
       </View>
       {actionLabel ? (
         <Pressable
@@ -674,21 +684,15 @@ const styles = StyleSheet.create({
   /** Title + Back — no accent strip (`231:817` variant `Title + Back`). */
   topHeaderRow: {
     width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
+  },
+  topHeaderChromeRow: {
+    width: '100%',
     gap: space('Spacing/8'),
   },
-  backHit: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
   profileTitle: {
-    flex: 1,
     color: fg.primary,
   },
   bodyWrap: {
@@ -723,6 +727,15 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
     flex: 1,
     minWidth: 0,
+  },
+  sectionTitleAndroid: {
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    lineHeight: 20,
+    marginTop: 0,
+    marginBottom: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   actionButton: {
     flexDirection: 'row',

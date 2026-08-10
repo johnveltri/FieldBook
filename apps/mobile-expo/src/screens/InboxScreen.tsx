@@ -18,6 +18,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius } from '@fieldsolo/design-system/lib/tokens';
 
+import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
+import {
+  PlatformHeaderTitle,
+  platformHeaderRowStyle,
+} from '../components/platform/platformHeaderMetrics';
 import {
   listInboxMaterials,
   listInboxNotes,
@@ -40,12 +45,8 @@ import {
   ViewNotesBuckets,
   type ChooseJobBottomSheetJob,
 } from '../components/ds';
-import { SessionSheetBackIcon } from '../components/figma-icons/JobDetailScreenIcons';
-import {
-  ShellBottomNav,
-  shellBottomNavOuterHeight,
-  type ShellMainTab,
-} from '../components/shell/ShellBottomNav';
+import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
+import { shellBottomNavOuterHeight } from '../components/platform/shellDockMetrics';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
 import { analytics, errorProperties } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -73,7 +74,6 @@ export type InboxScreenProps = {
   /** Bump to force a refetch when the screen is (re)opened. */
   loadKey?: number;
   onRequestClose: () => void;
-  onSelectShellTab: (tab: ShellMainTab) => void;
 };
 
 type AssignTarget = { kind: InboxTab; id: string } | null;
@@ -126,7 +126,7 @@ function groupByRecency<T extends { createdAt: string }>(
  * `timeBuckets` logic. Tapping an item opens the "Add to Job" sheet; assigning
  * removes it from the Inbox.
  */
-export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: InboxScreenProps) {
+export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
   const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
@@ -369,18 +369,20 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
       >
         <View style={columnStyle}>
         <View style={styles.topHeader}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-            onPress={onRequestClose}
-            hitSlop={12}
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-          >
-            <SessionSheetBackIcon color={fg.primary} />
-          </Pressable>
-          <Text {...screenHeaderA11y()} style={typography.displayH1}>
-            INBOX
-          </Text>
+          <View style={platformHeaderRowStyle(styles.topHeaderChromeRow)}>
+            <PlatformHeaderAction
+              accessibilityLabel="Back"
+              onPress={onRequestClose}
+            >
+              <TopHeaderBackIcon size={28} color={fg.primary} />
+            </PlatformHeaderAction>
+            <PlatformHeaderTitle
+              {...screenHeaderA11y()}
+              typography={typography.displayH1}
+            >
+              INBOX
+            </PlatformHeaderTitle>
+          </View>
         </View>
 
         <View style={styles.tabsWrap}>
@@ -497,9 +499,6 @@ export function InboxScreen({ loadKey = 0, onRequestClose, onSelectShellTab }: I
         </View>
       </Animated.ScrollView>
 
-      {/* Fixed in the column (not overlaid) so tab taps reach the nav on Android. */}
-      <ShellBottomNav selected="jobs" onSelect={onSelectShellTab} />
-
       <ChooseJobBottomSheet
         typography={typography}
         visible={assignTarget !== null}
@@ -523,17 +522,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: space('Spacing/16'),
     paddingBottom: space('Spacing/8'),
-    flexDirection: 'row',
-    alignItems: 'center',
+  },
+  topHeaderChromeRow: {
+    width: '100%',
     justifyContent: 'flex-start',
     gap: space('Spacing/12'),
-  },
-  backButton: {
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -space('Spacing/8'),
   },
   tabsWrap: {
     width: '100%',

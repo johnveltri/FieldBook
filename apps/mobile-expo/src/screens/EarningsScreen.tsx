@@ -6,7 +6,7 @@ import {
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getEarningsSnapshotForCurrentUser,
@@ -16,6 +16,9 @@ import {
 import { color, radius } from '@fieldsolo/design-system/lib/tokens';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
+import {
+  platformHeaderDisplayTitleStyle,
+} from '../components/platform/platformHeaderMetrics';
 import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import {
   EarningsSnapshotCard,
@@ -349,7 +352,7 @@ export function EarningsScreen({
   }
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} collapsable={false}>
       <CanvasTiledBackground scrollY={scrollY} contentHeight={scrollContentHeight} />
       <View
         pointerEvents="none"
@@ -374,7 +377,15 @@ export function EarningsScreen({
       >
         <View style={columnStyle}>
           <View style={styles.titleOnlyRow}>
-            <Text {...screenHeaderA11y()} style={typography.displayH1}>
+            <Text
+              {...screenHeaderA11y()}
+              style={[
+                typography.displayH1,
+                Platform.OS === 'android'
+                  ? platformHeaderDisplayTitleStyle(typography.displayH1)
+                  : null,
+              ]}
+            >
               EARNINGS
             </Text>
           </View>

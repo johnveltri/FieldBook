@@ -1,0 +1,84 @@
+import type { Session } from '@supabase/supabase-js';
+import { act, render, waitFor } from '@testing-library/react-native';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { Text } from 'react-native';
+
+import { AuthProvider, useAuth } from './AuthContext';
+
+const mockGetSession = jest.fn<() => Promise<{ data: { session: Session | null } }>>();
+const mockSignOut = jest.fn<() => Promise<void>>(async () => undefined);
+const mockUnsubscribe = jest.fn();
+const mockAnalyticsOnSignOut = jest.fn<() => Promise<void>>(async () => undefined);
+const mockClearAnalyticsConsentCache = jest.fn<() => Promise<void>>(async () => undefined);
+let mockAuthStateChange: ((event: string, session: Session | null) => void) | null = null;
+
+jest.mock('../lib/supabase', () => ({
+  isSupabaseConfigured: () => true,
+  supabase: {
+    auth: {
+      getSession: () => mockGetSession(),
+      onAuthStateChange: (callback: (event: string, session: Session | null) => void) => {
+        mockAuthStateChange = callback;
+        return { data: { subscription: { unsubscribe: mockUnsubscribe } } };
+      },
+      signOut: () => mockSignOut(),
+    },
+  },
+}));
+
+jest.mock('../lib/analytics', () => ({
+  analytics: {
+    capture: jest.fn(),
+    isConsentGranted: () => false,
+    onSignOut: () => mockAnalyticsOnSignOut(),
+  },
+  errorProperties: () => ({}),
+}));
+
+jest.mock('../lib/analytics/consentStorage', () => ({
+  clearAnalyticsConsentCache: () => mockClearAnalyticsConsentCache(),
+}));
+
+jest.mock('@fieldsolo/api-client', () => ({
+  deleteCurrentAccount: jest.fn(),
+  updateCurrentUserPassword: jest.fn(),
+}));
+
+const signedInSession = {
+  user: { id: 'user-1' },
+} as Session;
+
+function SessionState() {
+  const { session } = useAuth();
+  return <Text>{session ? 'signed in' : 'signed out'}</Text>;
+}
+
+describe('AuthProvider', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAuthStateChange = null;
+    mockGetSession.mockResolvedValue({ data: { session: signedInSession } });
+  });
+
+  it('clears analytics identity and cached consent after an automatic sign-out', async () => {
+    const screen = render(
+      <AuthProvider>
+        <SessionState />
+      </AuthProvider>,
+    );
+
+    await screen.findByText('signed in');
+    expect(mockAnalyticsOnSignOut).not.toHaveBeenCalled();
+    expect(mockClearAnalyticsConsentCache).not.toHaveBeenCalled();
+
+    act(() => {
+      mockAuthStateChange?.('SIGNED_OUT', null);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('signed out')).toBeTruthy();
+      expect(mockAnalyticsOnSignOut).toHaveBeenCalledTimes(1);
+      expect(mockClearAnalyticsConsentCache).toHaveBeenCalledTimes(1);
+    });
+  });
+});

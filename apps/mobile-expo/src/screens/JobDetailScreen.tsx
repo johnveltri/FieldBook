@@ -64,6 +64,7 @@ import {
   type EditSessionBottomSheetValues,
 } from '../components/ds';
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
+import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
 import {
   JobDetailIconCtaMore,
   JobDetailIconSectionAdd,
@@ -74,7 +75,6 @@ import {
   JobDetailIconTopClose,
   JobDetailIconTopEdit,
 } from '../components/figma-icons/JobDetailScreenIcons';
-import type { ShellMainTab } from '../components/shell/ShellBottomNav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/tokens';
 import {
@@ -194,13 +194,6 @@ export type JobDetailScreenProps = {
   onSwipeDismissStart?: () => void;
   /** Called if the swipe exit animation is interrupted before close. */
   onSwipeDismissCancel?: () => void;
-  /**
-   * Tab nav handler — closes Job Detail and switches the parent shell to the
-   * tapped tab (HOME / JOBS / EARNINGS). Owned by the parent because Job
-   * Detail covers the shell entirely while open and needs the parent to flip
-   * `mainTab` + dismiss this screen in one update.
-   */
-  onSelectShellTab?: (tab: ShellMainTab) => void;
   /** Signed-in user (refetch job list when this changes). */
   sessionUserId?: string | null;
   sessionEmail?: string | null;
@@ -218,7 +211,6 @@ export function JobDetailScreen({
   onRequestClose,
   onSwipeDismissStart,
   onSwipeDismissCancel,
-  onSelectShellTab,
   sessionUserId,
   sessionEmail,
   jobId,
@@ -2317,14 +2309,11 @@ export function JobDetailScreen({
             ]}
           >
             <View style={styles.topHeaderRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-                onPress={onClose}
-                style={({ pressed }) => [styles.closeCircle, pressed && styles.pressed]}
-              >
-                <JobDetailIconTopClose color={fg.primary} />
-              </Pressable>
+              <View style={styles.closeChromeOffset}>
+                <PlatformHeaderAction accessibilityLabel="Close" onPress={onClose}>
+                  <JobDetailIconTopClose color={fg.primary} />
+                </PlatformHeaderAction>
+              </View>
             </View>
           </View>
         ) : null}
@@ -2424,14 +2413,11 @@ export function JobDetailScreen({
         {/* `TopHeader` variant `X (Close &Edit)` (`231:858`) */}
         <View style={[styles.topHeader, styles.topHeaderModal]}>
           <View style={styles.topHeaderRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-              onPress={onClose}
-              style={({ pressed }) => [styles.closeCircle, pressed && styles.pressed]}
-            >
-              <JobDetailIconTopClose color={fg.primary} />
-            </Pressable>
+            <View style={styles.closeChromeOffset}>
+              <PlatformHeaderAction accessibilityLabel="Close" onPress={onClose}>
+                <JobDetailIconTopClose color={fg.primary} />
+              </PlatformHeaderAction>
+            </View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Edit job"
@@ -3159,10 +3145,7 @@ function SectionHeaderFigma({
 // helper now live in `components/ds/ViewActivityBuckets` so the Inbox can reuse
 // the same UNASSIGNED card + rows.
 
-// Bottom nav (Figma `225:12089`) is rendered via the shared
-// `ShellBottomNav` component (see imports above). The local
-// `BottomNavTabCell` / `BottomNavJobs` placeholders that used to live here
-// were removed when the tabs were wired for cross-screen navigation.
+// Bottom chrome is the shell NativeTabs + PrimaryActionOverlay (Slack dock removed).
 
 // -----------------------------------------------------------------------------
 // Styles — grouped roughly top-to-bottom to match the component tree
@@ -3214,13 +3197,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingBottom: space('Spacing/4'),
   },
-  closeCircle: {
-    width: space('Spacing/32'),
-    height: space('Spacing/32'),
-    borderRadius: radius('Radius/16'),
-    backgroundColor: bg.subtle,
-    alignItems: 'center',
-    justifyContent: 'center',
+  closeChromeOffset: {
     transform: [{ translateY: -space('Spacing/12') }],
   },
   editButton: {

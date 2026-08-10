@@ -58,6 +58,7 @@ import {
 } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { contentColumnMetrics, createTextStyles, space } from '../theme/nativeTokens';
+import { shellLiveSessionBarBottom } from './platform/shellDockMetrics';
 
 type LiveSessionOverlayProps = {
   /**
@@ -822,11 +823,8 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
     openSheet();
   }, [elapsedSeconds, liveSession, openSheet, sheetStackWriters, topmostSheet]);
 
-  // The bar's anchor stays pinned at `fabSlotBottom` (where it lives when
-  // no foreign sheet is presented). When a foreign sheet IS presented we
-  // SLIDE the bar up via an animated `translateY` so it lands just above
-  // the sheet's top edge with a small gap.
-  const fabSlotBottom = space('Spacing/8') + insets.bottom + 64 + space('Spacing/12');
+  // The bar's anchor stays pinned above the floating shell dock.
+  const fabSlotBottom = shellLiveSessionBarBottom(insets.bottom);
   const stackTopY = topmostSheet?.topY ?? null;
   const liftDelta = useMemo(() => {
     if (stackTopY == null) return 0;

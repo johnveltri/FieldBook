@@ -12,6 +12,7 @@ import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
+import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
 import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '../lib/legal-versions';
 import {
@@ -88,15 +89,9 @@ export function HelpScreen({ onBack }: HelpScreenProps) {
       >
         <View style={columnStyle}>
           <View style={styles.topHeaderRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              onPress={onBack}
-              hitSlop={12}
-              style={({ pressed }) => [styles.backHit, pressed && styles.pressed]}
-            >
-              <TopHeaderBackIcon color={fg.secondary} size={BACK_ICON_SIZE} />
-            </Pressable>
+            <PlatformHeaderAction accessibilityLabel="Back" onPress={onBack}>
+              <TopHeaderBackIcon size={BACK_ICON_SIZE} color={fg.primary} />
+            </PlatformHeaderAction>
             <Text {...screenHeaderA11y()} style={[typography.displayH1, styles.title]}>
               HELP
             </Text>

@@ -21,7 +21,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   countInboxItems,
-  createBlankJobForCurrentUser,
   listJobsForCurrentUserPage,
   type ListJobsForCurrentUserItem,
   type ListJobsForCurrentUserTab,
@@ -30,9 +29,12 @@ import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/toke
 import { jobCostsIncompleteForListPill } from '../lib/jobFinancialCompleteness';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
-import { ScrollFriendlyPressable } from '../components/ScrollFriendlyPressable';
+import { PlatformHeaderAction, platformHeaderActionIconColor } from '../components/platform/PlatformHeaderAction';
 import {
-  JobsFabPlusIcon,
+  PlatformHeaderTitle,
+  platformHeaderRowStyle,
+} from '../components/platform/platformHeaderMetrics';
+import {
   JobsInboxIcon,
   JobsSearchClearIcon,
   JobsSearchIcon,
@@ -53,13 +55,11 @@ import {
   type RecencyBucket,
 } from '../lib/timeBuckets';
 import {
-  FAB_SIZE,
   bg,
   border,
   cardShadowRn,
   createTextStyles,
   fg,
-  scrollBottomInsetForFab,
   space,
 } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
@@ -87,14 +87,8 @@ type JobsScreenProps = {
   /** When false, the jobs tab is hidden — skip list refetch until the user returns. */
   isActive?: boolean;
   onOpenJobDetail: (jobId?: string, options?: { initialEditOpen?: boolean }) => void;
-  onCreateJob?: () => Promise<string>;
   /** Open the Inbox of unassigned quick captures (header icon). */
   onOpenInbox?: () => void;
-  /**
-   * Hide the "New Job" floating action button. Used while a Live Session is
-   * in progress — the floating MinimizedLiveSessionBar takes its slot.
-   */
-  suppressFab?: boolean;
   /**
    * When both are set, the All / Open / Paid tab is controlled by the parent so it
    * survives navigation (e.g. Job Detail unmounts this screen).
@@ -229,9 +223,7 @@ function JobsLoadingSkeleton({ typography }: { typography: Typography }) {
 
 export function JobsScreen({
   onOpenJobDetail,
-  onCreateJob: onCreateJobProp,
   onOpenInbox,
-  suppressFab = false,
   isActive = true,
   jobsListTab: jobsListTabProp,
   onJobsListTabChange,
@@ -240,7 +232,7 @@ export function JobsScreen({
   onOpenScrollToSectionHandled,
 }: JobsScreenProps) {
   const insets = useSafeAreaInsets();
-  const { columnStyle, fabRight } = useContentColumn();
+  const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const scrollOffsetRef = useRef(0);
   const { version } = useJobsListInvalidation();
@@ -320,7 +312,6 @@ export function JobsScreen({
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreInFlight = useRef(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [creatingJob, setCreatingJob] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
@@ -587,51 +578,6 @@ export function JobsScreen({
     [],
   );
 
-  const onCreateJob = useCallback(async () => {
-    if (creatingJob) return;
-    if (!onCreateJobProp && !isSupabaseConfigured()) {
-      setLoadError('Supabase is not configured.');
-      analytics.capture('supabase_not_configured_seen', {
-        screen: 'jobs',
-        operation: 'job_create_started',
-      });
-      return;
-    }
-    setCreatingJob(true);
-    setLoadError(null);
-    analytics.capture('job_create_started', { source: 'jobs_fab' });
-    try {
-      if (onCreateJobProp) {
-        await onCreateJobProp();
-      } else {
-        const jobId = await createBlankJobForCurrentUser(supabase);
-        analytics.capture('job_created', {
-          source: 'jobs_fab',
-          job_id: jobId,
-          placeholder: true,
-        });
-        onOpenJobDetail(jobId, { initialEditOpen: true });
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === 'object' &&
-              error !== null &&
-              'message' in error &&
-              typeof (error as { message: unknown }).message === 'string'
-            ? (error as { message: string }).message
-            : 'Failed to create job.';
-      setLoadError(message);
-      analytics.capture('job_create_failed', {
-        source: 'jobs_fab',
-        ...errorProperties(error),
-      });
-    } finally {
-      setCreatingJob(false);
-    }
-  }, [creatingJob, onCreateJobProp, onOpenJobDetail]);
-
   const renderItem = useCallback<ListRenderItem<JobsFlatRow>>(
     ({ item }) => {
       if (item.kind === 'section') {
@@ -678,26 +624,35 @@ export function JobsScreen({
       <View style={styles.listHeaderBand}>
         <View style={columnStyle}>
         <View style={styles.topHeader}>
-          <Text {...screenHeaderA11y()} style={typography.displayH1}>
-            JOBS
-          </Text>
-          <Pressable
-            accessibilityRole="button"
+          <View style={platformHeaderRowStyle(styles.topHeaderChromeRow)}>
+            <PlatformHeaderTitle
+              {...screenHeaderA11y()}
+              typography={typography.displayH1}
+            >
+              JOBS
+            </PlatformHeaderTitle>
+            <PlatformHeaderAction
             accessibilityLabel={`Inbox${inboxCount > 0 ? `, ${inboxCount} unassigned` : ''}`}
-            onPress={onOpenInbox}
-            style={({ pressed }) => [styles.inboxWrap, pressed && styles.pressed]}
+            variant="primary"
+            onPress={() => onOpenInbox?.()}
+            style={styles.inboxWrap}
           >
-            <JobsInboxIcon color={fg.primary} />
+            <JobsInboxIcon color={platformHeaderActionIconColor} />
             {inboxCount > 0 ? (
               <View style={styles.inboxBadge}>
                 <Text
-                  style={[typography.bodySmall, styles.inboxBadgeText, { color: bg.canvasWarm }]}
+                  style={[
+                    typography.bodySmall,
+                    styles.inboxBadgeText,
+                    { color: color('Brand/Primary') },
+                  ]}
                 >
                   {inboxCount > 99 ? '99+' : inboxCount}
                 </Text>
               </View>
             ) : null}
-          </Pressable>
+          </PlatformHeaderAction>
+          </View>
         </View>
 
         <View style={styles.searchBarOuter}>
@@ -938,14 +893,10 @@ export function JobsScreen({
 
   const bottomNavReservedHeight = shellBottomNavOuterHeight(insets.bottom);
   const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
-  // shellMain sits above ShellBottomNav — do not subtract nav height from FAB offset.
-  const fabBottom = space('Spacing/8') + space('Spacing/32') + space('Spacing/4');
-  const scrollBottomPad = suppressFab
-    ? bottomNavReservedHeight + space('Spacing/20')
-    : scrollBottomInsetForFab(fabBottom, FAB_SIZE);
+  const scrollBottomPad = bottomNavReservedHeight + space('Spacing/20');
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} collapsable={false}>
       <CanvasTiledBackground scrollY={scrollY} contentHeight={listContentHeight} />
       <View
         pointerEvents="none"
@@ -982,27 +933,6 @@ export function JobsScreen({
         onScrollToIndexFailed={onScrollToIndexFailed}
         keyboardShouldPersistTaps="handled"
       />
-
-      {suppressFab ? null : (
-        <View style={[styles.fabWrap, { bottom: fabBottom, right: fabRight }]}>
-          <ScrollFriendlyPressable
-            accessibilityRole="button"
-            accessibilityLabel="Create new job"
-            disabled={creatingJob}
-            onPress={onCreateJob}
-            onScrollDelta={(dy) => {
-              const next = Math.max(0, scrollOffsetRef.current - dy);
-              scrollOffsetRef.current = next;
-              listRef.current?.scrollToOffset({ offset: next, animated: false });
-            }}
-            style={({ pressed }) => [styles.fabContent, (pressed || creatingJob) && styles.pressed]}
-          >
-            <JobsFabPlusIcon color={bg.canvasWarm} />
-            <Text style={[typography.bodyBold, { color: bg.canvasWarm }]}>New Job</Text>
-          </ScrollFriendlyPressable>
-        </View>
-      )}
-
     </View>
   );
 }
@@ -1048,19 +978,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: space('Spacing/32'),
     paddingBottom: space('Spacing/16'),
-    flexDirection: 'row',
-    alignItems: 'center',
+  },
+  topHeaderChromeRow: {
+    width: '100%',
     justifyContent: 'space-between',
   },
   inboxWrap: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
     position: 'relative',
-    borderRadius: radius('Radius/12'),
-    backgroundColor: bg.surfaceWhite,
-    ...cardShadowRn,
   },
   inboxBadge: {
     position: 'absolute',
@@ -1069,7 +993,7 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Brand/Primary'),
+    backgroundColor: color('Foundation/Surface/White'),
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 3,
@@ -1217,23 +1141,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: space('Spacing/20'),
   },
   pressed: { opacity: 0.75 },
-  fabWrap: {
-    position: 'absolute',
-    zIndex: 20,
-  },
-  fabContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space('Spacing/8'),
-    minHeight: FAB_SIZE,
-    borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Brand/Primary'),
-    paddingHorizontal: 21,
-    paddingVertical: space('Spacing/12'),
-    ...cardShadowRn,
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-  },
 });

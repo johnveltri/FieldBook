@@ -37,12 +37,11 @@ jest.mock('../components/CanvasTiledBackground', () => ({
   CanvasTiledBackground: () => null,
 }));
 
-jest.mock('../components/figma-icons/JobDetailScreenIcons', () => ({
-  SessionSheetBackIcon: () => null,
+jest.mock('../components/figma-icons/TopHeaderIcons', () => ({
+  TopHeaderBackIcon: () => null,
 }));
 
 jest.mock('../components/shell/ShellBottomNav', () => ({
-  ShellBottomNav: () => null,
   shellBottomNavOuterHeight: () => 80,
 }));
 
@@ -149,7 +148,7 @@ describe('InboxScreen', () => {
 
     const onRequestClose = jest.fn();
     const screen = render(
-      <InboxScreen loadKey={1} onRequestClose={onRequestClose} onSelectShellTab={() => undefined} />,
+      <InboxScreen loadKey={1} onRequestClose={onRequestClose} />,
     );
 
     await waitFor(() => {
@@ -194,7 +193,7 @@ describe('InboxScreen', () => {
     mockListInboxMaterials.mockResolvedValue([]);
 
     const screen = render(
-      <InboxScreen loadKey={1} onRequestClose={() => undefined} onSelectShellTab={() => undefined} />,
+      <InboxScreen loadKey={1} onRequestClose={() => undefined} />,
     );
 
     await waitFor(() => {
