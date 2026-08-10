@@ -91,7 +91,7 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
   const [creatingJob, setCreatingJob] = useState(false);
   const creatingJobRef = useRef(false);
 
-  const [qaStep, setQaStep] = useState<QuickActionsStep>('quickCapture');
+  const [qaStep, setQaStep] = useState<QuickActionsStep>('chooseJob');
   const [captureStep, setCaptureStep] = useState<CaptureStep>('idle');
   const [captureKind, setCaptureKind] = useState<QuickCaptureKind>('note');
   const [captureMode, setCaptureMode] = useState<CaptureMode>('inbox');
@@ -594,7 +594,6 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
               typography={typography}
               visible={captureStep === 'idle'}
               step={qaStep}
-              onStepChange={setQaStep}
               recentJobs={recentJobs}
               recentJobsLoading={recentJobsLoading}
               recentJobsError={recentJobsError}
