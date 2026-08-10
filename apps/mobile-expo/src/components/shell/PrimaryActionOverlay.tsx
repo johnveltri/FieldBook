@@ -47,7 +47,7 @@ export function PrimaryActionOverlay({ blurTargetRef }: PrimaryActionOverlayProp
   const { sideInset, gutter } = contentColumnMetrics(windowWidth);
   const horizontalPad = Math.max(sideInset + gutter, DOCK_FLOATING_PAD_H);
 
-  const { handlePrimaryAction } = useQuickActionsFlow();
+  const { creatingJob, handlePrimaryAction } = useQuickActionsFlow();
   const hasLiveSession = useHasLiveSession();
   const hideBottomChrome = useShellChromeOptional()?.hideBottomChrome ?? false;
   const hidePrimaryAction = hasLiveSession || hideBottomChrome;
@@ -71,7 +71,7 @@ export function PrimaryActionOverlay({ blurTargetRef }: PrimaryActionOverlayProp
   const primaryControl = (
     <PlatformPrimaryAction
       open={menuOpen}
-      disabled={false}
+      disabled={creatingJob}
       size={primarySize}
       onOpen={openMenu}
       onClose={closeMenu}

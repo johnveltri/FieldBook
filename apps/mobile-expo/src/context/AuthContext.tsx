@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { AuthError, Session, User } from '@supabase/supabase-js';
 import {
   deleteCurrentAccount,
@@ -58,6 +58,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [signupLegalPending, setSignupLegalPending] = useState(false);
+  const signedOutCleanupRef = useRef<Promise<void> | null>(null);
+  const signedOutAnalyticsClearedRef = useRef(false);
+
+  const clearSignedOutAnalyticsState = useCallback(() => {
+    if (signedOutAnalyticsClearedRef.current) {
+      return signedOutCleanupRef.current ?? Promise.resolve();
+    }
+    if (signedOutCleanupRef.current) return signedOutCleanupRef.current;
+
+    signedOutAnalyticsClearedRef.current = true;
+    const cleanup = Promise.allSettled([analytics.onSignOut(), clearAnalyticsConsentCache()]).then(
+      () => undefined,
+    );
+    signedOutCleanupRef.current = cleanup;
+    void cleanup.finally(() => {
+      if (signedOutCleanupRef.current === cleanup) {
+        signedOutCleanupRef.current = null;
+      }
+    });
+    return cleanup;
+  }, []);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -70,10 +91,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void supabase.auth
       .getSession()
       .then(({ data: { session: s } }) => {
-        if (mounted) setSession(s);
+        if (mounted) {
+          setSession(s);
+          if (s === null) {
+            void clearSignedOutAnalyticsState();
+          } else {
+            signedOutAnalyticsClearedRef.current = false;
+          }
+        }
       })
       .catch(() => {
-        if (mounted) setSession(null);
+        if (mounted) {
+          setSession(null);
+          void clearSignedOutAnalyticsState();
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -82,14 +113,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, next) => {
-      if (mounted) setSession(next);
+      if (!mounted) return;
+      setSession(next);
+      if (next === null) {
+        void clearSignedOutAnalyticsState();
+      } else {
+        signedOutAnalyticsClearedRef.current = false;
+      }
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [clearSignedOutAnalyticsState]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -129,8 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           analytics.capture('signed_out', { source: 'manual' });
         }
         await supabase.auth.signOut();
-        await analytics.onSignOut();
-        await clearAnalyticsConsentCache();
+        await clearSignedOutAnalyticsState();
       },
       requestPasswordReset: async (email) => {
         const trimmed = email.trim().toLowerCase();
@@ -163,8 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             analytics.capture('account_delete_succeeded', { source: 'profile' });
           }
           await supabase.auth.signOut();
-          await analytics.onSignOut();
-          await clearAnalyticsConsentCache();
+          await clearSignedOutAnalyticsState();
           return { error: null };
         } catch (e) {
           if (analytics.isConsentGranted()) {
@@ -182,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [session, loading, signupLegalPending],
+    [clearSignedOutAnalyticsState, session, loading, signupLegalPending],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

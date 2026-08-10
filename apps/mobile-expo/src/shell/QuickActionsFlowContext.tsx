@@ -21,6 +21,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -65,6 +66,7 @@ import {
 
 type QuickActionsFlowContextValue = {
   handlePrimaryAction: (id: PrimaryActionMenuItemId) => void;
+  creatingJob: boolean;
   quickActionsVisible: boolean;
 };
 
@@ -86,6 +88,8 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
   const [recentJobsError, setRecentJobsError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [creatingJob, setCreatingJob] = useState(false);
+  const creatingJobRef = useRef(false);
 
   const [qaStep, setQaStep] = useState<QuickActionsStep>('quickCapture');
   const [captureStep, setCaptureStep] = useState<CaptureStep>('idle');
@@ -529,9 +533,23 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
   const handlePrimaryAction = useCallback(
     (id: PrimaryActionMenuItemId) => {
       switch (id) {
-        case 'new_job':
-          void onCreateJob();
+        case 'new_job': {
+          if (creatingJobRef.current) return;
+          creatingJobRef.current = true;
+          setCreatingJob(true);
+          void onCreateJob()
+            .catch((error) => {
+              Alert.alert(
+                'Create job failed',
+                error instanceof Error ? error.message : 'Could not create job.',
+              );
+            })
+            .finally(() => {
+              creatingJobRef.current = false;
+              setCreatingJob(false);
+            });
           return;
+        }
         case 'live_session':
           openQuickActionsAtStep('chooseJob');
           return;
@@ -553,9 +571,10 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
   const contextValue = useMemo(
     () => ({
       handlePrimaryAction,
+      creatingJob,
       quickActionsVisible,
     }),
-    [handlePrimaryAction, quickActionsVisible],
+    [creatingJob, handlePrimaryAction, quickActionsVisible],
   );
 
   return (
