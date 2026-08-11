@@ -631,27 +631,28 @@ export function JobsScreen({
             >
               JOBS
             </PlatformHeaderTitle>
-            <PlatformHeaderAction
-            accessibilityLabel={`Inbox${inboxCount > 0 ? `, ${inboxCount} unassigned` : ''}`}
-            variant="primary"
-            onPress={() => onOpenInbox?.()}
-            style={styles.inboxWrap}
-          >
-            <JobsInboxIcon color={platformHeaderActionIconColor} />
-            {inboxCount > 0 ? (
-              <View style={styles.inboxBadge}>
-                <Text
-                  style={[
-                    typography.bodySmall,
-                    styles.inboxBadgeText,
-                    { color: color('Brand/Primary') },
-                  ]}
-                >
-                  {inboxCount > 99 ? '99+' : inboxCount}
-                </Text>
-              </View>
-            ) : null}
-          </PlatformHeaderAction>
+            <View style={styles.inboxWrap}>
+              <PlatformHeaderAction
+                accessibilityLabel={`Inbox${inboxCount > 0 ? `, ${inboxCount} unassigned` : ''}`}
+                variant="primary"
+                onPress={() => onOpenInbox?.()}
+              >
+                <JobsInboxIcon color={platformHeaderActionIconColor} />
+              </PlatformHeaderAction>
+              {inboxCount > 0 ? (
+                <View pointerEvents="none" style={styles.inboxBadge}>
+                  <Text
+                    style={[
+                      typography.bodySmall,
+                      styles.inboxBadgeText,
+                      { color: bg.surfaceWhite },
+                    ]}
+                  >
+                    {inboxCount > 99 ? '99+' : inboxCount}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </View>
         </View>
 
@@ -764,17 +765,6 @@ export function JobsScreen({
                 </Text>
               </Pressable>
             </View>
-            {activeTab === 'paid' ? (
-              <Text
-                style={[
-                  typography.bodySmall,
-                  styles.paidTabSubcopy,
-                  { color: fg.secondary },
-                ]}
-              >
-                Financially complete, paid jobs
-              </Text>
-            ) : null}
           </>
         )}
         </View>
@@ -985,22 +975,27 @@ const styles = StyleSheet.create({
   },
   inboxWrap: {
     position: 'relative',
+    width: 44,
+    height: 44,
+    overflow: 'visible',
   },
   inboxBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -5,
+    right: -5,
     minWidth: 20,
     height: 20,
     borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Foundation/Surface/White'),
+    backgroundColor: fg.primary,
+    borderWidth: 2,
+    borderColor: bg.canvasWarm,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
   },
   inboxBadgeText: {
-    fontSize: 11,
-    lineHeight: 12,
+    fontSize: 10,
+    lineHeight: 11,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
     includeFontPadding: false,
@@ -1096,10 +1091,6 @@ const styles = StyleSheet.create({
   },
   jobsTabLabel: {
     textTransform: 'uppercase',
-  },
-  paidTabSubcopy: {
-    marginTop: space('Spacing/8'),
-    textAlign: 'left',
   },
   sectionHeader: {
     width: '100%',

@@ -53,9 +53,9 @@ export function shellDockOuterHeight(
   return shellBottomNavOuterHeight(insetsBottom, fontScale);
 }
 
-/** Bottom offset for minimized live-session bar (above native tab bar + FAB). */
+/** Bottom offset for minimized live-session bar just above the native tab bar. */
 export function shellLiveSessionBarBottom(insetsBottom: number): number {
-  return shellPrimaryActionBottomOffset(insetsBottom) + shellDockRowHeight() + space('Spacing/8');
+  return shellPrimaryActionBottomOffset(insetsBottom);
 }
 
 /** @deprecated Use `shellDockBottomPadding`. */

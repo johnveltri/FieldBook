@@ -76,11 +76,10 @@ type BottomSheetShellProps = {
   autoSizeUpToFraction?: number;
   /**
    * Whether this sheet should self-register with the global
-   * `BottomSheetStackContext` so the floating live-session bar can lift
-   * itself above this sheet (and dismiss it when the user expands the
-   * live session). Defaults to `true` for app-level sheets. The Live
-   * Session sheets themselves opt out (`false`) — otherwise the bar would
-   * try to position itself relative to its own sheet.
+   * `BottomSheetStackContext` so the floating live-session bar can hide
+   * while this sheet is active. Defaults to `true` for app-level sheets. The Live
+   * Session sheets themselves opt out (`false`) — otherwise they would hide
+   * their own minimized bar during the sheet-to-bar transition.
    */
   registerInGlobalStack?: boolean;
   /**
@@ -237,22 +236,21 @@ export function BottomSheetShell({
   }, [extraBottomOffset, forcedOffset]);
 
   // ---- Global stack registration -------------------------------------------
-  // Sheets register themselves with the app-wide `BottomSheetStackContext`
-  // while visible so the LiveSessionOverlay can lift its floating bar
-  // above whatever sheet is currently presented (and politely dismiss it
-  // when the user expands the live session). Live-session sheets opt out
-  // via `registerInGlobalStack={false}`.
+  // Sheets register from open through the end of their close animation so
+  // the LiveSessionOverlay hides its floating bar for the entire transition.
+  // Live-session sheets opt out via `registerInGlobalStack={false}`.
+  const sheetActive = visible || stackingElevated;
   useEffect(() => {
-    if (!sheetStack || !registerInGlobalStack || !visible) return;
+    if (!sheetStack || !registerInGlobalStack || !sheetActive) return;
     const unregister = sheetStack.registerSheet(sheetId, {
       onRequestClose: () => onCloseRef.current?.(),
     });
     return unregister;
-  }, [registerInGlobalStack, sheetId, sheetStack, visible]);
+  }, [registerInGlobalStack, sheetActive, sheetId, sheetStack]);
 
   // Reports the rendered sheet's top edge (window-relative) every time the
-  // inner Animated.View lays out, so the live-session bar can sit just
-  // above it. We compute this from the sheet's measured height + the known
+  // inner Animated.View lays out so the registry can identify the topmost
+  // sheet. We compute this from the sheet's measured height + the known
   // window height since the sheet is anchored to the bottom of the window.
   const handleSheetLayout = useCallback(
     (e: LayoutChangeEvent) => {
