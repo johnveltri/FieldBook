@@ -63,8 +63,8 @@ export function PlatformFloatingSurface({
           isMenu ? styles.iosMenuGlassSurface : null,
           style,
         ]}
-        // Menu: regular glass + strong white tint so pills read closer to Android’s white surfaces.
-        glassEffectStyle="regular"
+        // Use clear glass consistently across FAB, menu, and dock chrome.
+        glassEffectStyle="clear"
         colorScheme="light"
         tintColor={
           isMenu ? colorWithAlpha('Foundation/Surface/White', 0.88) : brandPrimary

@@ -5,8 +5,8 @@ import {
   UbuntuSansMono_600SemiBold,
   UbuntuSansMono_700Bold,
 } from '@expo-google-fonts/ubuntu-sans-mono';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, Easing, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -43,6 +43,7 @@ import {
   type EditLiveSessionSavePayload,
 } from './ds';
 import {
+  useHasRegisteredBottomSheet,
   useBottomSheetStackWriters,
   useTopmostBottomSheet,
 } from '../context/BottomSheetStackContext';
@@ -57,7 +58,7 @@ import {
   textLengthBucket,
 } from '../lib/analytics';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { contentColumnMetrics, createTextStyles, space } from '../theme/nativeTokens';
+import { contentColumnMetrics, createTextStyles } from '../theme/nativeTokens';
 import { shellLiveSessionBarBottom } from './platform/shellDockMetrics';
 
 type LiveSessionOverlayProps = {
@@ -77,10 +78,11 @@ type LiveSessionOverlayProps = {
  */
 export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) {
   const insets = useSafeAreaInsets();
-  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
   const minimizedBarMetrics = useMemo(() => contentColumnMetrics(windowWidth), [windowWidth]);
   const sheetStackWriters = useBottomSheetStackWriters();
   const topmostSheet = useTopmostBottomSheet();
+  const hasRegisteredSheet = useHasRegisteredBottomSheet();
   const {
     liveSession,
     mode,
@@ -803,13 +805,8 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
     onSessionEnded,
   ]);
 
-  // Tapping the minimized bar should:
-  //   1. If a foreign bottom sheet (Edit Job, etc.) is currently presented,
-  //      ask it to dismiss first so the user is not left with two stacked
-  //      overlays.
-  //   2. Open the Live Session sheet. Both animations play simultaneously
-  //      (foreign sheet slides down, live sheet slides up) which reads as
-  //      a swap rather than a queued stack.
+  // The bar is hidden while another sheet is open. Keep the defensive close
+  // here for the narrow case where a sheet registers during the same tap.
   const handleBarPress = useCallback(() => {
     analytics.capture('live_session_reopened', {
       session_id: liveSession?.id ?? null,
@@ -825,23 +822,6 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
 
   // The bar's anchor stays pinned above the floating shell dock.
   const fabSlotBottom = shellLiveSessionBarBottom(insets.bottom);
-  const stackTopY = topmostSheet?.topY ?? null;
-  const liftDelta = useMemo(() => {
-    if (stackTopY == null) return 0;
-    const liftedBottom = Math.max(0, windowHeight - stackTopY) + space('Spacing/12');
-    return Math.max(0, liftedBottom - fabSlotBottom);
-  }, [stackTopY, fabSlotBottom, windowHeight]);
-
-  const liftAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const isLifting = liftDelta > 0;
-    Animated.timing(liftAnim, {
-      toValue: -liftDelta,
-      duration: isLifting ? 280 : 220,
-      easing: isLifting ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [liftAnim, liftDelta]);
 
   useEffect(() => {
     if (!liveSession) return;
@@ -869,9 +849,7 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
 
   if (!fontsLoaded || !liveSession) return null;
 
-  const barVisible = mode === 'minimized';
-  /** Lift above foreign sheets (Edit Job, etc.) when they are on the global stack. */
-  const barAboveForeignSheet = barVisible && topmostSheet != null;
+  const barVisible = mode === 'minimized' && !hasRegisteredSheet;
 
   return (
     <>
@@ -1055,17 +1033,16 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
         opacity/translate/scale animation.
       */}
       <Animated.View
-        pointerEvents="box-none"
+        pointerEvents={hasRegisteredSheet ? 'none' : 'box-none'}
         style={[
           styles.minimizedAnchor,
           barVisible && styles.minimizedAnchorRaised,
-          barAboveForeignSheet && styles.minimizedAnchorAboveSheet,
+          hasRegisteredSheet && styles.minimizedAnchorSuppressed,
           {
             bottom: fabSlotBottom,
             left: minimizedBarMetrics.sideInset,
             right: minimizedBarMetrics.sideInset,
             paddingHorizontal: minimizedBarMetrics.gutter,
-            transform: [{ translateY: liftAnim }],
           },
         ]}
       >
@@ -1092,8 +1069,7 @@ const styles = StyleSheet.create({
     zIndex: 30,
     elevation: 12,
   },
-  minimizedAnchorAboveSheet: {
-    zIndex: 1100,
-    elevation: 1100,
+  minimizedAnchorSuppressed: {
+    opacity: 0,
   },
 });

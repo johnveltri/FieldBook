@@ -46,18 +46,21 @@ type BottomSheetStackWriters = {
 /** Reactive reader — re-renders when the topmost sheet changes. */
 type BottomSheetStackReader = {
   topmostSheet: RegisteredBottomSheet | null;
+  hasRegisteredSheet: boolean;
 };
 
 const BottomSheetStackWritersContext =
   createContext<BottomSheetStackWriters | null>(null);
 const BottomSheetStackReaderContext =
-  createContext<BottomSheetStackReader>({ topmostSheet: null });
+  createContext<BottomSheetStackReader>({
+    topmostSheet: null,
+    hasRegisteredSheet: false,
+  });
 
 /**
  * Lightweight, app-wide registry of bottom sheets that are currently
- * presented. Lets the global Live Session overlay know whether to lift its
- * floating "minimized" bar above another sheet (so the user can interact
- * with both), and to dismiss that sheet first when the user taps the bar.
+ * presented. Lets the global Live Session overlay hide its floating
+ * "minimized" bar while another sheet is active.
  *
  * Mounted at the App root above `LiveSessionProvider` so screens, sheets,
  * and the overlay can all participate.
@@ -72,8 +75,11 @@ export function BottomSheetStackProvider({ children }: { children: ReactNode }) 
   // about; recomputed on every mutation.
   const [topmostSheet, setTopmostSheet] =
     useState<RegisteredBottomSheet | null>(null);
+  const [hasRegisteredSheet, setHasRegisteredSheet] = useState(false);
 
   const recomputeTopmost = useCallback(() => {
+    const hasEntries = entriesRef.current.size > 0;
+    setHasRegisteredSheet((prev) => (prev === hasEntries ? prev : hasEntries));
     let best: RegisteredBottomSheet | null = null;
     for (const entry of entriesRef.current.values()) {
       if (entry.topY == null) continue;
@@ -141,10 +147,10 @@ export function BottomSheetStackProvider({ children }: { children: ReactNode }) 
     [registerSheet, requestCloseTopmost, setSheetTop],
   );
 
-  // Reader: only re-creates when `topmostSheet` actually changes.
+  // Reader: only re-creates when the derived sheet state actually changes.
   const reader = useMemo<BottomSheetStackReader>(
-    () => ({ topmostSheet }),
-    [topmostSheet],
+    () => ({ topmostSheet, hasRegisteredSheet }),
+    [hasRegisteredSheet, topmostSheet],
   );
 
   return (
@@ -171,4 +177,9 @@ export function useBottomSheetStackWriters(): BottomSheetStackWriters | null {
  */
 export function useTopmostBottomSheet(): RegisteredBottomSheet | null {
   return useContext(BottomSheetStackReaderContext).topmostSheet;
+}
+
+/** True from sheet-open through the end of its close animation. */
+export function useHasRegisteredBottomSheet(): boolean {
+  return useContext(BottomSheetStackReaderContext).hasRegisteredSheet;
 }

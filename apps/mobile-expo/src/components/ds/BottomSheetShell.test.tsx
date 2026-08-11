@@ -1,8 +1,17 @@
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, waitFor } from '@testing-library/react-native';
 import { describe, expect, it, jest } from '@jest/globals';
 import { Text } from 'react-native';
 
+import {
+  BottomSheetStackProvider,
+  useHasRegisteredBottomSheet,
+} from '../../context/BottomSheetStackContext';
 import { BottomSheetShell } from './BottomSheetShell';
+
+function SheetStackStatus() {
+  const hasRegisteredSheet = useHasRegisteredBottomSheet();
+  return <Text testID="sheet-stack-status">{hasRegisteredSheet ? 'active' : 'idle'}</Text>;
+}
 
 describe('BottomSheetShell accessibility', () => {
   it('removes a mounted hidden sheet and its scrim from the accessibility tree', () => {
@@ -33,5 +42,20 @@ describe('BottomSheetShell accessibility', () => {
     );
 
     expect(screen.getByTestId('bottom-sheet-overlay').props.accessibilityViewIsModal).toBe(true);
+  });
+
+  it('registers as active as soon as the sheet opens', async () => {
+    render(
+      <BottomSheetStackProvider>
+        <SheetStackStatus />
+        <BottomSheetShell visible onClose={jest.fn()}>
+          <Text>Visible sheet content</Text>
+        </BottomSheetShell>
+      </BottomSheetStackProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sheet-stack-status').props.children).toBe('active');
+    });
   });
 });
