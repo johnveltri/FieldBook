@@ -67,10 +67,11 @@ export async function fetchCurrentUserProfile(
 /**
  * Updates (or inserts) the profile row for the currently-authenticated user.
  *
- * Uses an UPSERT keyed on `id` so the call works even when the user predates
- * the on-insert trigger or the trigger somehow didn't fire — the RLS
- * `profiles_*_own` policies scope both the INSERT and UPDATE to
- * `auth.uid() = id`, so this is safe.
+ * Existing rows are updated without including the immutable `id` column. The
+ * database intentionally grants authenticated users UPDATE access only to the
+ * editable profile fields, so an UPSERT containing `id` is rejected before
+ * RLS is evaluated. If the profile row is genuinely missing, an owner-scoped
+ * INSERT preserves support for users who predate the provisioning trigger.
  */
 export async function updateCurrentUserProfile(
   client: FieldSoloSupabaseClient,
@@ -101,28 +102,44 @@ export async function updateCurrentUserProfile(
         })()
       : undefined;
 
-  const payload: Database['public']['Tables']['profiles']['Insert'] = { id: userId };
-  if (input.firstName !== undefined) payload.first_name = normalizeName(input.firstName);
-  if (input.lastName !== undefined) payload.last_name = normalizeName(input.lastName);
-  if (cleanedTrades !== undefined) payload.trades = cleanedTrades;
+  const patch: Database['public']['Tables']['profiles']['Update'] = {};
+  if (input.firstName !== undefined) patch.first_name = normalizeName(input.firstName);
+  if (input.lastName !== undefined) patch.last_name = normalizeName(input.lastName);
+  if (cleanedTrades !== undefined) patch.trades = cleanedTrades;
 
   // If there is genuinely nothing to write, just return the current row
   // (or a synthetic empty one if even the row doesn't exist yet).
-  if (Object.keys(payload).length === 1) {
+  if (Object.keys(patch).length === 0) {
     const current = await fetchCurrentUserProfile(client);
     if (current) return current;
     return { id: userId, firstName: null, lastName: null, trades: [] };
   }
 
-  const { data, error } = await client
+  const { data: updatedData, error: updateError } = await client
     .from('profiles')
-    .upsert(payload, { onConflict: 'id' })
+    .update(patch)
+    .eq('id', userId)
     .select('id, first_name, last_name, trades')
     .maybeSingle();
 
-  if (error) throw error;
-  if (!data) {
-    throw new Error('Profile upsert affected no rows (check RLS).');
+  if (updateError) throw updateError;
+  if (updatedData) {
+    return rowToProfile(updatedData as ProfileRow);
   }
-  return rowToProfile(data as ProfileRow);
+
+  const insertPayload: Database['public']['Tables']['profiles']['Insert'] = {
+    id: userId,
+    ...patch,
+  };
+  const { data: insertedData, error: insertError } = await client
+    .from('profiles')
+    .insert(insertPayload)
+    .select('id, first_name, last_name, trades')
+    .maybeSingle();
+
+  if (insertError) throw insertError;
+  if (!insertedData) {
+    throw new Error('Profile update or insert affected no rows (check RLS).');
+  }
+  return rowToProfile(insertedData as ProfileRow);
 }
