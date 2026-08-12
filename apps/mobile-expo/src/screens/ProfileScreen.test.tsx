@@ -48,7 +48,7 @@ type ProfileShape = {
   trades: string[];
 };
 const mockFetchProfile = jest.fn<() => Promise<ProfileShape | null>>();
-const mockUpdateProfile = jest.fn<() => Promise<ProfileShape>>();
+const mockUpdateProfile = jest.fn<(...args: unknown[]) => Promise<ProfileShape>>();
 jest.mock('@fieldsolo/api-client', () => ({
   fetchCurrentUserProfile: (...args: unknown[]) => mockFetchProfile(...(args as [])),
   updateCurrentUserProfile: (...args: unknown[]) => mockUpdateProfile(...(args as [])),
@@ -66,6 +66,12 @@ describe('ProfileScreen', () => {
       firstName: 'Alex',
       lastName: 'Builder',
       trades: ['Plumbing', 'Handyman'],
+    });
+    mockUpdateProfile.mockResolvedValue({
+      id: 'user-1',
+      firstName: 'Alex',
+      lastName: 'Builder',
+      trades: ['Electrical', 'Handyman'],
     });
   });
 
@@ -114,6 +120,37 @@ describe('ProfileScreen', () => {
     fireEvent.press(screen.getByLabelText('EDIT'));
     await waitFor(() => {
       expect(screen.getByText('Update Profile')).toBeTruthy();
+    });
+  });
+
+  it('returns from Trades with the new selections and saves them', async () => {
+    const screen = render(<ProfileScreen onBack={jest.fn()} />);
+    await waitFor(() => expect(screen.getByText('Alex Builder')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('EDIT'));
+    await waitFor(() => expect(screen.getByText('Update Profile')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Choose trades'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Trades')).toBeTruthy();
+      expect(screen.queryByText('Update Profile')).toBeNull();
+    });
+
+    fireEvent.press(screen.getByLabelText('Plumbing'));
+    fireEvent.press(screen.getByLabelText('Electrical'));
+    fireEvent.press(screen.getByLabelText('DONE'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Trades')).toBeNull();
+      expect(screen.getByText('Handyman, Electrical')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByLabelText('SAVE CHANGES'));
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ trades: ['Handyman', 'Electrical'] }),
+      );
     });
   });
 

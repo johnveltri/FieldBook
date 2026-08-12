@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
@@ -37,6 +37,8 @@ type UpdateProfileBottomSheetProps = {
   onTradesPress: (current: UpdateProfileValues) => void;
   /** @default true — set false when this sheet replaces another (e.g. live session) without stacking. */
   registerInGlobalStack?: boolean;
+  /** Disable touch/accessibility while a nested picker is displayed above it. */
+  interactionEnabled?: boolean;
 };
 
 function DropdownCaret() {
@@ -86,6 +88,7 @@ export function UpdateProfileBottomSheet({
   onSave,
   onTradesPress,
   registerInGlobalStack = true,
+  interactionEnabled = true,
 }: UpdateProfileBottomSheetProps) {
   const [firstName, setFirstName] = useState(values.firstName);
   const [lastName, setLastName] = useState(values.lastName);
@@ -113,6 +116,7 @@ export function UpdateProfileBottomSheet({
       onClose={onClose}
       onClosed={onClosed}
       registerInGlobalStack={registerInGlobalStack}
+      interactionEnabled={interactionEnabled}
       bottomPaddingExtra={space('Spacing/4')}
     >
       <View style={styles.body}>
@@ -137,7 +141,7 @@ export function UpdateProfileBottomSheet({
           </Text>
         </View>
 
-        <View style={styles.fields}>
+        <View style={styles.fields} pointerEvents={saving ? 'none' : 'auto'}>
           <View style={styles.inputShell}>
             <TextInput
               value={firstName}
@@ -146,7 +150,6 @@ export function UpdateProfileBottomSheet({
               placeholderTextColor={fg.secondary}
               autoCapitalize="words"
               autoCorrect={false}
-              editable={!saving}
               style={[typography.body, styles.inputText]}
             />
           </View>
@@ -158,7 +161,6 @@ export function UpdateProfileBottomSheet({
               placeholderTextColor={fg.secondary}
               autoCapitalize="words"
               autoCorrect={false}
-              editable={!saving}
               style={[typography.body, styles.inputText]}
             />
           </View>
@@ -204,7 +206,18 @@ export function UpdateProfileBottomSheet({
           accessibilityRole="button"
           accessibilityLabel="SAVE CHANGES"
           accessibilityState={{ disabled: saving }}
-          onPress={saving ? undefined : () => onSave(draft())}
+          onPress={
+            saving
+              ? undefined
+              : () => {
+                  // Android can repeatedly resize a KeyboardAvoidingView when
+                  // focused TextInputs become non-editable during an async
+                  // save. Dismiss once while the native inputs remain stable,
+                  // then start the request.
+                  Keyboard.dismiss();
+                  onSave(draft());
+                }
+          }
           disabled={saving}
           style={({ pressed }) => [
             styles.primary,

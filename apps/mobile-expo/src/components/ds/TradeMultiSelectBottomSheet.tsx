@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -233,7 +234,10 @@ export function TradeMultiSelectBottomSheet({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="DONE"
-          onPress={() => onSubmit(localSelected)}
+          onPress={() => {
+            Keyboard.dismiss();
+            onSubmit(localSelected);
+          }}
           style={({ pressed }) => [
             styles.primary,
             { backgroundColor: accent, shadowColor: accent },

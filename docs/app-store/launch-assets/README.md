@@ -13,6 +13,21 @@ For the 6.5-inch display slot, use [`screenshots-6.5-inch/`](./screenshots-6.5-i
 | 5 | `05-review.png` | Review. |
 | 6 | `06-learn.png` | Learn. |
 
+## Free-first alternative campaign
+
+The separate free-first campaign is in [`screenshots-free-first/`](./screenshots-free-first/) at 1320×2868 and [`screenshots-free-first-6.5-inch/`](./screenshots-free-first-6.5-inch/) at 1284×2778. These files do not replace the approved campaign above.
+
+| Order | Asset | Message |
+| --- | --- | --- |
+| 1 | `01-built-for-solo-contractors.png` | Built for solo contractors. Free. Truly unlimited jobs. |
+| 2 | `02-know-your-net.png` | Know your net on every job. |
+| 3 | `03-log-job-details.png` | Log job details in seconds. |
+| 4 | `04-complete-records.png` | Complete records for every job. |
+| 5 | `05-profit-insights-price-smarter.png` | Profit insights to price smarter. |
+| 6 | `06-find-open-jobs-close-the-loop.png` | Find open jobs. Close the loop. |
+
+The editable alternative is the [`Free-first v1` section in Figma](https://www.figma.com/design/EfbpybZzUJB2KjoMHYKMVi/FieldSoli-App-Store-Campaign-%E2%80%94-Buzz-Masters?node-id=40-2). Headlines and campaign layout remain editable; the corrected device mockups are embedded image assets.
+
 The editable campaign master is in [Figma](https://www.figma.com/design/EfbpybZzUJB2KjoMHYKMVi). It contains source imagery, locked brand controls, all six final frames, and two reusable masters on the **03 Buzz master templates** page. The exported campaign intentionally uses headline-only marketing copy and near-full-width product crops so it remains legible at App Store thumbnail size.
 
 For Buzz bulk creation, use [`buzz/fieldsoli-buzz-content-matrix.xlsx`](./buzz/fieldsoli-buzz-content-matrix.xlsx). It contains the exact approved copy, production notes, and embedded source images. In Figma Buzz, duplicate either master, keep the locked brand elements fixed, and map the editable text/image fields to the matching workbook columns.

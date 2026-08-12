@@ -91,6 +91,11 @@ type BottomSheetShellProps = {
    * When the sheet opens, announced to VoiceOver / TalkBack (e.g. sheet title).
    */
   accessibilityTitle?: string;
+  /**
+   * Keeps a visible sheet rendered as a background layer while a nested
+   * sheet owns touch and accessibility focus. Defaults to `true`.
+   */
+  interactionEnabled?: boolean;
 };
 
 /**
@@ -112,6 +117,7 @@ export function BottomSheetShell({
   registerInGlobalStack = true,
   bottomPaddingExtra = space('Spacing/4'),
   accessibilityTitle,
+  interactionEnabled = true,
 }: BottomSheetShellProps) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -124,6 +130,15 @@ export function BottomSheetShell({
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+  // `onClosed` is commonly an inline callback that checks the parent's
+  // current flow before unmounting a sheet. Keep the latest callback in a
+  // ref so a parent render (for example, setting `saving`) does not restart
+  // the native open/close animation just because that callback's identity
+  // changed.
+  const onClosedRef = useRef(onClosed);
+  useEffect(() => {
+    onClosedRef.current = onClosed;
+  }, [onClosed]);
   // Use the window height as the hidden translate-Y. A hard-coded value
   // (previously 420) is unsafe because some sheets (e.g. DropdownBottomSheet
   // with 7+ preset rows + custom input) are taller than that — the hidden
@@ -192,7 +207,7 @@ export function BottomSheetShell({
       translateY.setValue(hiddenOffset);
       scrimOpacity.setValue(0);
       setStackingElevated(false);
-      onClosed?.();
+      onClosedRef.current?.();
       return;
     }
 
@@ -213,10 +228,10 @@ export function BottomSheetShell({
     ]).start(({ finished }) => {
       if (finished) {
         setStackingElevated(false);
-        onClosed?.();
+        onClosedRef.current?.();
       }
     });
-  }, [dragY, hiddenOffset, onClosed, scrimOpacity, translateY, visible]);
+  }, [dragY, hiddenOffset, scrimOpacity, translateY, visible]);
 
   const prevVisibleRef = useRef(visible);
   useEffect(() => {
@@ -262,10 +277,12 @@ export function BottomSheetShell({
     [registerInGlobalStack, sheetId, sheetStack, visible, windowHeight],
   );
 
-  // We let `KeyboardAvoidingView` (below) actually push the sheet up; this
-  // listener only tracks the keyboard-visible flag so we can drop the
-  // safe-area bottom from the sheet's own `paddingBottom` while it's open
-  // (the keyboard already covers that region).
+  // iOS uses `KeyboardAvoidingView` below to push the sheet up. Android's
+  // default adjustResize behavior already resizes the native scene, so adding
+  // KAV `height` there double-applies the keyboard inset and can leave the
+  // sheet hovering after the keyboard dismisses. This listener still tracks
+  // keyboard visibility on both platforms so the sheet can drop redundant
+  // safe-area padding while the keyboard is open.
   useEffect(() => {
     const onShow = () => setKeyboardVisible(true);
     const onHide = () => setKeyboardVisible(false);
@@ -405,6 +422,7 @@ export function BottomSheetShell({
   // animation can play, but taps must pass through to whatever is behind us —
   // otherwise stacking two sheets (e.g. chooser + edit) swallows the active sheet's
   // taps via the inactive sheet's scrim Pressable.
+  const interactive = visible && interactionEnabled;
   return (
     <View
       testID="bottom-sheet-overlay"
@@ -412,10 +430,10 @@ export function BottomSheetShell({
         styles.overlay,
         stackingElevated ? styles.overlayElevated : styles.overlayFlat,
       ]}
-      pointerEvents={visible ? 'box-none' : 'none'}
-      accessibilityViewIsModal={visible}
-      accessibilityElementsHidden={!visible}
-      importantForAccessibility={visible ? 'yes' : 'no-hide-descendants'}
+      pointerEvents={interactive ? 'box-none' : 'none'}
+      accessibilityViewIsModal={interactive}
+      accessibilityElementsHidden={!interactive}
+      importantForAccessibility={interactive ? 'yes' : 'no-hide-descendants'}
     >
       {/* Scrim sits in its OWN absolutely-positioned layer so it covers
           the full screen (including the area behind the keyboard) — keeps
@@ -426,20 +444,15 @@ export function BottomSheetShell({
         accessibilityLabel="Close bottom sheet"
         onPress={onClose}
         style={[absoluteFill, overlayBleedStyle]}
-        pointerEvents={visible ? 'auto' : 'none'}
+        pointerEvents={interactive ? 'auto' : 'none'}
       >
         <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]} />
       </Pressable>
-      {/* `KeyboardAvoidingView` adds bottom padding equal to the keyboard
-          height when it appears. Combined with `justifyContent: 'flex-end'`
-          this pushes the sheet UP so its bottom edge stays flush with the
-          keyboard top regardless of how iOS reports keyboard frames on
-          this device. We use `behavior="padding"` on iOS (smooth animation
-          alongside our open/close transform) and `'height'` on Android
-          which works better with the soft input mode. */}
+      {/* iOS needs explicit keyboard avoidance. Android's native scene uses
+          adjustResize, so it must not also receive a KAV height reduction. */}
       <KeyboardAvoidingView
         style={styles.kav}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         pointerEvents="box-none"
       >
         <BottomSheetScrollProvider
@@ -449,7 +462,7 @@ export function BottomSheetShell({
         >
           <PanGestureHandler
             ref={panRef}
-            enabled={visible && scrollAtTop}
+            enabled={interactive && scrollAtTop}
             activeOffsetY={10}
             failOffsetY={-5}
             failOffsetX={[-24, 24]}
@@ -475,7 +488,7 @@ export function BottomSheetShell({
                   ],
                 },
               ]}
-              pointerEvents={visible ? 'auto' : 'none'}
+              pointerEvents={interactive ? 'auto' : 'none'}
             >
               {!isFullbleed ? (
                 <View style={styles.handleHitArea}>
@@ -528,7 +541,7 @@ const styles = StyleSheet.create({
    * `KeyboardAvoidingView` host. Fills the overlay (so its `flex-end`
    * justification anchors the sheet to the bottom of whatever space is left
    * after the keyboard takes its share). The KAV adds `paddingBottom` on
-   * iOS / shrinks `height` on Android when the keyboard appears.
+   * iOS; Android relies on the native scene's adjustResize behavior.
    */
   kav: {
     ...absoluteFill,
