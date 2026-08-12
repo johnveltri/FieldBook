@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Animated,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -25,7 +26,8 @@ import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import { shellBottomNavOuterHeight } from '../components/platform/shellDockMetrics';
-import {  ChangePasswordBottomSheet,
+import {
+  ChangePasswordBottomSheet,
   DeleteAccountBottomSheet,
   ProfileRowsCard,
   TradeMultiSelectBottomSheet,
@@ -99,7 +101,8 @@ export type ProfileScreenProps = {
   onBack: () => void;
 };
 
-export function ProfileScreen({ onBack }: ProfileScreenProps) {  const insets = useSafeAreaInsets();
+export function ProfileScreen({ onBack }: ProfileScreenProps) {
+  const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
@@ -190,8 +193,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {  const insets = 
 
   /**
    * Parent-owned draft for the Update Profile sheet. The trade picker
-   * temporarily hides the Update Profile sheet, so the typed first/last
-   * name need to be cached here to survive the round-trip.
+   * temporarily disables the Update Profile sheet underneath it, so the
+   * typed first/last name need to be cached here to survive the round-trip.
    */
   const [editDraft, setEditDraft] = useState<UpdateProfileValues>({
     firstName: '',
@@ -458,6 +461,73 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {  const insets = 
     [openDeleteAccount],
   );
 
+  const profileSheetLayer = (
+    <>
+      {editProfileMounted ? (
+        <>
+          <UpdateProfileBottomSheet
+            typography={typography}
+            // Keep the parent sheet open underneath the trade picker. Closing
+            // one animated overlay while simultaneously reopening its sibling
+            // is unreliable with Android's elevation-based compositing and can
+            // leave the picker's footer intercepting or swallowing DONE.
+            visible={flow === 'editProfile' || flow === 'editProfileTrades'}
+            email={session?.user.email ?? null}
+            values={editDraft}
+            saving={saving}
+            interactionEnabled={flow === 'editProfile'}
+            onClose={closeEditProfile}
+            onClosed={() => {
+              if (flow === 'closed') setEditProfileMounted(false);
+            }}
+            onBack={closeEditProfile}
+            onSave={onSaveProfile}
+            onTradesPress={openTradePicker}
+          />
+          <TradeMultiSelectBottomSheet
+            typography={typography}
+            visible={flow === 'editProfileTrades'}
+            presets={TRADE_PRESETS}
+            selected={editDraft.trades}
+            onClose={closeEditProfile}
+            onClosed={() => {
+              if (flow === 'closed') setEditProfileMounted(false);
+            }}
+            onBack={() => returnFromTradePicker(editDraft.trades)}
+            onSubmit={returnFromTradePicker}
+          />
+        </>
+      ) : null}
+
+      {changePasswordMounted ? (
+        <ChangePasswordBottomSheet
+          typography={typography}
+          visible={flow === 'changePassword'}
+          saving={saving}
+          onClose={closeChangePassword}
+          onClosed={() => {
+            if (flow === 'closed') setChangePasswordMounted(false);
+          }}
+          onBack={closeChangePassword}
+          onSubmit={onSubmitNewPassword}
+        />
+      ) : null}
+
+      {deleteAccountMounted ? (
+        <DeleteAccountBottomSheet
+          typography={typography}
+          visible={flow === 'deleteAccount'}
+          onClose={closeDeleteAccount}
+          onClosed={() => {
+            if (flow === 'closed') setDeleteAccountMounted(false);
+          }}
+          onBack={closeDeleteAccount}
+          onSubmit={onDeleteAccountSheetSubmit}
+        />
+      ) : null}
+    </>
+  );
+
   if (!fontsLoaded) {
     return (
       <View style={styles.root}>
@@ -542,63 +612,26 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {  const insets = 
         </View>
       </Animated.ScrollView>
 
-      {editProfileMounted ? (
-        <>
-          <UpdateProfileBottomSheet
-            typography={typography}
-            visible={flow === 'editProfile'}
-            email={session?.user.email ?? null}
-            values={editDraft}
-            saving={saving}
-            onClose={closeEditProfile}
-            onClosed={() => {
-              if (flow === 'closed') setEditProfileMounted(false);
+      {Platform.OS === 'android' ? (
+        profileSheetsMounted ? (
+          <Modal
+            visible
+            transparent
+            animationType="none"
+            statusBarTranslucent
+            navigationBarTranslucent
+            onRequestClose={() => {
+              if (flow === 'changePassword') closeChangePassword();
+              else if (flow === 'deleteAccount') closeDeleteAccount();
+              else closeEditProfile();
             }}
-            onBack={closeEditProfile}
-            onSave={onSaveProfile}
-            onTradesPress={openTradePicker}
-          />
-          <TradeMultiSelectBottomSheet
-            typography={typography}
-            visible={flow === 'editProfileTrades'}
-            presets={TRADE_PRESETS}
-            selected={editDraft.trades}
-            onClose={closeEditProfile}
-            onClosed={() => {
-              if (flow === 'closed') setEditProfileMounted(false);
-            }}
-            onBack={() => returnFromTradePicker(editDraft.trades)}
-            onSubmit={returnFromTradePicker}
-          />
-        </>
-      ) : null}
-
-      {changePasswordMounted ? (
-        <ChangePasswordBottomSheet
-          typography={typography}
-          visible={flow === 'changePassword'}
-          saving={saving}
-          onClose={closeChangePassword}
-          onClosed={() => {
-            if (flow === 'closed') setChangePasswordMounted(false);
-          }}
-          onBack={closeChangePassword}
-          onSubmit={onSubmitNewPassword}
-        />
-      ) : null}
-
-      {deleteAccountMounted ? (
-        <DeleteAccountBottomSheet
-          typography={typography}
-          visible={flow === 'deleteAccount'}
-          onClose={closeDeleteAccount}
-          onClosed={() => {
-            if (flow === 'closed') setDeleteAccountMounted(false);
-          }}
-          onBack={closeDeleteAccount}
-          onSubmit={onDeleteAccountSheetSubmit}
-        />
-      ) : null}
+          >
+            <View style={styles.profileSheetModalHost}>{profileSheetLayer}</View>
+          </Modal>
+        ) : null
+      ) : (
+        profileSheetLayer
+      )}
 
       {helpMounted ? (
         <OverlaySlideHost
@@ -677,6 +710,7 @@ function ProfileSectionHeader({
 
 const styles = StyleSheet.create({
   root: { flex: 1, alignItems: 'center', backgroundColor: bg.canvasWarm },
+  profileSheetModalHost: { flex: 1, backgroundColor: 'transparent' },
   scroll: { flex: 1, width: '100%', backgroundColor: 'transparent', zIndex: 1 },
   scrollContent: {
     alignItems: 'stretch',

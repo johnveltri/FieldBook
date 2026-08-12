@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react-native';
 import { describe, expect, it, jest } from '@jest/globals';
-import { Text } from 'react-native';
+import { Animated, Text } from 'react-native';
 
 import {
   BottomSheetStackProvider,
@@ -57,5 +57,24 @@ describe('BottomSheetShell accessibility', () => {
     await waitFor(() => {
       expect(screen.getByTestId('sheet-stack-status').props.children).toBe('active');
     });
+  });
+
+  it('does not restart an open animation when an inline onClosed callback changes', () => {
+    const timingSpy = jest.spyOn(Animated, 'timing');
+    const view = render(
+      <BottomSheetShell visible onClosed={() => undefined}>
+        <Text>Stable sheet</Text>
+      </BottomSheetShell>,
+    );
+    const animationCountAfterOpen = timingSpy.mock.calls.length;
+
+    view.rerender(
+      <BottomSheetShell visible onClosed={() => undefined}>
+        <Text>Stable sheet after parent render</Text>
+      </BottomSheetShell>,
+    );
+
+    expect(timingSpy).toHaveBeenCalledTimes(animationCountAfterOpen);
+    timingSpy.mockRestore();
   });
 });
