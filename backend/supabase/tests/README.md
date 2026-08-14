@@ -26,6 +26,18 @@ PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
   -f backend/supabase/tests/prelaunch_hardening.test.sql
 ```
 
+```bash
+PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -f backend/supabase/tests/legacy_costs_reviewed_at_compat.test.sql
+```
+
+```bash
+PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -f backend/supabase/tests/legacy_profile_upsert_compat.test.sql
+```
+
 Or run all DB tests:
 
 ```bash

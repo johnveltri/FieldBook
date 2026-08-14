@@ -7,6 +7,8 @@ import {
   type ReactNode,
 } from 'react';
 
+import { useHasRegisteredBottomSheet } from '../context/BottomSheetStackContext';
+
 type ShellChromeContextValue = {
   /** Hide native tab bar + FAB (e.g. profile edit sheets). */
   hideBottomChrome: boolean;
@@ -17,6 +19,7 @@ const ShellChromeContext = createContext<ShellChromeContextValue | null>(null);
 
 export function ShellChromeProvider({ children }: { children: ReactNode }) {
   const [profileSheetsMounted, setProfileSheetsMountedState] = useState(false);
+  const hasRegisteredBottomSheet = useHasRegisteredBottomSheet();
 
   const setProfileSheetsMounted = useCallback((mounted: boolean) => {
     setProfileSheetsMountedState(mounted);
@@ -24,10 +27,12 @@ export function ShellChromeProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     (): ShellChromeContextValue => ({
-      hideBottomChrome: profileSheetsMounted,
+      // Modal sheets own the entire interaction layer. Native tabs and the
+      // global primary-action FAB must not float above their scrim/surface.
+      hideBottomChrome: profileSheetsMounted || hasRegisteredBottomSheet,
       setProfileSheetsMounted,
     }),
-    [profileSheetsMounted, setProfileSheetsMounted],
+    [hasRegisteredBottomSheet, profileSheetsMounted, setProfileSheetsMounted],
   );
 
   return <ShellChromeContext.Provider value={value}>{children}</ShellChromeContext.Provider>;
