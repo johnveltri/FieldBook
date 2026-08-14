@@ -223,6 +223,7 @@ export type Database = {
       jobs: {
         Row: {
           collected_cents: number
+          costs_reviewed_at: string | null
           materials_reviewed_at: string | null
           other_costs_reviewed_at: string | null
           created_at: string
@@ -244,6 +245,7 @@ export type Database = {
         }
         Insert: {
           collected_cents?: number
+          costs_reviewed_at?: string | null
           materials_reviewed_at?: string | null
           other_costs_reviewed_at?: string | null
           created_at?: string
@@ -265,6 +267,7 @@ export type Database = {
         }
         Update: {
           collected_cents?: number
+          costs_reviewed_at?: string | null
           materials_reviewed_at?: string | null
           other_costs_reviewed_at?: string | null
           created_at?: string

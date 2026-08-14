@@ -88,6 +88,13 @@ type BottomSheetShellProps = {
    */
   bottomPaddingExtra?: number;
   /**
+   * Let child content own the bottom safe-area inset so a scroll viewport can
+   * extend all the way to the physical screen edge. The child must include
+   * the safe-area inset in its own content padding.
+   * @default false
+   */
+  contentExtendsToBottomEdge?: boolean;
+  /**
    * When the sheet opens, announced to VoiceOver / TalkBack (e.g. sheet title).
    */
   accessibilityTitle?: string;
@@ -116,6 +123,7 @@ export function BottomSheetShell({
   autoSizeUpToFraction,
   registerInGlobalStack = true,
   bottomPaddingExtra = space('Spacing/4'),
+  contentExtendsToBottomEdge = false,
   accessibilityTitle,
   interactionEnabled = true,
 }: BottomSheetShellProps) {
@@ -320,13 +328,15 @@ export function BottomSheetShell({
   // approximate the available content height by subtracting the chrome we
   // own (handle area, safe-area bottom). Children own their padding when
   // `fullbleedDark`, so the only overhead there is the safe-area bottom.
+  const shellBottomPadding = contentExtendsToBottomEdge
+    ? 0
+    : effectiveSafeBottom + bottomPaddingExtra;
   const sheetChromeHeight = isFullbleed
     ? effectiveSafeBottom + bottomPaddingExtra
     : space('Spacing/12') /* paddingTop */ +
       space('Spacing/12') /* handleHitArea paddingBottom */ +
       6 /* handle h */ +
-      effectiveSafeBottom +
-      bottomPaddingExtra;
+      shellBottomPadding;
 
   const scrollViewMaxHeight =
     maxSheetHeight != null ? Math.max(0, maxSheetHeight - sheetChromeHeight) : undefined;
@@ -470,13 +480,14 @@ export function BottomSheetShell({
             onHandlerStateChange={onPanHandlerStateChange}
           >
             <Animated.View
+              testID="bottom-sheet-surface"
               onLayout={handleSheetLayout}
               collapsable={false}
               style={[
                 isFullbleed ? styles.sheetFullbleed : styles.sheet,
                 !isFullbleed ? { paddingHorizontal: sheetGutter } : null,
                 {
-                  paddingBottom: isFullbleed ? 0 : effectiveSafeBottom + bottomPaddingExtra,
+                  paddingBottom: isFullbleed ? 0 : shellBottomPadding,
                   maxHeight: maxSheetHeight,
                   transform: [
                     {

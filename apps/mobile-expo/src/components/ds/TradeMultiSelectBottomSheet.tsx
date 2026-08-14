@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import {
   Keyboard,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,6 +19,7 @@ import {
 } from '../figma-icons/ProfileScreenIcons';
 import { SessionSheetBackIcon } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { BottomSheetScrollView } from './bottomSheetScrollContext';
 import { screenHeaderA11y } from '../../lib/accessibility';
 import type { TradePreset } from '../../lib/trades';
 
@@ -142,11 +142,14 @@ export function TradeMultiSelectBottomSheet({
           </Text>
         </View>
 
-        <ScrollView
+        <BottomSheetScrollView
+          testID="trade-list"
           style={styles.listScroll}
           contentContainerStyle={styles.listScrollContent}
+          contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
+          showsVerticalScrollIndicator
         >
           {presets.map((opt, i) => {
             const sel = isSelected(opt.value);
@@ -229,7 +232,7 @@ export function TradeMultiSelectBottomSheet({
               ))}
             </View>
           ) : null}
-        </ScrollView>
+        </BottomSheetScrollView>
 
         <Pressable
           accessibilityRole="button"
@@ -280,6 +283,7 @@ const styles = StyleSheet.create({
   listScroll: {
     width: '100%',
     flexGrow: 0,
+    flexShrink: 1,
   },
   listScrollContent: {
     width: '100%',

@@ -1,10 +1,12 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { SessionSheetBackIcon } from '../figma-icons/JobDetailScreenIcons';
 import { BottomSheetShell } from './BottomSheetShell';
+import { BottomSheetScrollView } from './bottomSheetScrollContext';
 import { screenHeaderA11y } from '../../lib/accessibility';
 
 export type ChooseJobBottomSheetJob = {
@@ -48,6 +50,7 @@ export function ChooseJobBottomSheet({
   busy = false,
   registerInGlobalStack = true,
 }: ChooseJobBottomSheetProps) {
+  const insets = useSafeAreaInsets();
   const showError = error != null && error.length > 0;
   return (
     <BottomSheetShell
@@ -55,8 +58,9 @@ export function ChooseJobBottomSheet({
       onClose={onClose}
       onClosed={onClosed}
       registerInGlobalStack={registerInGlobalStack}
+      contentExtendsToBottomEdge
     >
-      <View style={styles.body}>
+      <View style={[styles.body, { maxHeight: 460 + insets.bottom }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back"
@@ -92,7 +96,18 @@ export function ChooseJobBottomSheet({
             </Text>
           </View>
         ) : (
-          <View style={styles.listContent}>
+          <BottomSheetScrollView
+            testID="choose-job-list"
+            style={[styles.listScroll, { maxHeight: 320 + insets.bottom }]}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: insets.bottom + space('Spacing/8') },
+            ]}
+            contentInsetAdjustmentBehavior="automatic"
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
+          >
             {jobs.map((job) => (
               <Pressable
                 key={job.id}
@@ -112,7 +127,7 @@ export function ChooseJobBottomSheet({
                 </View>
               </Pressable>
             ))}
-          </View>
+          </BottomSheetScrollView>
         )}
       </View>
     </BottomSheetShell>
@@ -123,7 +138,6 @@ const styles = StyleSheet.create({
   body: {
     width: '100%',
     gap: space('Spacing/16'),
-    maxHeight: 460,
   },
   back: {
     flexDirection: 'row',
@@ -144,10 +158,10 @@ const styles = StyleSheet.create({
   },
   listScroll: {
     width: '100%',
+    flexShrink: 1,
   },
   listContent: {
     gap: space('Spacing/12'),
-    paddingBottom: space('Spacing/8'),
   },
   row: {
     flexDirection: 'row',

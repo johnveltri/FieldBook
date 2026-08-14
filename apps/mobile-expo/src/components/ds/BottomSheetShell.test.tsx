@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react-native';
 import { describe, expect, it, jest } from '@jest/globals';
-import { Animated, Text } from 'react-native';
+import { Animated, StyleSheet, Text } from 'react-native';
 
 import {
   BottomSheetStackProvider,
@@ -42,6 +42,17 @@ describe('BottomSheetShell accessibility', () => {
     );
 
     expect(screen.getByTestId('bottom-sheet-overlay').props.accessibilityViewIsModal).toBe(true);
+  });
+
+  it('lets edge-to-edge content own the bottom safe-area padding', () => {
+    render(
+      <BottomSheetShell visible contentExtendsToBottomEdge>
+        <Text>Edge-to-edge content</Text>
+      </BottomSheetShell>,
+    );
+
+    const surfaceStyle = StyleSheet.flatten(screen.getByTestId('bottom-sheet-surface').props.style);
+    expect(surfaceStyle.paddingBottom).toBe(0);
   });
 
   it('registers as active as soon as the sheet opens', async () => {
