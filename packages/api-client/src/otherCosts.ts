@@ -46,10 +46,9 @@ function assertOtherCostType(costType: string): asserts costType is OtherCostTyp
   }
 }
 
-function assertDescriptionNotBlank(description: string): void {
-  if (!description || !description.trim()) {
-    throw new Error('Other cost description must not be blank.');
-  }
+function normalizeOptionalDescription(description: string): string | null {
+  const trimmed = description.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 function assertCostNonNegative(costCents: number): void {
@@ -68,7 +67,6 @@ export async function createOtherCost(
   input: CreateOtherCostInput,
 ): Promise<OtherCostId> {
   assertOtherCostType(input.costType);
-  assertDescriptionNotBlank(input.description);
   assertCostNonNegative(input.costCents);
 
   const { data: authData, error: authError } = await client.auth.getUser();
@@ -80,7 +78,7 @@ export async function createOtherCost(
 
   const row = {
     user_id: userId,
-    description: input.description.trim(),
+    description: normalizeOptionalDescription(input.description),
     quantity: 1,
     unit: 'ea',
     unit_cost_cents: input.costCents,
@@ -112,8 +110,7 @@ export async function updateOtherCost(
     patch.cost_type = input.costType;
   }
   if (input.description !== undefined) {
-    assertDescriptionNotBlank(input.description);
-    patch.description = input.description.trim();
+    patch.description = normalizeOptionalDescription(input.description);
   }
   if (input.costCents !== undefined) {
     assertCostNonNegative(input.costCents);

@@ -763,6 +763,7 @@ export function JobDetailScreen({
       });
       // eslint-disable-next-line no-console
       console.log('[LiveSession] startLiveSession success', created);
+      onClose();
     } catch (err) {
       // Inspect the underlying Supabase error shape (PG code lives on
       // `.code`, with `.message` / `.details` usually carrying the raw
@@ -816,6 +817,7 @@ export function JobDetailScreen({
             recovery_result: 'recovered_existing_live_session',
             ...errorProperties(err),
           });
+          onClose();
           return; // bar / sheet will appear via context update
         }
         analytics.capture('live_session_start_failed', {
@@ -847,7 +849,7 @@ export function JobDetailScreen({
         ...errorProperties(err),
       });
     }
-  }, [closeSessionFlow, job, liveSessionCtx]);
+  }, [closeSessionFlow, job, liveSessionCtx, onClose]);
 
   /**
    * Re-fetch the job detail whenever the live session for THIS job ends

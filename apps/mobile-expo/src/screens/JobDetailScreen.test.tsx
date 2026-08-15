@@ -9,6 +9,9 @@ import type { JobDetailViewModel } from '@fieldsolo/shared-types';
 const mockClaimFeedbackPromptMilestone = jest.fn<(...args: unknown[]) => Promise<1 | 3 | null>>();
 const mockMarkFeedbackSent = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockOpenFeedbackEmail = jest.fn<(...args: unknown[]) => Promise<void>>();
+const mockStartLiveSession = jest.fn<(...args: unknown[]) => Promise<{ id: string }>>();
+const mockRefreshLiveSession = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockUpdateLiveSessionJobShortDescription = jest.fn();
 
 jest.mock('../lib/feedback', () => ({
   claimFeedbackPromptMilestone: (...args: unknown[]) => mockClaimFeedbackPromptMilestone(...args),
@@ -39,7 +42,7 @@ jest.mock('../context/LiveSessionContext', () => ({
     hydrating: false,
     hasLiveSession: false,
     mode: 'hidden' as const,
-    startLiveSession: jest.fn(),
+    startLiveSession: mockStartLiveSession,
     openSheet: jest.fn(),
     minimize: jest.fn(),
     openEditSheet: jest.fn(),
@@ -48,8 +51,8 @@ jest.mock('../context/LiveSessionContext', () => ({
     endLiveSessionNow: jest.fn(),
     updateLiveSessionStartedAt: jest.fn(),
     deleteLiveSessionNow: jest.fn(),
-    updateLiveSessionJobShortDescription: jest.fn(),
-    refresh: jest.fn(),
+    updateLiveSessionJobShortDescription: mockUpdateLiveSessionJobShortDescription,
+    refresh: mockRefreshLiveSession,
   }),
   useHasLiveSession: () => false,
 }));
@@ -187,15 +190,18 @@ jest.mock('../components/ds', () => ({
   },
   NewSessionBottomSheet: ({
     visible,
+    onLiveSessionPress,
     onLogPastPress,
   }: {
     visible: boolean;
+    onLiveSessionPress?: () => void;
     onLogPastPress?: () => void;
   }) => {
     const { Text, View } = require('react-native');
     return visible ? (
       <View>
         <Text>new-session-sheet</Text>
+        <Text onPress={() => onLiveSessionPress?.()}>Live Session</Text>
         <Text onPress={() => onLogPastPress?.()}>Log Past Session</Text>
       </View>
     ) : null;
@@ -490,6 +496,8 @@ describe('JobDetailScreen manual session and note flows', () => {
     apiClient.deleteOtherCost.mockResolvedValue(undefined);
     apiClient.updateJobStatusById.mockResolvedValue(undefined);
     apiClient.countCompletedJobsForCurrentUser.mockResolvedValue(1);
+    mockStartLiveSession.mockResolvedValue({ id: 'sess-live-1' });
+    mockRefreshLiveSession.mockResolvedValue(null);
     mockClaimFeedbackPromptMilestone.mockResolvedValue(null);
     mockMarkFeedbackSent.mockResolvedValue(undefined);
     mockOpenFeedbackEmail.mockResolvedValue(undefined);
@@ -548,6 +556,32 @@ describe('JobDetailScreen manual session and note flows', () => {
         startedAt: '2026-04-18T14:00:00.000Z',
         endedAt: '2026-04-18T16:00:00.000Z',
       });
+    });
+  });
+
+  it('closes job detail after starting a live session', async () => {
+    const onRequestClose = jest.fn();
+    const screen = render(
+      <JobDetailScreen
+        jobId="job-1"
+        sessionUserId="user-1"
+        onRequestClose={onRequestClose}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Add Sessions')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByLabelText('Add Sessions'));
+    fireEvent.press(screen.getByText('Live Session'));
+
+    await waitFor(() => {
+      expect(mockStartLiveSession).toHaveBeenCalledWith({
+        jobId: 'job-1',
+        jobShortDescription: 'Fixture install',
+      });
+      expect(onRequestClose).toHaveBeenCalledTimes(1);
     });
   });
 

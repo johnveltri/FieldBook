@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createOtherCost } from './otherCosts';
+import { createOtherCost, updateOtherCost } from './otherCosts';
 import { makeBuilder, makeClient } from './testUtils';
 
 describe('otherCosts api client', () => {
@@ -40,5 +40,52 @@ describe('otherCosts api client', () => {
       job_id: 'job-9',
       session_id: null,
     });
+  });
+
+  it('createOtherCost stores a blank optional description as null', async () => {
+    let inserted: unknown;
+    const client = makeClient({
+      authUserId: 'user-1',
+      buildersByTable: {
+        job_costs: [
+          makeBuilder({
+            onInsert: (payload) => {
+              inserted = payload;
+            },
+            singleResult: { data: { id: 'oc-2' }, error: null },
+          }),
+        ],
+      },
+    });
+
+    await createOtherCost(client as never, {
+      jobId: 'job-9',
+      sessionId: null,
+      costType: 'permit',
+      description: '   ',
+      costCents: 12_000,
+    });
+
+    expect(inserted).toEqual(expect.objectContaining({ description: null }));
+  });
+
+  it('updateOtherCost clears a description when it is blank', async () => {
+    let updated: unknown;
+    const client = makeClient({
+      buildersByTable: {
+        job_costs: [
+          makeBuilder({
+            onUpdate: (payload) => {
+              updated = payload;
+            },
+            maybeSingleResult: { data: { id: 'oc-1' }, error: null },
+          }),
+        ],
+      },
+    });
+
+    await updateOtherCost(client as never, 'oc-1', { description: '   ' });
+
+    expect(updated).toEqual({ description: null });
   });
 });
