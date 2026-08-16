@@ -16,6 +16,7 @@ import {
   Pressable,
   StyleSheet,
   useWindowDimensions,
+  type KeyboardEvent,
   type LayoutChangeEvent,
   View,
 } from 'react-native';
@@ -171,12 +172,24 @@ export function BottomSheetShell({
   const [contentOverflow, setContentOverflow] = useState(false);
 
   /**
-   * Tracks keyboard visibility so we can drop the safe-area bottom from
-   * `paddingBottom` when the keyboard is up — the keyboard already covers
-   * that region, otherwise the sheet ends up with ~SB extra cream below
-   * the primary CTA when typing.
+   * Tracks whether a software keyboard actually covers the bottom inset. A
+   * hardware keyboard can still emit a focus/show event with a zero-height
+   * frame; in that case the sheet must retain its cream safe-area fill.
    */
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardCoversSafeArea, setKeyboardCoversSafeArea] = useState(false);
+  /**
+   * React Native's Android `KeyboardAvoidingView` treats keyboardDidHide's
+   * navigation-inset frame as a remaining keyboard height. Remount only after
+   * that event so its internal height state returns to zero without missing a
+   * real keyboardDidShow event.
+   */
+  const [androidKeyboardAvoidanceEpoch, setAndroidKeyboardAvoidanceEpoch] = useState(0);
+  /**
+   * Some Android IMEs reserve a short bottom band for a floating toolbar.
+   * Keep that band painted with the sheet surface rather than exposing the
+   * dimmed screen below the modal.
+   */
+  const [keyboardReservedHeight, setKeyboardReservedHeight] = useState(0);
   /**
    * Keep the overlay in the elevated stacking band while a sheet is open or
    * playing its close animation. Drop back to flat once fully hidden so
@@ -285,15 +298,24 @@ export function BottomSheetShell({
     [registerInGlobalStack, sheetId, sheetStack, visible, windowHeight],
   );
 
-  // iOS uses `KeyboardAvoidingView` below to push the sheet up. Android's
-  // default adjustResize behavior already resizes the native scene, so adding
-  // KAV `height` there double-applies the keyboard inset and can leave the
-  // sheet hovering after the keyboard dismisses. This listener still tracks
-  // keyboard visibility on both platforms so the sheet can drop redundant
-  // safe-area padding while the keyboard is open.
+  // The `KeyboardAvoidingView` below owns the sheet's keyboard response on
+  // both platforms: iOS uses bottom padding and Android uses a reduced height
+  // so the flex-end sheet is anchored to the visible viewport. This listener
+  // tracks whether an on-screen keyboard actually covers the safe area, so
+  // hardware-keyboard focus keeps the sheet's solid bottom fill intact.
   useEffect(() => {
-    const onShow = () => setKeyboardVisible(true);
-    const onHide = () => setKeyboardVisible(false);
+    const onShow = (event: KeyboardEvent) => {
+      const height = Math.max(0, event.endCoordinates.height);
+      setKeyboardReservedHeight(height);
+      setKeyboardCoversSafeArea(height > insets.bottom);
+    };
+    const onHide = () => {
+      setKeyboardReservedHeight(0);
+      setKeyboardCoversSafeArea(false);
+      if (Platform.OS === 'android') {
+        setAndroidKeyboardAvoidanceEpoch((epoch) => epoch + 1);
+      }
+    };
     const showEvent =
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent =
@@ -304,7 +326,7 @@ export function BottomSheetShell({
       showSub.remove();
       hideSub.remove();
     };
-  }, []);
+  }, [insets.bottom]);
 
   const isFullbleed = variant === 'fullbleedDark';
 
@@ -318,11 +340,10 @@ export function BottomSheetShell({
     ? Math.max(160, windowHeight * autoSizeUpToFraction)
     : undefined;
 
-  // When the keyboard is up the keyboard itself covers the home indicator
-  // / safe-area bottom region, so we collapse our own safe-area
-  // paddingBottom to keep the primary CTA flush ~12px above the keyboard
-  // top instead of leaving an SB-sized gap of cream below it.
-  const effectiveSafeBottom = keyboardVisible ? 0 : insets.bottom;
+  // A real software keyboard covers the home-indicator / safe-area region, so
+  // collapse our own padding to keep the primary CTA flush above it. A
+  // zero-height hardware-keyboard event retains the cream safe-area fill.
+  const effectiveSafeBottom = keyboardCoversSafeArea ? 0 : insets.bottom;
 
   // The inner scrollview becomes height-locked when content overflows. We
   // approximate the available content height by subtracting the chrome we
@@ -458,11 +479,31 @@ export function BottomSheetShell({
       >
         <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]} />
       </Pressable>
-      {/* iOS needs explicit keyboard avoidance. Android's native scene uses
-          adjustResize, so it must not also receive a KAV height reduction. */}
+      {/* Android lays the flex-end sheet above its system navigation inset,
+          and some IMEs reserve a short floating-toolbar band. The overlay
+          spans both, so paint the larger exposed bottom area with the sheet
+          surface rather than exposing the dimmed screen below the modal. */}
+      <View
+        testID="bottom-sheet-bottom-fill"
+        pointerEvents="none"
+        style={[
+          styles.bottomFill,
+          {
+            height: visible ? Math.max(insets.bottom, keyboardReservedHeight) : 0,
+            backgroundColor: isFullbleed
+              ? color('Foundation/Border/Default')
+              : bg.canvasWarm,
+          },
+        ]}
+      />
+      {/* Keep the platform behavior explicit: the Android sheet must shrink
+          its viewport so focused fields and actions clear the keyboard. The
+          Android-only key discards React Native's stale navigation-inset
+          height after keyboardDidHide; iOS uses its original padding branch. */}
       <KeyboardAvoidingView
+        key={Platform.OS === 'android' ? androidKeyboardAvoidanceEpoch : 'ios'}
         style={styles.kav}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         pointerEvents="box-none"
       >
         <BottomSheetScrollProvider
@@ -551,8 +592,8 @@ const styles = StyleSheet.create({
   /**
    * `KeyboardAvoidingView` host. Fills the overlay (so its `flex-end`
    * justification anchors the sheet to the bottom of whatever space is left
-   * after the keyboard takes its share). The KAV adds `paddingBottom` on
-   * iOS; Android relies on the native scene's adjustResize behavior.
+   * after the keyboard takes its share). The KAV adds bottom padding on iOS
+   * and reduces this host's height on Android.
    */
   kav: {
     ...absoluteFill,
@@ -562,6 +603,12 @@ const styles = StyleSheet.create({
     ...absoluteFill,
     backgroundColor: color('Foundation/Text/Primary'),
     opacity: 0.3,
+  },
+  bottomFill: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   sheet: {
     borderTopLeftRadius: radius('Radius/32'),
