@@ -43,7 +43,8 @@
           "backgroundColor": "#FAF6F0"
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "./plugins/with-android-landscape"
     ],
     "extra": {
       "eas": {
