@@ -7,7 +7,7 @@ const { validateReleaseEnvironment } = require('../../release-env') as {
 const hostedReleaseEnv = {
   EAS_BUILD: 'true',
   EXPO_PUBLIC_APP_ENV: 'production',
-  EXPO_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
+  EXPO_PUBLIC_SUPABASE_URL: 'https://gfvqmxsiuhhujnckghpa.supabase.co',
   EXPO_PUBLIC_SUPABASE_ANON_KEY: 'public-anon-key',
   EXPO_PUBLIC_ANALYTICS_DEBUG_RICH: 'false',
   EXPO_PUBLIC_ANALYTICS_PROVIDER: 'posthog',
@@ -18,9 +18,35 @@ describe('validateReleaseEnvironment', () => {
   it('allows local Supabase during development', () => {
     expect(() =>
       validateReleaseEnvironment({
+        EXPO_PUBLIC_APP_ENV: 'development',
         EXPO_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
       }),
     ).not.toThrow();
+  });
+
+  it('rejects the production project during development', () => {
+    expect(() =>
+      validateReleaseEnvironment({
+        EXPO_PUBLIC_APP_ENV: 'development',
+        EXPO_PUBLIC_SUPABASE_URL: 'https://gfvqmxsiuhhujnckghpa.supabase.co',
+      }),
+    ).toThrow('Non-production development cannot use the production Supabase project');
+  });
+
+  it('allows only the staging project when staging is explicit', () => {
+    expect(() =>
+      validateReleaseEnvironment({
+        EXPO_PUBLIC_APP_ENV: 'staging',
+        EXPO_PUBLIC_SUPABASE_URL: 'https://anypejjoovlatmrkrxvx.supabase.co',
+      }),
+    ).not.toThrow();
+
+    expect(() =>
+      validateReleaseEnvironment({
+        EXPO_PUBLIC_APP_ENV: 'staging',
+        EXPO_PUBLIC_SUPABASE_URL: 'https://another-project.supabase.co',
+      }),
+    ).toThrow('Staging must use Supabase project anypejjoovlatmrkrxvx');
   });
 
   it('validates explicit local release exports', () => {
@@ -44,6 +70,15 @@ describe('validateReleaseEnvironment', () => {
         EXPO_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
       }),
     ).toThrow('HTTPS hosted Supabase URL');
+  });
+
+  it('rejects a different hosted backend for production builds', () => {
+    expect(() =>
+      validateReleaseEnvironment({
+        ...hostedReleaseEnv,
+        EXPO_PUBLIC_SUPABASE_URL: 'https://anypejjoovlatmrkrxvx.supabase.co',
+      }),
+    ).toThrow('Production builds must use Supabase project gfvqmxsiuhhujnckghpa');
   });
 
   it('rejects rich analytics debugging for production builds', () => {

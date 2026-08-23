@@ -31,9 +31,17 @@
     "mobile:android": "npm run android -w mobile-expo",
     "mobile:android:go": "npm run android:go -w mobile-expo",
     "mobile:ios": "npm run ios -w mobile-expo",
+    "local:setup": "node scripts/configure-local-mobile-env.mjs",
+    "dev:local": "npm run local:setup && npm run mobile",
     "db:start": "npx supabase start --workdir backend",
     "db:stop": "npx supabase stop --workdir backend",
-    "db:reset": "npx supabase db reset --workdir backend"
+    "db:reset": "npx supabase db reset --local --workdir backend",
+    "db:verify": "npm run db:reset && npm run test:db",
+    "screenshots:reset": "node scripts/seed-app-store-demo.mjs",
+    "db:deploy:staging:plan": "node scripts/supabase-deploy.mjs staging",
+    "db:deploy:staging": "node scripts/supabase-deploy.mjs staging --apply",
+    "db:deploy:production:plan": "node scripts/supabase-deploy.mjs production",
+    "db:deploy:production": "node scripts/supabase-deploy.mjs production --apply"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.4",
