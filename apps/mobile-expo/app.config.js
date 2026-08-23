@@ -2,9 +2,9 @@ const { validateReleaseEnvironment } = require('./release-env');
 
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = ({ config }) => {
-  // Expo/EAS loads .env files before evaluating dynamic config. Refuse to
-  // generate a store build when a developer-local override points at a local
-  // backend or enables analytics' rich debug payloads.
+  // Expo/EAS loads environment variables before evaluating dynamic config.
+  // Refuse accidental local-to-production connections and mismatched store
+  // build configuration before native build or Metro bundling begins.
   validateReleaseEnvironment(process.env);
 
   return {

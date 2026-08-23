@@ -1,6 +1,9 @@
 # Local Supabase quick reference
 
-After `npx supabase start --workdir backend`, use this sheet so you do not have to scroll the CLI every time.
+Run `npm run dev:local` for the normal full-stack workflow, or
+`npm run local:setup` to start/configure Supabase without starting Metro. See
+[`docs/development-and-release.md`](../docs/development-and-release.md) for the migration and
+production-release workflow.
 
 ## What to keep handy
 
@@ -39,11 +42,13 @@ For **Expo** (`apps/mobile-expo`), you typically need:
 - `EXPO_PUBLIC_SUPABASE_URL` → API URL above (`http://127.0.0.1:54321`)
 - `EXPO_PUBLIC_SUPABASE_ANON_KEY` → **publishable** / anon key from CLI output
 
-Create `apps/mobile-expo/.env` (not committed) with keys from `supabase status`:
+`npm run local:setup` creates or updates ignored `apps/mobile-expo/.env.local` with keys from
+`supabase status`. The resulting values are equivalent to:
 
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<publishable key from supabase status>
+EXPO_PUBLIC_APP_ENV=development
 ```
 
 ### Expo Go (iOS + Android)
@@ -62,13 +67,15 @@ If you see **Missing Supabase env vars** on one emulator, stop Metro and restart
 cd apps/mobile-expo && npx expo start --clear
 ```
 
-Env vars live in `apps/mobile-expo/.env` only — a Metro server started without loading that file will bundle empty `EXPO_PUBLIC_*` values on every platform.
+Env vars live in ignored `apps/mobile-expo/.env.local` — restart Metro after changing them.
 
 ### Local Docker is the default
 
 With **`EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`**, the Expo app and **local Studio** (`http://127.0.0.1:54323`) talk to the **same** database. A row returned by SQL in Studio (e.g. `auth.users`) is the same project the app uses—as long as `.env` keys come from `supabase status` for that running stack.
 
-**Optional:** To point the app at a **hosted** project instead, set URL and anon key from **Project Settings → API** there (not the local CLI output).
+**Optional:** Hosted staging instructions are in
+[`docs/development-and-release.md`](../docs/development-and-release.md). Normal development must
+not point at the production project; the Expo configuration rejects that combination.
 
 ### Auth user check (local Studio → SQL)
 

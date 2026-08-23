@@ -6,7 +6,8 @@ This folder is the **source of truth** for schema and local tooling. Remote Supa
 
 - `config.toml` — local stack (API, DB, Studio ports, etc.).
 - `migrations/` — ordered SQL migrations (apply to hosted project with `supabase db push` after linking).
-- `seed.sql` — optional demo rows after `db reset`.
+- `seed.sql` — normal local seed, intentionally empty for FieldSoli.
+- `fixtures/app-store-demo.sql` — explicit local-only App Store screenshot fixture.
 
 ## CLI commands (from repo root)
 
@@ -21,13 +22,24 @@ npx supabase stop --workdir backend
 
 # Reapply migrations + seed
 npx supabase db reset --workdir backend
+
+# Rebuild local DB and add the repeatable App Store screenshot account/data.
+npm run screenshots:reset
 ```
 
 ## Hosted project
 
-1. Create a project in the [Supabase dashboard](https://supabase.com/dashboard).
-2. Link the CLI: `npx supabase link --workdir backend` (project ref + DB password).
-3. Push schema: `npx supabase db push --workdir backend`.
+Use the target-verifying scripts documented in
+[`docs/development-and-release.md`](../../docs/development-and-release.md), rather than raw
+`supabase link` / `db push` commands. The raw link is persistent, which makes it too easy to leave
+the checkout connected to the wrong hosted project.
+
+```bash
+npm run db:deploy:staging:plan
+npm run db:deploy:staging
+npm run db:deploy:production:plan
+npm run db:deploy:production
+```
 
 ## Env for `apps/mobile-expo`
 
@@ -64,7 +76,7 @@ Supabase Storage.
 
 ## Jobs in the app
 
-Job Detail loads **`fetchFirstJobIdForCurrentUser`** → **`fetchJobDetail`**: only rows the **authenticated user** can see under RLS (typically **`jobs.user_id = auth.uid()`**). If none exist, the UI shows **no jobs**. `seed.sql` is intentionally empty by default; create real user-owned jobs in local dev.
+Job Detail loads **`fetchFirstJobIdForCurrentUser`** → **`fetchJobDetail`**: only rows the **authenticated user** can see under RLS (typically **`jobs.user_id = auth.uid()`**). If none exist, the UI shows **no jobs**. `seed.sql` is intentionally empty by default; create real user-owned jobs in local dev. For repeatable screenshot data, run `npm run screenshots:reset`; it uses a real local account and its ordinary ownership policies, not a demo bypass.
 
 For active client tables (`sessions`, `notes`, `job_costs`), authenticated reads/writes require both:
 - row ownership (`user_id = auth.uid()`)
