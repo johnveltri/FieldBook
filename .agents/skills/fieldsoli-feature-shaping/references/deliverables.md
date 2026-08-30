@@ -15,17 +15,18 @@ Present the packet in the conversation before writing the final contract.
 
 ## Why now
 
-<Roadmap rationale, dependencies, and what this enables.>
+<Rationale, known dependencies, and what this enables.>
 
 ## Evidence considered
 
 - <Current product/code/data evidence>
 - <Relevant prior contract or decision>
 - <Authoritative external constraint, if any>
+- <Freshness status of current-product.html if it was used>
 
-## Decisions for owner
+## Questions for PM
 
-| # | Decision | Recommendation | Consequence | Viable alternative | Downstream effect |
+| # | Question | Why it matters | Options or short-answer prompt | Recommendation, if useful | Consequence |
 |---:|---|---|---|---|---|
 | 1 | ... | ... | ... | ... | ... |
 
@@ -41,10 +42,10 @@ Present the packet in the conversation before writing the final contract.
 
 - <Only unresolved material risks>
 
-Estimated owner review time: <N> minutes
+Fastest response format: <for example, "1A, 2 yes, 3 free text">
 ```
 
-Prefer yes/no or bounded-choice approvals. The owner must always be able to replace the recommendation with a different direction.
+Prefer yes/no, bounded choices, or short free-text answers. There is no decision-count cap. Group questions by topic and dependency, and omit a recommendation when obtaining the PM's direct answer is faster than researching one. The PM must always be able to replace a recommendation with a different direction.
 
 ## Implementation Contract
 
@@ -52,7 +53,7 @@ Prefer yes/no or bounded-choice approvals. The owner must always be able to repl
 # <Feature>
 
 **Status:** Draft | Approved implementation contract
-**Roadmap item:** <name and link>
+**Feature source:** <user-supplied name or brief>
 **Last updated:** YYYY-MM-DD
 
 ## Outcome
@@ -87,9 +88,20 @@ Prefer yes/no or bounded-choice approvals. The owner must always be able to repl
 - Analytics events or explicit absence
 - Provider or legal implications
 
-## Accessibility and platform behavior
+## Cost and dependency contract
 
-- Relevant screen-size, input, keyboard, assistive-technology, and platform requirements
+- Current free-tier limits and expected usage
+- Upgrade or limit trigger
+- Licensing, lock-in, and migration considerations
+- Additional engineering or operations accepted to extend free-tier runway
+
+## Consumer-grade UX, accessibility, and platform behavior
+
+- Brand-strategy fit and field-speed behavior
+- Visual and interaction quality bar
+- Loading, empty, error, offline, retry, interruption, and completion feedback
+- Relevant screen-size, input, keyboard, safe-area, orientation, assistive-technology, motion, and platform requirements
+- Component approach: current design system, native primitive, external library, or custom implementation
 
 ## Verification contract
 
@@ -165,7 +177,7 @@ Include only applicable gates and keep them independently verifiable.
 
 ## Product-context closeout
 
-- <Current-product, legal, store, analytics, support, or maintained-design updates actually required>
+- <Brand strategy, current-product, legal, store, analytics, support, or maintained-design updates actually required>
 ```
 
 Do not turn the plan into speculative code. It should communicate exact change boundaries, order, and proof.
@@ -187,15 +199,18 @@ Do not turn the plan into speculative code. It should communicate exact change b
 - Unplanned requirements: None | <list>
 - Plan tasks without requirements: None | <list>
 
-### Owner attention
-- Owner checkpoints used: N
-- Decisions escalated to owner: N
+### Shaping throughput
+- PM questions asked: N
+- PM-agent decision rounds: N
+- Fast PM answers used instead of agent research: N
 - Material decisions resolved independently: N
-- Estimated owner review time: N minutes
-- Actual active owner time: Unknown unless the owner provides it
+- Consequential decisions reopened after approval: N
+- Total elapsed shaping time: <measured value or Unknown>
+- Active PM time: <measured or PM-provided value, otherwise Unknown>
+- Active agent investigation time: <measured value or Unknown>
 
 ### Artifacts
 - <path>
 ```
 
-The owner-attention section is a process metric, not a performance claim. Never invent actual elapsed or active time.
+The throughput section measures the optimization target; it is not a performance claim. Never invent elapsed, active, or time-saved values. The quality guardrail is zero consequential product decisions discovered during implementation, not a low question count.
