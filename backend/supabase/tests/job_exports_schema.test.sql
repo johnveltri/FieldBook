@@ -116,8 +116,9 @@ begin
 end $$;
 
 -- Exercise the authoritative request boundary as an authenticated user. An
--- empty year is a true no-op; an active duplicate is idempotent; different
--- years are accepted immediately until the rolling-hour limit is reached.
+-- empty year is a true no-op; an in-flight duplicate is idempotent; different
+-- years are accepted immediately; a sent same-year request can be repeated
+-- after 15 minutes.
 select set_config(
   'request.jwt.claims',
   json_build_object(
@@ -145,7 +146,7 @@ begin
 
   result := public.accept_job_export_request(current_year, 'UTC');
   if result ->> 'status' <> 'confirmed' or not (result ->> 'deduplicated')::boolean then
-    raise exception 'active same-year request must deduplicate, got %', result;
+    raise exception 'in-flight same-year request must deduplicate, got %', result;
   end if;
 end $$;
 
@@ -179,18 +180,99 @@ declare
   result jsonb;
 begin
   result := public.accept_job_export_request(current_year - 1, 'UTC');
-  if result ->> 'status' <> 'confirmed' then
+  if result ->> 'status' <> 'confirmed' or (result ->> 'deduplicated')::boolean then
     raise exception 'different eligible year must be accepted immediately, got %', result;
   end if;
 
   result := public.accept_job_export_request(current_year - 2, 'UTC');
-  if result ->> 'status' <> 'confirmed' then
-    raise exception 'third newly accepted request must be confirmed, got %', result;
+  if result ->> 'status' <> 'confirmed' or (result ->> 'deduplicated')::boolean then
+    raise exception 'second different year must be accepted immediately, got %', result;
   end if;
 
   result := public.accept_job_export_request(current_year - 3, 'UTC');
+  if result ->> 'status' <> 'confirmed' or (result ->> 'deduplicated')::boolean then
+    raise exception 'third different year must be accepted immediately, got %', result;
+  end if;
+end $$;
+
+reset role;
+
+do $$
+declare
+  current_year integer := extract(year from now() at time zone 'UTC')::integer;
+begin
+  update public.job_export_requests
+  set
+    generation_state = 'queued',
+    created_at = now() - interval '16 minutes'
+  where user_id = current_setting('fieldsoli.export_test_user_id')::uuid
+    and reporting_year = current_year - 1;
+end $$;
+
+set local role authenticated;
+
+do $$
+declare
+  current_year integer := extract(year from now() at time zone 'UTC')::integer;
+  result jsonb;
+begin
+  result := public.accept_job_export_request(current_year - 1, 'UTC');
+  if result ->> 'status' <> 'confirmed' or not (result ->> 'deduplicated')::boolean then
+    raise exception 'in-flight same-year request must still deduplicate after 15 minutes, got %', result;
+  end if;
+end $$;
+
+reset role;
+
+do $$
+declare
+  current_year integer := extract(year from now() at time zone 'UTC')::integer;
+begin
+  update public.job_export_requests
+  set
+    generation_state = 'ready',
+    delivery_state = 'sent',
+    expires_at = now() + interval '24 hours',
+    created_at = now() - interval '5 minutes'
+  where user_id = current_setting('fieldsoli.export_test_user_id')::uuid
+    and reporting_year = current_year;
+end $$;
+
+set local role authenticated;
+
+do $$
+declare
+  current_year integer := extract(year from now() at time zone 'UTC')::integer;
+  result jsonb;
+begin
+  result := public.accept_job_export_request(current_year, 'UTC');
   if result ->> 'status' <> 'rate_limited' or result ->> 'retry_at' is null then
-    raise exception 'fourth newly accepted request must be rate limited, got %', result;
+    raise exception 'same-year rerequest within 15 minutes must be rate limited, got %', result;
+  end if;
+end $$;
+
+reset role;
+
+do $$
+declare
+  current_year integer := extract(year from now() at time zone 'UTC')::integer;
+begin
+  update public.job_export_requests
+  set created_at = now() - interval '15 minutes 1 second'
+  where user_id = current_setting('fieldsoli.export_test_user_id')::uuid
+    and reporting_year = current_year;
+end $$;
+
+set local role authenticated;
+
+do $$
+declare
+  current_year integer := extract(year from now() at time zone 'UTC')::integer;
+  result jsonb;
+begin
+  result := public.accept_job_export_request(current_year, 'UTC');
+  if result ->> 'status' <> 'confirmed' or (result ->> 'deduplicated')::boolean then
+    raise exception 'sent same-year request must accept a new export after 15 minutes, got %', result;
   end if;
 end $$;
 
@@ -203,8 +285,8 @@ begin
   select count(*) into request_count
   from public.job_export_requests
   where user_id = current_setting('fieldsoli.export_test_user_id')::uuid;
-  if request_count <> 3 then
-    raise exception 'empty, duplicate, and rate-limited requests must not create rows; saw %', request_count;
+  if request_count <> 5 then
+    raise exception 'empty, duplicate, and rate-limited requests must not create rows; same-year rerequest after 15 minutes must; saw %', request_count;
   end if;
 end $$;
 

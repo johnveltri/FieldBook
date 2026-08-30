@@ -170,14 +170,14 @@ Do not add year-list, eligibility-check, or status-polling endpoints for V1.
 It performs a fresh Auth lookup, requires a confirmed email, validates the IANA time zone/year range, checks owner-scoped eligibility, and serializes acceptance per user.
 
 - `202`: newly accepted confirmation
-- `200`: active same-year duplicate confirmation
+- `200`: in-flight same-year duplicate confirmation
 - `200`: `no_eligible_jobs`
 - `429`: `rate_limited` with `retry_at` and `Retry-After`
 - `401`: invalid identity
 - `422`: invalid input or unverified email
 - `503`: failure before durable acceptance
 
-Different years may be requested immediately. At most three newly accepted requests are allowed per rolling hour. An active duplicate is queued, processing, ready, or sent with an unexpired link; it does not consume quota or send another email.
+Different years may be requested immediately. A newly accepted request for the same year is allowed every 15 minutes. An in-flight same-year duplicate is queued, processing, or ready and not yet sent; it does not consume quota or send another email. A sent, failed, expired, or revoked request does not block a later same-year request once 15 minutes have passed since that year's last newly accepted request.
 
 The request row and queue message are committed atomically.
 
@@ -312,7 +312,7 @@ Automated coverage must include:
 - time-zone account/current-year validation and DST year boundaries;
 - exact 20-column order, nulls, zero/negative values, all cost types, deduplication, Unicode, multiline text, formula protection, BOM, and CRLF;
 - pagination beyond 1,000 jobs;
-- different-year requests, same-year deduplication, empty-year no-op, and fourth-in-hour rate limiting;
+- different-year requests, in-flight same-year deduplication, empty-year no-op, same-year rerequest after 15 minutes, and same-year 15-minute rate limiting;
 - worker recovery, stable email payload/idempotency, and permanent/transient provider errors;
 - exact HTML/plain-text email copy and expiration parity;
 - cross-user denial, generic redemption failures, fragment removal, and absence of Analytics;
