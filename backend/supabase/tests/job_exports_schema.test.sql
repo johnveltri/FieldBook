@@ -35,8 +35,26 @@ begin
   end if;
   select count(*) into policy_count from pg_policies where schemaname = 'public' and tablename = 'job_export_requests';
   if policy_count <> 0 then raise exception 'job_export_requests must not have client policies'; end if;
-  if has_table_privilege('authenticated', 'public.job_export_requests', 'select') then
-    raise exception 'authenticated must not select job export requests';
+  if has_table_privilege('anon', 'public.job_export_requests', 'select')
+    or has_table_privilege('anon', 'public.job_export_requests', 'insert')
+    or has_table_privilege('anon', 'public.job_export_requests', 'update')
+    or has_table_privilege('anon', 'public.job_export_requests', 'delete')
+    or has_table_privilege('authenticated', 'public.job_export_requests', 'select')
+    or has_table_privilege('authenticated', 'public.job_export_requests', 'insert')
+    or has_table_privilege('authenticated', 'public.job_export_requests', 'update')
+    or has_table_privilege('authenticated', 'public.job_export_requests', 'delete') then
+    raise exception 'client roles must not access job export requests';
+  end if;
+  if not has_table_privilege('service_role', 'public.job_export_requests', 'select')
+    or not has_table_privilege('service_role', 'public.job_export_requests', 'update')
+    or not has_table_privilege('service_role', 'public.job_export_requests', 'delete') then
+    raise exception 'service_role requires select, update, and delete on job export requests';
+  end if;
+  if has_table_privilege('service_role', 'public.job_export_requests', 'insert')
+    or has_table_privilege('service_role', 'public.job_export_requests', 'truncate')
+    or has_table_privilege('service_role', 'public.job_export_requests', 'references')
+    or has_table_privilege('service_role', 'public.job_export_requests', 'trigger') then
+    raise exception 'service_role has unnecessary job export request privileges';
   end if;
 
   select public, file_size_limit, allowed_mime_types into bucket from storage.buckets where id = 'job-exports';
