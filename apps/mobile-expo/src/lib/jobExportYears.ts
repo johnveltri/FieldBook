@@ -9,7 +9,6 @@ export function calendarYearInTimeZone(date: Date, timeZone: string): number {
   if (!Number.isInteger(year)) throw new Error('Could not resolve calendar year');
   return year;
 }
-
 /** Resolves the device's current IANA time zone, if the runtime exposes one. */
 export function resolveReportingTimeZone(): string | null {
   try {
@@ -38,4 +37,3 @@ export function buildJobExportYears(
   for (let year = currentYear; year >= firstYear; year -= 1) years.push(year);
   return years;
 }
-

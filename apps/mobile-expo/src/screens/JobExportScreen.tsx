@@ -192,6 +192,9 @@ export function JobExportScreen({ onBack, onBackToHome }: JobExportScreenProps) 
           <View style={styles.body}>
             {terminalResult ? (
               <View accessibilityLiveRegion="polite" style={styles.resultCard}>
+                {requestState.kind === 'confirmed' ? (
+                  <Text selectable style={[typography.titleH3, styles.resultTitle]}>Export requested</Text>
+                ) : null}
                 <Text selectable style={[typography.body, styles.resultText]}>{resultCopy}</Text>
                 <Pressable
                   accessibilityRole="button"
@@ -249,8 +252,12 @@ export function JobExportScreen({ onBack, onBackToHome }: JobExportScreenProps) 
                   accessibilityRole="button"
                   accessibilityLabel="Request Export"
                   onPress={() => void submit()}
-                  disabled={requestState.kind === 'submitting'}
-                  style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed, requestState.kind === 'submitting' && styles.disabled]}
+                  disabled={!emailVerified || requestState.kind === 'submitting'}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    pressed && styles.pressed,
+                    (!emailVerified || requestState.kind === 'submitting') && styles.disabled,
+                  ]}
                 >
                   {requestState.kind === 'submitting' ? <ActivityIndicator color={bg.canvasWarm} /> : null}
                   <Text selectable style={[typography.bodyBold, styles.primaryButtonText]}>Request Export</Text>
@@ -321,6 +328,7 @@ const styles = StyleSheet.create({
   infoLabel: { color: fg.secondary },
   infoBody: { color: fg.primary },
   errorText: { color: color('Semantic/Status/Error/Text') },
+  resultTitle: { color: fg.primary },
   primaryButton: {
     minHeight: 52,
     borderRadius: radius('Radius/12'),
@@ -347,6 +355,7 @@ const styles = StyleSheet.create({
     borderRadius: radius('Radius/12'),
     padding: space('Spacing/16'),
     marginTop: space('Spacing/8'),
+    gap: space('Spacing/8'),
     ...cardShadowRn,
   },
   resultText: { color: fg.primary },

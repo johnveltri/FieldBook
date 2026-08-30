@@ -83,7 +83,7 @@ Payment status does not control eligibility. Created, last-worked, and paid date
 
 The server validates that the selected year falls between the Auth account-creation year and current year, inclusive, in the request's reporting time zone.
 
-Existing completed jobs are not backfilled from `updated_at`, `last_worked_at`, sessions, or other inferred data. Before production launch, query for existing completed jobs with null `completed_at`; if real user history exists, pause and choose an explicit migration policy.
+For the one-time launch migration, existing completed jobs with a null `completed_at` use `last_worked_at`, and existing paid jobs with a null `paid_at` use `last_worked_at`. Rows without `last_worked_at` remain null rather than guessing from `updated_at`, sessions, or other inferred data. Future transitions always use the database transition time.
 
 ## Lifecycle timestamps
 
@@ -99,7 +99,7 @@ Maintain them in the database:
 - Entering or re-entering the derived `paid` state sets `paid_at` to the transition time.
 - Becoming unpaid or partially paid preserves the timestamp, but `paid_date` exports blank unless the job is currently paid.
 - Payment-only edits do not change `completed_at`.
-- New inserts are handled defensively; existing rows receive no historical backfill.
+- New inserts are handled defensively; the launch migration applies the explicit `last_worked_at` backfill policy above.
 
 Use the existing `jobs.last_worked_at` for `last_worked_date`.
 
@@ -308,7 +308,7 @@ Never put Resend, worker, token-derivation, secret-role, or Vault values in the 
 
 Automated coverage must include:
 
-- timestamp transitions and no backfill;
+- timestamp transitions and the one-time `last_worked_at` backfill;
 - time-zone account/current-year validation and DST year boundaries;
 - exact 20-column order, nulls, zero/negative values, all cost types, deduplication, Unicode, multiline text, formula protection, BOM, and CRLF;
 - pagination beyond 1,000 jobs;

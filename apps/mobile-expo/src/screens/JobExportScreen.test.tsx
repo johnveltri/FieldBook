@@ -16,23 +16,31 @@ jest.mock('@fieldsolo/api-client', () => ({
   requestJobExport: (...args: [unknown, unknown]) => mockRequestJobExport(...args),
   JobExportRequestError: MockJobExportRequestError,
 }));
+
+let mockSession = {
+  user: {
+    id: 'user-1',
+    email: 'tech@example.com',
+    email_confirmed_at: '2026-01-02T00:00:00Z' as string | null,
+    created_at: '2026-02-01T12:00:00Z',
+  },
+};
 jest.mock('../context/AuthContext', () => ({
-  useAuth: () => ({
-    session: {
-      user: {
-        id: 'user-1',
-        email: 'tech@example.com',
-        email_confirmed_at: '2026-01-02T00:00:00Z',
-        created_at: '2026-02-01T12:00:00Z',
-      },
-    },
-  }),
+  useAuth: () => ({ session: mockSession }),
 }));
 
 describe('JobExportScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers({ now: new Date('2026-08-29T12:00:00Z') });
+    mockSession = {
+      user: {
+        id: 'user-1',
+        email: 'tech@example.com',
+        email_confirmed_at: '2026-01-02T00:00:00Z',
+        created_at: '2026-02-01T12:00:00Z',
+      },
+    };
     mockRequestJobExport.mockResolvedValue({
       status: 'confirmed',
       requestId: 'request-1',
@@ -72,12 +80,22 @@ describe('JobExportScreen', () => {
     });
   });
 
+  it('does not allow an export request until the account email is verified', async () => {
+    mockSession.user.email_confirmed_at = null;
+    const screen = render(<JobExportScreen onBack={jest.fn()} onBackToHome={jest.fn()} />);
+
+    expect(screen.getByText('Verify your email before requesting an export.')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('Request Export'));
+    expect(mockRequestJobExport).not.toHaveBeenCalled();
+  });
+
   it('shows the exact confirmation copy', async () => {
     const screen = render(<JobExportScreen onBack={jest.fn()} onBackToHome={jest.fn()} />);
     await act(async () => {
       fireEvent.press(screen.getByLabelText('Request Export'));
     });
     expect(screen.getByText(/Your 2026 job export has been requested/)).toBeTruthy();
+    expect(screen.getByText('Export requested')).toBeTruthy();
     expect(screen.getByText('EXPORT JOBS')).toBeTruthy();
     expect(screen.getByText(/within 15 minutes/)).toBeTruthy();
     expect(screen.getByLabelText('Back to Home')).toBeTruthy();

@@ -26,4 +26,3 @@ describe('job export year options', () => {
     expect(() => buildJobExportYears('2027-01-01T00:00:00Z', 'UTC', new Date('2026-01-01T00:00:00Z'))).toThrow();
   });
 });
-

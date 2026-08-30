@@ -96,38 +96,3 @@ export function downloadUrl(token: string): string {
   const configured = Deno.env.get('EXPORT_DOWNLOAD_BASE_URL') || `https://fieldsoli.com${DOWNLOAD_PATH}`;
   return `${configured}#token=${encodeURIComponent(token)}`;
 }
-
-export function csvText(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  let text = String(value);
-  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
-  return `"${text.replaceAll('"', '""')}"`;
-}
-
-export function money(cents: number | string | null | undefined): string {
-  if (cents === null || cents === undefined) return '';
-  return (Number(cents) / 100).toFixed(2);
-}
-
-export function dateInZone(value: string | null | undefined, timeZone: string): string {
-  if (!value) return '';
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(new Date(value));
-  const part = (type: string) => parts.find((entry) => entry.type === type)?.value ?? '';
-  return `${part('year')}-${part('month')}-${part('day')}`;
-}
-
-export function expirationInZone(value: string, timeZone: string): string {
-  const date = new Date(value);
-  const datePart = new Intl.DateTimeFormat('en-US', { timeZone, month: 'long', day: 'numeric', year: 'numeric' }).format(date);
-  const timeParts = new Intl.DateTimeFormat('en-US', {
-    timeZone, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short',
-  }).formatToParts(date);
-  const time = timeParts.filter((part) => ['hour', 'literal', 'minute', 'dayPeriod', 'timeZoneName'].includes(part.type)).map((part) => part.value).join('').replace(/\s+(?=[A-Z]{2,5}$)/, ' ');
-  return `${datePart} at ${time} (${timeZone})`;
-}
-
-export function escapeHtml(value: string): string {
-  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
-}

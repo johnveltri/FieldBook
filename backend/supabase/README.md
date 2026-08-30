@@ -181,6 +181,13 @@ The mobile app calls `delete-account` to remove the authenticated user. When Pos
 
 If the PostHog secrets are absent, account deletion still succeeds; analytics cleanup is skipped locally.
 
+Account deletion first revokes every active Job Summary export and removes all
+known or deterministic export object paths. If an export worker is currently
+generating a file, the function returns retryable `409 export_cleanup_pending`
+without deleting the Auth user; retrying after the worker observes the
+revocation completes deletion. Storage cleanup failures likewise leave the
+account intact instead of orphaning a private CSV.
+
 ## Job Summary CSV exports
 
 The export pipeline is migration-managed: it creates the private `job-exports`

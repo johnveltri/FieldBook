@@ -9,10 +9,54 @@ alter table public.jobs
   add column if not exists completed_at timestamptz,
   add column if not exists paid_at timestamptz;
 
+-- Approved one-time launch policy: existing completed and paid jobs use the
+-- last recorded work timestamp. Preserve updated_at so this migration does not
+-- reorder users' job lists merely because export metadata was introduced.
+alter table public.jobs disable trigger set_jobs_updated_at;
+update public.jobs
+set
+  completed_at = case
+    when job_work_status = 'completed' and completed_at is null
+      then last_worked_at
+    else completed_at
+  end,
+  paid_at = case
+    when job_payment_state = 'paid' and paid_at is null
+      then last_worked_at
+    else paid_at
+  end
+where last_worked_at is not null
+  and (
+    (job_work_status = 'completed' and completed_at is null)
+    or (job_payment_state = 'paid' and paid_at is null)
+  );
+alter table public.jobs enable trigger set_jobs_updated_at;
+
+do $$
+begin
+  if exists (
+    select 1 from public.jobs
+    where job_work_status = 'completed'
+      and last_worked_at is not null
+      and completed_at is null
+  ) then
+    raise exception 'completed job timestamp backfill was incomplete';
+  end if;
+  if exists (
+    select 1 from public.jobs
+    where job_payment_state = 'paid'
+      and last_worked_at is not null
+      and paid_at is null
+  ) then
+    raise exception 'paid job timestamp backfill was incomplete';
+  end if;
+end;
+$$;
+
 comment on column public.jobs.completed_at is
-  'Set when the job enters completed; retained if it later leaves completed. Historical rows are intentionally not backfilled.';
+  'Set when the job enters completed; retained if it later leaves completed. Launch-era completed rows were backfilled from last_worked_at.';
 comment on column public.jobs.paid_at is
-  'Set when the derived payment state enters paid; retained if it later becomes unpaid or partially paid. Historical rows are intentionally not backfilled.';
+  'Set when the derived payment state enters paid; retained if it later becomes unpaid or partially paid. Launch-era paid rows were backfilled from last_worked_at.';
 
 create or replace function private.set_job_export_state_timestamps()
 returns trigger

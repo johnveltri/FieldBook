@@ -1,95 +1,76 @@
 import {
-  EXPORT_BUCKET, ExportRequest, csvText, dateInZone, downloadUrl, errorCode,
-  escapeHtml, expirationInZone, exportObjectPath, exportTokenForRequest, json, money,
-  requiredEnv, serverClient, sha256Hex, workerAuthorized,
+  EXPORT_BUCKET, ExportRequest, downloadUrl, errorCode, exportObjectPath,
+  exportTokenForRequest, json, requiredEnv, serverClient, sha256Hex, workerAuthorized,
 } from '../_shared/job-export.ts';
-
-type ExportRow = {
-  job_id: string; job_description: string; customer_name: string | null; service_address: string | null;
-  work_status: string; payment_status: string | null; created_at: string; last_worked_at: string | null;
-  completed_at: string; paid_at: string | null; revenue_cents: number | null;
-  material_cost: number; helper_labor_cost: number; equipment_rental_cost: number; permit_cost: number;
-  disposal_cost: number; travel_parking_cost: number; other_cost: number;
-};
-
-const HEADERS = [
-  'job_id', 'job_description', 'customer_name', 'service_address', 'work_status', 'payment_status',
-  'created_date', 'last_worked_date', 'completed_date', 'paid_date', 'revenue', 'material_cost',
-  'helper_labor_cost', 'equipment_rental_cost', 'permit_cost', 'disposal_cost', 'travel_parking_cost',
-  'other_cost', 'total_costs', 'net_earnings',
-];
-
-function rowToCsv(row: ExportRow, timeZone: string): string {
-  const costs = [row.material_cost, row.helper_labor_cost, row.equipment_rental_cost, row.permit_cost, row.disposal_cost, row.travel_parking_cost, row.other_cost].map(Number);
-  const total = costs.reduce((sum, value) => sum + value, 0);
-  const paidDate = row.payment_status === 'paid' ? dateInZone(row.paid_at, timeZone) : '';
-  const cells = [
-    row.job_id, row.job_description, row.customer_name, row.service_address, row.work_status, row.payment_status,
-    dateInZone(row.created_at, timeZone), dateInZone(row.last_worked_at, timeZone), dateInZone(row.completed_at, timeZone), paidDate,
-    row.revenue_cents === null ? '' : money(row.revenue_cents), ...costs.map(money), money(total),
-    row.revenue_cents === null ? '' : money(Number(row.revenue_cents) - total),
-  ];
-  // Only free-form, user-supplied text is formula-sanitized. Dates, UUIDs,
-  // enum values, and monetary values remain machine-readable CSV values (in
-  // particular, a negative net earnings value must not acquire an apostrophe).
-  return cells.map((cell, index) => {
-    if ([1, 2, 3].includes(index)) return csvText(cell);
-    const text = String(cell ?? '');
-    return `"${text.replaceAll('"', '""')}"`;
-  }).join(',');
-}
+import {
+  buildJobExportCsv, buildJobExportEmail, type JobExportRow,
+} from '../_shared/job-export-content.ts';
 
 async function buildCsv(request: ExportRequest): Promise<Uint8Array> {
   const client = serverClient();
-  let beforeCompletedAt: string | null = null;
-  let beforeCreatedAt: string | null = null;
-  let beforeId: string | null = null;
-  let csv = `\ufeff${HEADERS.join(',')}\r\n`;
-  while (true) {
+  return await buildJobExportCsv(request.reporting_time_zone, async (cursor) => {
     const { data, error } = await client.rpc('job_export_rows', {
-      p_request_id: request.id, p_before_completed_at: beforeCompletedAt,
-      p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: 500,
+      p_request_id: request.id,
+      p_before_completed_at: cursor.beforeCompletedAt,
+      p_before_created_at: cursor.beforeCreatedAt,
+      p_before_id: cursor.beforeId,
+      p_limit: cursor.limit,
     });
     if (error) throw new Error(`rows_${errorCode(error)}`);
-    const rows = (data ?? []) as ExportRow[];
-    for (const row of rows) csv += `${rowToCsv(row, request.reporting_time_zone)}\r\n`;
-    if (rows.length < 500) break;
-    const last = rows.at(-1)!;
-    beforeCompletedAt = last.completed_at;
-    beforeCreatedAt = last.created_at;
-    beforeId = last.job_id;
-  }
-  return new TextEncoder().encode(csv);
+    return (data ?? []) as JobExportRow[];
+  });
 }
 
-function emailContent(request: ExportRequest, token: string, expiresAt: string) {
-  const year = String(request.reporting_year);
-  const url = downloadUrl(token);
-  const safeUrl = escapeHtml(url);
-  const expiration = expirationInZone(expiresAt, request.reporting_time_zone);
-  const text = [
-    'Your job export is ready', '',
-    `Your ${year} FieldSoli job summary CSV is ready to download.`, '',
-    `Download CSV: ${url}`, '',
-    `This link expires on ${expiration}.`, '',
-    'Anyone with this link can download the CSV until it expires. Do not forward or share it.',
-    'The file may contain customer names, service addresses, job descriptions, and financial information. Store it securely.', '',
-    'If the button does not work, copy and paste this link into your browser:', url, '',
-    'If you did not request this export, do not download it. Contact support@fieldsoli.com.', '',
-    'FieldSoli · support@fieldsoli.com',
-  ].join('\n');
-  const preview = `Download your ${year} job summary CSV before the secure link expires.`;
-  const html = `<!doctype html><html><body style="margin:0;background:#f6f7f8;font-family:Arial,sans-serif;color:#18212b"><div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${escapeHtml(preview)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:32px 16px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border-radius:12px"><tr><td style="padding:32px"><p style="margin:0 0 24px;font-weight:700;font-size:20px">FieldSoli</p><h1 style="margin:0 0 16px;font-size:26px">Your job export is ready</h1><p style="line-height:1.5">Your ${year} FieldSoli job summary CSV is ready to download.</p><p style="margin:28px 0"><a href="${safeUrl}" style="display:inline-block;background:#18212b;color:#fff;padding:13px 20px;border-radius:7px;text-decoration:none;font-weight:700">Download CSV</a></p><p style="line-height:1.5">This link expires on ${escapeHtml(expiration)}.</p><p style="line-height:1.5">Anyone with this link can download the CSV until it expires. Do not forward or share it.</p><p style="line-height:1.5">The file may contain customer names, service addresses, job descriptions, and financial information. Store it securely.</p><p style="line-height:1.5">If the button does not work, copy and paste this link into your browser:</p><p style="word-break:break-all;line-height:1.5"><a href="${safeUrl}">${safeUrl}</a></p><p style="line-height:1.5">If you did not request this export, do not download it. Contact <a href="mailto:support@fieldsoli.com">support@fieldsoli.com</a>.</p><p style="margin:28px 0 0;color:#667085;font-size:13px">FieldSoli · support@fieldsoli.com</p></td></tr></table></td></tr></table></body></html>`;
-  return { url, html, text };
+async function markRevokedRequestCleaned(request: ExportRequest, path: string): Promise<void> {
+  const client = serverClient();
+  const { error: removeError } = await client.storage.from(EXPORT_BUCKET).remove([path]);
+  const now = new Date().toISOString();
+  const { error: stateError } = await client.from('job_export_requests').update({
+    generation_state: removeError ? 'ready' : 'deleted',
+    delivery_state: 'revoked',
+    object_path: removeError ? path : null,
+    expires_at: removeError ? (request.expires_at ?? now) : request.expires_at,
+    recipient_email: '',
+    token_hash: null,
+    resend_message_id: null,
+    scrubbed_at: removeError ? null : now,
+  }).eq('id', request.id).eq('delivery_state', 'revoked');
+  if (removeError || stateError) {
+    console.error('[job-export] revoked artifact cleanup failure', {
+      requestId: request.id,
+      failure: errorCode(removeError ?? stateError),
+    });
+  }
 }
 
 async function ensureArtifact(request: ExportRequest): Promise<ExportRequest> {
   const client = serverClient();
   if (request.generation_state === 'ready' && request.object_path) return request;
   const path = exportObjectPath(request.user_id, request.id);
-  await client.from('job_export_requests').update({ generation_state: 'processing', generation_attempts: request.generation_attempts + 1 }).eq('id', request.id);
+  const { data: started, error: startError } = await client.from('job_export_requests')
+    .update({ generation_state: 'processing', generation_attempts: request.generation_attempts + 1 })
+    .eq('id', request.id)
+    .in('delivery_state', ['pending', 'processing'])
+    .select()
+    .maybeSingle();
+  if (startError) throw new Error(`artifact_start_${errorCode(startError)}`);
+  if (!started) throw new Error('request_revoked');
+
   const bytes = await buildCsv(request);
   if (bytes.byteLength > 25 * 1024 * 1024) throw new Error('csv_too_large');
+
+  // Account deletion revokes the row before touching Storage. Re-check after
+  // CSV generation so a claimed worker cannot upload after that revocation.
+  const { data: current, error: currentError } = await client.from('job_export_requests')
+    .select('delivery_state')
+    .eq('id', request.id)
+    .maybeSingle();
+  if (currentError) throw new Error(`artifact_guard_${errorCode(currentError)}`);
+  if (!current || !['pending', 'processing'].includes(current.delivery_state)) {
+    await markRevokedRequestCleaned(request, path);
+    throw new Error('request_revoked');
+  }
+
   const { error: uploadError } = await client.storage.from(EXPORT_BUCKET).upload(path, new Blob([bytes], { type: 'text/csv' }), {
     // storage-js prefixes this value with `max-age=`. Including `no-store`
     // produces the valid private-artifact directive `max-age=0, no-store`.
@@ -101,8 +82,15 @@ async function ensureArtifact(request: ExportRequest): Promise<ExportRequest> {
   }
   const { data, error } = await client.from('job_export_requests').update({
     generation_state: 'ready', object_path: path, byte_size: bytes.byteLength, generated_at: new Date().toISOString(), failure_code: null,
-  }).eq('id', request.id).select().single();
-  if (error) throw new Error(`artifact_state_${errorCode(error)}`);
+  }).eq('id', request.id).in('delivery_state', ['pending', 'processing']).select().maybeSingle();
+  if (error) {
+    await markRevokedRequestCleaned(request, path);
+    throw new Error(`artifact_state_${errorCode(error)}`);
+  }
+  if (!data) {
+    await markRevokedRequestCleaned(request, path);
+    throw new Error('request_revoked');
+  }
   return data as ExportRequest;
 }
 
@@ -115,20 +103,29 @@ async function sendEmail(request: ExportRequest): Promise<void> {
   if (!request.token_hash || !expiresAt) {
     const firstSendAt = new Date();
     expiresAt = new Date(firstSendAt.getTime() + 24 * 60 * 60 * 1000).toISOString();
-    const { error } = await client.from('job_export_requests').update({
+    const { data, error } = await client.from('job_export_requests').update({
       token_hash: await sha256Hex(token), expires_at: expiresAt, first_send_at: firstSendAt.toISOString(),
       delivery_state: 'processing', delivery_attempts: deliveryAttempt,
-    }).eq('id', request.id).is('token_hash', null);
+    }).eq('id', request.id).is('token_hash', null).in('delivery_state', ['pending', 'processing'])
+      .select('id').maybeSingle();
     if (error) throw new Error(`token_state_${errorCode(error)}`);
+    if (!data) throw new Error('request_revoked');
   } else if (request.token_hash !== await sha256Hex(token)) {
     throw new Error('token_hash_mismatch');
   } else {
-    const { error } = await client.from('job_export_requests').update({
+    const { data, error } = await client.from('job_export_requests').update({
       delivery_state: 'processing', delivery_attempts: deliveryAttempt,
-    }).eq('id', request.id);
+    }).eq('id', request.id).in('delivery_state', ['pending', 'processing'])
+      .select('id').maybeSingle();
     if (error) throw new Error(`attempt_state_${errorCode(error)}`);
+    if (!data) throw new Error('request_revoked');
   }
-  const content = emailContent(request, token, expiresAt!);
+  const content = buildJobExportEmail({
+    reportingYear: request.reporting_year,
+    reportingTimeZone: request.reporting_time_zone,
+    downloadUrl: downloadUrl(token),
+    expiresAt: expiresAt!,
+  });
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -146,10 +143,11 @@ async function sendEmail(request: ExportRequest): Promise<void> {
     const permanent = [400, 401, 403, 422].includes(response.status);
     throw new Error(`${permanent ? 'permanent' : 'transient'}_resend_${response.status}`);
   }
-  const { error } = await client.from('job_export_requests').update({
+  const { data: sentRow, error } = await client.from('job_export_requests').update({
     delivery_state: 'sent', resend_message_id: payload.id ?? null, sent_at: new Date().toISOString(), delivery_attempts: deliveryAttempt, failure_code: null,
-  }).eq('id', request.id);
+  }).eq('id', request.id).eq('delivery_state', 'processing').select('id').maybeSingle();
   if (error) throw new Error(`sent_state_${errorCode(error)}`);
+  if (!sentRow) throw new Error('request_revoked');
 }
 
 async function processMessage(messageId: number, requestId: string, readCount: number) {
@@ -166,6 +164,11 @@ async function processMessage(messageId: number, requestId: string, readCount: n
     await client.rpc('ack_job_export_queue_message', { p_message_id: messageId });
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'unknown';
+    if (reason === 'request_revoked') {
+      await markRevokedRequestCleaned(working, exportObjectPath(working.user_id, working.id));
+      await client.rpc('ack_job_export_queue_message', { p_message_id: messageId });
+      return;
+    }
     const terminal = reason.startsWith('permanent_') || reason === 'csv_too_large' || reason === 'token_hash_mismatch' || readCount >= 5;
     if (terminal) {
       const current = working;
@@ -199,7 +202,7 @@ Deno.serve(async (request) => {
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
   if (!workerAuthorized(request)) return json({ error: 'unauthorized' }, 401);
   const client = serverClient();
-  const { data, error } = await client.rpc('claim_job_export_queue_messages', { p_quantity: 5 });
+  const { data, error } = await client.rpc('claim_job_export_queue_messages', { p_quantity: 1 });
   if (error) return json({ error: 'temporarily_unavailable' }, 503);
   for (const message of (data ?? []) as Array<{ message_id: number; request_id: string; read_count: number }>) {
     await processMessage(message.message_id, message.request_id, message.read_count);
