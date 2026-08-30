@@ -64,6 +64,12 @@ begin
   if not exists (select 1 from pgmq.list_queues() where queue_name = 'job_exports') then
     raise exception 'job_exports queue missing';
   end if;
+  if coalesce((select schedule from cron.job where jobname = 'process_job_exports'), '') <> '*/2 * * * *' then
+    raise exception 'job export processor must run every two minutes';
+  end if;
+  if coalesce((select schedule from cron.job where jobname = 'cleanup_job_exports'), '') <> '0 0 * * *' then
+    raise exception 'job export cleanup must run daily at midnight UTC';
+  end if;
 end $$;
 
 select set_config('fieldsoli.export_test_user_id', gen_random_uuid()::text, true);

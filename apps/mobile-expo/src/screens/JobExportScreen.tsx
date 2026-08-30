@@ -158,14 +158,16 @@ export function JobExportScreen({ onBack, onBackToHome }: JobExportScreenProps) 
 
   const resultCopy =
     requestState.kind === 'confirmed'
-      ? `Your ${activeYear} job export has been requested. It will be delivered to ${requestState.email} within 15 minutes. The download link expires within 24 hours from receipt.`
+      ? `Your ${activeYear} job export has been requested. It will be delivered to ${requestState.email} within a few minutes. The download link expires within 24 hours from receipt.`
       : requestState.kind === 'no_eligible_jobs'
         ? `No completed jobs found for ${activeYear}.`
-        : requestState.kind === 'rate_limited'
-          ? `You’ve reached the export limit. Try again after ${formatRetryAt(requestState.retryAt)}.`
-          : requestState.kind === 'error'
-            ? 'Couldn’t request your export. Try again later.'
-            : null;
+        : null;
+  const requestErrorCopy =
+    requestState.kind === 'rate_limited'
+      ? `You’ve reached the export limit. Try again after ${formatRetryAt(requestState.retryAt)}.`
+      : requestState.kind === 'error'
+        ? 'Couldn’t request your export. Try again later.'
+        : null;
 
   return (
     <View style={styles.root}>
@@ -191,7 +193,7 @@ export function JobExportScreen({ onBack, onBackToHome }: JobExportScreenProps) 
 
           <View style={styles.body}>
             {terminalResult ? (
-              <View accessibilityLiveRegion="polite" style={styles.resultCard}>
+              <View accessibilityLiveRegion="polite" testID="job-export-result-card" style={styles.resultCard}>
                 {requestState.kind === 'confirmed' ? (
                   <Text selectable style={[typography.titleH3, styles.resultTitle]}>Export requested</Text>
                 ) : null}
@@ -242,10 +244,15 @@ export function JobExportScreen({ onBack, onBackToHome }: JobExportScreenProps) 
                   </Text>
                 </View>
 
-                {resultCopy ? (
-                  <View accessibilityLiveRegion="polite" style={styles.resultCard}>
-                    <Text selectable style={[typography.body, styles.resultText]}>{resultCopy}</Text>
-                  </View>
+                {requestErrorCopy ? (
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    selectable
+                    testID="job-export-request-error"
+                    style={[typography.bodySmall, styles.errorText]}
+                  >
+                    {requestErrorCopy}
+                  </Text>
                 ) : null}
 
                 <Pressable
