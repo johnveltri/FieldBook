@@ -180,3 +180,58 @@ The mobile app calls `delete-account` to remove the authenticated user. When Pos
 - `POSTHOG_API_HOST` — optional; defaults to `https://us.posthog.com` (API host, not the capture/ingestion host)
 
 If the PostHog secrets are absent, account deletion still succeeds; analytics cleanup is skipped locally.
+
+Account deletion first revokes every active Job Summary export and removes all
+known or deterministic export object paths. If an export worker is currently
+generating a file, the function returns retryable `409 export_cleanup_pending`
+without deleting the Auth user; retrying after the worker observes the
+revocation completes deletion. Storage cleanup failures likewise leave the
+account intact instead of orphaning a private CSV.
+
+## Job Summary CSV exports
+
+The export pipeline is migration-managed: it creates the private `job-exports`
+Storage bucket, `job_export_requests`, the durable `job_exports` PGMQ queue,
+and schedules a protected processor every minute plus a midnight-UTC cleanup.
+Do not add Storage policies or table grants for client roles.
+
+Before deploying the functions, configure these values separately in **each**
+Supabase project under **Edge Functions → Secrets** (or with `supabase secrets set`):
+
+- `RESEND_EXPORT_API_KEY` — a Resend sending-only key restricted to
+  `fieldsoli.com`; use a separate key from Supabase Auth SMTP.
+- `EXPORT_WORKER_SECRET` — unique cryptographically random value of at least
+  32 bytes. It protects cron invocations of the processing and cleanup functions.
+- `EXPORT_TOKEN_SECRET` — a different unique cryptographically random value of
+  at least 32 bytes. The worker HMACs the request id with it to reconstruct the
+  same opaque 32-byte bearer token during retries while the database stores
+  only the token SHA-256 hash. Never reuse `EXPORT_WORKER_SECRET`.
+- `EXPORT_DOWNLOAD_BASE_URL` — staging’s deployed marketing URL or
+  `https://fieldsoli.com/exports/download` in production.
+
+Create these two Supabase Vault secrets in each hosted project before the
+migration schedules can run:
+
+```sql
+select vault.create_secret('https://YOUR-PROJECT.supabase.co', 'export_project_url');
+select vault.create_secret('THE-SAME-EXPORT_WORKER_SECRET', 'export_worker_secret');
+```
+
+The migration reads those Vault entries at runtime and sends the worker secret
+only in `x-export-worker-secret`; do not put URLs, API keys, or secrets in
+migration SQL. Confirm the `process_job_exports` and `cleanup_job_exports`
+entries appear in `cron.job` after deployment.
+
+### Resend setup and email contract
+
+In Resend, verify `fieldsoli.com` with SPF/DKIM (and DMARC before production),
+create the restricted sending key above, disable open and click tracking, and
+make sure `support@fieldsoli.com` is monitored. Do not configure a Resend
+template, webhook, CSV attachment, or tracking pixel: the deployed processor
+renders both HTML and plain-text email versions.
+
+Every accepted export is sent from `FieldSoli <noreply@fieldsoli.com>` with
+Reply-To `support@fieldsoli.com` and subject `Your YYYY FieldSoli job export is
+ready`. It contains the download button and text fallback URL, exact local-zone
+expiry, bearer-link warning, sensitive-data warning, unexpected-request advice,
+and support address—but no job/customer/financial data and no attachment.

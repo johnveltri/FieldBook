@@ -13,6 +13,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
+import { buildExportDeletionPlan } from '../_shared/job-export-deletion.ts';
 import { queuePostHogPersonDeletion } from './posthog.ts';
 
 const CORS_HEADERS = {
@@ -77,6 +78,40 @@ Deno.serve(async (req) => {
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+
+  // Export artifacts are intentionally private and are not covered by the
+  // database FK cascade. Revoke every request before inspecting Storage so a
+  // claimed worker sees the revocation before it can publish new state.
+  const revokedAt = new Date().toISOString();
+  const { error: revokeErr } = await adminClient
+    .from('job_export_requests')
+    .update({ delivery_state: 'revoked', token_hash: null, expires_at: revokedAt })
+    .eq('user_id', userId);
+  if (revokeErr) {
+    return jsonResponse({ error: 'export_cleanup_failed' }, 500);
+  }
+
+  const { data: exportRows, error: exportsErr } = await adminClient
+    .from('job_export_requests')
+    .select('id, object_path, generation_state')
+    .eq('user_id', userId);
+  if (exportsErr) {
+    return jsonResponse({ error: 'export_cleanup_failed' }, 500);
+  }
+
+  const plan = buildExportDeletionPlan(userId, exportRows ?? []);
+  if (plan.generationInFlight) {
+    // The worker will observe delivery_state=revoked, remove any upload, and
+    // leave generation_state=deleted. Retrying account deletion is then safe.
+    return jsonResponse({ error: 'export_cleanup_pending' }, 409);
+  }
+
+  if (plan.objectPaths.length > 0) {
+    const { error: removeErr } = await adminClient.storage.from('job-exports').remove(plan.objectPaths);
+    if (removeErr && !/not found|does not exist|404/i.test(removeErr.message ?? '')) {
+      return jsonResponse({ error: 'export_cleanup_failed' }, 500);
+    }
+  }
 
   const { error: deleteErr } = await adminClient.auth.admin.deleteUser(userId);
   if (deleteErr) {

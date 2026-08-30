@@ -1,4 +1,5 @@
 node_modules/
 .expo/
+**/.DS_Store
 
 .vercel

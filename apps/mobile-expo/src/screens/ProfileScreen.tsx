@@ -38,6 +38,7 @@ import {
 import {
   ProfileAccountIcon,
   ProfileEditPencilIcon,
+  ProfileLockIcon,
   ProfilePersonalInfoIcon,
   ProfilePlanIcon,
   ProfileTrashIcon,
@@ -53,6 +54,7 @@ import { analytics, changedFields, emailProperties, errorProperties } from '../l
 import { supabase } from '../lib/supabase';
 import { PrivacyChoicesScreen } from './PrivacyChoicesScreen';
 import { HelpScreen } from './HelpScreen';
+import { JobExportScreen } from './JobExportScreen';
 import { OverlaySlideHost } from '../navigation/OverlaySlideHost';
 import { TRADE_PRESETS, formatTradesForDisplay } from '../lib/trades';
 import {
@@ -99,9 +101,11 @@ type ProfileFlow =
 
 export type ProfileScreenProps = {
   onBack: () => void;
+  /** Closes the Profile overlay and returns to the home tab. */
+  onBackToHome?: () => void;
 };
 
-export function ProfileScreen({ onBack }: ProfileScreenProps) {
+export function ProfileScreen({ onBack, onBackToHome = onBack }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
@@ -134,6 +138,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [privacyChoicesOpen, setPrivacyChoicesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [jobExportOpen, setJobExportOpen] = useState(false);
+  const [jobExportMounted, setJobExportMounted] = useState(false);
   const [helpMounted, setHelpMounted] = useState(false);
   const [privacyMounted, setPrivacyMounted] = useState(false);
   useEffect(() => {
@@ -418,6 +424,11 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     setHelpOpen(true);
   }, []);
 
+  const openJobExport = useCallback(() => {
+    setJobExportMounted(true);
+    setJobExportOpen(true);
+  }, []);
+
   const sendFeedback = useCallback(() => {
     analytics.capture('feedback_composer_opened', { source: 'profile' });
     void openFeedbackEmail('profile')
@@ -601,6 +612,16 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
 
             <ProfileSectionHeader
               typography={typography}
+              title="Your data"
+              icon={<ProfileLockIcon color={color('Brand/Accent')} />}
+            />
+            <ProfileRowsCard
+              typography={typography}
+              rows={[{ kind: 'link', label: 'Export Job Summary', onPress: openJobExport }]}
+            />
+
+            <ProfileSectionHeader
+              typography={typography}
               title="Account"
               icon={<ProfileAccountIcon color={color('Brand/Accent')} />}
             />
@@ -655,6 +676,17 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             userId={session.user.id}
             onBack={() => setPrivacyChoicesOpen(false)}
           />
+        </OverlaySlideHost>
+      ) : null}
+
+      {jobExportMounted && session?.user ? (
+        <OverlaySlideHost
+          visible={jobExportOpen}
+          axis="horizontal"
+          onRequestClose={() => setJobExportOpen(false)}
+          onExited={() => setJobExportMounted(false)}
+        >
+          <JobExportScreen onBack={() => setJobExportOpen(false)} onBackToHome={onBackToHome} />
         </OverlaySlideHost>
       ) : null}
     </View>

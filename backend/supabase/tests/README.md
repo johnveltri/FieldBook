@@ -44,6 +44,10 @@ Or run all DB tests:
 npm run test:db
 ```
 
+The Job Summary CSV export migration is covered by
+`job_exports_schema.test.sql`; it requires the local stack after the export
+migration has been applied.
+
 Each test prints a final `*.test.sql PASSED` row on success. Any failed
 `do $$ … raise exception … $$` inside the file causes `psql` to exit
 non-zero because of the `-v ON_ERROR_STOP=1` flag.
