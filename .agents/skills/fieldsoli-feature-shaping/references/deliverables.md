@@ -47,12 +47,12 @@ Fastest response format: <for example, "1A, 2 yes, 3 free text">
 
 Prefer yes/no, bounded choices, or short free-text answers. There is no decision-count cap. Group questions by topic and dependency, and omit a recommendation when obtaining the PM's direct answer is faster than researching one. The PM must always be able to replace a recommendation with a different direction.
 
-## Implementation Contract
+## Product Spec
 
 ```markdown
 # <Feature>
 
-**Status:** Draft | Approved implementation contract
+**Status:** Draft | Approved product spec
 **Feature source:** <user-supplied name or brief>
 **Last updated:** YYYY-MM-DD
 
@@ -64,50 +64,41 @@ Prefer yes/no, bounded choices, or short free-text answers. There is no decision
 
 - <Decision and resulting rule>
 
-## Product behavior
+## Scope
 
-### Entry points
-### Primary flow
-### Loading and interruption
-### Empty states
-### Errors, retry, and recovery
-### Completion and return behavior
+- Smallest useful release: ...
+- Users and surfaces included: ...
+- Known dependent features or constraints: ...
 
-## Data and lifecycle contract
+## Product requirements
 
-- Ownership
-- Relationships
-- State transitions
-- Deletion, archival, and historical behavior
-- Migration and backward compatibility
+| ID | Requirement | Acceptance evidence |
+|---|---|---|
+| REQ-01 | ... | ... |
 
-## Security, privacy, and analytics
+## Artifact manifest
 
-- Authorization boundary
-- Sensitive data and retention
-- Analytics events or explicit absence
-- Provider or legal implications
+| Artifact | Applicability | Path or inline section | Rationale |
+|---|---|---|---|
+| State model | Required / Inlined / Not applicable | ... | ... |
+| Data contract | Required / Inlined / Not applicable | ... | ... |
+| UX contract | Required / Inlined / Not applicable | ... | ... |
+| Text contract | Required / Inlined / Not applicable | ... | ... |
 
-## Cost and dependency contract
+## Product constraints
 
-- Current free-tier limits and expected usage
-- Upgrade or limit trigger
-- Licensing, lock-in, and migration considerations
-- Additional engineering or operations accepted to extend free-tier runway
+- Brand and field-speed constraints: ...
+- Security, privacy, legal, or financial constraints: ...
+- Free-tier and dependency constraints: ...
+- Compatibility and release constraints: ...
 
-## Consumer-grade UX, accessibility, and platform behavior
+## Acceptance scenarios
 
-- Brand-strategy fit and field-speed behavior
-- Visual and interaction quality bar
-- Loading, empty, error, offline, retry, interruption, and completion feedback
-- Relevant screen-size, input, keyboard, safe-area, orientation, assistive-technology, motion, and platform requirements
-- Component approach: current design system, native primitive, external library, or custom implementation
+- Given ..., when ..., then ...
 
-## Verification contract
+## Agent-decided assumptions
 
-- Automated requirements and test layer
-- Manual device or provider checks
-- Release-specific checks
+- <Reversible implementation assumption and evidence>
 
 ## Non-goals
 
@@ -124,16 +115,22 @@ Prefer yes/no, bounded choices, or short free-text answers. There is no decision
 
 Use exact approved copy when the contract contains user-facing language. Avoid vague requirements such as “handle errors gracefully.”
 
+The spec owns product scope and requirements; it does not replace the applicable supporting contracts. Read [contract-artifacts.md](contract-artifacts.md) for their applicability tests, ownership, and templates.
+
 ## Build Plan
 
-For a one-file feature contract, save this beside it as `<feature-slug>.plan.md`. For a feature directory, use `plan.md`.
+For a one-file feature spec, save this beside it as `<feature-slug>.plan.md`. For a feature directory, use `plan.md`.
 
 ```markdown
 # <Feature> Build Plan
 
 ## Readiness basis
 
-- Approved contract: <path>
+- Approved product spec: <path>
+- State model: <path, inlined, or not applicable>
+- Data contract: <path, inlined, or not applicable>
+- UX contract: <path, inlined, or not applicable>
+- Text contract: <path, inlined, or not applicable>
 - Source revision reviewed: <commit>
 - Remaining blockers: None | <list>
 
@@ -143,9 +140,9 @@ For a one-file feature contract, save this beside it as `<feature-slug>.plan.md`
 
 ## Change map
 
-| Area | Expected files/systems | Contract requirement |
+| Area | Expected files/systems | Requirement or contract rule |
 |---|---|---|
-| ... | ... | ... |
+| ... | ... | REQ-*, STATE-*, DATA-*, UX-*, TXT-* |
 
 ## Implementation sequence
 
@@ -160,7 +157,7 @@ For a one-file feature contract, save this beside it as `<feature-slug>.plan.md`
 
 ## Verification matrix
 
-| Requirement | Test layer | Planned evidence |
+| Requirement or contract rule | Test layer | Planned evidence |
 |---|---|---|
 | ... | Unit, component, database, integration, E2E, or manual | ... |
 
@@ -190,14 +187,20 @@ Do not turn the plan into speculative code. It should communicate exact change b
 **Verdict:** Ready for Implementation | Blocked
 
 ### Contract coverage
-- Requirements with planned verification: N/N
-- Unresolved owner decisions: N
+- Product requirements with planned verification: N/N
+- State rules with planned verification: N/N or N/A
+- Data rules with planned verification: N/N or N/A
+- UX rules with planned verification: N/N or N/A
+- Text rules with planned verification: N/N or N/A
+- Unresolved PM decisions: N
 - Unresolved technical blockers: N
 
 ### Cross-artifact review
 - Contradictions: None | <list>
-- Unplanned requirements: None | <list>
-- Plan tasks without requirements: None | <list>
+- Unplanned requirements or contract rules: None | <list>
+- Plan tasks without requirements or contract rules: None | <list>
+- Missing or unjustified contract artifacts: None | <list>
+- State/data/UX/text mismatches: None | <list>
 
 ### Shaping throughput
 - PM questions asked: N

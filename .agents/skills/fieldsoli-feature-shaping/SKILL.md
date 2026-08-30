@@ -1,6 +1,6 @@
 ---
 name: fieldsoli-feature-shaping
-description: Shape a FieldSoli feature into an approved decision packet, implementation contract, and build plan while minimizing combined PM and agent elapsed time. Use when defining, scoping, or preparing a FieldSoli feature for implementation; do not use for ordinary bug fixes or an already-approved implementation task.
+description: Shape a FieldSoli feature into an approved product spec, applicable state/data/UX/text contracts, and build plan while minimizing combined PM and agent elapsed time. Use when defining, scoping, or preparing a FieldSoli feature for implementation; do not use for ordinary bug fixes or an already-approved implementation task.
 ---
 
 # FieldSoli Feature Shaping
@@ -64,8 +64,8 @@ Use a reversible assumption only when it is both safe and faster than asking. A 
 
 Classify the feature before shaping:
 
-- **Small and reversible:** Produce a compact brief containing the outcome, requirements, non-goals, acceptance checks, and implementation outline. Skip a separate decision packet when there are no consequential decisions.
-- **Material or cross-cutting:** Use the full decision-packet, contract, plan, and readiness workflow below.
+- **Small and reversible:** Produce a compact spec containing the outcome, requirements, non-goals, acceptance checks, contract-applicability manifest, and implementation outline. Inline a small applicable contract only when it remains unambiguous. Skip a separate decision packet when there are no consequential decisions.
+- **Material or cross-cutting:** Use the full decision-packet, product spec, applicable contract artifacts, plan, and readiness workflow below. Separate contract files are the default.
 - **Coupled foundation:** If the feature constrains known dependent features, first map the shared domain and lifecycle decisions. Customers, Estimates, Jobs, Invoices, and Payments are coupled until evidence shows otherwise.
 
 Do not force large-feature ceremony onto a small change. Do not disguise an irreversible or cross-feature decision as an implementation detail to keep the packet short.
@@ -126,21 +126,32 @@ Requirements:
 
 There is no maximum number of PM decisions. Group questions by topic and dependency so they are quick to answer. If the list is long, use multiple short rounds when that shortens total time; do not silently decide, defer, or split scope merely to keep the packet small.
 
-Do not write the final contract while consequential decisions remain unresolved.
+Do not write the final spec and contract set while consequential decisions remain unresolved.
 
-### 5. Write the Implementation Contract
+### 5. Write the Product Spec and Contract Set
 
-After the owner responds, incorporate the decisions and write the contract using the format in [references/deliverables.md](references/deliverables.md).
+After the PM responds, incorporate the decisions and write the product spec using [references/deliverables.md](references/deliverables.md). Read [references/contract-artifacts.md](references/contract-artifacts.md) and create every applicable supporting contract.
 
-Use the existing `docs/specs/<feature-slug>.md` convention when one file remains readable. For a complex feature that needs multiple maintained artifacts, use:
+For a small feature, use the existing `docs/specs/<feature-slug>.md` convention when the spec and any inlined contract remain readable. For a material or cross-cutting feature, use:
 
 ```text
 docs/specs/<feature-slug>/
   spec.md
+  state-model.md
+  data-contract.md
+  ux-contract.md
+  text-contract.md
   plan.md
 ```
 
-The contract must distinguish:
+Create only applicable supporting files, but record every artifact as `Required`, `Inlined`, or `Not applicable` with a rationale in the spec's artifact manifest. Applicability is based on behavior, not feature size:
+
+- `state-model.md` for meaningful lifecycle, workflow, asynchronous, interruption, recovery, or status behavior;
+- `data-contract.md` for persisted, derived, imported/exported, queued, provider, permissioned, or migrated data;
+- `ux-contract.md` for any user-visible flow or interaction change; and
+- `text-contract.md` for any new or changed user-facing language, including errors, notifications, emails, accessibility labels, and exported headings.
+
+The spec and contracts together must distinguish:
 
 - approved behavior;
 - agent-decided implementation assumptions;
@@ -150,9 +161,20 @@ The contract must distinguish:
 
 Do not add speculative states, data, endpoints, or extensibility solely for a possible future feature. Preserve explicit seams required by dependent features the PM has identified.
 
+Keep ownership clear:
+
+- `spec.md` owns outcome, scope, product requirements, acceptance criteria, decisions, non-goals, and the artifact manifest;
+- `state-model.md` owns states, events, guards, transitions, terminal behavior, interruption, retry, and recovery;
+- `data-contract.md` owns data meaning, ownership, invariants, relationships, interfaces, authorization, migration, retention, and quota implications;
+- `ux-contract.md` owns journeys, screen/surface behavior, interaction rules, platform behavior, accessibility, and consumer-grade quality;
+- `text-contract.md` owns exact user-visible strings, variables, tone, and fallback behavior; and
+- `plan.md` owns implementation order, file/system changes, migration mechanics, verification, and release gates.
+
+Cross-reference instead of duplicating rules. If two artifacts disagree, the feature is not ready; resolve the conflict rather than inventing precedence.
+
 ### 6. Produce the Build Plan
 
-Create the plan only after the product contract is stable. The plan must include:
+Create the plan only after the spec and applicable contract artifacts are stable. The plan must include:
 
 - the current-state implementation evidence;
 - concrete files and systems expected to change;
@@ -163,7 +185,9 @@ Create the plan only after the product contract is stable. The plan must include
 - documentation and product-context closeout; and
 - separate deployment, submission, processing, and public-release gates when relevant.
 
-An implementation agent should be able to execute the plan without asking the owner routine technical questions.
+An implementation agent should be able to execute the plan without asking the PM routine technical questions.
+
+For material features, use stable identifiers from the contracts in the plan and verification matrix, such as `REQ-*`, `STATE-*`, `DATA-*`, `UX-*`, and `TXT-*`. Every applicable contract rule must map to an implementation step or verification entry; the plan must not introduce new product behavior.
 
 For any new or expanded third-party dependency, document the current free-tier limits, expected usage, overage or upgrade trigger, lock-in, licensing, and a no-cost alternative when credible. Prefer staying within free tiers for as long as practical, even when that justifies modest additional engineering, but make the maintenance tradeoff visible.
 
@@ -171,7 +195,7 @@ For user-facing work, explicitly compare reuse of current components, platform/n
 
 ### 7. Run a Readiness Review
 
-Review the supplied feature intent, contract, plan, and verification matrix together. Look specifically for:
+Review the supplied feature intent, spec, applicable contracts, plan, and verification matrix together. Look specifically for:
 
 - contradictory requirements;
 - unhandled loading, empty, error, interruption, retry, and recovery behavior;
@@ -181,7 +205,11 @@ Review the supplied feature intent, contract, plan, and verification matrix toge
 - free-tier quota, cost-escalation, licensing, or vendor-lock-in gaps;
 - UI that is merely functional rather than consumer-grade, including weak loading, empty, error, motion, keyboard, safe-area, or platform behavior;
 - requirements without verification; and
-- plan tasks without a corresponding requirement.
+- plan tasks without a corresponding requirement or contract rule;
+- lifecycle states without data or UX representation where one is required;
+- data states the lifecycle cannot produce or recover from;
+- UX states without approved text; and
+- text entries that are unreachable or lack a defined UX surface.
 
 Use an isolated read-only reviewer when the environment supports it and the user has authorized delegation. Otherwise perform a separate review pass without extending the design.
 
@@ -193,7 +221,8 @@ End with:
 
 - `Readiness: Ready for Implementation` or `Readiness: Blocked`;
 - the exact artifact paths created or updated;
-- remaining owner decisions, if any;
+- the applicability status of `state-model.md`, `data-contract.md`, `ux-contract.md`, and `text-contract.md`;
+- remaining PM decisions, if any;
 - known deferred work;
 - the verification expected before merge and before release; and
 - the shaping-throughput metrics from [references/deliverables.md](references/deliverables.md).

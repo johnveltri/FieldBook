@@ -1,0 +1,278 @@
+# FieldSoli Contract Artifacts
+
+Use these contracts to make implementation-critical behavior explicit without duplicating the product spec. A contract is required when its subject changes; do not create an empty file solely to complete the directory.
+
+## Shared Rules
+
+- The product spec declares each artifact `Required`, `Inlined`, or `Not applicable`, with a one-sentence rationale.
+- Separate files are the default for material and cross-cutting features. Inline only a genuinely small contract that remains easy to review and reference.
+- For material features, give enforceable rules stable identifiers: `STATE-*`, `DATA-*`, `UX-*`, and `TXT-*`. Use those identifiers in the plan and verification matrix.
+- Record observable behavior and durable semantics, not speculative implementation code.
+- Link to the owning rule instead of copying it. If a summary is useful, label it as a summary and keep one authoritative location.
+- Mark an unresolved rule as a blocker. Do not fill gaps with an implementation-time guess.
+
+## State Model
+
+Create `state-model.md` when the feature introduces or changes meaningful domain status, multi-step workflow, asynchronous processing, interruption, retry, recovery, or terminal behavior.
+
+Keep domain/process states separate from transient presentation states. The UX contract may describe `loading` or `saving`; the state model should include them only when they affect durable behavior, legal transitions, recovery, or user expectations.
+
+```markdown
+# <Feature> State Model
+
+## Scope
+
+- Modeled entity or process: ...
+- Source of truth for current state: ...
+- Persisted states: ...
+- Derived states: ...
+
+## State definitions
+
+| ID | State | Meaning | Persisted or derived | Entry condition | Exit condition | Terminal? |
+|---|---|---|---|---|---|---|
+| STATE-01 | ... | ... | ... | ... | ... | Yes/No |
+
+## Events
+
+| Event | Initiator | Preconditions | Payload or evidence | Idempotency rule |
+|---|---|---|---|---|
+| ... | User/System/Provider | ... | ... | ... |
+
+## Transitions
+
+| From | Event | Guard | To | Side effects | Failure result |
+|---|---|---|---|---|---|
+| ... | ... | ... | ... | ... | ... |
+
+## Invalid, duplicate, and concurrent events
+
+- <Events that must be rejected, ignored, deduplicated, or serialized>
+
+## Interruption, retry, and recovery
+
+- App termination or navigation away: ...
+- Network loss or timeout: ...
+- Retry ownership and limits: ...
+- Stale or partially completed work: ...
+- Reconciliation after conflicting local/provider state: ...
+
+## Invariants
+
+- <Rule that must hold across every transition>
+
+## Verification obligations
+
+- <Transition, invariant, race, retry, or recovery case that must be proven>
+```
+
+A diagram may supplement the tables when it makes branching or concurrency clearer, but it does not replace exact transitions and guards.
+
+## Data Contract
+
+Create `data-contract.md` when the feature reads or changes persisted, derived, imported, exported, queued, permissioned, provider-owned, or migrated data.
+
+```markdown
+# <Feature> Data Contract
+
+## Scope and terminology
+
+- Canonical business terms: ...
+- Existing source of truth: ...
+- New or changed data boundaries: ...
+
+## Entities and ownership
+
+| Entity | Meaning | Owner/tenant | Source of truth | Retention/deletion |
+|---|---|---|---|---|
+| ... | ... | ... | ... | ... |
+
+## Fields
+
+| ID | Entity.field | Type/format | Required/default | Meaning and validation | Source | Sensitive? |
+|---|---|---|---|---|---|---|
+| DATA-01 | ... | ... | ... | ... | User/System/Derived/Provider | Yes/No |
+
+## Relationships and lifecycle effects
+
+| Relationship | Cardinality | Creation rule | Update rule | Delete/archive behavior |
+|---|---|---|---|---|
+| ... | ... | ... | ... | ... |
+
+## Invariants and calculations
+
+- <Uniqueness, ownership, totals, rounding, time-zone, ordering, or derived-value rule>
+
+## Interfaces
+
+| Interface | Direction | Request/event/file shape | Response/result | Auth | Idempotency/versioning |
+|---|---|---|---|---|---|
+| API/RPC/Queue/File/Provider | ... | ... | ... | ... | ... |
+
+## Authorization, privacy, and retention
+
+- Authentication and ownership boundary: ...
+- RLS/service-role or server-only behavior: ...
+- Sensitive fields, logs, analytics, and redaction: ...
+- Export, deletion, and retention obligations: ...
+
+## Migration and compatibility
+
+- Existing-row behavior and defaults: ...
+- Backfill or lazy migration: ...
+- Old-client compatibility: ...
+- Rollback or forward-fix boundary: ...
+
+## Cost and quota envelope
+
+- Free-tier resources consumed: ...
+- Expected usage and assumptions: ...
+- Limit/upgrade trigger and degradation behavior: ...
+- Lock-in, licensing, and migration considerations: ...
+
+## Verification obligations
+
+- <Schema, constraint, RLS, interface, migration, calculation, quota, or compatibility case>
+```
+
+Use real product terminology and active data. A data contract may reference planned tables or endpoints, but must define semantics independently of one implementation when a business rule is involved.
+
+## UX Contract
+
+Create `ux-contract.md` for every feature that changes a user-visible flow, surface, interaction, or feedback state.
+
+The UX contract owns behavior, not exact wording. Reference `TXT-*` entries for strings and `STATE-*` entries for durable lifecycle state.
+
+```markdown
+# <Feature> UX Contract
+
+## User and context
+
+- Primary user and job to be done: ...
+- Field context, interruption risk, and speed target: ...
+- Entry points and prerequisites: ...
+- Successful exit and return destination: ...
+
+## Primary journey
+
+| Step | Surface | User action | System response | Next state/surface |
+|---:|---|---|---|---|
+| 1 | ... | ... | ... | ... |
+
+## Surface-state matrix
+
+| Surface | Loading | Empty | Ready | Saving/processing | Success | Error/retry | Offline/interrupted |
+|---|---|---|---|---|---|---|---|
+| ... | ... | ... | ... | ... | ... | ... | ... |
+
+## Interaction rules
+
+- Primary and secondary actions: ...
+- Validation timing and disabled states: ...
+- Back, dismiss, cancel, and unsaved-change behavior: ...
+- Destructive actions, confirmation, and undo: ...
+- Repeated taps, duplicate submission, and optimistic behavior: ...
+- Keyboard, focus, scrolling, sheets, and touch-through: ...
+
+## Navigation and continuity
+
+- Deep links or alternate entry: ...
+- App backgrounding, termination, and restoration: ...
+- Cross-device or stale-data behavior: ...
+
+## Responsive and platform behavior
+
+- Phone, tablet, portrait, landscape, and constrained layouts: ...
+- Safe areas, keyboard, system Back, and platform conventions: ...
+- Reduced motion and motion/feedback purpose: ...
+
+## Accessibility
+
+- Reading/focus order and screen-reader behavior: ...
+- Labels, roles, state announcements, and dynamic updates: ...
+- Touch targets, contrast, text scaling, and non-color cues: ...
+
+## Visual and component quality
+
+- Relevant brand pillars and intended feel: ...
+- Existing design-system components assessed: ...
+- Native primitive, external library, or custom alternatives considered: ...
+- Selected approach and consumer-grade quality bar: ...
+- Loading, transition, feedback, and motion polish required: ...
+
+## Analytics and observability
+
+- User outcomes or failures that must be observable: ...
+- Events intentionally omitted: ...
+
+## Verification obligations
+
+- <Device, viewport, accessibility, interruption, recovery, visual, or interaction case>
+```
+
+Do not accept “match the existing component” as sufficient when the feature exposes a known quality weakness. State the interaction and finish expected.
+
+## Text Contract
+
+Create `text-contract.md` when a feature adds or changes visible copy, errors, confirmations, notifications, emails, accessibility labels, share/export headings, or provider-facing language.
+
+The text contract is the source of truth for exact wording. The UX contract defines when and where the text appears.
+
+```markdown
+# <Feature> Text Contract
+
+## Voice and terminology
+
+- Relevant brand principles: ...
+- Canonical nouns and verbs: ...
+- Terms to avoid: ...
+- Reading-level or brevity constraint: ...
+
+## String inventory
+
+| ID | Surface/context | Purpose | Exact text | Variables | Display condition | Accessibility/localization note |
+|---|---|---|---|---|---|---|
+| TXT-01 | ... | ... | “...” | `{name}` | ... | ... |
+
+## Variable contract
+
+| Variable | Meaning | Format | Missing/fallback behavior | Example |
+|---|---|---|---|---|
+| ... | ... | ... | ... | ... |
+
+## Error and recovery mapping
+
+| Error condition | User-visible text ID | Available action | Technical detail exposure |
+|---|---|---|---|
+| ... | TXT-... | Retry/Change/Contact/etc. | None/Sanitized |
+
+## External and asynchronous messages
+
+- Push notification: ...
+- Email subject/body: ...
+- Share sheet, generated file, or export headings: ...
+- Provider-hosted or system-owned copy boundary: ...
+
+## Approval status
+
+- PM-approved strings: ...
+- Agent-drafted strings awaiting approval: ...
+- Unresolved terminology: ...
+
+## Verification obligations
+
+- <Exact-string, variable, truncation, pluralization, accessibility-label, or fallback case>
+```
+
+Preserve PM-approved wording exactly. Never expose stack traces, provider internals, secrets, or sensitive data through user-visible error text. If exact wording remains undecided, keep the feature blocked rather than letting the implementation agent improvise consequential copy.
+
+## Cross-Artifact Review
+
+Before planning, confirm:
+
+- every product requirement in the product spec is implemented by at least one applicable contract or explicitly needs no supporting contract;
+- every state transition has compatible data semantics and a user experience when user-visible;
+- every persisted status is reachable, distinguishable, authorized, and recoverable as specified;
+- every UX state that presents language references an approved or clearly pending `TXT-*` entry;
+- every error/retry message corresponds to a real system condition and available action; and
+- no supporting contract expands scope beyond the product spec.
