@@ -1,6 +1,6 @@
 ---
 name: fieldsoli-feature-shaping
-description: Shape a FieldSoli feature into an approved product spec, applicable state/data/UX/text contracts, and build plan while minimizing combined PM and agent elapsed time. Use when defining, scoping, or preparing a FieldSoli feature for implementation; do not use for ordinary bug fixes or an already-approved implementation task.
+description: Shape a FieldSoli feature into an approved product spec, applicable state/data/UX/test contracts, and build plan while minimizing combined PM and agent elapsed time. Use when defining, scoping, or preparing a FieldSoli feature for implementation; do not use for ordinary bug fixes or an already-approved implementation task.
 ---
 
 # FieldSoli Feature Shaping
@@ -140,16 +140,16 @@ docs/specs/<feature-slug>/
   state-model.md
   data-contract.md
   ux-contract.md
-  text-contract.md
+  test-contract.md
   plan.md
 ```
 
-Create only applicable supporting files, but record every artifact as `Required`, `Inlined`, or `Not applicable` with a rationale in the spec's artifact manifest. Applicability is based on behavior, not feature size:
+Create only applicable supporting files, but record every artifact as `Required`, `Inlined`, or `Not applicable` with a rationale in the spec's artifact manifest. Applicability is based on behavior and verification risk, not a desire to minimize file count:
 
 - `state-model.md` for meaningful lifecycle, workflow, asynchronous, interruption, recovery, or status behavior;
 - `data-contract.md` for persisted, derived, imported/exported, queued, provider, permissioned, or migrated data;
 - `ux-contract.md` for any user-visible flow or interaction change; and
-- `text-contract.md` for any new or changed user-facing language, including errors, notifications, emails, accessibility labels, and exported headings.
+- a test contract for every implementation feature. Use separate `test-contract.md` for material or cross-cutting work, or whenever proof spans multiple test layers, environments, providers, devices, migrations, security boundaries, or release gates. A small low-risk feature may inline a compact test contract, but may not mark it `Not applicable`.
 
 The spec and contracts together must distinguish:
 
@@ -166,9 +166,9 @@ Keep ownership clear:
 - `spec.md` owns outcome, scope, product requirements, acceptance criteria, decisions, non-goals, and the artifact manifest;
 - `state-model.md` owns states, events, guards, transitions, terminal behavior, interruption, retry, and recovery;
 - `data-contract.md` owns data meaning, ownership, invariants, relationships, interfaces, authorization, migration, retention, and quota implications;
-- `ux-contract.md` owns journeys, screen/surface behavior, interaction rules, platform behavior, accessibility, and consumer-grade quality;
-- `text-contract.md` owns exact user-visible strings, variables, tone, and fallback behavior; and
-- `plan.md` owns implementation order, file/system changes, migration mechanics, verification, and release gates.
+- `ux-contract.md` owns journeys, screen/surface behavior, interaction rules, exact user-visible copy, platform behavior, accessibility, and consumer-grade quality;
+- `test-contract.md` owns quality risks, test scenarios, traceability, layers, fixtures, environments, automation/manual boundaries, and required evidence; and
+- `plan.md` owns implementation order, file/system changes, migration mechanics, execution sequencing, and release sequencing.
 
 Cross-reference instead of duplicating rules. If two artifacts disagree, the feature is not ready; resolve the conflict rather than inventing precedence.
 
@@ -180,14 +180,14 @@ Create the plan only after the spec and applicable contract artifacts are stable
 - concrete files and systems expected to change;
 - dependency-aware implementation order;
 - migration and backward-compatibility strategy;
-- automated test coverage mapped to requirements;
-- manual device, provider, or release checks;
+- implementation and evidence steps mapped to `TEST-*` scenarios;
+- automated coverage and justified manual device, provider, or release checks;
 - documentation and product-context closeout; and
 - separate deployment, submission, processing, and public-release gates when relevant.
 
 An implementation agent should be able to execute the plan without asking the PM routine technical questions.
 
-For material features, use stable identifiers from the contracts in the plan and verification matrix, such as `REQ-*`, `STATE-*`, `DATA-*`, `UX-*`, and `TXT-*`. Every applicable contract rule must map to an implementation step or verification entry; the plan must not introduce new product behavior.
+For material features, use stable identifiers across the contracts, plan, and test traceability matrix, such as `REQ-*`, `STATE-*`, `DATA-*`, `UX-*`, and `TEST-*`. Every applicable product rule must map to an implementation step and `TEST-*` coverage or an explicit manual-evidence rationale; the plan must not introduce new product behavior or verification requirements.
 
 For any new or expanded third-party dependency, document the current free-tier limits, expected usage, overage or upgrade trigger, lock-in, licensing, and a no-cost alternative when credible. Prefer staying within free tiers for as long as practical, even when that justifies modest additional engineering, but make the maintenance tradeoff visible.
 
@@ -195,7 +195,7 @@ For user-facing work, explicitly compare reuse of current components, platform/n
 
 ### 7. Run a Readiness Review
 
-Review the supplied feature intent, spec, applicable contracts, plan, and verification matrix together. Look specifically for:
+Review the supplied feature intent, spec, applicable contracts, plan, and test execution map together. Look specifically for:
 
 - contradictory requirements;
 - unhandled loading, empty, error, interruption, retry, and recovery behavior;
@@ -204,12 +204,13 @@ Review the supplied feature intent, spec, applicable contracts, plan, and verifi
 - privacy, security, accessibility, analytics, or release gaps;
 - free-tier quota, cost-escalation, licensing, or vendor-lock-in gaps;
 - UI that is merely functional rather than consumer-grade, including weak loading, empty, error, motion, keyboard, safe-area, or platform behavior;
-- requirements without verification; and
+- requirements without verification;
 - plan tasks without a corresponding requirement or contract rule;
 - lifecycle states without data or UX representation where one is required;
 - data states the lifecycle cannot produce or recover from;
-- UX states without approved text; and
-- text entries that are unreachable or lack a defined UX surface.
+- UX states without approved copy or recovery behavior;
+- product, state, data, or UX rules without `TEST-*` coverage or justified manual evidence; and
+- test cases that invent behavior absent from the product, state, data, or UX contracts.
 
 Use an isolated read-only reviewer when the environment supports it and the user has authorized delegation. Otherwise perform a separate review pass without extending the design.
 
@@ -221,7 +222,7 @@ End with:
 
 - `Readiness: Ready for Implementation` or `Readiness: Blocked`;
 - the exact artifact paths created or updated;
-- the applicability status of `state-model.md`, `data-contract.md`, `ux-contract.md`, and `text-contract.md`;
+- the applicability status of `state-model.md`, `data-contract.md`, `ux-contract.md`, and `test-contract.md`;
 - remaining PM decisions, if any;
 - known deferred work;
 - the verification expected before merge and before release; and

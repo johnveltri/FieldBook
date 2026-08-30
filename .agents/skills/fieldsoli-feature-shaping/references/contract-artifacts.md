@@ -6,7 +6,8 @@ Use these contracts to make implementation-critical behavior explicit without du
 
 - The product spec declares each artifact `Required`, `Inlined`, or `Not applicable`, with a one-sentence rationale.
 - Separate files are the default for material and cross-cutting features. Inline only a genuinely small contract that remains easy to review and reference.
-- For material features, give enforceable rules stable identifiers: `STATE-*`, `DATA-*`, `UX-*`, and `TXT-*`. Use those identifiers in the plan and verification matrix.
+- For material features, give enforceable rules stable identifiers: `STATE-*`, `DATA-*`, `UX-*`, and `TEST-*`. Use those identifiers across the plan and test traceability matrix.
+- A test contract is always required. It may be inlined for a small low-risk feature, but it is never `Not applicable`.
 - Record observable behavior and durable semantics, not speculative implementation code.
 - Link to the owning rule instead of copying it. If a summary is useful, label it as a summary and keep one authoritative location.
 - Mark an unresolved rule as a blocker. Do not fill gaps with an implementation-time guess.
@@ -141,7 +142,7 @@ Use real product terminology and active data. A data contract may reference plan
 
 Create `ux-contract.md` for every feature that changes a user-visible flow, surface, interaction, or feedback state.
 
-The UX contract owns behavior, not exact wording. Reference `TXT-*` entries for strings and `STATE-*` entries for durable lifecycle state.
+The UX contract owns user-visible behavior and exact wording. Reference `STATE-*` entries for durable lifecycle state and keep copy attached to the surface and condition where it appears.
 
 ```markdown
 # <Feature> UX Contract
@@ -200,6 +201,17 @@ The UX contract owns behavior, not exact wording. Reference `TXT-*` entries for 
 - Selected approach and consumer-grade quality bar: ...
 - Loading, transition, feedback, and motion polish required: ...
 
+## Content and copy
+
+| ID | Surface/state | Purpose | Exact text | Variables/fallback | Accessibility or truncation note |
+|---|---|---|---|---|---|
+| UX-... | ... | ... | “...” | ... | ... |
+
+- Canonical nouns and verbs: ...
+- Terms to avoid: ...
+- Error condition to recovery-action mapping: ...
+- Notification, email, share, generated-file, or export wording: ...
+
 ## Analytics and observability
 
 - User outcomes or failures that must be observable: ...
@@ -212,59 +224,86 @@ The UX contract owns behavior, not exact wording. Reference `TXT-*` entries for 
 
 Do not accept “match the existing component” as sufficient when the feature exposes a known quality weakness. State the interaction and finish expected.
 
-## Text Contract
+Preserve PM-approved wording exactly. Never expose stack traces, provider internals, secrets, or sensitive data through user-visible errors.
 
-Create `text-contract.md` when a feature adds or changes visible copy, errors, confirmations, notifications, emails, accessibility labels, share/export headings, or provider-facing language.
+## Test Contract
 
-The text contract is the source of truth for exact wording. The UX contract defines when and where the text appears.
+Create `test-contract.md` for every material or cross-cutting feature and whenever proof spans multiple layers, environments, providers, devices, migrations, security boundaries, or release gates. A small low-risk feature may inline this contract when a short traceability matrix fully describes the required proof.
+
+The test contract defines what evidence is required for confidence. It consumes product, state, data, and UX rules; it must not invent behavior or implementation scope.
 
 ```markdown
-# <Feature> Text Contract
+# <Feature> Test Contract
 
-## Voice and terminology
+## Quality objective and risk inventory
 
-- Relevant brand principles: ...
-- Canonical nouns and verbs: ...
-- Terms to avoid: ...
-- Reading-level or brevity constraint: ...
-
-## String inventory
-
-| ID | Surface/context | Purpose | Exact text | Variables | Display condition | Accessibility/localization note |
-|---|---|---|---|---|---|---|
-| TXT-01 | ... | ... | “...” | `{name}` | ... | ... |
-
-## Variable contract
-
-| Variable | Meaning | Format | Missing/fallback behavior | Example |
-|---|---|---|---|---|
-| ... | ... | ... | ... | ... |
-
-## Error and recovery mapping
-
-| Error condition | User-visible text ID | Available action | Technical detail exposure |
+| Risk | Impact | Likelihood | Required proof |
 |---|---|---|---|
-| ... | TXT-... | Retry/Change/Contact/etc. | None/Sanitized |
+| ... | High/Medium/Low | High/Medium/Low | ... |
 
-## External and asynchronous messages
+## Traceability matrix
 
-- Push notification: ...
-- Email subject/body: ...
-- Share sheet, generated file, or export headings: ...
-- Provider-hosted or system-owned copy boundary: ...
+| ID | Source rules | Scenario | Expected result | Layer | Automated or manual | Environment |
+|---|---|---|---|---|---|---|
+| TEST-01 | REQ-*, STATE-*, DATA-*, UX-* | ... | ... | Unit/Component/DB/Integration/E2E/Manual | ... | ... |
 
-## Approval status
+## Test layers and boundaries
 
-- PM-approved strings: ...
-- Agent-drafted strings awaiting approval: ...
-- Unresolved terminology: ...
+- Unit responsibilities and exclusions: ...
+- Component responsibilities and exclusions: ...
+- Database/RLS responsibilities and exclusions: ...
+- Integration/provider responsibilities and exclusions: ...
+- End-to-end responsibilities and exclusions: ...
+- Manual/device/release responsibilities and why they are not automated: ...
 
-## Verification obligations
+## Fixtures and test data
 
-- <Exact-string, variable, truncation, pluralization, accessibility-label, or fallback case>
+- Deterministic seed or fixture source: ...
+- Ownership/tenant isolation cases: ...
+- Boundary, empty, legacy, malformed, and maximum-size data: ...
+- Sensitive-data handling and cleanup: ...
+
+## Lifecycle, failure, and concurrency coverage
+
+- Every legal and illegal state transition: ...
+- Retry, timeout, duplicate, idempotency, race, and stale-state cases: ...
+- App interruption, process restart, and reconciliation cases: ...
+- Partial failure and recovery evidence: ...
+
+## Data, security, and migration coverage
+
+- Schema constraints, calculations, and invariants: ...
+- RLS, service-role, cross-tenant, and unauthorized access: ...
+- Migration, existing-row, old-client, and forward-fix behavior: ...
+- Export, retention, deletion, logging, and privacy boundaries: ...
+
+## UX and accessibility coverage
+
+- Loading, empty, ready, success, error, offline, interruption, and recovery states: ...
+- Exact critical copy, variables, truncation, and fallback behavior: ...
+- Keyboard, safe area, orientation, screen size, touch, focus, and system Back: ...
+- Screen reader, text scaling, reduced motion, contrast, and non-color cues: ...
+- Required device/OS matrix and visual evidence: ...
+
+## External dependencies and environments
+
+- Local, mocked, sandbox, preview, or production-safe environment per test: ...
+- Provider failure simulation and webhook/event fixtures: ...
+- Free-tier quota or resource-envelope checks: ...
+- Secrets, accounts, clocks, network, and nondeterminism controls: ...
+
+## Release gates and evidence
+
+| Gate | Required checks | Evidence | Blocking failure |
+|---|---|---|---|
+| Before merge / Before deployment / Before submission / Before public release | ... | Command, report, screenshot, provider receipt, or manual record | ... |
+
+## Deferred or intentionally untested
+
+- <Scenario, rationale, risk accepted, and approving decision>
 ```
 
-Preserve PM-approved wording exactly. Never expose stack traces, provider internals, secrets, or sensitive data through user-visible error text. If exact wording remains undecided, keep the feature blocked rather than letting the implementation agent improvise consequential copy.
+Prefer the cheapest reliable test layer. Do not use broad end-to-end tests when a lower layer proves the rule, but do not substitute mocks for a provider, database, platform, or release boundary whose real behavior is the risk. Manual checks require a stated reason and expected evidence.
 
 ## Cross-Artifact Review
 
@@ -273,6 +312,8 @@ Before planning, confirm:
 - every product requirement in the product spec is implemented by at least one applicable contract or explicitly needs no supporting contract;
 - every state transition has compatible data semantics and a user experience when user-visible;
 - every persisted status is reachable, distinguishable, authorized, and recoverable as specified;
-- every UX state that presents language references an approved or clearly pending `TXT-*` entry;
-- every error/retry message corresponds to a real system condition and available action; and
+- every UX state has defined content, error/retry behavior, and an available recovery action where applicable;
+- every `REQ-*`, `STATE-*`, `DATA-*`, and `UX-*` rule maps to `TEST-*` coverage or an explicit manual-evidence rationale;
+- every `TEST-*` scenario traces back to an owning product or supporting-contract rule;
+- real provider, database, device, security, migration, and release boundaries are exercised wherever mocking would hide the material risk; and
 - no supporting contract expands scope beyond the product spec.

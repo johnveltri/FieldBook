@@ -83,7 +83,7 @@ Prefer yes/no, bounded choices, or short free-text answers. There is no decision
 | State model | Required / Inlined / Not applicable | ... | ... |
 | Data contract | Required / Inlined / Not applicable | ... | ... |
 | UX contract | Required / Inlined / Not applicable | ... | ... |
-| Text contract | Required / Inlined / Not applicable | ... | ... |
+| Test contract | Required / Inlined | ... | ... |
 
 ## Product constraints
 
@@ -130,7 +130,7 @@ For a one-file feature spec, save this beside it as `<feature-slug>.plan.md`. Fo
 - State model: <path, inlined, or not applicable>
 - Data contract: <path, inlined, or not applicable>
 - UX contract: <path, inlined, or not applicable>
-- Text contract: <path, inlined, or not applicable>
+- Test contract: <path or inlined section>
 - Source revision reviewed: <commit>
 - Remaining blockers: None | <list>
 
@@ -142,7 +142,7 @@ For a one-file feature spec, save this beside it as `<feature-slug>.plan.md`. Fo
 
 | Area | Expected files/systems | Requirement or contract rule |
 |---|---|---|
-| ... | ... | REQ-*, STATE-*, DATA-*, UX-*, TXT-* |
+| ... | ... | REQ-*, STATE-*, DATA-*, UX-*, TEST-* |
 
 ## Implementation sequence
 
@@ -155,11 +155,11 @@ For a one-file feature spec, save this beside it as `<feature-slug>.plan.md`. Fo
 
 - <Additive rollout, backfill, old-client compatibility, rollback/forward-fix approach>
 
-## Verification matrix
+## Test execution map
 
-| Requirement or contract rule | Test layer | Planned evidence |
+| Test contract rules | Implementation step or gate | Planned evidence |
 |---|---|---|
-| ... | Unit, component, database, integration, E2E, or manual | ... |
+| TEST-* | ... | ... |
 
 ## Release sequence
 
@@ -191,7 +191,7 @@ Do not turn the plan into speculative code. It should communicate exact change b
 - State rules with planned verification: N/N or N/A
 - Data rules with planned verification: N/N or N/A
 - UX rules with planned verification: N/N or N/A
-- Text rules with planned verification: N/N or N/A
+- Test scenarios with required evidence defined: N/N
 - Unresolved PM decisions: N
 - Unresolved technical blockers: N
 
@@ -200,7 +200,7 @@ Do not turn the plan into speculative code. It should communicate exact change b
 - Unplanned requirements or contract rules: None | <list>
 - Plan tasks without requirements or contract rules: None | <list>
 - Missing or unjustified contract artifacts: None | <list>
-- State/data/UX/text mismatches: None | <list>
+- State/data/UX/test mismatches: None | <list>
 
 ### Shaping throughput
 - PM questions asked: N
