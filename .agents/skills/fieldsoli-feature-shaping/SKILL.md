@@ -9,13 +9,13 @@ description: Shape a FieldSoli feature into an approved product spec, applicable
 
 Move one feature from an idea to **Ready for Implementation** in the least combined elapsed time across the PM and agent.
 
-PM attention is not the scarce resource by default. Ask a quick question when the PM can answer from intent or preference faster than the agent can investigate or infer it. Ten seconds of PM input is better than five minutes of agent research. Optimize for:
+PM attention is not the scarce resource by default. Ask a quick question when the PM can answer from intent or preference faster than the agent can investigate or infer it. Ten seconds of PM input is better than two minutes of agent research. Optimize for:
 
 1. shortest reliable time to a build-ready contract;
 2. no consequential product decisions discovered during implementation; and
 3. enough evidence to prevent avoidable rework.
 
-Do not impose a question, decision, checkpoint, or review-time cap. More purposeful questions are preferable to slow research, hidden assumptions, or a shorter but incomplete packet.
+Do not impose a question, decision, checkpoint, or review-time cap. More purposeful questions are preferable to slow research that spends many tokens, hidden assumptions, or a shorter but incomplete packet.
 
 ## Boundaries
 
