@@ -1,5 +1,6 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { JobExportScreen } from './JobExportScreen';
 
@@ -97,7 +98,7 @@ describe('JobExportScreen', () => {
     expect(screen.getByText(/Your 2026 job export has been requested/)).toBeTruthy();
     expect(screen.getByText('Export requested')).toBeTruthy();
     expect(screen.getByText('EXPORT JOBS')).toBeTruthy();
-    expect(screen.getByText(/within 15 minutes/)).toBeTruthy();
+    expect(screen.getByText(/within a few minutes/)).toBeTruthy();
     expect(screen.getByLabelText('Back to Home')).toBeTruthy();
     expect(screen.queryByLabelText('Request Export')).toBeNull();
     expect(screen.queryByLabelText('Export year 2026')).toBeNull();
@@ -128,6 +129,10 @@ describe('JobExportScreen', () => {
       fireEvent.press(screen.getByLabelText('Request Export'));
     });
     expect(screen.getByText(/You’ve reached the export limit/)).toBeTruthy();
+    expect(screen.getByTestId('job-export-request-error')).toHaveStyle({
+      color: color('Semantic/Status/Error/Text'),
+    });
+    expect(screen.queryByTestId('job-export-result-card')).toBeNull();
     expect(screen.getByLabelText('Request Export')).toBeTruthy();
 
     mockRequestJobExport.mockRejectedValueOnce(new Error('offline'));
@@ -135,5 +140,8 @@ describe('JobExportScreen', () => {
       fireEvent.press(screen.getByLabelText('Request Export'));
     });
     await waitFor(() => expect(screen.getByText('Couldn’t request your export. Try again later.')).toBeTruthy());
+    expect(screen.getByTestId('job-export-request-error')).toHaveStyle({
+      color: color('Semantic/Status/Error/Text'),
+    });
   });
 });
