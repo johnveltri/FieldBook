@@ -1,0 +1,46 @@
+.page {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 2rem 1.25rem;
+  background: var(--cream-100);
+}
+
+.card {
+  width: min(100%, 34rem);
+  padding: clamp(2rem, 6vw, 4rem);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--cream-50);
+  box-shadow: var(--shadow-soft);
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--rust-700);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0;
+  color: var(--navy-950);
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.copy,
+.support {
+  margin: 1.25rem 0 0;
+  font-size: 1.05rem;
+}
+
+.support {
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+}

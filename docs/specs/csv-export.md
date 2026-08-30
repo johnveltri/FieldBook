@@ -1,604 +1,333 @@
 # Job Summary CSV Export
 
-**Status:** Draft for review
+**Status:** Approved implementation contract
 
-**Version:** V1 proposal
+**Version:** V1
 
-**Last updated:** 2026-08-23
-
-**Planning source:** [CSV Product Requirements Planning](chatgpt-conversation://6a7e4870-6908-83ea-906a-d191af6e810d)
+**Last updated:** 2026-08-29
 
 ## Summary
 
-FieldSoli should let an authenticated user request a CSV summary of completed jobs for a selected calendar year. FieldSoli generates the file on the server, stores it temporarily in a private Supabase Storage bucket, and emails a secure download link to the user's verified account email address.
+FieldSoli lets an authenticated user request a CSV summary of completed jobs for one calendar year. The server generates the file, stores it temporarily in a private Supabase Storage bucket, and emails a secure download link to the user's verified account email.
 
-The export service is frontend- and delivery-agnostic. Mobile is the V1 requesting client and email is the V1 delivery adapter, but CSV generation, private artifact storage, request status, rate limiting, and cleanup must not depend on a mobile runtime or on email-specific state. A future authenticated web client can request the same artifact and add direct browser delivery without rebuilding the export pipeline.
+The link stops working 24 hours after the first email-provider attempt begins. A daily cleanup at midnight UTC deletes expired private files through the Storage API. Depending on when a link expires, an inaccessible file may remain privately stored until the next midnight UTC cleanup.
 
-The emailed link expires 24 hours after the email is accepted by the transactional email provider. Expired links stop working immediately. A recurring cleanup process permanently deletes the underlying CSV through the Supabase Storage API as soon as practical after expiration.
+V1 is a job-level portability feature. It is not a Schedule C, tax return, invoice export, transaction ledger, or full account backup.
 
-V1 is a job summary, similar in spirit to a Joist job export. It is intended for spreadsheets, sharing job-level records with an accountant, and moving core business records out of FieldSoli. It is not a Schedule C, tax return, invoice export, transaction ledger, or full account backup.
+Estimated Tax Set-Aside is specified separately in [estimated-tax-set-aside.md](./estimated-tax-set-aside.md).
 
-Estimated Tax Set-Aside is specified separately in [estimated-tax-set-aside.md](./estimated-tax-set-aside.md). It is not part of this feature or its CSV schema.
+## Product behavior
 
-## Goals
+### Entry point and year list
 
-- Give every user a free, human-readable export of completed job records for a selected year.
-- Include the job-level information needed to review revenue, direct costs, earnings after direct costs, completion, and payment state.
-- Preserve separate created, completed, and paid dates without presenting FieldSoli as tax-accounting software.
-- Include every currently supported direct-cost type in a predictable column.
-- Deliver the export to the user's verified account email without asking them to enter a recipient address.
-- Keep artifact generation independent from the requesting frontend and delivery method.
-- Protect customer and financial data with authenticated export requests, private storage, expiring bearer links, rate limits, and prompt permanent deletion.
-- Make the file straightforward to open in Excel, Numbers, and Google Sheets.
+1. Open **Profile**.
+2. Under **Your data**, select **Export Job Summary**.
+3. The app reads the authenticated Auth user's `created_at` and the device's current IANA time zone.
+4. It shows every year from the account-creation year through the current year, inclusive, newest first, with the current year selected.
 
-## Non-goals
+Examples:
 
-V1 does not include:
+- Account created in 2026 and current year 2026: `2026`
+- Account created in 2026 and current year 2027: `2027`, `2026`
+- Account created in 2027 and current year 2027: `2027`
 
-- Schedule C generation or tax-category mapping.
-- Tax advice or a claim that the export contains everything needed to file taxes.
-- Cash-basis or accrual-basis reporting logic.
-- Arbitrary start/end date filtering.
-- Not-started, in-progress, on-hold, or cancelled jobs.
-- Individual work sessions or cost line items.
-- Notes, photos, attachments, or receipt images.
-- Quotes, invoices, payment transactions, refunds, or customer sales tax as separate records.
-- Partial-payment history.
-- A separate customer export.
-- A ZIP or multi-file account archive.
-- Import into FieldSoli or another product.
-- Immediate authenticated web download; email is the only V1 delivery adapter.
+The app does not query job data to construct or filter the list. An empty year remains selectable. The server is authoritative when the user presses **Request Export**.
 
-Customer, note, attachment, quote, invoice, and payment portability can be specified as those product areas mature. They should not expand or block this V1.
+If the account timestamp or IANA time zone is unavailable, the app shows a retryable loading error rather than guessing.
 
-## Export eligibility and year filtering
+### Request screen
 
-### Job eligibility
+The screen shows:
 
-The export includes one row for each active job where:
+- the **EXPORT JOBS** heading, including after the user submits a request;
+- the selected year;
+- the verified account email that will receive the link;
+- that the CSV includes completed jobs, customer names, service addresses, job details, revenue, and direct costs.
 
-- `job_work_status = completed`;
-- `deleted_at` is null; and
-- the job falls within the selected reporting year under the rule below.
+The recipient is not editable. The app makes no export-specific network request until the user presses **Request Export** and disables the button only while that request is in flight.
 
-Payment state does not determine eligibility. Both unpaid and paid completed jobs are included. A completed job is not omitted merely because its paid date is blank.
+### Confirmation and empty states
 
-### Reporting-year rule
-
-V1 defines the selected year by **completion date**. For a selected year and IANA time zone, include jobs where `completed_at` falls from local January 1 at 00:00:00 inclusive through the following local January 1 at 00:00:00 exclusive.
-
-Created date and paid date remain separate CSV columns but do not control inclusion. A job completed in December and paid the following January appears in the completion-year export. This avoids silently claiming cash-basis tax treatment.
-
-The request records one validated IANA time zone and uses it consistently for:
-
-- year-boundary filtering;
-- all three exported calendar dates; and
-- the expiration time shown in the email.
-
-`created_at`, `completed_at`, and `paid_at` are timezone-aware database timestamps. The CSV derives each corresponding calendar-date column from its timestamp in the request's reporting time zone and formats it as `YYYY-MM-DD`; it does not expose a time of day.
-
-V1 may use the authenticated client's current IANA time zone at request time. The server treats it as validated request data, not as a mobile-device assumption. The request and confirmation UI should disclose the time zone. A persisted business time zone is a follow-on candidate.
-
-## User experience
-
-### Entry point
-
-Recommended V1 location:
-
-1. The user opens **Profile**.
-2. Under a new **Your data** section, the user selects **Export Jobs CSV**.
-
-A dedicated section is preferred over placing the action among password and logout controls because future customer and attachment exports can use the same area.
-
-### Request flow
-
-1. The screen explains that the CSV will include completed jobs for the selected year, including customer name, service address, job details, revenue, and costs.
-2. The user selects one available calendar year.
-3. The client performs an owner-scoped eligibility check for jobs completed in the selected calendar year, using the selected IANA reporting time zone.
-4. If jobs exist for that year, the Export Jobs screen displays the verified account email that will receive the link.
-5. The user selects **Request Export**.
-6. FieldSoli submits an authenticated request.
-7. After the request records and queue message are durably committed, the client immediately shows the confirmation screen.
-8. If the successful client eligibility check finds no jobs for that year, the client shows the **No eligible jobs** screen.
-
-The recipient email is never editable in this flow. It is resolved server-side from the authenticated Supabase Auth user, not accepted from the request body or user metadata.
-
-The client eligibility check is a UX optimization, not an authorization or data-integrity boundary. The authenticated request endpoint must repeat the same owner-scoped eligibility check against authoritative server data before consuming rate-limit allowance or enqueueing work. This protects against stale client state, modified requests, and eligibility changes between the client check and submission.
-
-### Confirmation screen
-
-Required content:
+After durable acceptance:
 
 > Export requested
 >
 > Your 2026 job export has been requested. It will be delivered to **name@example.com** within 15 minutes. The download link expires within 24 hours from receipt.
 >
-> CTA: "Back to Home"
+> CTA: **Back to Home**
 
-The screen must state:
-
-- the selected year;
-- the exact verified account email address;
-- the promise that delivery will occur within 15 minutes; and
-- that the link expires within 24 hours from receipt.
-
-The confirmation means the request was authenticated, rate-limit approved, stored durably, and queued. It does not mean the CSV has already been generated or the email provider has accepted the message.
-
-The 15-minute promise is a conservative allowance for the queue, CSV generation, private upload, transactional email handoff, and bounded retries. The user does not need to keep FieldSoli open or wait for another in-app state.
-
-The **Back to Home** CTA returns the user to Home. After a request is accepted, the requesting client disables **Export Jobs CSV** until the server-provided `next_request_allowed_at` timestamp. For V1, that timestamp reflects the server-enforced 15-minute request cooldown. The client must not calculate an independent hardcoded cooldown, and the server remains authoritative if another client submits a request.
-
-### No eligible jobs
-
-If a successful client eligibility check or the authoritative server check determines that the selected year has no eligible jobs, the client shows a simple message:
+If the authoritative server query finds no eligible jobs:
 
 > No completed jobs found for 2026.
 >
-> CTA Primary: "Back to Home"
+> CTA: **Back to Home**
 
-The app will not let the user request an export with no jobs.
+An empty request creates no export record, queue message, file, quota use, or email.
 
-### Failure
+For a rate limit, show the server-provided retry time. Other synchronous failures use:
 
-- Do not email a link until the complete CSV is stored successfully.
-- Do not show the confirmation screen unless the request records and queue message were committed successfully.
-- If the client eligibility check fails, do not treat the result as an empty year. Show **Couldn’t check for completed jobs. Try again.** and allow the user to retry.
-- Retry transient generation, Storage, and email-provider failures through the background job system.
-- After the retry limit is exhausted, mark the request failed, delete any generated object, alert operational monitoring, and let the user submit a new request.
-- V1 does not add a second in-app failure state after a request has been confirmed.
-- Use specific copy for hourly rate limiting and include the server-provided retry time.
-- For synchronous failures before durable acceptance, show **Couldn’t request your export. Try again later.**
+> Couldn't request your export. Try again later.
 
-## Filename and email
+There is no client-side eligibility check, persisted cooldown, polling state, preparing state, or asynchronous failure screen. **Back to Home** closes both the export and Profile overlays.
 
-### Filename
+## Eligibility and reporting year
 
-`fieldsoli-job-summary-YYYY.csv`
+Include one row for each job where:
 
-The object path must use server-generated identifiers rather than customer data, the user's email address, or the filename alone.
+- `user_id` is the authenticated request owner;
+- `job_work_status = completed`;
+- `deleted_at IS NULL`; and
+- `completed_at` falls from local January 1 inclusive through the following local January 1 exclusive in the validated reporting time zone.
 
-Recommended private object path:
+Payment status does not control eligibility. Created, last-worked, and paid dates do not determine the reporting year.
 
-`<user_id>/<export_request_id>/job-summary.csv`
+The server validates that the selected year falls between the Auth account-creation year and current year, inclusive, in the request's reporting time zone.
 
-### Transactional email
+Existing completed jobs are not backfilled from `updated_at`, `last_worked_at`, sessions, or other inferred data. Before production launch, query for existing completed jobs with null `completed_at`; if real user history exists, pause and choose an explicit migration policy.
 
-Recommended subject:
+## Lifecycle timestamps
 
-> Your 2026 FieldSoli job export is ready
-
-The email should include:
-
-- the selected year;
-- one **Download CSV** button and a plain-text fallback link;
-- the exact expiration date and time with time-zone abbreviation;
-- a warning that anyone with the link can download the file until it expires;
-- a note to ignore the email if the user did not request it; and
-- support contact information.
-
-The email must not include job names, customer information, financial totals, or any CSV contents.
-
-Use the existing verified `fieldsoli.com` Resend setup, but create a separate domain-restricted API key for export email and store it only as an Edge Function secret. Use the Resend HTTPS API from the server rather than Auth email templates or SMTP from any frontend client. The recommended sender is **FieldSoli** `<noreply@fieldsoli.com>`.
-
-## CSV schema
-
-Columns are fixed and ordered. A future cost type may add a new column in a later schema version, but columns must never depend on which cost types happen to exist in one user's data.
-
-| # | Column | Source or calculation | Format and null behavior |
-|---:|---|---|---|
-| 1 | `job_id` | `jobs.id` | UUID; always present. This identifies the job and is distinct from future quote or invoice IDs. |
-| 2 | `job_description` | `jobs.short_description` | Text; always present. |
-| 3 | `customer_name` | `jobs.customer_name` | Text; blank when absent. |
-| 4 | `service_address` | `jobs.service_address` | Current formatted address string; blank when absent. V1 does not remodel it into separate address fields. |
-| 5 | `work_status` | `jobs.job_work_status` | `completed` for V1 rows. Retained for clarity and forward compatibility. |
-| 6 | `payment_status` | `jobs.job_payment_state` | `unpaid`, `partially_paid`, or `paid`; blank only when the source is null. V1 UI is still full-paid or unpaid, but the export preserves a valid stored partial state. |
-| 7 | `created_date` | `jobs.created_at` (`timestamptz`) | Calendar date derived as `YYYY-MM-DD` in the request's reporting time zone. |
-| 8 | `completed_date` | `jobs.completed_at` (`timestamptz`, new) | Calendar date derived as `YYYY-MM-DD` in the reporting time zone; always present for an included yearly-export row. |
-| 9 | `paid_date` | `jobs.paid_at` (`timestamptz`, new) | Calendar date derived as `YYYY-MM-DD` only when current payment status is `paid`; otherwise blank. |
-| 10 | `revenue` | `jobs.revenue_cents` | Decimal currency amount with two places and no currency symbol or thousands separator; blank when source is null. |
-| 11 | `material_cost` | Sum of active `job_costs` where `cost_type = material` | Decimal currency amount with two places; `0.00` when there are no matching costs. |
-| 12 | `helper_labor_cost` | Sum where `cost_type = helper_labor` | Same currency format. |
-| 13 | `equipment_rental_cost` | Sum where `cost_type = equipment_rental` | Same currency format. |
-| 14 | `permit_cost` | Sum where `cost_type = permit` | Same currency format. |
-| 15 | `disposal_cost` | Sum where `cost_type = disposal` | Same currency format. |
-| 16 | `travel_parking_cost` | Sum where `cost_type = travel_parking` | Same currency format. This is the current travel cost; V1 does not calculate mileage. |
-| 17 | `other_cost` | Sum where `cost_type = other` | Same currency format. |
-| 18 | `total_costs` | Sum of all seven cost columns | Decimal currency amount with two places. |
-| 19 | `net_earnings` | `revenue - total_costs` | Decimal currency amount with two places; may be negative; blank when revenue is null. |
-
-### Currency
-
-V1 assumes the product's current single-currency behavior. Currency symbols are omitted from amount cells so spreadsheet tools recognize them as numbers. Multi-currency support requires a future schema change that adds an explicit currency code.
-
-### Direct-cost aggregation
-
-For each eligible job, include active cost rows that are linked either:
-
-- directly to the job through `job_costs.job_id`; or
-- to one of the job's active sessions through `job_costs.session_id`.
-
-Rules:
-
-- Exclude cost rows where `job_costs.deleted_at` is not null.
-- Exclude cost rows attached to a deleted session.
-- Exclude Inbox/unassigned cost rows that are not linked to the exported job or one of its sessions.
-- Count each `job_costs.id` once even if data retrieval paths overlap.
-- Treat each stored `total_cost_cents` as authoritative; do not recalculate quantity times unit cost during export.
-- Keep all amounts in integer cents until final CSV formatting.
-- Treat a missing category total as zero, not blank.
-
-## Status timestamp requirements
-
-The current schema has `created_at timestamptz`, but not dedicated completion or paid timestamps. V1 requires two nullable timezone-aware timestamp fields:
+Add:
 
 - `jobs.completed_at timestamptz`
 - `jobs.paid_at timestamptz`
 
-Required semantics:
+Maintain them in the database:
 
-- When a job transitions from a non-completed work status into `completed`, set `completed_at` to the transition time.
-- Changing payment state while the job remains completed must not change `completed_at`.
-- If a job leaves `completed` and later re-enters it, overwrite `completed_at` with the latest completion transition.
-- When collection changes from less than full revenue to full revenue, set `paid_at` to the transition time.
-- If a job becomes not fully paid, retain the stored timestamp for lifecycle continuity but export a blank `paid_date` while its current state is not `paid`.
-- If the job later becomes fully paid again, overwrite `paid_at` with that latest transition.
-- Status timestamp writes should be enforced at the data layer so they remain correct across current and future clients.
+- Entering or re-entering `completed` sets `completed_at` to the transition time.
+- Leaving `completed` preserves the timestamp.
+- Entering or re-entering the derived `paid` state sets `paid_at` to the transition time.
+- Becoming unpaid or partially paid preserves the timestamp, but `paid_date` exports blank unless the job is currently paid.
+- Payment-only edits do not change `completed_at`.
+- New inserts are handled defensively; existing rows receive no historical backfill.
 
-Existing jobs are not backfilled from `updated_at`, `last_worked_at`, activity events, or other inferred data. Missing history is preferable to a fabricated date.
+Use the existing `jobs.last_worked_at` for `last_worked_date`.
 
-## Secure delivery architecture
+## CSV contract
 
-### Architecture boundary
+Filename: `fieldsoli-job-summary-YYYY.csv`
 
-The system has three independent responsibilities:
+The fixed columns, in order, are:
 
-```text
-Authenticated FieldSoli client
-            ↓
-Export request and status API
-            ↓
-CSV generation → private export artifact
-            ↓
-Delivery adapter
-   ├── Verified-account email link (V1)
-   └── Authenticated web download (future)
+| # | Column | Source and null behavior |
+|---:|---|---|
+| 1 | `job_id` | `jobs.id`; always present |
+| 2 | `job_description` | `jobs.short_description`; always present |
+| 3 | `customer_name` | `jobs.customer_name`; blank when null |
+| 4 | `service_address` | Current formatted address; blank when null |
+| 5 | `work_status` | Current work status |
+| 6 | `payment_status` | Current derived payment state |
+| 7 | `created_date` | `created_at` as reporting-zone `YYYY-MM-DD` |
+| 8 | `last_worked_date` | Existing `last_worked_at` as reporting-zone `YYYY-MM-DD`; blank when null |
+| 9 | `completed_date` | `completed_at` as reporting-zone `YYYY-MM-DD` |
+| 10 | `paid_date` | `paid_at` as reporting-zone `YYYY-MM-DD` only when currently paid; otherwise blank |
+| 11 | `revenue` | `revenue_cents`; blank when null |
+| 12 | `material_cost` | Active `material` costs; `0.00` when absent |
+| 13 | `helper_labor_cost` | Active `helper_labor` costs; `0.00` when absent |
+| 14 | `equipment_rental_cost` | Active `equipment_rental` costs; `0.00` when absent |
+| 15 | `permit_cost` | Active `permit` costs; `0.00` when absent |
+| 16 | `disposal_cost` | Active `disposal` costs; `0.00` when absent |
+| 17 | `travel_parking_cost` | Active `travel_parking` costs; `0.00` when absent |
+| 18 | `other_cost` | Active `other` costs; `0.00` when absent |
+| 19 | `total_costs` | Sum of all seven cost columns |
+| 20 | `net_earnings` | Revenue minus total costs; blank when revenue is null and may be negative |
+
+Cost aggregation includes active costs linked directly to the job or through an active job session. Exclude deleted costs, costs attached only to deleted sessions, and unassigned Inbox costs. Count each `job_costs.id` once and use stored `total_cost_cents`.
+
+Formatting rules:
+
+- Keyset-page 500 jobs at a time; do not rely on the Data API's 1,000-row default.
+- Sort by `completed_at DESC`, `created_at DESC`, then `job_id ASC`.
+- Keep money in integer cents until rendering two decimal places without symbols or thousands separators.
+- Encode UTF-8 with BOM and use RFC-4180 quoting with CRLF rows.
+- Prefix text starting with `=`, `+`, `-`, `@`, tab, or carriage return with an apostrophe.
+- Never log job contents, customer data, exact amounts, emails, tokens, or download URLs.
+
+## Request and processing architecture
+
+### Client contract
+
+The mobile client exposes only:
+
+```ts
+requestJobExport({ year, timeZone }): Promise<
+  | { status: "confirmed"; requestId: string; recipientEmail: string; deduplicated: boolean }
+  | { status: "no_eligible_jobs" }
+  | { status: "rate_limited"; retryAt: string }
+>
 ```
 
-Artifact generation must end in a delivery-neutral `ready` state. Email token creation and email-provider calls happen only after the artifact is ready and belong to the V1 email delivery adapter. The generator must not require an email address, download token, browser, mobile runtime, or email-provider dependency.
+Do not add year-list, eligibility-check, or status-polling endpoints for V1.
 
-### 1. Authenticated request endpoint
+### Authenticated request function
 
-Any authenticated FieldSoli client may invoke a `request-job-export` Edge Function with JWT verification enabled. The V1 mobile client sends only the selected year and current IANA time zone. The server must:
+`request-job-export` accepts only:
 
-- verify the Supabase Auth access token;
-- fetch or otherwise obtain a currently valid authenticated user identity;
-- resolve and freeze the recipient from the current verified Auth user's email;
-- require a confirmed email address before accepting the request;
-- validate the selected year and IANA time zone;
-- reject arbitrary recipient emails, user IDs, object paths, or filenames from the client;
-- repeat the owner-scoped eligibility check against authoritative server data and return a typed `no_eligible_jobs` result without consuming rate-limit allowance when the year is empty;
-- perform an atomic rate-limit check;
-- create one `job_export_requests` row and one linked `job_export_deliveries` row with the server-controlled V1 method `email`;
-- enqueue a durable background job in the same atomic operation; and
-- return the request ID, confirmation state, server-resolved recipient email, and server-calculated `next_request_allowed_at` timestamp.
+```json
+{ "year": 2026, "time_zone": "America/Chicago" }
+```
 
-The V1 client does not poll for completion. A status endpoint or owner-scoped RLS projection may still support diagnostics and future clients, but the confirmation response is sufficient for the V1 UI.
+It performs a fresh Auth lookup, requires a confirmed email, validates the IANA time zone/year range, checks owner-scoped eligibility, and serializes acceptance per user.
 
-Client-controlled `user_metadata` must never be used for authorization. The client cannot choose its user ID, delivery method, recipient, object path, or filename in V1.
+- `202`: newly accepted confirmation
+- `200`: active same-year duplicate confirmation
+- `200`: `no_eligible_jobs`
+- `429`: `rate_limited` with `retry_at` and `Retry-After`
+- `401`: invalid identity
+- `422`: invalid input or unverified email
+- `503`: failure before durable acceptance
 
-### 2. Durable generation job
+Different years may be requested immediately. At most three newly accepted requests are allowed per rolling hour. An active duplicate is queued, processing, ready, or sent with an unexpired link; it does not consume quota or send another email.
 
-Use a durable Supabase Queue rather than relying only on an in-memory background promise. A worker Edge Function should:
+The request row and queue message are committed atomically.
 
-1. Claim one queued request with a visibility timeout.
-2. Load the export request by server-generated ID.
-3. Query only records whose `user_id` matches the request owner, even though the worker uses server privileges.
-4. Generate the CSV deterministically.
-5. Upload it to the private export bucket without overwrite/upsert.
-6. Record artifact metadata and mark generation `ready`.
-7. Permanently delete the generation queue message after success; otherwise retry with bounded exponential backoff.
+### Private state
 
-The generation worker must be idempotent. Retrying the same request must not create multiple objects. It emits no email and creates no public or bearer download credential.
+Use one private `job_export_requests` table for request identity, generation/delivery states, artifact metadata, token hash/expiry, Resend ID, attempts, next retry time, and coarse failure code. Grant no client access.
 
-### 3. Delivery adapters
+Use one private `job-exports` bucket with CSV-only uploads, a 25 MiB limit, `Cache-Control: no-store`, and object paths `<user_id>/<request_id>/job-summary.csv`.
 
-#### V1 email adapter
+Use one Basic PGMQ queue, `job_exports`, containing request IDs only. PGMQ visibility timeout is the worker lease; do not create separate queue, delivery, cleanup, lease, or alert tables.
 
-After generation reaches `ready`, a separate delivery worker must:
+### Worker
 
-1. Confirm that the request owner still exists and the export has not been revoked or deleted.
-2. Use the verified recipient address frozen by the request endpoint.
-3. Create the email bearer token and expiration record.
-4. Send the transactional email with an idempotency key derived from the export request ID.
-5. Mark delivery `sent` only after provider acceptance.
-6. Retry transient failures with bounded exponential backoff without generating another CSV.
+Invoke `process-job-exports` every minute. The same message progresses through generation and email delivery:
 
-The adapter must be idempotent. Retrying the same delivery must not create multiple active tokens or send duplicate messages. If the account email changes after the request is confirmed, the already-confirmed export still goes to the verified address shown on the confirmation screen.
+1. Generate and upload if the artifact is not ready.
+2. Reuse the ready artifact after retries or restarts.
+3. Send the frozen email payload.
+4. Delete the queue message only after Resend accepts the email.
 
-#### Future authenticated web adapter
+Retry transient failures after 1, 2, 4, and 8 minutes, for five total attempts. Terminal failure marks the applicable state failed, deletes any object through the Storage API, and emits a coarse operational error.
 
-A future web client may reuse a `ready` artifact without an email token. An authenticated download endpoint would verify the user's current JWT, request ownership, artifact state, expiration, and rate limits, then issue a Storage signed URL valid for no more than 60 seconds.
+## Email contract
 
-That future adapter must preserve the same private bucket, ownership checks, artifact lifecycle, audit controls, and generation rate limits. It is not required for V1 and must not weaken the emailed-link controls.
+Render version-controlled HTML and plain text in the Edge Function. Do not use Supabase Auth templates, Resend-hosted templates, SMTP, or an attachment.
 
-### 4. Private Storage bucket
+Envelope:
 
-Create a dedicated private bucket such as `job-exports` with:
+- From: `FieldSoli <noreply@fieldsoli.com>`
+- Reply-To: `support@fieldsoli.com`
+- To: verified Auth email frozen at acceptance
+- Subject: `Your YYYY FieldSoli job export is ready`
+- Preview: `Download your YYYY job summary CSV before the secure link expires.`
+- Resend idempotency key: `job-export/<request_id>`
+- Optional tag: `category=job_export`
 
-- public access disabled;
-- no direct `anon` or `authenticated` upload, list, update, or delete policies;
-- CSV MIME type restriction;
-- a conservative maximum file size; and
-- all operations performed by server-side functions using secrets that never ship in a frontend client.
+The HTML and plain-text versions contain the same information:
 
-No mobile or web client receives a Storage service-role or secret key or uploads the generated CSV.
+1. FieldSoli text brand header.
+2. **Your job export is ready**.
+3. `Your YYYY FieldSoli job summary CSV is ready to download.`
+4. **Download CSV** button.
+5. Exact expiry, for example: `This link expires on August 30, 2026 at 3:15 PM CDT (America/Chicago).`
+6. `Anyone with this link can download the CSV until it expires. Do not forward or share it.`
+7. `The file may contain customer names, service addresses, job descriptions, and financial information. Store it securely.`
+8. A visible fallback URL introduced by `If the button does not work, copy and paste this link into your browser:`.
+9. `If you did not request this export, do not download it. Contact support@fieldsoli.com.`
+10. Minimal FieldSoli footer and support address.
 
-### 5. Emailed download link
+The URL is:
 
-Do not place the raw 24-hour Supabase Storage signed URL in the email. Email a FieldSoli download URL containing a cryptographically signed, random bearer token in the URL fragment:
+```text
+https://fieldsoli.com/exports/download#token=<opaque-token>
+```
 
-`https://fieldsoli.com/exports/download#token=<opaque_token>`
+Derive the opaque 32-byte token as `HMAC-SHA-256(EXPORT_TOKEN_SECRET, request_id)`, format it as `v1.<base64url>`, and persist only its SHA-256 hash. The token does not contain a separately verified signature; redemption still uses the stored hash lookup. Deterministic derivation lets a restarted worker reconstruct the identical email payload without storing bearer plaintext. Freeze `expires_at` at 24 hours after the first Resend attempt begins, then reuse the token, timestamp, HTML, plain text, and `job-export/<request_id>` idempotency key for every retry.
 
-Requirements:
+Escape dynamic HTML values. Use a simple table layout and inline styles. Do not include remote images, open tracking, click tracking, unsubscribe copy, CSV attachment, job/customer details, or financial totals.
 
-- Generate at least 256 bits of randomness with a cryptographically secure generator.
-- Sign a versioned token with a dedicated server-side export-link signing secret and use constant-time signature comparison.
-- Include no email address, user ID, job data, or other readable personal data in the token.
-- Store only a SHA-256 hash of the complete token in the database for lookup and revocation.
-- Never log the raw token, URL fragment, redemption request body, or resulting signed Storage URL.
-- Bind the token to one export request and one object path.
-- Set `expires_at` to exactly 24 hours after the email provider accepts the message.
-- Allow multiple downloads until expiry; one-time use is intentionally avoided because email security scanners can pre-open links.
-- Support server-side revocation before expiry.
-- Rate-limit repeated download attempts by token hash and coarse source signal without storing raw IP addresses.
+Resend API acceptance marks delivery `sent`; it does not guarantee inbox delivery. V1 uses the Resend dashboard for later bounce/suppression support rather than a webhook.
 
-The fragment is not sent in the initial HTTP request. The FieldSoli download page must contain no third-party scripts or analytics. Its first-party code reads the fragment, immediately removes it from browser history with `history.replaceState`, and sends the token in the body of a `POST` request to the public redemption endpoint.
+## Secure download
 
-The redemption endpoint must validate the token signature, token hash, request state, revocation state, and `expires_at` before every download. If valid, it generates a Supabase Storage signed URL valid for no more than 60 seconds with download disposition. The page immediately navigates to that short-lived URL so the CSV download begins without another user action.
+The public page is `https://fieldsoli.com/exports/download#token=<token>`.
 
-Use HTTPS only and return a restrictive Content Security Policy plus `Cache-Control: private, no-store` and `Referrer-Policy: no-referrer` from both the download page and redemption endpoint. Upload the CSV with a no-store/zero browser cache policy. Expired, revoked, malformed, or deleted links should return the same generic unavailable response so the endpoint does not reveal which tokens once existed.
+The page must:
 
-This is intentionally similar to password-recovery link security—high entropy, server validation, short lifetime, no secret stored in plaintext—but it is a separate download-token system and must not reuse Supabase Auth recovery tokens.
+- read the fragment and immediately remove it with `history.replaceState` before network activity;
+- POST `{ token }` to `redeem-job-export`;
+- navigate to the returned signed URL; and
+- show a generic unavailable state for every failure.
 
-### 6. Expiration and permanent deletion
+The route has no Vercel Analytics and applies `Cache-Control: private, no-store`, `Referrer-Policy: no-referrer`, `noindex`, and a restrictive CSP.
 
-The bearer link becomes invalid as soon as `expires_at <= now()`, independent of whether cleanup has run.
+The redemption function validates strict token shape, hashes it, and returns identical `404 export_unavailable` responses for malformed, unknown, expired, revoked, or deleted requests. A valid request receives a private download-disposition signed URL whose TTL is the lesser of 60 seconds or the remaining bearer-token lifetime.
 
-Hosted Supabase Storage does not currently support S3 `PutBucketLifecycleConfiguration` or `GetBucketLifecycleConfiguration`. Therefore V1's lifecycle policy is application-enforced:
+Do not add a custom download-attempt table in V1.
 
-- Supabase Cron invokes a protected `cleanup-job-exports` worker every minute.
-- The worker finds expired or terminally failed export artifacts in bounded batches.
-- It permanently deletes each object through the Supabase Storage API, never by deleting directly from `storage.objects` with SQL.
-- It marks the request `deleted` only after the Storage API confirms deletion or confirms the object is already absent.
-- Failed deletions remain retryable and trigger monitoring after a bounded delay.
+## Expiry, cleanup, and deletion
 
-Operational target: delete an expired CSV within one minute of link expiration in normal operation and alert if any object remains more than five minutes after expiration. Account deletion and explicit revocation should enqueue immediate deletion rather than waiting for the recurring sweep.
+Bearer authorization stops immediately at `expires_at`, independently of file cleanup.
 
-If Supabase later supports native bucket lifecycle configuration, it may be added as defense in depth, but application-level expiry validation remains authoritative.
+Run `cleanup-job-exports` once daily at midnight UTC (`0 0 * * *`). It scans the private table directly, marks expired deliveries, deletes objects through the Storage API, treats an absent object as success, and scrubs recipient email, token hash, provider ID, and object path.
 
-## Rate limits and abuse controls
+Failed deletion is logged and retried at the next daily run. Raise a higher-priority error if an artifact remains more than 26 hours beyond expiry. Purge scrubbed coarse rows after seven days.
 
-Recommended V1 limits:
+Account deletion or explicit revocation immediately revokes tokens and synchronously deletes remaining objects. Account deletion aborts and can be retried if Storage cleanup fails; it does not wait for the daily job.
 
-- Minimum **15 minutes between accepted new export requests per authenticated user**.
-- Maximum **3 new export requests per authenticated user per rolling hour**.
-- Maximum **1 active queued or processing request per user and selected year**.
-- Duplicate submissions for the same active request return its existing request ID and do not enqueue another job.
-- Empty-year checks do not consume the allowance.
-- A conservative global queue/concurrency limit protects the database and email provider during spikes.
-- Download attempts receive a separate, higher limit so legitimate email-link scanners and repeat downloads do not consume export-generation quota.
+## Manual configuration
 
-The cooldown and rolling request limit must be enforced atomically on the server, not with client state or a read-then-write counter. A successful request returns the server-calculated `next_request_allowed_at`. A rate-limited request returns HTTP `429` with a consistent `Retry-After` value and does not enqueue work.
+Perform these steps separately for staging and production.
 
-Rate-limit storage should contain the authenticated user ID or a keyed hash appropriate to the purpose, the time window, and a count. Do not use the account email as the rate-limit key. Expire rate-limit records promptly after they are no longer needed.
+### Resend
 
-Because an authenticated user can export only their own RLS-protected data, this limit primarily prevents resource abuse and repeated email generation. It is not a substitute for ownership checks on every query.
+1. Confirm `fieldsoli.com` is verified, sending is enabled, and SPF/DKIM pass.
+2. Confirm open and click tracking are disabled. Add/validate DMARC before production if it is not already configured.
+3. Create `FieldSoli Job Exports - Staging` or `FieldSoli Job Exports - Production` with **Sending access** restricted to `fieldsoli.com`.
+4. Do not reuse or replace the key used for Supabase Auth SMTP.
+5. Confirm `support@fieldsoli.com` is monitored.
+6. Do not create a hosted template or webhook for V1.
 
-## Database records and access control
+### Supabase
 
-Add a `job_export_requests` record with, at minimum:
+Set these Edge Function values in each hosted project:
 
-- server-generated request ID;
-- authenticated owner user ID;
-- selected year;
-- reporting IANA time zone;
-- generation status (`queued`, `processing`, `ready`, `failed`, `deleted`);
-- private object path;
-- artifact deletion deadline;
-- requested, processing, artifact-ready, failure, and deletion timestamps; and
-- coarse generation failure code safe to show or aggregate.
+- `RESEND_EXPORT_API_KEY`
+- `EXPORT_WORKER_SECRET` using at least 32 random bytes and a different value per environment
+- `EXPORT_TOKEN_SECRET` using at least 32 random bytes, unique per environment and not reused as the worker secret
+- `EXPORT_DOWNLOAD_BASE_URL`, ending in `/exports/download`
 
-Add a separate `job_export_deliveries` record with, at minimum:
+Create Vault entries:
 
-- server-generated delivery ID;
-- export request ID;
-- delivery method (`email` for V1; server controlled);
-- delivery status (`pending`, `processing`, `sent`, `failed`, `revoked`, `expired`);
-- server-resolved verified recipient email snapshot;
-- token hash for bearer-link delivery;
-- delivery-created, sent, expiration, revocation, and failure timestamps;
-- coarse delivery failure code; and
-- email provider message ID for idempotency and support diagnostics.
+- `export_project_url`: hosted project URL
+- `export_worker_secret`: identical to `EXPORT_WORKER_SECRET`
 
-Artifact fields remain valid independently of delivery fields. A future authenticated web adapter can create its own delivery/audit record without changing the generator or adding web-specific columns to `job_export_requests`. The artifact deletion deadline must never be earlier than an active delivery's expiry and is recalculated when a delivery is revoked or expires.
+The migration manages the bucket, queue, extensions, tables, and cron definitions. Cron reads the project URL and worker secret from Vault and sends `x-export-worker-secret` to the processing and cleanup functions.
 
-Do not store CSV contents or the raw bearer token in Postgres. The recipient snapshot is required so the confirmation copy and actual delivery cannot diverge. Treat it as sensitive, exclude it from analytics and operational logs, expose it only to the owning user's confirmation response, and remove it when the delivery metadata reaches its retention deadline.
+Function access:
 
-If either table is in an exposed schema:
+- `request-job-export`: user JWT required
+- `redeem-job-export`: public and token-authenticated in code
+- `process-job-exports`: private worker-secret header required
+- `cleanup-job-exports`: private worker-secret header required
 
-- enable RLS;
-- allow authenticated users to select only their own minimal request and delivery status fields through an ownership-preserving relationship;
-- do not grant authenticated insert, update, or delete access;
-- perform state changes only through server-side workers; and
-- prevent object path, token hash, provider identifiers, and internal error details from being returned to any frontend client.
+Never put Resend, worker, token-derivation, secret-role, or Vault values in the mobile app, marketing browser bundle, `EXPO_PUBLIC_*`, `NEXT_PUBLIC_*`, committed environment files, or migration SQL.
 
-Internal rate-limit and queue tables/functions should remain unexposed or have all `anon` and `authenticated` privileges revoked.
+## Verification and release gates
 
-## CSV file contract and safety
+Automated coverage must include:
 
-- Encode the file as UTF-8 in a form that opens correctly in current Excel, Numbers, and Google Sheets.
-- Use a standards-compliant CSV writer; quote and escape commas, quotes, and line breaks correctly.
-- Use one header row and no title, metadata, subtotal, or disclaimer rows before the data.
-- Protect spreadsheet users from formula injection in user-entered text fields that begin with spreadsheet formula characters.
-- Preserve line breaks inside quoted text rather than corrupting adjacent rows.
-- Sort rows deterministically by `completed_at` descending, then `created_at` descending, then `job_id` ascending.
-- Generate the file only from rows owned by the authenticated request owner.
-- Do not write CSV contents or sensitive row values to logs, traces, analytics, or error messages.
+- timestamp transitions and no backfill;
+- time-zone account/current-year validation and DST year boundaries;
+- exact 20-column order, nulls, zero/negative values, all cost types, deduplication, Unicode, multiline text, formula protection, BOM, and CRLF;
+- pagination beyond 1,000 jobs;
+- different-year requests, same-year deduplication, empty-year no-op, and fourth-in-hour rate limiting;
+- worker recovery, stable email payload/idempotency, and permanent/transient provider errors;
+- exact HTML/plain-text email copy and expiration parity;
+- cross-user denial, generic redemption failures, fragment removal, and absence of Analytics;
+- immediate token expiry, midnight cleanup, retry, overdue logging, and account-deletion cleanup.
 
-## Privacy and product language
-
-The pre-export screen must state that the file may contain customer names, addresses, and financial information and that FieldSoli will temporarily store it and email a 24-hour download link to the account email.
-
-The export is intentionally sent through configured subprocessors: Supabase Storage/Edge Functions and the transactional email provider. Product privacy disclosures and the subprocessor inventory must accurately cover this processing before launch.
-
-Allowed positioning:
-
-> Export completed job records for your spreadsheet, accountant, or your own files.
-
-Avoid claims such as:
-
-- “Everything you need to file your taxes.”
-- “Tax-ready Schedule C.”
-- “IRS-compliant tax report.”
-- “Accounting profit.”
-
-The file reports **earnings after direct costs**, not accounting net income or taxable profit.
-
-## Product analytics and operational logging
-
-Acceptable product events may include:
-
-- export requested;
-- export email accepted;
-- export failed with a coarse error category;
-- download completed; and
-- selected year category or job-count bucket rather than exact sensitive values.
-
-Do not send filenames, links, tokens, job/customer identifiers, descriptions, addresses, exact dates, exact money amounts, exact job counts, email addresses, or CSV contents to product analytics.
-
-Operational logs may include request IDs, state transitions, latency, retry count, provider response class, and object-deletion confirmation. Raw tokens, signed URLs, full request URLs, CSV contents, and customer/job data must never be logged.
-
-Monitor and alert on:
-
-- any confirmed request not handed off to the email provider within 15 minutes;
-- queue age and terminal failure rate;
-- email-provider rejection rate;
-- rate-limit rejection spikes;
-- download endpoint abuse;
-- expired objects awaiting deletion; and
-- any cross-user authorization test failure.
-
-## Acceptance criteria
-
-### Year selection and CSV contents
-
-- [ ] An authenticated Free-plan user can select an available calendar year and request an export.
-- [ ] The request uses a disclosed, validated IANA reporting time zone.
-- [ ] Every active job completed in the selected year is included exactly once, including completed unpaid jobs.
-- [ ] Jobs completed outside the selected year and jobs in every other work status are excluded.
-- [ ] Soft-deleted jobs, costs, and sessions are excluded.
-- [ ] Job-linked and session-linked costs are aggregated into the correct fixed cost-type columns without duplicates.
-- [ ] Totals and earnings are mathematically correct to the cent, including negative earnings.
-- [ ] Created, completed, and paid dates follow the defined semantics and reporting time zone.
-- [ ] The CSV renders only `YYYY-MM-DD` calendar dates derived from stored timezone-aware timestamps; it does not expose times of day.
-- [ ] A currently unpaid or partially paid job has a blank paid date.
-- [ ] Null text fields and null revenue are blank; real zero cost totals are `0.00`.
-- [ ] CSV-special characters, Unicode, multi-line text, and formula-like user input do not corrupt or endanger the spreadsheet.
-- [ ] The result opens correctly in Excel, Numbers, and Google Sheets.
-- [ ] Large eligible histories are not truncated by API pagination or list-screen limits.
-
-### Request and email flow
-
-- [ ] Mobile and future web clients use the same authenticated export-request contract.
-- [ ] The request body accepts only the selected year and validated IANA time zone in V1; delivery method and recipient are server controlled.
-- [ ] The client eligibility check uses the selected year and reporting time zone, and only a successful empty result opens the **No eligible jobs** screen.
-- [ ] A failed client eligibility check shows a retryable error and is never interpreted as an empty year.
-- [ ] The server repeats the owner-scoped eligibility check before consuming rate-limit allowance or enqueueing work, regardless of the client result.
-- [ ] CSV generation reaches a delivery-neutral `ready` state before email token creation or provider calls begin.
-- [ ] Generation can be retried without creating a duplicate artifact, token, or email.
-- [ ] The server derives and freezes the recipient from the currently authenticated, confirmed Auth user and rejects client-supplied recipients.
-- [ ] The request records and queue message are committed atomically before confirmation is returned.
-- [ ] The confirmation screen immediately displays the selected year, exact frozen recipient email, the promise of delivery within 15 minutes, and link-expiration language.
-- [ ] The confirmation copy matches the approved wording exactly except for dynamic year and email values.
-- [ ] V1 has no preparing, sent, or long-running status screen and requires no client polling.
-- [ ] The user can close the requesting client immediately after confirmation while the durable background job completes.
-- [ ] An accepted response includes `next_request_allowed_at`, and the requesting client disables **Export Jobs CSV** until that server-provided timestamp.
-- [ ] Duplicate taps do not create duplicate jobs, files, or emails.
-- [ ] An empty year creates no file, sends no email, and does not consume the hourly allowance.
-- [ ] Transient failures retry safely; terminal asynchronous failures delete any generated object, alert operations, and allow a new request.
-
-### Secure download and storage
-
-- [ ] Generated files exist only in the dedicated private bucket and are inaccessible through public URLs or client list operations.
-- [ ] Raw download tokens and signed Storage URLs are never stored in the database or logs.
-- [ ] The emailed bearer token is versioned, cryptographically signed, has at least 256 bits of entropy, and only its SHA-256 hash is persisted.
-- [ ] The token travels in the email URL fragment, is removed from browser history immediately, and is redeemed only through a POST body.
-- [ ] The download page contains no third-party scripts or analytics and enforces a restrictive Content Security Policy.
-- [ ] The bearer token becomes invalid exactly 24 hours after provider acceptance.
-- [ ] A valid bearer token produces a Storage signed URL valid for no more than 60 seconds.
-- [ ] No frontend client receives a Storage service-role or secret key.
-- [ ] Expired, revoked, malformed, or deleted tokens return the same generic unavailable response.
-- [ ] Multiple downloads work before expiry without being broken by email link scanners.
-- [ ] A user cannot request, observe, email, sign, or download another user's export through any authenticated endpoint.
-- [ ] Account deletion and explicit revocation enqueue immediate artifact deletion.
-
-### Deletion lifecycle
-
-- [ ] Cleanup runs every minute and deletes objects only through the Storage API.
-- [ ] An expired link is rejected even if object deletion is delayed.
-- [ ] Normal-operation deletion occurs within one minute after expiration.
-- [ ] Objects remaining more than five minutes after expiration alert and continue retrying.
-- [ ] Cleanup is idempotent and treats an already-absent object as successful deletion.
-- [ ] Tests prove that deleting only a `storage.objects` metadata row is never used as cleanup.
-
-### Rate limiting and resilience
-
-- [ ] The server atomically permits at most three new export requests per user per rolling hour.
-- [ ] A fourth request returns `429` and a usable retry time without enqueuing work.
-- [ ] Only one active request exists per user/year combination.
-- [ ] Worker retries are bounded, idempotent, and cannot send duplicate emails.
-- [ ] Global concurrency is bounded so exports cannot overload Postgres, Storage, or the email provider.
-
-### Status timestamps
-
-- [ ] First transition into Completed captures `completed_at`.
-- [ ] Paid/unpaid changes while work remains completed do not modify `completed_at`.
-- [ ] Leaving and re-entering Completed replaces `completed_at` with the latest transition.
-- [ ] First transition to fully paid captures `paid_at`.
-- [ ] Leaving and re-entering fully paid replaces `paid_at` with the latest paid transition.
-- [ ] No migration invents timestamps for historical jobs.
-
-## Open review decisions
-
-1. **Year basis:** Confirm that completion date controls the selected year. Paid date remains visible but does not move the row into the paid year.
-2. **Entry point:** Confirm the new **Profile → Your data → Export Jobs CSV** location.
-3. **Time zone:** Accept the authenticated client's IANA time zone captured at request time for V1, or add a persisted business time zone first.
-4. **Hours:** Confirm that total work hours stay out of V1. Detailed sessions are out of scope either way; a single `total_hours` summary column could be added if portability requires it.
-5. **Generation rate:** Confirm three requests per rolling hour. This is intentionally low because the operation sends email and creates a sensitive temporary artifact.
-6. **Undeliverable email:** Decide whether a confirmed but bounced account email should direct the user to support or to a future change-email flow.
-
-## Follow-on candidates
-
-- Persisted business time zone.
-- Authenticated direct download from a FieldSoli web client using the same ready artifact and a short-lived Storage URL.
-- Paid-year or custom date-range filtering with explicit accounting-basis language.
-- Reusable customer CSV export.
-- Notes export after note portability requirements are settled.
-- Individual and bulk attachment downloads.
-- Quote, invoice, payment, sales-tax, refund, and partial-payment exports.
-- Mileage tracking and mileage-specific tax records.
-- Multi-currency export.
-- A full account archive or machine-oriented data export.
-
-## Supabase implementation references
-
-- [Private Storage buckets and access model](https://supabase.com/docs/guides/storage/buckets/fundamentals)
-- [Serving private files with signed URLs](https://supabase.com/docs/guides/storage/serving/downloads)
-- [Storage signed URL JavaScript reference](https://supabase.com/docs/reference/javascript/storage-from-createsignedurl)
-- [Supabase Storage S3 compatibility and unsupported lifecycle endpoints](https://supabase.com/docs/guides/storage/s3/compatibility)
-- [Deleting Storage objects through the API](https://supabase.com/docs/guides/storage/management/delete-objects)
-- [Scheduling Edge Functions with Supabase Cron](https://supabase.com/docs/guides/functions/schedule-functions)
-- [Supabase Queues](https://supabase.com/docs/guides/queues)
-- [Securing Edge Functions with authorization headers](https://supabase.com/docs/guides/functions/auth-headers)
-- [Sending transactional email from an Edge Function](https://supabase.com/docs/guides/functions/examples/send-emails)
-- [Rate-limiting Edge Functions](https://supabase.com/docs/guides/functions/examples/rate-limiting)
+Before production:
+
+1. Update the Privacy Policy and its required acceptance version to describe CSV creation, private temporary storage, Resend processing, email delivery, and up-to-next-midnight deletion.
+2. Update the current-product export only when the feature is actually shipped.
+3. Validate a real email in desktop and mobile clients, including button/fallback redemption and no tracking rewrite.
+4. Open representative CSVs in current Excel, Numbers, and Google Sheets.
+5. Deploy database changes from clean `main` after merge; treat functions, website, and mobile release as separate checkpoints.
+
+## Non-goals
+
+V1 excludes hours, session rows, tax calculations, tax-category mapping, arbitrary date ranges, non-completed jobs, line-item exports, notes, photos, attachments, receipts, invoices, payment transactions, refunds, customer export, ZIP archives, imports, multi-currency, and direct authenticated web delivery.
+
+A future multi-year UI may create multiple one-year requests without changing this schema.

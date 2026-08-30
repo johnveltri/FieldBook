@@ -95,6 +95,12 @@ export {
   updateCurrentUserPassword,
 } from './account';
 export {
+  requestJobExport,
+  JobExportRequestError,
+  type JobExportRequestInput,
+  type JobExportRequestResult,
+} from './jobExports';
+export {
   recordLegalAcceptance,
   recordReacceptanceLegalAcceptances,
   recordSignupLegalAcceptances,

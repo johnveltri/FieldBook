@@ -75,13 +75,15 @@ describe('ProfileScreen', () => {
     });
   });
 
-  it('renders all three section headers and the user info', async () => {
+  it('renders the data-export entry point with the profile information', async () => {
     const screen = render(<ProfileScreen onBack={jest.fn()} />);
     await waitFor(() => {
       expect(screen.getByText('Alex Builder')).toBeTruthy();
     });
     expect(screen.getByText('Personal Info')).toBeTruthy();
     expect(screen.getByText('Plan')).toBeTruthy();
+    expect(screen.getByText('Your data')).toBeTruthy();
+    expect(screen.getByText('Export Job Summary')).toBeTruthy();
     expect(screen.getByText('Account')).toBeTruthy();
     expect(screen.getByText('tech@example.com')).toBeTruthy();
     expect(screen.getByText('Plumbing, Handyman')).toBeTruthy();

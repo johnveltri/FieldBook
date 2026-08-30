@@ -78,6 +78,31 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  // Export artifacts are intentionally private and are not covered by the
+  // database FK cascade. Revoke bearer tokens first, then remove every object
+  // synchronously; do not delete the Auth user if Storage cleanup fails.
+  const { data: exportRows, error: exportsErr } = await adminClient
+    .from('job_export_requests')
+    .select('id, object_path')
+    .eq('user_id', userId)
+    .not('object_path', 'is', null);
+  if (exportsErr) {
+    return jsonResponse({ error: 'export_cleanup_failed' }, 500);
+  }
+  const objectPaths = (exportRows ?? []).flatMap((row) => row.object_path ? [row.object_path] : []);
+  if (objectPaths.length > 0) {
+    const { error: revokeErr } = await adminClient
+      .from('job_export_requests')
+      .update({ delivery_state: 'revoked', token_hash: null, expires_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .not('object_path', 'is', null);
+    if (revokeErr) return jsonResponse({ error: 'export_cleanup_failed' }, 500);
+    const { error: removeErr } = await adminClient.storage.from('job-exports').remove(objectPaths);
+    if (removeErr && !/not found|does not exist|404/i.test(removeErr.message ?? '')) {
+      return jsonResponse({ error: 'export_cleanup_failed' }, 500);
+    }
+  }
+
   const { error: deleteErr } = await adminClient.auth.admin.deleteUser(userId);
   if (deleteErr) {
     return jsonResponse(

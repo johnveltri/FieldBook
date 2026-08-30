@@ -1,0 +1,35 @@
+import { EXPORT_BUCKET, errorCode, json, serverClient, workerAuthorized } from '../_shared/job-export.ts';
+
+function absent(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return /not found|does not exist|404/i.test(message);
+}
+
+Deno.serve(async (request) => {
+  if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
+  if (!workerAuthorized(request)) return json({ error: 'unauthorized' }, 401);
+  const client = serverClient();
+  const now = new Date().toISOString();
+  const { data: expired, error } = await client.from('job_export_requests').select('id, object_path, expires_at')
+    .lt('expires_at', now).not('object_path', 'is', null).limit(500);
+  if (error) return json({ error: 'temporarily_unavailable' }, 503);
+
+  for (const row of expired ?? []) {
+    await client.from('job_export_requests').update({ delivery_state: 'expired' }).eq('id', row.id);
+    const { error: removeError } = await client.storage.from(EXPORT_BUCKET).remove([row.object_path]);
+    if (removeError && !absent(removeError)) {
+      const overdue = Date.now() - Date.parse(row.expires_at) > 26 * 60 * 60 * 1000;
+      console.error(overdue ? '[job-export] overdue artifact deletion failure' : '[job-export] artifact deletion failure', { requestId: row.id, failure: errorCode(removeError) });
+      continue;
+    }
+    await client.from('job_export_requests').update({
+      generation_state: 'deleted', delivery_state: 'expired', object_path: null,
+      recipient_email: '', token_hash: null, resend_message_id: null, scrubbed_at: now,
+    }).eq('id', row.id);
+  }
+
+  // Coarse rows remain seven days after sensitive fields are scrubbed for
+  // operational diagnostics, then are removed without a secondary queue.
+  await client.from('job_export_requests').delete().lt('scrubbed_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+  return json({ ok: true });
+});

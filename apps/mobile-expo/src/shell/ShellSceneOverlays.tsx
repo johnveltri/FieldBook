@@ -69,7 +69,7 @@ export function ShellSceneOverlays({ tab }: ShellSceneOverlaysProps) {
             onRequestClose={closeProfile}
             onExited={onProfileExited}
           >
-            <ProfileScreen onBack={closeProfile} />
+            <ProfileScreen onBack={closeProfile} onBackToHome={closeProfile} />
           </OverlaySlideHost>
         </View>
       ) : null}
