@@ -33,4 +33,10 @@ describe("website privacy policy", () => {
     expect(markdownSource).toContain("withdrawal of marketing consent");
     expect(markdownSource).toContain("remove your waitlist record");
   });
+
+  it("includes Job Summary export and Resend disclosures", () => {
+    expect(markdownSource).toContain("Job Summary export");
+    expect(markdownSource).toContain("Resend");
+    expect(markdownSource).toContain("Export Job Summary");
+  });
 });
