@@ -320,7 +320,7 @@ App identity (pre-public TestFlight polish):
 - After creating the new App Store Connect app, replace `ascAppId` in
   `apps/mobile-expo/eas.json` with the new numeric app id.
 
-Legal versions (`2026-07-27`) left unchanged — no reacceptance bump needed while there are no users.
+Legal versions (`2026-08-30`) include Job Summary export disclosures. Deploy marketing `/privacy` and `/terms` before or with any mobile build that requires the new version so reacceptance links show the updated documents.
 
 ---
 

@@ -1,8 +1,8 @@
 # FieldSoli Privacy Policy
 
-**Effective date:** July 27, 2026
+**Effective date:** August 30, 2026
 
-**Policy version:** 2026-07-27
+**Policy version:** 2026-08-30
 
 FieldSoli™ is a product operated by **Veltri Ventures LLC, an Illinois limited liability company** ("FieldSoli," "we," "us," or "our"). This Privacy Policy explains how we collect, use, disclose, retain, and protect personal information when you use:
 
@@ -23,7 +23,7 @@ In this Privacy Policy:
 
 - a **User** is an individual who creates or uses a FieldSoli account;
 - **Customer Information** means information a User enters about the User's own customer, worksite, or job; and
-- **User Content** means job records, Customer Information, notes, material entries, and other content a User enters into FieldSoli.
+- **User Content** means job records, Customer Information, notes, material and other job-cost entries, and other content a User enters into FieldSoli.
 
 Users decide what Customer Information and User Content to enter. FieldSoli processes that information to provide the Services to the User. Users are responsible for having appropriate authority to provide information about their customers and worksites.
 
@@ -75,18 +75,19 @@ When you use FieldSoli to organize work, we collect the information you choose t
 
 - job descriptions, customer names, and service addresses;
 - job status, payment status, revenue, record source, and whether you confirmed that no materials were used;
-- record creation, update, last-worked, and deletion timestamps;
+- record creation, update, last-worked, completed, paid, and deletion timestamps;
 - live or manually entered work sessions, including their associated job, status, entry mode, start and end times, and the starting time zone for live sessions;
-- free-text notes associated with a job or work session or saved without an assignment in the Inbox; and
-- material descriptions, quantities, units, unit costs, calculated total costs, and job or work-session associations.
+- free-text notes associated with a job or work session or saved without an assignment in the Inbox;
+- material descriptions, quantities, units, unit costs, calculated total costs, and job or work-session associations; and
+- other job-cost descriptions, cost types (such as helper labor, equipment rental, permits, disposal, travel or parking, and other), quantities, units, unit costs, calculated total costs, and job or work-session associations.
 
 When you search your jobs, the search text is sent to our database provider to filter your own job descriptions and customer names. We do not send the search text to product analytics; product analytics may receive only a bucket representing the search text's length.
 
-We store and process this information to create, organize, retrieve, display, edit, and delete your records and to provide the job, Inbox, work-session, material, and payment-status features you request.
+We store and process this information to create, organize, retrieve, display, edit, and delete your records and to provide the job, Inbox, work-session, job-cost, and payment-status features you request.
 
 ### E. Calculated information and insights
 
-FieldSoli calculates information from the records you enter, including work duration, material totals, net earnings, net hourly rate, financial-completeness status, weekly, monthly, and yearly earnings summaries, outstanding payments, job rankings, recent-work groupings, and jobs that may need attention.
+FieldSoli calculates information from the records you enter, including work duration, material and other job-cost totals, net earnings, net hourly rate, financial-completeness status, weekly, monthly, and yearly earnings summaries, outstanding payments, job rankings, recent-work groupings, and jobs that may need attention.
 
 We use these calculations to provide the Services. They are business-organizing estimates based on the information you enter and are not bank-account, payment-card, or payment-processing information.
 
@@ -120,7 +121,26 @@ We collect the information you provide when you contact us for support, provide 
 
 We use communications to respond, investigate and resolve issues, fulfill requests, secure the Services, and document our response where appropriate.
 
-### I. Information FieldSoli does not currently collect through the mobile app
+### I. Job Summary export
+
+When you use the in-app **Export Job Summary** control (Profile → Your data), we process information to create and deliver a CSV summary of your completed jobs for one calendar year you select.
+
+The export may include job descriptions, customer names, service addresses, work and payment status, creation, last-worked, completed, and paid dates, revenue, job-cost totals by category, and net earnings. It does not include notes, work-session rows, photos, attachments, or a full account backup.
+
+To fulfill your request, we:
+
+- query your completed jobs and associated job-cost records for the selected year and reporting time zone;
+- generate a CSV file and store it temporarily in a private Supabase Storage bucket;
+- email a secure download link to your verified account email address through Resend (the email contains a link only, not the CSV as an attachment); and
+- keep limited request metadata needed to generate, deliver, secure, and clean up the export.
+
+Resend processes your account email address and the download link so it can deliver the notification. Resend does not receive the CSV contents.
+
+The download link expires within 24 hours after the first email-delivery attempt begins. Depending on when the link expires, the private CSV file may remain stored until the next midnight UTC cleanup. After cleanup, we scrub recipient email, token, provider, and storage-path fields from the export request record and later purge scrubbed records. Account deletion revokes active export links and deletes associated export files from storage.
+
+We use this information to provide the portability feature you request. You are responsible for storing downloaded exports securely because they may contain Customer Information and financial details.
+
+### J. Information FieldSoli does not currently collect through the mobile app
 
 The current FieldSoli mobile app does not request or collect precise GPS location, contacts, calendars, camera or photo-library content, audio recordings, microphone data, email-inbox content, payment-card numbers, or bank-account credentials.
 
@@ -129,7 +149,7 @@ The current FieldSoli mobile app does not request or collect precise GPS locatio
 In addition to the category-specific purposes described above, we use personal information to:
 
 - create, authenticate, maintain, and secure accounts;
-- provide job capture, live and manual work-session tracking, Inbox capture and assignment, material tracking, payment-status features, and earnings insights;
+- provide job capture, live and manual work-session tracking, Inbox capture and assignment, material and other job-cost tracking, payment-status features, earnings insights, and Job Summary export;
 - store, organize, retrieve, display, and delete User Content;
 - operate the waitlist and send communications you requested or agreed to receive;
 - provide support and fulfill privacy requests;
@@ -156,11 +176,12 @@ We disclose personal information only in the following circumstances:
 
 Providers process information for us to perform specific functions. Current material providers include:
 
-- **Supabase**, for authentication, database hosting, backend functions, and related cloud infrastructure;
-- **Vercel**, for website hosting, operation, security, and website analytics; and
-- **PostHog**, for optional in-app product analytics when it is configured and you have enabled analytics.
+- **Supabase**, for authentication, database hosting, file storage, backend functions, and related cloud infrastructure;
+- **Vercel**, for website hosting, operation, security, and website analytics;
+- **PostHog**, for optional in-app product analytics when it is configured and you have enabled analytics; and
+- **Resend**, for transactional email, including account and authentication messages and Job Summary export delivery notifications.
 
-We also use providers for email communications, customer support, and other operational functions. We provide these providers with information reasonably necessary to perform their services and require appropriate protection through contracts or other applicable safeguards.
+We also use providers for customer support and other operational functions. We provide these providers with information reasonably necessary to perform their services and require appropriate protection through contracts or other applicable safeguards.
 
 ### Legal, safety, and enforcement reasons
 
@@ -194,17 +215,18 @@ We retain information for only as long as reasonably necessary for the purposes 
 - **Analytics and technical information:** retained according to the applicable provider configuration and only while reasonably needed for analytics, security, diagnostics, or reliability.
 - **Support and privacy-request records:** retained while needed to resolve the matter, document our response, protect legal rights, or meet legal obligations.
 - **Rate-limit records:** eligible for deletion after two days and removed through subsequent cleanup.
+- **Job Summary exports:** private CSV files are deleted when the download link expires or through the next midnight UTC cleanup after expiry. Export request metadata is scrubbed after cleanup and purged after a limited period. Active export links and files are removed when you delete your account.
 - **Aggregated or deidentified information:** may be retained when it no longer reasonably identifies a person, customer, or business.
 
 Information may remain for a limited period in backup copies until those backups are overwritten through the normal backup cycle. We may retain narrowly limited information longer when necessary to comply with law, maintain security, prevent fraud or abuse, resolve disputes, or enforce agreements. We limit retained information to the relevant purpose.
 
 ## 8. Account and Record Deletion
 
-You can use available controls in the app to remove individual job records, sessions, notes, and material entries from active use and normal display. These records may remain marked as deleted and associated with your account as described in Section 7.
+You can use available controls in the app to remove individual job records, sessions, notes, and material or other job-cost entries from active use and normal display. These records may remain marked as deleted and associated with your account as described in Section 7.
 
 You can request account deletion through the in-app **Delete account** control or through [fieldsoli.com/delete-account](https://fieldsoli.com/delete-account). If you cannot use either method, contact [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com) from the email address associated with your account.
 
-We may verify that you control the account before completing an external request. We complete verified account deletion from active systems within 30 days. Account deletion removes the account and associated active-system User Content. When configured, we also request deletion of associated PostHog person and event data. Limited information and backup copies may remain temporarily as described in Section 7.
+We may verify that you control the account before completing an external request. We complete verified account deletion from active systems within 30 days. Account deletion removes the account and associated active-system User Content, revokes active Job Summary export links, and deletes associated export files from storage. When configured, we also request deletion of associated PostHog person and event data. Limited information and backup copies may remain temporarily as described in Section 7.
 
 To delete a waitlist record, email [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com) from the address used to join the waitlist.
 
@@ -226,7 +248,7 @@ FieldSoli offers the following choices to all Users, subject to identity verific
 - withdrawal of marketing consent and removal of your waitlist record; and
 - appeal of a decision concerning a privacy request.
 
-You can edit available profile and record information, withdraw analytics consent, or initiate account deletion through the app. For another request, email [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com). We may verify your identity using information associated with your account or waitlist record before acting on a request.
+You can edit available profile and record information, withdraw analytics consent, request a Job Summary CSV export through Profile → Your data → Export Job Summary, or initiate account deletion through the app. For another request, email [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com). We may verify your identity using information associated with your account or waitlist record before acting on a request.
 
 An authorized agent may submit a request by contacting us and providing proof of authorization. If we deny a request, you may appeal by replying to our decision or emailing [privacy@fieldsoli.com](mailto:privacy@fieldsoli.com) with **Privacy Appeal** in the subject line.
 

@@ -1,8 +1,8 @@
 # FieldSoli Terms of Service
 
-**Effective date:** July 27, 2026
+**Effective date:** August 30, 2026
 
-**Terms version:** 2026-07-27
+**Terms version:** 2026-08-30
 
 FieldSoli™ is a product operated by **Veltri Ventures LLC, an Illinois limited liability company** ("FieldSoli," "we," "us," or "our"). These Terms of Service (the "Terms") govern access to and use of:
 
@@ -33,9 +33,10 @@ FieldSoli provides business-organizing tools that currently allow users to:
 
 - create and organize jobs, including job descriptions, customer names, service addresses, work status, payment status, and revenue;
 - start, resume, edit, end, and organize live or manually entered work sessions;
-- capture notes and material entries for a job or work session or hold them unassigned in the Inbox for later assignment;
-- record material quantities, units, unit costs, and calculated totals;
-- view estimates and summaries based on entered information, including work duration, material totals, net earnings, net hourly rate, outstanding payments, job rankings, recent work, and items that may need attention;
+- capture notes and material or other job-cost entries for a job or work session or hold them unassigned in the Inbox for later assignment;
+- record material and other job-cost quantities, units, unit costs, and calculated totals;
+- view estimates and summaries based on entered information, including work duration, material and other job-cost totals, net earnings, net hourly rate, outstanding payments, job rankings, recent work, and items that may need attention;
+- request a Job Summary CSV export of completed jobs for one calendar year, delivered by email as a secure download link (not a tax package, invoice export, or full account backup);
 - manage account and profile information and available privacy choices; and
 - access the FieldSoli website, waitlist, legal information, and support.
 
@@ -120,7 +121,7 @@ We may investigate suspected misuse and remove or restrict content or access whe
 
 ## 8. User Content and Customer Information
 
-**User Content** means information you enter or store through the Services, including job descriptions, customer names, service addresses, work and payment statuses, revenue, work-session information, notes, material entries, and related business records. **Customer Information** means User Content concerning your own customers, properties, worksites, or jobs.
+**User Content** means information you enter or store through the Services, including job descriptions, customer names, service addresses, work and payment statuses, revenue, work-session information, notes, material and other job-cost entries, and related business records. **Customer Information** means User Content concerning your own customers, properties, worksites, or jobs.
 
 As between you and FieldSoli, you retain ownership of your User Content. You are responsible for its accuracy, quality, legality, and appropriateness and for the consequences of entering or using it through the Services.
 
@@ -206,7 +207,7 @@ Sections that by their nature should continue will survive termination, includin
 
 ## 17. Calculations and No Professional Advice
 
-FieldSoli's duration, revenue, material-cost, net-earnings, net-hourly-rate, payment-status, ranking, and other calculations depend on information you enter and on the app's calculation rules. They may be incomplete, delayed, or inaccurate and may not reflect your actual financial or business results.
+FieldSoli's duration, revenue, material and other job-cost, net-earnings, net-hourly-rate, payment-status, ranking, and other calculations depend on information you enter and on the app's calculation rules. They may be incomplete, delayed, or inaccurate and may not reflect your actual financial or business results.
 
 The Services and their calculations are provided for business organization and general informational purposes. FieldSoli does not provide legal, tax, accounting, financial, investment, insurance, payroll, employment, safety, licensing, or pricing advice. The Services do not guarantee payment collection, profitability, work quality, customer outcomes, or compliance with any law, contract, professional standard, or accounting practice.
 
