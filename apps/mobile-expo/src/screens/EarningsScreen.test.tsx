@@ -141,9 +141,10 @@ describe('EarningsScreen', () => {
     expect(screen.getByText('-$450.00')).toBeTruthy();
     expect(screen.getByText('3.0h')).toBeTruthy();
     expect(screen.getByText('$317/hr')).toBeTruthy();
+    expect(screen.getByText('$1,500.00')).toBeTruthy();
 
     fireEvent.press(
-      screen.getByLabelText('Unpaid (2). Completed but not paid.'),
+      screen.getByLabelText('Unpaid (2). Completed but not paid. $1,500.00.'),
     );
     expect(onOpenJobsOpenTab).toHaveBeenCalledWith('unpaid');
 

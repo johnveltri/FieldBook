@@ -13,6 +13,8 @@ import {
 export type JobsOpenSummaryCardProps = {
   kind: JobsOpenSectionKind;
   count: number;
+  /** Optional pre-formatted metric shown before the navigation affordance. */
+  trailingValue?: string;
   typography: TextStyles;
   onPress: () => void;
 };
@@ -31,7 +33,13 @@ const ACCENT: Record<JobsOpenSectionKind, string> = {
 /**
  * Collapsed Open-tab section row for Home “Needs attention” and Earnings outstanding.
  */
-export function JobsOpenSummaryCard({ kind, count, typography, onPress }: JobsOpenSummaryCardProps) {
+export function JobsOpenSummaryCard({
+  kind,
+  count,
+  trailingValue,
+  typography,
+  onPress,
+}: JobsOpenSummaryCardProps) {
   const { titlePrefix, subtitle } = JOBS_OPEN_SECTION_COPY[kind];
   const accentColor = ACCENT[kind];
   const titleLine = `${titlePrefix} (${count})`;
@@ -40,7 +48,7 @@ export function JobsOpenSummaryCard({ kind, count, typography, onPress }: JobsOp
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${titleLine}. ${subtitle}.`}
+      accessibilityLabel={`${titleLine}. ${subtitle}.${trailingValue ? ` ${trailingValue}.` : ''}`}
       style={({ pressed }) => [
         styles.row,
         {
@@ -55,6 +63,11 @@ export function JobsOpenSummaryCard({ kind, count, typography, onPress }: JobsOp
         <Text style={[typography.bodySmall, { color: fg.secondary }]}>{subtitle}</Text>
       </View>
       <View style={styles.trailing}>
+        {trailingValue ? (
+          <Text style={[typography.metric, styles.trailingValue, { color: accentColor }]}>
+            {trailingValue}
+          </Text>
+        ) : null}
         <HomeSummaryCardArrowIcon
           backgroundColor={accentColor}
           arrowColor={fg.muted}
@@ -88,8 +101,14 @@ const styles = StyleSheet.create({
   },
   trailing: {
     flexShrink: 0,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: space('Spacing/12'),
+  },
+  trailingValue: {
+    textTransform: 'none',
+    fontVariant: ['tabular-nums'],
   },
   pressed: { opacity: 0.75 },
 });

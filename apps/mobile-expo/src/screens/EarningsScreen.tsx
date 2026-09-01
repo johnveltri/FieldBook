@@ -447,6 +447,7 @@ export function EarningsScreen({
                   <JobsOpenSummaryCard
                     kind="unpaid"
                     count={outstanding.count}
+                    trailingValue={formatUsd(outstanding.revenueCents)}
                     typography={typography}
                     onPress={() => {
                       analytics.capture('outstanding_payment_card_pressed', {
