@@ -1,86 +1,77 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { color, colorWithAlpha, radius, space } from '@fieldsolo/design-system/lib/tokens';
+import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { cardShadowRn, fg, type TextStyles } from '../../theme/nativeTokens';
 
+import { HomeSummaryCardArrowIcon } from '../figma-icons/HomeSectionIcons';
 import {
   JOBS_OPEN_SECTION_COPY,
-  JOBS_OPEN_SECTION_TITLE_COLORS,
   type JobsOpenSectionKind,
 } from './JobsOpenStackSectionHeader';
 
 export type JobsOpenSummaryCardProps = {
   kind: JobsOpenSectionKind;
   count: number;
+  /** Optional pre-formatted metric shown before the navigation affordance. */
+  trailingValue?: string;
   typography: TextStyles;
   onPress: () => void;
 };
 
-const SURFACE: Record<
-  JobsOpenSectionKind,
-  { backgroundColor: string; borderColor: string; badgeBackground: string; ctaColor: string }
-> = {
-  incomplete: {
-    backgroundColor: color('Semantic/Status/Warning/BG'),
-    borderColor: color('Semantic/Status/Warning/Stroke'),
-    badgeBackground: color('Semantic/Status/Warning/Text'),
-    ctaColor: color('Semantic/Status/Error/Text'),
-  },
-  inProgress: {
-    backgroundColor: color('Semantic/Status/Info/BG'),
-    borderColor: colorWithAlpha('Semantic/Status/Info/Text', 0.22),
-    badgeBackground: color('Semantic/Status/Info/Text'),
-    ctaColor: color('Semantic/Status/Info/Text'),
-  },
-  unpaid: {
-    backgroundColor: color('Semantic/Status/Neutral/BG'),
-    borderColor: colorWithAlpha('Foundation/Border/Default', 0.1),
-    badgeBackground: color('Semantic/Status/Neutral/Text'),
-    ctaColor: color('Semantic/Status/Neutral/Text'),
-  },
+const CARD_SURFACE = {
+  backgroundColor: color('Foundation/Surface/White'),
+  borderColor: color('Foundation/Border/Subtle'),
+} as const;
+
+const ACCENT: Record<JobsOpenSectionKind, string> = {
+  incomplete: color('Semantic/Status/Warning/Text'),
+  inProgress: color('Semantic/Status/Info/Text'),
+  unpaid: color('Semantic/Status/Neutral/Text'),
 };
 
-function trailingLabelFor(kind: JobsOpenSectionKind): string {
-  return kind === 'incomplete' ? 'Fix →' : 'Review →';
-}
-
 /**
- * Collapsed Open-tab section row for Home “Needs attention” (mirrors Earnings `OutstandingPaymentCard`).
+ * Collapsed Open-tab section row for Home “Needs attention” and Earnings outstanding.
  */
-export function JobsOpenSummaryCard({ kind, count, typography, onPress }: JobsOpenSummaryCardProps) {
+export function JobsOpenSummaryCard({
+  kind,
+  count,
+  trailingValue,
+  typography,
+  onPress,
+}: JobsOpenSummaryCardProps) {
   const { titlePrefix, subtitle } = JOBS_OPEN_SECTION_COPY[kind];
-  const titleColor = JOBS_OPEN_SECTION_TITLE_COLORS[kind];
-  const surface = SURFACE[kind];
-  const trailing = trailingLabelFor(kind);
+  const accentColor = ACCENT[kind];
+  const titleLine = `${titlePrefix} (${count})`;
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${titlePrefix}. ${count} jobs. ${subtitle}. ${trailing.replace(' →', '')}.`}
+      accessibilityLabel={`${titleLine}. ${subtitle}.${trailingValue ? ` ${trailingValue}.` : ''}`}
       style={({ pressed }) => [
         styles.row,
         {
-          backgroundColor: surface.backgroundColor,
-          borderColor: surface.borderColor,
+          backgroundColor: CARD_SURFACE.backgroundColor,
+          borderColor: CARD_SURFACE.borderColor,
         },
         pressed && styles.pressed,
       ]}
     >
       <View style={styles.main}>
-        <View style={[styles.badge, { backgroundColor: surface.badgeBackground }]}>
-          <Text style={[typography.metric, styles.badgeText, { color: fg.muted, textTransform: 'none' }]}>
-            {count}
-          </Text>
-        </View>
-        <View style={styles.titleStack}>
-          <Text style={[typography.bodyBold, { color: fg.primary }]}>{titlePrefix}</Text>
-          <Text style={[typography.bodySmall, { color: titleColor }]}>{subtitle}</Text>
-        </View>
+        <Text style={[typography.titleH3, styles.title, { color: fg.primary }]}>{titleLine}</Text>
+        <Text style={[typography.bodySmall, { color: fg.secondary }]}>{subtitle}</Text>
       </View>
       <View style={styles.trailing}>
-        <Text style={[typography.bodyBold, { color: surface.ctaColor }]}>{trailing}</Text>
+        {trailingValue ? (
+          <Text style={[typography.metric, styles.trailingValue, { color: accentColor }]}>
+            {trailingValue}
+          </Text>
+        ) : null}
+        <HomeSummaryCardArrowIcon
+          backgroundColor={accentColor}
+          arrowColor={fg.muted}
+        />
       </View>
     </Pressable>
   );
@@ -102,32 +93,22 @@ const styles = StyleSheet.create({
   main: {
     flex: 1,
     minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space('Spacing/12'),
+    gap: space('Spacing/4'),
     marginRight: space('Spacing/12'),
   },
-  badge: {
-    minWidth: 40,
-    minHeight: 40,
-    borderRadius: radius('Radius/Full'),
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    paddingHorizontal: space('Spacing/4'),
-  },
-  badgeText: {
-    textAlign: 'center',
-  },
-  titleStack: {
-    flex: 1,
-    minWidth: 0,
-    gap: space('Spacing/4'),
+  title: {
+    width: '100%',
   },
   trailing: {
     flexShrink: 0,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    gap: space('Spacing/12'),
+  },
+  trailingValue: {
+    textTransform: 'none',
+    fontVariant: ['tabular-nums'],
   },
   pressed: { opacity: 0.75 },
 });

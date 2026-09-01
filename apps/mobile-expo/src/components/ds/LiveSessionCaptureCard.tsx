@@ -60,9 +60,9 @@ export function LiveSessionCaptureCard({
         <View style={styles.header}>
           <View style={styles.leading}>
             <View style={styles.datePad}>
-              <Text style={[typography.bodyBold, { color: fg.primary }]}>{dateLabel}</Text>
+              <Text style={[typography.body, { color: fg.primary }]}>{dateLabel}</Text>
             </View>
-            <Text style={typography.sessionTimeRange}>{startedAtLabel}</Text>
+            <Text style={[typography.bodySmall, { color: fg.secondary }]}>{startedAtLabel}</Text>
           </View>
           <View style={styles.trailing}>
             <View style={expanded ? styles.chevronExpanded : undefined}>

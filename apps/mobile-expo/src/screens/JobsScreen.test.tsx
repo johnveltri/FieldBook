@@ -235,6 +235,9 @@ describe('JobsScreen', () => {
       expect(screen.getByText('Start typing to search jobs')).toBeTruthy();
     });
 
+    expect(screen.queryByText('Loading jobs…')).toBeNull();
+    expect(screen.queryByLabelText('Loading jobs')).toBeNull();
+
     expect(screen.queryByText('All')).toBeNull();
   });
 

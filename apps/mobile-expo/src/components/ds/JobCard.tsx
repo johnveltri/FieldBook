@@ -1,5 +1,5 @@
 import type { ListJobsForCurrentUserItem } from '@fieldsolo/api-client';
-import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/tokens';
+import { color, colorWithAlpha } from '@fieldsolo/design-system/lib/tokens';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -84,7 +84,7 @@ export function JobCard({
           <View style={styles.jobHeaderRow}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[typography.titleH3, { color: fg.primary }]}>{job.shortDescription}</Text>
-              <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/4') }]}>
+              <Text style={[typography.bodySmall, { color: fg.secondary, marginTop: space('Spacing/4') }]}>
                 {(job.customerName || 'No customer').trim()} {'\u2022'} {recencySuffix}
               </Text>
             </View>
@@ -94,13 +94,9 @@ export function JobCard({
           </View>
 
           {incompletePills != null && incompletePills.length > 0 ? (
-            <View style={styles.incompletePillsRow}>
-              {incompletePills.map((label) => (
-                <View key={label} style={styles.incompletePill}>
-                  <Text style={[typography.labelCaps, styles.incompletePillLabel]}>{label}</Text>
-                </View>
-              ))}
-            </View>
+            <Text style={[typography.bodySmall, styles.incompleteReasons]}>
+              {`Missing: ${incompletePills.join(', ')}`}
+            </Text>
           ) : null}
 
           <View style={styles.metricsRow}>
@@ -178,26 +174,15 @@ const styles = StyleSheet.create({
   jobHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     gap: space('Spacing/8'),
   },
   statusPillWrap: {
-    alignSelf: 'flex-start',
+    flexShrink: 0,
+    alignItems: 'flex-end',
   },
-  incompletePillsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space('Spacing/8'),
-  },
-  incompletePill: {
-    backgroundColor: color('Semantic/Status/Warning/BG'),
-    borderWidth: 1,
-    borderColor: color('Semantic/Status/Warning/Stroke'),
-    borderRadius: radius('Radius/8'),
-    paddingHorizontal: space('Spacing/8'),
-    paddingVertical: space('Spacing/4'),
-  },
-  incompletePillLabel: {
-    color: color('Semantic/Status/Warning/Label'),
+  incompleteReasons: {
+    color: color('Semantic/Status/Error/Text'),
   },
   metricsRow: {
     borderTopWidth: 1,

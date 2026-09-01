@@ -21,7 +21,7 @@ const handleBg = colorWithAlpha('Foundation/Text/Primary', 0.2);
 
 const bodyBold = typographyBodyBoldStyle();
 const bodySmall = typographyBodySmallStyle();
-/** Figma `1283:350` fields use Ubuntu Sans Mono 14 (`Typography/Body`), not `Typography/Input`. */
+/** Figma `1283:350` fields use Ubuntu 14 (`Typography/Body`), not `Typography/Input`. */
 const fieldText = typographyBodyStyle();
 
 export const MATERIAL_SHEET_VARIANTS = [

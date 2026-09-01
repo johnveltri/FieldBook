@@ -72,12 +72,14 @@ export function ViewMaterialsBuckets({
                 ]}
               >
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[typography.bodyBold, { color: fg.primary }]}>{item.name}</Text>
-                  <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/4') }]}>
+                  <Text style={[typography.body, { color: fg.primary }]}>{item.name}</Text>
+                  <Text style={[typography.bodySmall, { color: fg.secondary, marginTop: space('Spacing/4') }]}>
                     {item.quantityLabel}
                   </Text>
                 </View>
-                <Text style={[typography.bodyBold, { color: fg.primary }]}>{item.priceLabel}</Text>
+                <Text style={[typography.metric, { textTransform: 'none', color: fg.primary }]}>
+                  {item.priceLabel}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -131,14 +133,16 @@ export function ViewOtherCostsBuckets({
                 ]}
               >
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[typography.bodyBold, { color: fg.primary }]}>{item.typeLabel}</Text>
+                  <Text style={[typography.body, { color: fg.primary }]}>{item.typeLabel}</Text>
                   {item.description ? (
-                    <Text style={[typography.body, { color: fg.secondary, marginTop: space('Spacing/4') }]}>
+                    <Text style={[typography.bodySmall, { color: fg.secondary, marginTop: space('Spacing/4') }]}>
                       {item.description}
                     </Text>
                   ) : null}
                 </View>
-                <Text style={[typography.bodyBold, { color: fg.primary }]}>{item.priceLabel}</Text>
+                <Text style={[typography.metric, { textTransform: 'none', color: fg.primary }]}>
+                  {item.priceLabel}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -157,6 +161,7 @@ export function ViewNotesBuckets({
   typography,
   onNotePress,
   hideBucketHeaders = false,
+  showNoteIcon = true,
 }: {
   buckets: JobDetailNoteBucket[];
   typography: TextStyles;
@@ -167,6 +172,8 @@ export function ViewNotesBuckets({
    * its own recency section headers (TODAY / PAST WEEK …) are the grouping.
    */
   hideBucketHeaders?: boolean;
+  /** Leading document icon on each note row. Job Detail hides these. */
+  showNoteIcon?: boolean;
 }) {
   if (buckets.length === 0) {
     return null;
@@ -199,14 +206,16 @@ export function ViewNotesBuckets({
                 accessibilityLabel="Edit note"
                 onPress={onNotePress ? () => onNotePress(n.id) : undefined}
                 style={({ pressed }) => [
-                  styles.noteRow,
+                  showNoteIcon ? styles.noteRow : styles.noteRowPlain,
                   ni > 0 && { borderTopWidth: 1, borderTopColor: color('Foundation/Border/Subtle') },
                   pressed && onNotePress ? styles.pressed : null,
                 ]}
               >
-                <View style={{ marginTop: space('Spacing/2') }}>
-                  <JobDetailIconViewNote color={noteIcon} />
-                </View>
+                {showNoteIcon ? (
+                  <View style={{ marginTop: space('Spacing/2') }}>
+                    <JobDetailIconViewNote color={noteIcon} />
+                  </View>
+                ) : null}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[typography.body, { color: fg.primary }]}>{n.excerpt}</Text>
                   <Text style={[typography.bodySmall, { color: fg.secondary, marginTop: space('Spacing/8') }]}>
@@ -225,7 +234,7 @@ export function ViewNotesBuckets({
 const styles = StyleSheet.create({
   viewCardOuter: {
     width: '100%',
-    paddingVertical: space('Spacing/8'),
+    paddingBottom: space('Spacing/8'),
   },
   viewCardBorder: {
     borderRadius: radius('Radius/16'),
@@ -244,7 +253,7 @@ const styles = StyleSheet.create({
     paddingVertical: space('Spacing/8'),
   },
   bucketHeaderText: {
-    color: fg.primary,
+    color: fg.secondary,
   },
   bucketHeaderFirst: {
     borderTopLeftRadius: radius('Radius/16'),
@@ -261,6 +270,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: space('Spacing/8'),
+    paddingHorizontal: space('Spacing/16'),
+    paddingVertical: space('Spacing/16'),
+  },
+  noteRowPlain: {
     paddingHorizontal: space('Spacing/16'),
     paddingVertical: space('Spacing/16'),
   },

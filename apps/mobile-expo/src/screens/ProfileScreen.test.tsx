@@ -81,7 +81,7 @@ describe('ProfileScreen', () => {
       expect(screen.getByText('Alex Builder')).toBeTruthy();
     });
     expect(screen.getByText('Personal Info')).toBeTruthy();
-    expect(screen.getByText('Plan')).toBeTruthy();
+    expect(screen.queryByText('Plan')).toBeNull();
     expect(screen.getByText('Your data')).toBeTruthy();
     expect(screen.getByText('Export Job Summary')).toBeTruthy();
     expect(screen.getByText('Account')).toBeTruthy();

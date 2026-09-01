@@ -316,16 +316,15 @@ describe('HomeScreen quick session', () => {
     );
     expect(screen.getByText('Completed jobs worked in the past 7 days')).toBeTruthy();
     expect(screen.getByText('Needs Attention')).toBeTruthy();
-    expect(screen.getByText('Incomplete')).toBeTruthy();
+    expect(screen.getByText('Incomplete (11)')).toBeTruthy();
     expect(screen.getByText('Missing key info')).toBeTruthy();
-    expect(screen.getByText('Fix →')).toBeTruthy();
-    expect(screen.getByLabelText('Incomplete. 11 jobs. Missing key info. Fix.')).toBeTruthy();
+    expect(screen.getByLabelText('Incomplete (11). Missing key info.')).toBeTruthy();
     expect(screen.queryByText('10 of 11 jobs')).toBeNull();
     expect(screen.queryByText('Wire outlet')).toBeNull();
     expect(screen.getByText('Jump Back In')).toBeTruthy();
     expect(screen.getByText('Replace ceiling fan')).toBeTruthy();
 
-    fireEvent.press(screen.getByLabelText('Incomplete. 11 jobs. Missing key info. Fix.'));
+    fireEvent.press(screen.getByLabelText('Incomplete (11). Missing key info.'));
     expect(onOpenJobsOpenTab).toHaveBeenCalledWith('incomplete');
 
     fireEvent.press(screen.getByText('Replace ceiling fan'));
@@ -370,10 +369,10 @@ describe('HomeScreen quick session', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('In Progress')).toBeTruthy();
+      expect(screen.getByText('In Progress (1)')).toBeTruthy();
     });
     expect(screen.getByText('Active work underway')).toBeTruthy();
-    expect(screen.getByLabelText('In Progress. 1 jobs. Active work underway. Review.')).toBeTruthy();
+    expect(screen.getByLabelText('In Progress (1). Active work underway.')).toBeTruthy();
     expect(screen.queryByText('Patch drywall')).toBeNull();
     expect(screen.queryByText('Estimate panel')).toBeNull();
     expect(screen.queryByText('Paused repair')).toBeNull();
@@ -413,14 +412,14 @@ describe('HomeScreen quick session', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Unpaid')).toBeTruthy();
+      expect(screen.getByText('Unpaid (1)')).toBeTruthy();
     });
     expect(screen.getByText('Completed but not paid')).toBeTruthy();
-    expect(screen.getByLabelText('Unpaid. 1 jobs. Completed but not paid. Review.')).toBeTruthy();
+    expect(screen.getByLabelText('Unpaid (1). Completed but not paid.')).toBeTruthy();
     expect(screen.queryByText('Garbage Disposal Install')).toBeNull();
     expect(screen.queryByText('Paid faucet repair')).toBeNull();
 
-    fireEvent.press(screen.getByLabelText('Unpaid. 1 jobs. Completed but not paid. Review.'));
+    fireEvent.press(screen.getByLabelText('Unpaid (1). Completed but not paid.'));
     expect(onOpenJobsOpenTab).toHaveBeenCalledWith('unpaid');
   });
 });

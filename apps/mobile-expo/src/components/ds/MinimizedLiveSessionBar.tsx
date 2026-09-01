@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     gap: space('Spacing/8'),
   },
   timer: {
-    fontFamily: 'UbuntuSansMono_700Bold',
+    fontFamily: 'Ubuntu_700Bold',
     fontSize: 18,
     lineHeight: 22,
     color: color('Brand/Primary'),

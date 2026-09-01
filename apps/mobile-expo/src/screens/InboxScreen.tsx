@@ -1,10 +1,8 @@
 import { useFonts } from 'expo-font';
-import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
-  UbuntuSansMono_400Regular,
-  UbuntuSansMono_600SemiBold,
-  UbuntuSansMono_700Bold,
-} from '@expo-google-fonts/ubuntu-sans-mono';
+  fieldsoloExpoFontAssets,
+  fieldsoloLoadedFonts,
+} from '@fieldsolo/design-system/expo/loadFieldSoloFonts';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -130,23 +128,13 @@ export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
   const insets = useSafeAreaInsets();
   const { columnStyle } = useContentColumn();
   const scrollY = useMemo(() => new Animated.Value(0), []);
-  const { invalidateJobsList } = useJobsListInvalidation();
+  const { invalidateJobsList, version } = useJobsListInvalidation();
 
-  const [fontsLoaded] = useFonts({
-    PTSerif_700Bold,
-    UbuntuSansMono_400Regular,
-    UbuntuSansMono_600SemiBold,
-    UbuntuSansMono_700Bold,
-  });
+  const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
 
   const typography = useMemo(
     () =>
-      createTextStyles({
-        serifBold: 'PTSerif_700Bold',
-        mono: 'UbuntuSansMono_400Regular',
-        monoSemi: 'UbuntuSansMono_600SemiBold',
-        monoBold: 'UbuntuSansMono_700Bold',
-      }),
+      createTextStyles(fieldsoloLoadedFonts),
     [],
   );
 
@@ -180,6 +168,8 @@ export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
   const [assignJobsLoading, setAssignJobsLoading] = useState(false);
   const [assignJobsError, setAssignJobsError] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
+  const hasLoadedInboxRef = useRef(false);
+  const prevLoadKeyRef = useRef(loadKey);
 
   const refetch = useCallback(async (isCancelled: () => boolean) => {
     const startedAt = Date.now();
@@ -227,16 +217,25 @@ export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
 
   useEffect(() => {
     let alive = true;
-    setLoading(true);
-    userPickedTabRef.current = false;
+    const loadKeyChanged = prevLoadKeyRef.current !== loadKey;
+    if (loadKeyChanged) {
+      userPickedTabRef.current = false;
+      prevLoadKeyRef.current = loadKey;
+    }
+    if (!hasLoadedInboxRef.current) {
+      setLoading(true);
+    }
     void (async () => {
       await refetch(() => !alive);
-      if (alive) setLoading(false);
+      if (alive) {
+        setLoading(false);
+        hasLoadedInboxRef.current = true;
+      }
     })();
     return () => {
       alive = false;
     };
-  }, [loadKey, refetch]);
+  }, [loadKey, version, refetch]);
 
   // Open to whichever inbox has items: if Notes is empty but Materials has
   // something, land on Materials (and vice versa). Skipped once the user has

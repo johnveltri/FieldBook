@@ -1,10 +1,8 @@
 import { useFonts } from 'expo-font';
-import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
-  UbuntuSansMono_400Regular,
-  UbuntuSansMono_600SemiBold,
-  UbuntuSansMono_700Bold,
-} from '@expo-google-fonts/ubuntu-sans-mono';
+  fieldsoloExpoFontAssets,
+  fieldsoloLoadedFonts,
+} from '@fieldsolo/design-system/expo/loadFieldSoloFonts';
 import {
   createBlankJobForLiveSessionStart,
   createMaterial,
@@ -75,9 +73,15 @@ const QuickActionsFlowContext = createContext<QuickActionsFlowContextValue | nul
 export type QuickActionsFlowProviderProps = {
   children: ReactNode;
   onCreateJob: () => Promise<unknown>;
+  /** Called after a quick note/material is saved so the underlying screen can refresh. */
+  onQuickCaptureSaved?: (info: { mode: CaptureMode; jobId: string | null }) => void;
 };
 
-export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActionsFlowProviderProps) {
+export function QuickActionsFlowProvider({
+  children,
+  onCreateJob,
+  onQuickCaptureSaved,
+}: QuickActionsFlowProviderProps) {
   const hasLiveSession = useHasLiveSession();
   const { startLiveSession, refresh: refreshLiveSession } = useLiveSession();
   const { invalidateJobsList } = useJobsListInvalidation();
@@ -108,21 +112,11 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
   const [chooseJobLoading, setChooseJobLoading] = useState(false);
   const [chooseJobError, setChooseJobError] = useState<string | null>(null);
 
-  const [fontsLoaded] = useFonts({
-    PTSerif_700Bold,
-    UbuntuSansMono_400Regular,
-    UbuntuSansMono_600SemiBold,
-    UbuntuSansMono_700Bold,
-  });
+  const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
 
   const typography = useMemo(
     () =>
-      createTextStyles({
-        serifBold: 'PTSerif_700Bold',
-        mono: 'UbuntuSansMono_400Regular',
-        monoSemi: 'UbuntuSansMono_600SemiBold',
-        monoBold: 'UbuntuSansMono_700Bold',
-      }),
+      createTextStyles(fieldsoloLoadedFonts),
     [],
   );
 
@@ -472,6 +466,10 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
         });
         closeQuickActions();
         invalidateJobsList();
+        onQuickCaptureSaved?.({
+          mode: captureMode,
+          jobId: captureMode === 'job' && captureJob ? captureJob.id : null,
+        });
       } catch (e) {
         analytics.capture('note_create_failed', {
           source: 'quick_actions',
@@ -483,7 +481,7 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
         setCaptureSaving(false);
       }
     },
-    [captureJob, captureMode, captureSaving, closeQuickActions, draftSessionId, invalidateJobsList],
+    [captureJob, captureMode, captureSaving, closeQuickActions, draftSessionId, invalidateJobsList, onQuickCaptureSaved],
   );
 
   const saveCaptureMaterial = useCallback(
@@ -516,6 +514,10 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
         });
         closeQuickActions();
         invalidateJobsList();
+        onQuickCaptureSaved?.({
+          mode: captureMode,
+          jobId: captureMode === 'job' && captureJob ? captureJob.id : null,
+        });
       } catch (e) {
         analytics.capture('material_create_failed', {
           source: 'quick_actions',
@@ -527,7 +529,7 @@ export function QuickActionsFlowProvider({ children, onCreateJob }: QuickActions
         setCaptureSaving(false);
       }
     },
-    [captureJob, captureMode, captureSaving, closeQuickActions, draftSessionId, invalidateJobsList],
+    [captureJob, captureMode, captureSaving, closeQuickActions, draftSessionId, invalidateJobsList, onQuickCaptureSaved],
   );
 
   const handlePrimaryAction = useCallback(

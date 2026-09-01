@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { color } from '@fieldsolo/design-system/lib/tokens';
 
 import { type TextStyles, fg, space } from '../../theme/nativeTokens';
@@ -24,45 +23,9 @@ export const JOBS_OPEN_SECTION_TITLE_COLORS: Record<JobsOpenSectionKind, string>
 
 const COPY = JOBS_OPEN_SECTION_COPY;
 
-const TITLE_COLORS = JOBS_OPEN_SECTION_TITLE_COLORS;
-
-function LeadingIncomplete({ stroke }: { stroke: string }) {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" accessibilityElementsHidden>
-      <Path
-        d="M7 1.75L12.25 12H1.75L7 1.75Z"
-        stroke={stroke}
-        strokeWidth={1.2}
-        strokeLinejoin="round"
-        fill="none"
-      />
-      <Path d="M7 5.25V7.75" stroke={stroke} strokeWidth={1.2} strokeLinecap="round" />
-      <Path d="M7 9.25h.01" stroke={stroke} strokeWidth={1.2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function LeadingInProgress({ fill }: { fill: string }) {
-  return (
-    <View
-      style={[styles.leadingDot, { backgroundColor: fill }]}
-      accessibilityElementsHidden
-    />
-  );
-}
-
-function LeadingUnpaid({ borderColor }: { borderColor: string }) {
-  return (
-    <View
-      style={[styles.leadingRing, { borderColor }]}
-      accessibilityElementsHidden
-    />
-  );
-}
-
 /**
  * OPEN-tab list section header — Figma: Incomplete `443:2253`, In progress `1022:456`, Unpaid `1022:468`.
- * @see fieldsolo/packages/design-system/components/jobs-open-stack-section-header/spec.json
+ * @see fieldsoli/packages/design-system/components/jobs-open-stack-section-header/spec.json
  */
 export function JobsOpenStackSectionHeader({
   kind,
@@ -79,18 +42,8 @@ export function JobsOpenStackSectionHeader({
    */
   contentInset?: number;
 }) {
-  const titleColor = TITLE_COLORS[kind];
   const { titlePrefix, subtitle } = COPY[kind];
-  const titleLine = `${titlePrefix} · ${count}`;
-
-  const leading =
-    kind === 'incomplete' ? (
-      <LeadingIncomplete stroke={titleColor} />
-    ) : kind === 'inProgress' ? (
-      <LeadingInProgress fill={titleColor} />
-    ) : (
-      <LeadingUnpaid borderColor={fg.secondary} />
-    );
+  const titleLine = `${titlePrefix} (${count})`;
 
   return (
     <View
@@ -98,12 +51,9 @@ export function JobsOpenStackSectionHeader({
       accessibilityRole="header"
       accessibilityLabel={`${titleLine}. ${subtitle}`}
     >
-      <View style={styles.headingRow}>
-        <View style={styles.leadingSlot}>{leading}</View>
-        <Text style={[typography.titleH3, styles.title, { color: titleColor }]}>{titleLine}</Text>
-      </View>
+      <Text style={[typography.titleH3, styles.title, { color: fg.primary }]}>{titleLine}</Text>
       <View style={styles.subtitleBlock}>
-        <Text style={[typography.bodySmall, { color: titleColor }]}>{subtitle}</Text>
+        <Text style={[typography.bodySmall, { color: fg.secondary }]}>{subtitle}</Text>
       </View>
     </View>
   );
@@ -116,37 +66,10 @@ const styles = StyleSheet.create({
     paddingBottom: space('Spacing/12'),
     gap: 4,
   },
-  headingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space('Spacing/8'),
+  title: {
     width: '100%',
   },
-  leadingSlot: {
-    width: 14,
-    height: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  leadingDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 9999,
-  },
-  leadingRing: {
-    width: 14,
-    height: 14,
-    borderRadius: 9999,
-    borderWidth: 2,
-    backgroundColor: 'transparent',
-  },
-  title: {
-    flex: 1,
-    minWidth: 0,
-  },
   subtitleBlock: {
-    paddingLeft: 22,
-    paddingRight: 22,
     paddingVertical: 1,
   },
 });

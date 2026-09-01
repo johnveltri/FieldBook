@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
     textTransform: 'none',
   },
   statusPillAlign: {
-    marginTop: space('Spacing/6'),
     flexShrink: 0,
-    flexGrow: 0,
+    alignItems: 'flex-end',
+    marginTop: space('Spacing/16'),
   },
 });

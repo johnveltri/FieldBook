@@ -1,6 +1,6 @@
 {
   "Typography/Body": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Regular",
     "size": 16,
     "weight": 400,
@@ -8,7 +8,7 @@
     "letterSpacing": 0
   },
   "Typography/Session/TimeRange": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Regular",
     "size": 16,
     "weight": 400,
@@ -16,7 +16,7 @@
     "letterSpacing": 0
   },
   "Typography/Body-Bold": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "SemiBold",
     "size": 18,
     "weight": 600,
@@ -24,7 +24,7 @@
     "letterSpacing": 0
   },
   "Typography/Metric-S": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "SemiBold",
     "size": 16,
     "weight": 600,
@@ -33,7 +33,7 @@
     "textTransform": "uppercase"
   },
   "Typography/Body-Small": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Regular",
     "size": 14,
     "weight": 400,
@@ -58,7 +58,7 @@
     "letterSpacing": 0
   },
   "Typography/Input": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Regular",
     "size": 16,
     "weight": 400,
@@ -66,7 +66,7 @@
     "letterSpacing": 0
   },
   "Typography/Input-Small": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Regular",
     "size": 14,
     "weight": 400,
@@ -74,15 +74,15 @@
     "letterSpacing": 0
   },
   "Typography/LABEL": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Bold",
-    "size": 12,
+    "size": 14,
     "weight": 700,
     "lineHeight": 140,
-    "letterSpacing": 8
+    "letterSpacing": -4
   },
   "Typography/Metric": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Bold",
     "size": 18,
     "weight": 700,
@@ -91,7 +91,7 @@
     "textTransform": "uppercase"
   },
   "Typography/Metric-XL": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Bold",
     "size": 42,
     "weight": 700,
@@ -116,7 +116,7 @@
     "letterSpacing": 0
   },
   "Typography/JobDetail/Subtitle": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Regular",
     "size": 14,
     "weight": 400,
@@ -124,7 +124,7 @@
     "letterSpacing": 0
   },
   "Typography/JobDetail/CategoryLabel": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Bold",
     "size": 12,
     "weight": 700,
@@ -133,7 +133,7 @@
     "textTransform": "uppercase"
   },
   "Typography/JobDetail/MetricColumnLabel": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "SemiBold",
     "size": 12,
     "weight": 600,
@@ -142,7 +142,7 @@
     "textTransform": "uppercase"
   },
   "Typography/JobDetail/NetAmount": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Bold",
     "size": 20,
     "weight": 700,
@@ -150,7 +150,7 @@
     "letterSpacing": 0
   },
   "Typography/CTA/PrimaryLabel": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "SemiBold",
     "size": 16,
     "weight": 600,
@@ -159,7 +159,7 @@
     "textTransform": "uppercase"
   },
   "Typography/Pill/Compact": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "Bold",
     "size": 12,
     "weight": 700,
@@ -168,7 +168,7 @@
     "textTransform": "uppercase"
   },
   "Typography/Section/MetricS-Dense": {
-    "family": "Ubuntu Sans Mono",
+    "family": "Ubuntu",
     "style": "SemiBold",
     "size": 12,
     "weight": 600,

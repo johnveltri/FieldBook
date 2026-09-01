@@ -1,10 +1,8 @@
 import { useFonts } from 'expo-font';
-import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
-  UbuntuSansMono_400Regular,
-  UbuntuSansMono_600SemiBold,
-  UbuntuSansMono_700Bold,
-} from '@expo-google-fonts/ubuntu-sans-mono';
+  fieldsoloExpoFontAssets,
+  fieldsoloLoadedFonts,
+} from '@fieldsolo/design-system/expo/loadFieldSoloFonts';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,7 +20,7 @@ import {
 import { shellBottomNavOuterHeight } from '../components/shell/ShellBottomNav';
 import {
   EarningsSnapshotCard,
-  OutstandingPaymentCard,
+  JobsOpenSummaryCard,
   RankedJobRowCard,
   SectionHeader,
   type JobsOpenSectionKind,
@@ -62,19 +60,19 @@ type WindowConfig = {
 
 const WINDOW_CONFIG: Record<EarningsWindow, WindowConfig> = {
   week: {
-    tabLabel: 'PAST WEEK',
+    tabLabel: 'WEEK',
     windowDays: 7,
     snapshotTitle: 'Weekly Snapshot',
     snapshotSubtitle: 'Completed jobs worked in the past 7 days',
   },
   month: {
-    tabLabel: 'PAST MONTH',
+    tabLabel: 'MONTH',
     windowDays: 30,
     snapshotTitle: 'Monthly Snapshot',
     snapshotSubtitle: 'Completed jobs worked in the past 30 days',
   },
   year: {
-    tabLabel: 'PAST YEAR',
+    tabLabel: 'YEAR',
     windowDays: 365,
     snapshotTitle: 'Annual Snapshot',
     snapshotSubtitle: 'Completed jobs worked in the past 365 days',
@@ -141,21 +139,11 @@ export function EarningsScreen({
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
   const { version } = useJobsListInvalidation();
 
-  const [fontsLoaded] = useFonts({
-    PTSerif_700Bold,
-    UbuntuSansMono_400Regular,
-    UbuntuSansMono_600SemiBold,
-    UbuntuSansMono_700Bold,
-  });
+  const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
 
   const typography: Typography = useMemo(
     () =>
-      createTextStyles({
-        serifBold: 'PTSerif_700Bold',
-        mono: 'UbuntuSansMono_400Regular',
-        monoSemi: 'UbuntuSansMono_600SemiBold',
-        monoBold: 'UbuntuSansMono_700Bold',
-      }),
+      createTextStyles(fieldsoloLoadedFonts),
     [],
   );
 
@@ -456,9 +444,10 @@ export function EarningsScreen({
 
               {outstanding.count > 0 ? (
                 <View style={[styles.cardBand, styles.cardBandTopGap]}>
-                  <OutstandingPaymentCard
+                  <JobsOpenSummaryCard
+                    kind="unpaid"
                     count={outstanding.count}
-                    amount={formatUsd(outstanding.revenueCents)}
+                    trailingValue={formatUsd(outstanding.revenueCents)}
                     typography={typography}
                     onPress={() => {
                       analytics.capture('outstanding_payment_card_pressed', {
@@ -475,7 +464,7 @@ export function EarningsScreen({
                 <View key={section.key} style={styles.sectionGroup}>
                   <SectionHeader
                     title={section.title}
-                    tone="accent"
+                    tone="neutral"
                     typography={typography}
                     contentInset={0}
                   />

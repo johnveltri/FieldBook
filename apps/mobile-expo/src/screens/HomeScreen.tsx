@@ -1,10 +1,8 @@
 import { useFonts } from 'expo-font';
-import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
-  UbuntuSansMono_400Regular,
-  UbuntuSansMono_600SemiBold,
-  UbuntuSansMono_700Bold,
-} from '@expo-google-fonts/ubuntu-sans-mono';
+  fieldsoloExpoFontAssets,
+  fieldsoloLoadedFonts,
+} from '@fieldsolo/design-system/expo/loadFieldSoloFonts';
 import {
   fetchFirstJobIdForCurrentUser,
   getWeeklyNetEarningsCentsForCurrentUser,
@@ -41,7 +39,6 @@ import {
   SectionHeader,
   type JobsOpenSectionKind,
 } from '../components/ds';
-import { HomeJumpBackInIcon, HomeNeedsAttentionIcon } from '../components/figma-icons/HomeSectionIcons';
 import { TopHeaderProfileIcon } from '../components/figma-icons/TopHeaderIcons';
 import { PlatformHeaderAction, platformHeaderActionIconColor } from '../components/platform/PlatformHeaderAction';
 import {
@@ -116,21 +113,11 @@ export function HomeScreen({
   /** Lined canvas height — same pattern as JobDetail (`CanvasTiledBackground` + `onContentSizeChange`). */
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
 
-  const [fontsLoaded] = useFonts({
-    PTSerif_700Bold,
-    UbuntuSansMono_400Regular,
-    UbuntuSansMono_600SemiBold,
-    UbuntuSansMono_700Bold,
-  });
+  const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
 
   const typography = useMemo(
     () =>
-      createTextStyles({
-        serifBold: 'PTSerif_700Bold',
-        mono: 'UbuntuSansMono_400Regular',
-        monoSemi: 'UbuntuSansMono_600SemiBold',
-        monoBold: 'UbuntuSansMono_700Bold',
-      }),
+      createTextStyles(fieldsoloLoadedFonts),
     [],
   );
 
@@ -412,9 +399,8 @@ export function HomeScreen({
             <>
               <SectionHeader
                 title="Needs Attention"
-                tone="accent"
+                tone="neutral"
                 typography={typography}
-                leadingIcon={<HomeNeedsAttentionIcon color={color('Brand/Accent')} />}
                 contentInset={0}
               />
               <View style={styles.needsAttentionBlock}>
@@ -448,7 +434,6 @@ export function HomeScreen({
                 title="Jump Back In"
                 tone="neutral"
                 typography={typography}
-                leadingIcon={<HomeJumpBackInIcon color={fg.secondary} />}
                 contentInset={0}
               />
               <View style={styles.jumpBackList}>

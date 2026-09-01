@@ -10,13 +10,10 @@
  * **Money:** `formatUsdCombined` in `lib/formatUsd.ts` + `JobDetailSummaryCard` use DS color tokens for tones.
  */
 import { useFonts } from 'expo-font';
-import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
-  UbuntuSansMono_400Regular,
-  UbuntuSansMono_600SemiBold,
-  UbuntuSansMono_700Bold,
-} from '@expo-google-fonts/ubuntu-sans-mono';
-import type { ReactNode } from 'react';
+  fieldsoloExpoFontAssets,
+  fieldsoloLoadedFonts,
+} from '@fieldsolo/design-system/expo/loadFieldSoloFonts';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -68,10 +65,6 @@ import { PlatformHeaderAction } from '../components/platform/PlatformHeaderActio
 import {
   JobDetailIconCtaMore,
   JobDetailIconSectionAdd,
-  JobDetailIconSectionMaterials,
-  JobDetailIconSectionNotes,
-  JobDetailIconSectionOtherCosts,
-  JobDetailIconSectionSessions,
   JobDetailIconTopClose,
   JobDetailIconTopEdit,
 } from '../components/figma-icons/JobDetailScreenIcons';
@@ -352,22 +345,12 @@ export function JobDetailScreen({
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
 
   /** Load DS fonts before rendering text (avoids flash of system font / layout jump). */
-  const [fontsLoaded] = useFonts({
-    PTSerif_700Bold,
-    UbuntuSansMono_400Regular,
-    UbuntuSansMono_600SemiBold,
-    UbuntuSansMono_700Bold,
-  });
+  const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
 
   /** Memoized text style bundle (serif headings + mono body) tied to loaded font postscript names. */
   const typography = useMemo(
     () =>
-      createTextStyles({
-        serifBold: 'PTSerif_700Bold',
-        mono: 'UbuntuSansMono_400Regular',
-        monoSemi: 'UbuntuSansMono_600SemiBold',
-        monoBold: 'UbuntuSansMono_700Bold',
-      }),
+      createTextStyles(fieldsoloLoadedFonts),
     [],
   );
 
@@ -2469,7 +2452,6 @@ export function JobDetailScreen({
         {/* Section headers are full-bleed within max width; ADD uses a compact primary button. */}
         <SectionHeaderFigma
           title="Sessions"
-          icon={<JobDetailIconSectionSessions color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
           onAddPress={openSessionChooser}
@@ -2504,7 +2486,6 @@ export function JobDetailScreen({
 
         <SectionHeaderFigma
           title="Materials"
-          icon={<JobDetailIconSectionMaterials color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
           onAddPress={openAddMaterial}
@@ -2533,7 +2514,6 @@ export function JobDetailScreen({
 
         <SectionHeaderFigma
           title="Other Costs"
-          icon={<JobDetailIconSectionOtherCosts color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
           onAddPress={openAddOtherCost}
@@ -2560,7 +2540,6 @@ export function JobDetailScreen({
 
         <SectionHeaderFigma
           title="Notes"
-          icon={<JobDetailIconSectionNotes color={color('Brand/Accent')} />}
           typography={typography}
           showAdd
           onAddPress={openAddNote}
@@ -2572,6 +2551,7 @@ export function JobDetailScreen({
             buckets={job.noteBuckets}
             typography={typography}
             onNotePress={openEditNote}
+            showNoteIcon={false}
           />
         )}
         </View>
@@ -3101,16 +3081,14 @@ function OtherCostsConfirmedNoUseCard({
 
 // --- Section header (Figma `371:2179` Row) ---
 
-/** Leading icon + section title; optional trailing ADD button when `showAdd` is true. */
+/** Section title; optional trailing ADD button when `showAdd` is true. */
 function SectionHeaderFigma({
   title,
-  icon,
   typography,
   showAdd,
   onAddPress,
 }: {
   title: string;
-  icon: ReactNode;
   typography: TextStyles;
   showAdd: boolean;
   onAddPress?: () => void;
@@ -3118,11 +3096,8 @@ function SectionHeaderFigma({
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderLead}>
-        {icon}
         <View style={styles.sectionHeaderTitleWrap}>
-          <Text style={typography.titleH3}>
-            {title}
-          </Text>
+          <Text style={typography.titleH3}>{title}</Text>
         </View>
       </View>
       {showAdd ? (
@@ -3297,10 +3272,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  /** Vertical breathing room around materials/notes cards (Figma `py-[9px]`). */
+  /** Bottom breathing room below materials/notes cards; top aligns with Sessions (no extra pad). */
   viewCardOuter: {
     width: '100%',
-    paddingVertical: space('Spacing/8'),
+    paddingBottom: space('Spacing/8'),
   },
   /** Single surface: rounded rect, clip children so bucket headers respect corner radius. */
   viewCardBorder: {

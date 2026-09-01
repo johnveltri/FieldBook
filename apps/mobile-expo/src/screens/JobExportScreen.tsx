@@ -1,10 +1,8 @@
 import { useFonts } from 'expo-font';
-import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
-  UbuntuSansMono_400Regular,
-  UbuntuSansMono_600SemiBold,
-  UbuntuSansMono_700Bold,
-} from '@expo-google-fonts/ubuntu-sans-mono';
+  fieldsoloExpoFontAssets,
+  fieldsoloLoadedFonts,
+} from '@fieldsolo/design-system/expo/loadFieldSoloFonts';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,6 +20,7 @@ import { CanvasTiledBackground } from '../components/CanvasTiledBackground';
 import { DropdownBottomSheet, type DropdownBottomSheetOption } from '../components/ds';
 import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
 import { TopHeaderBackIcon } from '../components/figma-icons/TopHeaderIcons';
+import { JobDetailIconViewSessionChevron } from '../components/figma-icons/JobDetailScreenIcons';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import {
@@ -30,6 +29,7 @@ import {
 } from '../lib/jobExportYears';
 import {
   bg,
+  border,
   cardShadowRn,
   createTextStyles,
   fg,
@@ -69,20 +69,10 @@ export function JobExportScreen({ onBack, onBackToHome }: JobExportScreenProps) 
   const [yearPickerOpen, setYearPickerOpen] = useState(false);
   const [requestState, setRequestState] = useState<RequestState>({ kind: 'idle' });
 
-  const [fontsLoaded] = useFonts({
-    PTSerif_700Bold,
-    UbuntuSansMono_400Regular,
-    UbuntuSansMono_600SemiBold,
-    UbuntuSansMono_700Bold,
-  });
+  const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
   const typography = useMemo(
     () =>
-      createTextStyles({
-        serifBold: 'PTSerif_700Bold',
-        mono: 'UbuntuSansMono_400Regular',
-        monoSemi: 'UbuntuSansMono_600SemiBold',
-        monoBold: 'UbuntuSansMono_700Bold',
-      }),
+      createTextStyles(fieldsoloLoadedFonts),
     [],
   );
   const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
@@ -217,8 +207,12 @@ export function JobExportScreen({ onBack, onBackToHome }: JobExportScreenProps) 
                   disabled={years.length === 0}
                   style={({ pressed }) => [styles.selector, pressed && styles.pressed]}
                 >
-                  <Text selectable style={[typography.bodyBold, styles.selectorText]}>{activeYear}</Text>
-                  <Text selectable style={[typography.body, styles.selectorChevron]}>⌄</Text>
+                  <View style={styles.selectorLeading}>
+                    <Text selectable style={[typography.body, styles.selectorText]}>{activeYear}</Text>
+                  </View>
+                  <View style={styles.selectorTrailing}>
+                    <JobDetailIconViewSessionChevron color={fg.secondary} />
+                  </View>
                 </Pressable>
                 {yearsResult.error ? (
                   <Text selectable style={[typography.bodySmall, styles.errorText]}>
@@ -312,19 +306,29 @@ const styles = StyleSheet.create({
   body: { width: '100%', gap: space('Spacing/12'), paddingBottom: space('Spacing/24') },
   label: { color: color('Brand/Accent'), paddingTop: space('Spacing/12') },
   selector: {
-    minHeight: 52,
+    width: '100%',
+    minHeight: space('Spacing/80'),
     borderWidth: 1,
-    borderColor: color('Foundation/Border/Default'),
-    borderRadius: radius('Radius/12'),
+    borderColor: border.subtle,
+    borderRadius: radius('Radius/16'),
     backgroundColor: bg.surfaceWhite,
     paddingHorizontal: space('Spacing/16'),
+    paddingVertical: space('Spacing/16'),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...cardShadowRn,
+  },
+  selectorLeading: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: space('Spacing/4'),
+  },
+  selectorTrailing: {
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   selectorText: { color: fg.primary },
-  selectorChevron: { color: fg.secondary, fontSize: 22 },
   infoCard: {
     backgroundColor: bg.surfaceWhite,
     borderRadius: radius('Radius/12'),

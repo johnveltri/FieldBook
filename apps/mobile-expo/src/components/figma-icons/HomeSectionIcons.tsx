@@ -1,4 +1,7 @@
+import { View, type ViewStyle } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
+
+import { color } from '@fieldsolo/design-system/lib/tokens';
 
 type IconProps = { color: string; size?: number };
 
@@ -36,5 +39,46 @@ export function HomeJumpBackInIcon({ color: stroke, size = 16 }: IconProps) {
         strokeLinejoin="round"
       />
     </Svg>
+  );
+}
+
+/** Trailing row affordance — arrow in circle (40×40), mirrored from session back chevron. */
+export function HomeSummaryCardArrowIcon({
+  arrowColor,
+  backgroundColor = color('Foundation/Surface/White'),
+  size = 40,
+  style,
+}: {
+  arrowColor: string;
+  backgroundColor?: string;
+  size?: number;
+  style?: ViewStyle;
+}) {
+  const iconSize = Math.round(size * 0.5);
+  return (
+    <View
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        style,
+      ]}
+      accessibilityElementsHidden
+    >
+      <Svg width={iconSize} height={iconSize} viewBox="0 0 20 20" fill="none">
+        <Path
+          d="M10 15.8333L15.8333 10M15.8333 10L10 4.16667M4.16667 10H15.8333"
+          stroke={arrowColor}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    </View>
   );
 }

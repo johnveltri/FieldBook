@@ -20,9 +20,9 @@ jest.mock('../figma-icons/ProfileScreenIcons', () => ({
 
 const typography = createTextStyles({
   serifBold: 'System',
-  mono: 'System',
-  monoSemi: 'System',
-  monoBold: 'System',
+  sans: 'System',
+  sansSemi: 'System',
+  sansBold: 'System',
 });
 
 describe('ChangePasswordBottomSheet', () => {

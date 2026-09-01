@@ -85,7 +85,7 @@ export function shadowFromColor(colorValue: string, spec = '0px 1px 2px'): strin
 export function typographyLabelStyle(): CSSProperties {
   const t = typography['Typography/LABEL'];
   return {
-    fontFamily: `"${t.family}", ui-monospace, monospace`,
+    fontFamily: fontStackForFamily(t.family),
     fontSize: t.size,
     fontWeight: t.weight,
     fontStyle: t.style === 'Italic' ? 'italic' : 'normal',
@@ -95,13 +95,17 @@ export function typographyLabelStyle(): CSSProperties {
   };
 }
 
+function fontStackForFamily(family: string): string {
+  if (family === 'PT Serif') {
+    return `"${family}", Georgia, "Times New Roman", serif`;
+  }
+  return `"Ubuntu", ui-sans-serif, system-ui, sans-serif`;
+}
+
 function typographyFromToken(token: keyof typeof typography): CSSProperties {
   const t = typography[token];
   const out: CSSProperties = {
-    fontFamily:
-      t.family === 'PT Serif'
-        ? `"${t.family}", Georgia, "Times New Roman", serif`
-        : `"${t.family}", ui-monospace, monospace`,
+    fontFamily: fontStackForFamily(t.family),
     fontSize: t.size,
     fontWeight: t.weight,
     fontStyle: t.style === 'Italic' ? 'italic' : 'normal',
