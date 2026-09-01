@@ -459,7 +459,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
               <View key={group.bucket} style={styles.groupWrap}>
                 <SectionHeader
                   title={RECENCY_BUCKET_TITLE[group.bucket]}
-                  tone="accent"
+                  tone="neutral"
                   typography={typography}
                   contentInset={0}
                 />
@@ -467,6 +467,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
                   buckets={[bucket]}
                   typography={typography}
                   onNotePress={(id) => openAssign('notes', id)}
+                  showNoteIcon={false}
                 />
               </View>
             );
@@ -482,7 +483,7 @@ export function InboxScreen({ loadKey = 0, onRequestClose }: InboxScreenProps) {
               <View key={group.bucket} style={styles.groupWrap}>
                 <SectionHeader
                   title={RECENCY_BUCKET_TITLE[group.bucket]}
-                  tone="accent"
+                  tone="neutral"
                   typography={typography}
                   contentInset={0}
                 />
