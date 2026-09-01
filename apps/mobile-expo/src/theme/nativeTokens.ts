@@ -95,21 +95,18 @@ export { color, radius, space };
 
 export type LoadedFonts = {
   serifBold: string;
-  mono: string;
-  monoSemi: string;
-  monoBold: string;
+  sans: string;
+  sansSemi: string;
+  sansBold: string;
 };
 
 type TypographyDef = (typeof typographyJson)[TypographyTokenName];
 
-function monoFamilyForToken(t: TypographyDef, f: LoadedFonts): string {
-  if (t.weight >= 700) return f.monoBold;
-  if (t.weight >= 600) return f.monoSemi;
-  return f.mono;
-}
-
 function fontFamilyForToken(t: TypographyDef, f: LoadedFonts): string {
-  return t.family === 'PT Serif' ? f.serifBold : monoFamilyForToken(t, f);
+  if (t.family === 'PT Serif') return f.serifBold;
+  if (t.weight >= 700) return f.sansBold;
+  if (t.weight >= 600) return f.sansSemi;
+  return f.sans;
 }
 
 /** Line height in px: token `100` = auto → ~1.25× font size; else percent of font size. */

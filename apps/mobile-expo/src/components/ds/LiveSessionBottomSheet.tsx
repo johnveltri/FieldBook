@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     paddingTop: space('Spacing/4'),
   },
   timer: {
-    fontFamily: 'UbuntuSansMono_700Bold',
+    fontFamily: 'Ubuntu_700Bold',
     fontSize: 70,
     lineHeight: 86,
     color: color('Foundation/Surface/White'),
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   endButtonLabel: {
-    fontFamily: 'UbuntuSansMono_700Bold',
+    fontFamily: 'Ubuntu_700Bold',
     fontSize: 18,
     lineHeight: 22,
     color: color('Foundation/Surface/White'),

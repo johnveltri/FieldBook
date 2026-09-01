@@ -31,9 +31,9 @@ jest.mock('@react-native-community/datetimepicker', () => ({
 
 const typography = createTextStyles({
   serifBold: 'System',
-  mono: 'System',
-  monoSemi: 'System',
-  monoBold: 'System',
+  sans: 'System',
+  sansSemi: 'System',
+  sansBold: 'System',
 });
 
 function setPlatformOS(os: 'ios' | 'android') {

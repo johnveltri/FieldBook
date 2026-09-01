@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&family=Ubuntu+Sans+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&family=Ubuntu:wght@400;500;700&display=swap");
 
 :root {
   --cream-50: #fcf8ef;
@@ -22,8 +22,8 @@
   --shadow-card: 0 0.75rem 0 0 var(--navy-950);
   --shadow-soft: 0 1.25rem 3rem rgba(16, 44, 56, 0.15);
   --font-serif: "PT Serif", Georgia, serif;
-  --font-ui: "Ubuntu Sans Mono", "Courier New", monospace;
-  --font-sans: "Ubuntu Sans Mono", "Courier New", monospace;
+  --font-ui: "Ubuntu", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Ubuntu", ui-sans-serif, system-ui, sans-serif;
   --content-width: 75rem;
   --page-gutter: clamp(1.25rem, 4vw, 4rem);
 }

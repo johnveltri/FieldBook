@@ -191,7 +191,6 @@ function Row({
               styles.statusPill,
               {
                 backgroundColor: row.badge.backgroundColor,
-                borderColor: row.badge.color,
               },
             ]}
           >
@@ -335,7 +334,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space('Spacing/12'),
     paddingVertical: space('Spacing/4'),
     borderRadius: radius('Radius/Full'),
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

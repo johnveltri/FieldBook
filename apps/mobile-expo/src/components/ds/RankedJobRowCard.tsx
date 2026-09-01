@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, colorWithAlpha, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { earningsSuccessNegativeColor } from '../../lib/financialColors';
-import { bg, border, cardShadowRn, fg, type TextStyles } from '../../theme/nativeTokens';
+import { bg, cardShadowRn, fg, type TextStyles } from '../../theme/nativeTokens';
 
 export type RankedJobRowCardProps = {
   /** 1-based rank shown in the leading badge. */
@@ -42,7 +42,11 @@ export function RankedJobRowCard({
       <View style={styles.main}>
         <View style={styles.badge}>
           <Text
-            style={[typography.metric, styles.badgeText, { color: fg.secondary, textTransform: 'none' }]}
+            style={[
+              typography.metric,
+              styles.badgeText,
+              { color: bg.surfaceWhite, textTransform: 'none' },
+            ]}
           >
             {rank}
           </Text>
@@ -88,9 +92,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: radius('Radius/Full'),
-    backgroundColor: color('Semantic/Status/Neutral/BG'),
-    borderWidth: 1,
-    borderColor: border.subtle,
+    backgroundColor: color('Semantic/Status/Neutral/Text'),
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,

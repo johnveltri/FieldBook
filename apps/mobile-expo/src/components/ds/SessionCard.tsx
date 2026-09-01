@@ -50,12 +50,14 @@ export function SessionCard({
         <View style={styles.header}>
           <View style={styles.leading}>
             <View style={styles.datePad}>
-              <Text style={[typography.bodyBold, { color: fg.primary }]}>{session.dateLabel}</Text>
+              <Text style={[typography.body, { color: fg.primary }]}>{session.dateLabel}</Text>
             </View>
-            <Text style={typography.sessionTimeRange}>{session.timeRangeLabel}</Text>
+            <Text style={[typography.bodySmall, { color: fg.secondary }]}>{session.timeRangeLabel}</Text>
           </View>
           <View style={styles.trailing}>
-            <Text style={[typography.metric, { textTransform: 'none' }]}>{session.durationLabel}</Text>
+            <Text style={[typography.metric, { textTransform: 'none', color: fg.primary }]}>
+              {session.durationLabel}
+            </Text>
             <View style={expanded ? styles.chevronExpanded : undefined}>
               <JobDetailIconViewSessionChevron color={fg.secondary} />
             </View>

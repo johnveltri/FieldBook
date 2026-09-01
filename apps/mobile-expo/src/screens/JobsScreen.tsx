@@ -1,10 +1,8 @@
 import { useFonts } from 'expo-font';
-import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
-  UbuntuSansMono_400Regular,
-  UbuntuSansMono_600SemiBold,
-  UbuntuSansMono_700Bold,
-} from '@expo-google-fonts/ubuntu-sans-mono';
+  fieldsoloExpoFontAssets,
+  fieldsoloLoadedFonts,
+} from '@fieldsolo/design-system/expo/loadFieldSoloFonts';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -107,10 +105,10 @@ type Typography = ReturnType<typeof createTextStyles>;
 function incompletePillsFor(job: ListJobsForCurrentUserItem): string[] {
   const pills: string[] = [];
   const desc = job.shortDescription.trim();
-  if (desc === '' || desc === 'Untitled Job') pills.push('NO SHORT DESCRIPTION');
-  if (job.revenueCents == null || job.revenueCents === 0) pills.push('NO REVENUE');
-  if (jobCostsIncompleteForListPill(job)) pills.push('NO COSTS');
-  if (!job.hasSessions) pills.push('NO SESSIONS');
+  if (desc === '' || desc === 'Untitled Job') pills.push('description');
+  if (job.revenueCents == null || job.revenueCents === 0) pills.push('revenue');
+  if (jobCostsIncompleteForListPill(job)) pills.push('costs');
+  if (!job.hasSessions) pills.push('sessions');
   return pills;
 }
 
@@ -236,21 +234,11 @@ export function JobsScreen({
   const scrollY = useMemo(() => new Animated.Value(0), []);
   const scrollOffsetRef = useRef(0);
   const { version } = useJobsListInvalidation();
-  const [fontsLoaded] = useFonts({
-    PTSerif_700Bold,
-    UbuntuSansMono_400Regular,
-    UbuntuSansMono_600SemiBold,
-    UbuntuSansMono_700Bold,
-  });
+  const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
 
   const typography = useMemo(
     () =>
-      createTextStyles({
-        serifBold: 'PTSerif_700Bold',
-        mono: 'UbuntuSansMono_400Regular',
-        monoSemi: 'UbuntuSansMono_600SemiBold',
-        monoBold: 'UbuntuSansMono_700Bold',
-      }),
+      createTextStyles(fieldsoloLoadedFonts),
     [],
   );
 
@@ -355,7 +343,6 @@ export function JobsScreen({
     }
     if (searchFocused && debouncedSearch.trim() === '') {
       setLoading(false);
-      setTabCache(emptyTabCache());
       setLoadError(null);
       return;
     }
@@ -431,6 +418,10 @@ export function JobsScreen({
 
   useEffect(() => {
     if (!isActive) return;
+    if (searchFocused && debouncedSearch.trim() === '') {
+      setLoading(false);
+      return;
+    }
     const fetchKey = `${debouncedSearch}|${searchFocused}`;
     const filtersChanged = jobsListFetchKeyRef.current !== fetchKey;
     const versionChanged = lastJobsFetchVersionRef.current !== version;
@@ -786,6 +777,9 @@ export function JobsScreen({
   );
 
   const listEmpty = useMemo(() => {
+    if (searchFocused && debouncedSearch.trim() === '') {
+      return null;
+    }
     if ((loading || tabAwaitingData) && jobs.length === 0) {
       return <JobsLoadingSkeleton typography={typography} />;
     }
@@ -797,9 +791,6 @@ export function JobsScreen({
           </Text>
         </View>
       );
-    }
-    if (searchFocused && debouncedSearch.trim() === '') {
-      return null;
     }
     if (searchFocused && debouncedSearch.trim() !== '' && jobs.length === 0) {
       return (
@@ -884,6 +875,14 @@ export function JobsScreen({
   const bottomNavReservedHeight = shellBottomNavOuterHeight(insets.bottom);
   const headerTopPad = Math.max(insets.top - space('Spacing/12'), 0);
   const scrollBottomPad = bottomNavReservedHeight + space('Spacing/20');
+  const searchAwaitingInput = searchFocused && debouncedSearch.trim() === '';
+  const listData = searchAwaitingInput
+    ? []
+    : loading || tabAwaitingData
+      ? jobs.length === 0
+        ? []
+        : flatData
+      : flatData;
 
   return (
     <View style={styles.root} collapsable={false}>
@@ -896,7 +895,7 @@ export function JobsScreen({
       </View>
       <Animated.FlatList
         ref={listRef}
-        data={loading || tabAwaitingData ? (jobs.length === 0 ? [] : flatData) : flatData}
+        data={listData}
         keyExtractor={(item) => item.key}
         renderItem={renderItem}
         ListHeaderComponent={listHeader}

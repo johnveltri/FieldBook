@@ -442,6 +442,15 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
     setProfileOpen(false);
   }, []);
 
+  const onQuickCaptureSaved = useCallback(
+    ({ mode, jobId }: { mode: 'inbox' | 'job'; jobId: string | null }) => {
+      if (mode === 'job' && jobId && jobDetailOpen && selectedJobId === jobId) {
+        setJobDetailLoadKey((k) => k + 1);
+      }
+    },
+    [jobDetailOpen, selectedJobId],
+  );
+
   const dismissOverlaysForTabPress = useCallback(
     (destinationTab: ShellMainTab) => {
       if (inboxOpen) {
@@ -560,7 +569,10 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
         />
       ) : null}
       {legalGate === 'ready' && analyticsConsentGate === 'ready' ? (
-        <QuickActionsFlowProvider onCreateJob={() => createJobAndOpen('primary_action')}>
+        <QuickActionsFlowProvider
+          onCreateJob={() => createJobAndOpen('primary_action')}
+          onQuickCaptureSaved={onQuickCaptureSaved}
+        >
           <ShellAppContext.Provider value={shellContextValue}>
             <ShellOverlayProvider value={shellOverlayValue}>
             <ShellChromeProvider>

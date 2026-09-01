@@ -272,7 +272,7 @@ export function JobCard({
             style={{
               flexShrink: 0,
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               justifyContent: 'flex-end',
             }}
           >

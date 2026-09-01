@@ -141,10 +141,9 @@ describe('EarningsScreen', () => {
     expect(screen.getByText('-$450.00')).toBeTruthy();
     expect(screen.getByText('3.0h')).toBeTruthy();
     expect(screen.getByText('$317/hr')).toBeTruthy();
-    expect(screen.getByText('$1,500.00')).toBeTruthy();
 
     fireEvent.press(
-      screen.getByLabelText('Outstanding. 2 jobs pending payment. $1,500.00.'),
+      screen.getByLabelText('Unpaid (2). Completed but not paid.'),
     );
     expect(onOpenJobsOpenTab).toHaveBeenCalledWith('unpaid');
 
@@ -164,8 +163,8 @@ describe('EarningsScreen', () => {
       expect(screen.getByText('Weekly Snapshot')).toBeTruthy();
     });
 
-    expect(screen.queryByText('Outstanding')).toBeNull();
-    expect(screen.queryByText('Jobs pending payment')).toBeNull();
+    expect(screen.queryByText(/Unpaid \(/)).toBeNull();
+    expect(screen.queryByText('Completed but not paid')).toBeNull();
   });
 
   it('reloads the snapshot when the selected earnings window changes', async () => {
@@ -178,7 +177,7 @@ describe('EarningsScreen', () => {
       );
     });
 
-    fireEvent.press(screen.getByText('PAST MONTH'));
+    fireEvent.press(screen.getByText('MONTH'));
 
     await waitFor(() => {
       expect(mockGetEarningsSnapshotForCurrentUser).toHaveBeenCalledWith(

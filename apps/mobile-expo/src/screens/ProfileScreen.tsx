@@ -1,10 +1,8 @@
 import { useFonts } from 'expo-font';
-import { PTSerif_700Bold } from '@expo-google-fonts/pt-serif';
 import {
-  UbuntuSansMono_400Regular,
-  UbuntuSansMono_600SemiBold,
-  UbuntuSansMono_700Bold,
-} from '@expo-google-fonts/ubuntu-sans-mono';
+  fieldsoloExpoFontAssets,
+  fieldsoloLoadedFonts,
+} from '@fieldsolo/design-system/expo/loadFieldSoloFonts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -36,11 +34,7 @@ import {
   type UpdateProfileValues,
 } from '../components/ds';
 import {
-  ProfileAccountIcon,
   ProfileEditPencilIcon,
-  ProfileLockIcon,
-  ProfilePersonalInfoIcon,
-  ProfilePlanIcon,
   ProfileTrashIcon,
 } from '../components/figma-icons/ProfileScreenIcons';
 import { PlatformHeaderAction } from '../components/platform/PlatformHeaderAction';
@@ -112,21 +106,11 @@ export function ProfileScreen({ onBack, onBackToHome = onBack }: ProfileScreenPr
   const [scrollContentHeight, setScrollContentHeight] = useState(0);
   const { signOut, session, updatePassword, deleteAccount } = useAuth();
 
-  const [fontsLoaded] = useFonts({
-    PTSerif_700Bold,
-    UbuntuSansMono_400Regular,
-    UbuntuSansMono_600SemiBold,
-    UbuntuSansMono_700Bold,
-  });
+  const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
 
   const typography = useMemo(
     () =>
-      createTextStyles({
-        serifBold: 'PTSerif_700Bold',
-        mono: 'UbuntuSansMono_400Regular',
-        monoSemi: 'UbuntuSansMono_600SemiBold',
-        monoBold: 'UbuntuSansMono_700Bold',
-      }),
+      createTextStyles(fieldsoloLoadedFonts),
     [],
   );
 
@@ -397,23 +381,6 @@ export function ProfileScreen({ onBack, onBackToHome = onBack }: ProfileScreenPr
     ];
   }, [profile, session?.user.email]);
 
-  const planRows: ProfileRowsCardRow[] = useMemo(
-    () => [
-      {
-        kind: 'linkBadge',
-        label: 'Current Plan',
-        sublabel: 'Free Tier',
-        badge: {
-          text: 'ACTIVE',
-          color: color('Semantic/Status/Success/Text'),
-          backgroundColor: color('Semantic/Status/Success/BG'),
-        },
-        hideChevron: true,
-      },
-    ],
-    [],
-  );
-
   const openPrivacyChoices = useCallback(() => {
     setHelpOpen(false);
     setPrivacyChoicesOpen(true);
@@ -585,7 +552,6 @@ export function ProfileScreen({ onBack, onBackToHome = onBack }: ProfileScreenPr
             <ProfileSectionHeader
               typography={typography}
               title="Personal Info"
-              icon={<ProfilePersonalInfoIcon color={color('Brand/Accent')} />}
               actionLabel="EDIT"
               actionIcon={
                 <ProfileEditPencilIcon color={bg.canvasWarm} />
@@ -603,28 +569,13 @@ export function ProfileScreen({ onBack, onBackToHome = onBack }: ProfileScreenPr
               <Text style={[typography.bodyBold, styles.feedbackButtonLabel]}>Send feedback</Text>
             </Pressable>
 
-            <ProfileSectionHeader
-              typography={typography}
-              title="Plan"
-              icon={<ProfilePlanIcon color={color('Brand/Accent')} />}
-            />
-            <ProfileRowsCard typography={typography} rows={planRows} />
-
-            <ProfileSectionHeader
-              typography={typography}
-              title="Your data"
-              icon={<ProfileLockIcon color={color('Brand/Accent')} />}
-            />
+            <ProfileSectionHeader typography={typography} title="Your data" />
             <ProfileRowsCard
               typography={typography}
               rows={[{ kind: 'link', label: 'Export Job Summary', onPress: openJobExport }]}
             />
 
-            <ProfileSectionHeader
-              typography={typography}
-              title="Account"
-              icon={<ProfileAccountIcon color={color('Brand/Accent')} />}
-            />
+            <ProfileSectionHeader typography={typography} title="Account" />
             <ProfileRowsCard typography={typography} rows={accountRows} />
 
             <View style={styles.deleteSpacer} />
@@ -693,35 +644,31 @@ export function ProfileScreen({ onBack, onBackToHome = onBack }: ProfileScreenPr
   );
 }
 
-/** Section header — leading icon + Metric-S title + optional pill action (Figma `1921:4617`). */
+/** Section header — title + optional pill action (Figma `1921:4617`). */
 function ProfileSectionHeader({
   typography,
   title,
-  icon,
   actionLabel,
   actionIcon,
   onActionPress,
 }: {
   typography: TextStyles;
   title: string;
-  icon: React.ReactNode;
   actionLabel?: string;
   actionIcon?: React.ReactNode;
   onActionPress?: () => void;
 }) {
   return (
     <View style={styles.sectionHeader}>
-      <View style={styles.sectionHeaderLead}>
-        {icon}
-        <Text
-          style={[
-            typography.titleH3,
-            Platform.OS === 'android' ? styles.sectionTitleAndroid : null,
-          ]}
-        >
-          {title}
-        </Text>
-      </View>
+      <Text
+        style={[
+          typography.titleH3,
+          styles.sectionTitle,
+          Platform.OS === 'android' ? styles.sectionTitleAndroid : null,
+        ]}
+      >
+        {title}
+      </Text>
       {actionLabel ? (
         <Pressable
           accessibilityRole="button"
@@ -787,10 +734,7 @@ const styles = StyleSheet.create({
     paddingBottom: space('Spacing/4'),
     gap: space('Spacing/8'),
   },
-  sectionHeaderLead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space('Spacing/8'),
+  sectionTitle: {
     flex: 1,
     minWidth: 0,
   },
