@@ -380,6 +380,10 @@ jest.mock('../components/ds', () => ({
   },
 }));
 
+jest.mock('../lib/featureFlags', () => ({
+  useJobDetailFullscreenEditFlag: () => ({ enabled: true, ready: true }),
+}));
+
 jest.mock('./jobDetailEdit/JobDetailEditMode', () => ({
   JobDetailEditMode: ({
     onBack,

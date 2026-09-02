@@ -133,6 +133,7 @@ import {
 import type { TextStyles } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
 import type { EditJobBottomSheetValues } from '../components/ds/EditJobBottomSheet';
+import { useJobDetailFullscreenEditFlag } from '../lib/featureFlags';
 import { JobDetailEditMode } from './jobDetailEdit/JobDetailEditMode';
 import { useJobEditDraft } from './jobDetailEdit/useJobEditDraft';
 
@@ -371,6 +372,9 @@ export function JobDetailScreen({
   const [detailMode, setDetailMode] = useState<DetailMode>('view');
   const [editSaving, setEditSaving] = useState(false);
   const editApi = useJobEditDraft(job);
+  const { enabled: fullscreenEditEnabled, ready: fullscreenEditReady } =
+    useJobDetailFullscreenEditFlag(sessionUserId, sessionEmail);
+  const useFullscreenEdit = fullscreenEditReady && fullscreenEditEnabled;
   const [statusSheetMounted, setStatusSheetMounted] = useState(false);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [statusActionPending, setStatusActionPending] = useState(false);
@@ -489,11 +493,24 @@ export function JobDetailScreen({
   }, [loadKey, jobId]);
 
   useEffect(() => {
-    if (!initialEditOpen || jobLoading || !job || autoEditOpenedRef.current) return;
+    if (
+      !initialEditOpen
+      || jobLoading
+      || !job
+      || autoEditOpenedRef.current
+      || !fullscreenEditReady
+    ) {
+      return;
+    }
     autoEditOpenedRef.current = true;
-    editApi.resetFromJob(job);
-    setDetailMode('edit');
-  }, [editApi, initialEditOpen, jobLoading, job]);
+    if (useFullscreenEdit) {
+      editApi.resetFromJob(job);
+      setDetailMode('edit');
+      return;
+    }
+    setEditSheetMounted(true);
+    setEditSheetVisible(true);
+  }, [editApi, initialEditOpen, jobLoading, job, fullscreenEditReady, useFullscreenEdit]);
 
   useEffect(() => {
     if (!supabaseReady) {
@@ -577,6 +594,11 @@ export function JobDetailScreen({
     setDetailMode('edit');
   }, [editApi, job]);
 
+  const openEditJobSheet = useCallback(() => {
+    setEditSheetMounted(true);
+    setEditSheetVisible(true);
+  }, []);
+
   const onEdit = useCallback(() => {
     if (job) {
       analytics.capture('job_edit_opened', {
@@ -588,8 +610,12 @@ export function JobDetailScreen({
         job_status: job.workStatus,
       });
     }
-    openEditMode();
-  }, [job, openEditMode]);
+    if (useFullscreenEdit) {
+      openEditMode();
+      return;
+    }
+    openEditJobSheet();
+  }, [job, openEditJobSheet, openEditMode, useFullscreenEdit]);
   const onCloseEditSheet = useCallback(
     (options?: MarkCompleteWizardCloseOptions) => {
       if (completeWizardActiveRef.current && !options?.keepWizardActive) {
