@@ -52,7 +52,11 @@ export function SessionCard({
             <View style={styles.datePad}>
               <Text style={[typography.body, { color: fg.primary }]}>{session.dateLabel}</Text>
             </View>
-            <Text style={[typography.bodySmall, { color: fg.secondary }]}>{session.timeRangeLabel}</Text>
+            {session.clockTimesExplicit && session.timeRangeLabel ? (
+              <Text style={[typography.bodySmall, { color: fg.secondary }]}>
+                {session.timeRangeLabel}
+              </Text>
+            ) : null}
           </View>
           <View style={styles.trailing}>
             <Text style={[typography.metric, { textTransform: 'none', color: fg.primary }]}>

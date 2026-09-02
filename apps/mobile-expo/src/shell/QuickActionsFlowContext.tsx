@@ -327,7 +327,7 @@ export function QuickActionsFlowProvider({
       const sessions = (detail?.allSessions ?? []).map((s) => ({
         id: s.id,
         dateLabel: s.dateLabel,
-        timeRangeLabel: s.timeRangeLabel,
+        durationLabel: s.durationLabel,
       }));
       setCaptureSessions(sessions);
     } catch {

@@ -1,6 +1,27 @@
 export { createFieldSoloClient, type FieldSoloSupabaseClient } from './client';
 export { fetchJobDetail } from './jobDetail';
 export {
+  applyJobDetailEdit,
+  ApplyJobDetailEditError,
+  type ApplyJobDetailEditPayload,
+  type ApplyJobDetailEditErrorCode,
+} from './applyJobDetailEdit';
+export {
+  createDefaultSessionDraft,
+  deviceIanaTimeZone,
+  durationHoursBetween,
+  DURATION_CHIP_HOURS,
+  formatDurationChipLabel,
+  formatLocalDateLabel,
+  formatSessionDurationLabel,
+  formatSessionTimeLabel,
+  normalizeSessionStartedTz,
+  resolveSessionDraftTimes,
+  synthesizeSessionTimes,
+  todayLocalDateString,
+  type SessionDurationDraft,
+} from './sessionDurationDraft';
+export {
   createBlankJobForCurrentUser,
   createBlankJobForLiveSessionStart,
   deleteJobById,

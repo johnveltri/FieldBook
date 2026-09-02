@@ -224,7 +224,7 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
       allSessionsList.map((s) => ({
         id: s.id,
         dateLabel: s.dateLabel,
-        timeRangeLabel: s.timeRangeLabel,
+        durationLabel: s.durationLabel,
       })),
     [allSessionsList],
   );

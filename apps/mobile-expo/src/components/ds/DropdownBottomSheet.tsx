@@ -46,9 +46,15 @@ type DropdownBottomSheetProps = {
    * pressable in the Edit Material sheet doesn't overflow.
    */
   customMaxLength?: number;
+  /** Keyboard type for the custom input (e.g. `decimal-pad` for duration). */
+  customKeyboardType?: 'default' | 'decimal-pad' | 'number-pad';
+  /** Input mode for the custom field (e.g. `decimal` for duration). */
+  customInputMode?: 'decimal' | 'text';
   onClose?: () => void;
   onClosed?: () => void;
   onBack?: () => void;
+  /** When set, replaces the leading Back control with Clear. */
+  onClear?: () => void;
   /** Called when the user selects a preset row or submits the Custom input. */
   onSelect: (value: string) => void;
   /** @default true — set false when this sheet replaces another (e.g. live session) without stacking. */
@@ -73,9 +79,12 @@ export function DropdownBottomSheet({
   allowCustom = false,
   customPlaceholder,
   customMaxLength = 8,
+  customKeyboardType,
+  customInputMode,
   onClose,
   onClosed,
   onBack,
+  onClear,
   onSelect,
   registerInGlobalStack = true,
 }: DropdownBottomSheetProps) {
@@ -99,6 +108,14 @@ export function DropdownBottomSheet({
     onSelect(trimmed);
   };
 
+  const handleDismiss = () => {
+    if (allowCustom && customText.trim()) {
+      commitCustom();
+      return;
+    }
+    onClose?.();
+  };
+
   // Figma `1882:1862` uses the error-text brand color for the APPLY pill
   // (#C44B2B on white text) — same palette as the +SESSION pill so both
   // row-level actions feel visually related.
@@ -117,34 +134,59 @@ export function DropdownBottomSheet({
   const insets = useSafeAreaInsets();
   const sheetChrome = insets.top + insets.bottom + 16 + 22 + 12 + 24;
   const bodyMaxHeight = Math.max(320, windowHeight - sheetChrome);
+  const hasHeaderBar = !!(onClear || onBack);
+  const hasHeaderSection = hasHeaderBar || !!title;
 
   return (
     <BottomSheetShell
       visible={visible}
-      onClose={onClose}
+      onClose={handleDismiss}
       onClosed={onClosed}
       registerInGlobalStack={registerInGlobalStack}
     >
       <View style={[styles.body, { maxHeight: bodyMaxHeight }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          onPress={onBack ?? onClose}
-          style={({ pressed }) => [styles.back, pressed && styles.pressed]}
-        >
-          <SessionSheetBackIcon color={fg.secondary} />
-          <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
-        </Pressable>
+        {hasHeaderSection ? (
+          <View style={styles.headerWrap}>
+            {hasHeaderBar ? (
+              <View style={styles.bar}>
+                {onClear ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear"
+                    onPress={() => {
+                      onClear();
+                      onClose?.();
+                    }}
+                    style={({ pressed }) => [styles.barAction, pressed && styles.pressed]}
+                  >
+                    <Text style={[typography.bodyBold, { color: fg.secondary }]}>Clear</Text>
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Back"
+                    onPress={onBack ?? onClose}
+                    style={({ pressed }) => [styles.barAction, pressed && styles.pressed]}
+                  >
+                    <SessionSheetBackIcon color={fg.secondary} />
+                    <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
+                  </Pressable>
+                )}
+                <View style={styles.barSpacer} />
+              </View>
+            ) : null}
 
-        {title ? (
-          <Text {...screenHeaderA11y()}
-            style={[typography.titleH3, styles.title, { color: fg.primary }]}
-          >
-            {title}
-          </Text>
+            {title ? (
+              <Text {...screenHeaderA11y()}
+                style={[typography.titleH3, styles.title, { color: fg.primary }]}
+              >
+                {title}
+              </Text>
+            ) : null}
+          </View>
         ) : null}
 
-        <View style={styles.listScroll}>
+        <View style={[styles.listScroll, hasHeaderSection && styles.listScrollWithHeader]}>
           {options.map((opt, i) => (
             <Pressable
               key={opt.id}
@@ -180,6 +222,8 @@ export function DropdownBottomSheet({
                   placeholder={customPlaceholder ?? 'Custom'}
                   placeholderTextColor={fg.secondary}
                   maxLength={customMaxLength}
+                  keyboardType={customKeyboardType}
+                  inputMode={customInputMode}
                   returnKeyType="done"
                   onSubmitEditing={commitCustom}
                   style={[typography.body, styles.customInput]}
@@ -210,22 +254,40 @@ export function DropdownBottomSheet({
 const styles = StyleSheet.create({
   body: {
     width: '100%',
-    gap: space('Spacing/12'),
     // `maxHeight` is applied inline from a window-height-derived value so
     // the sheet fits its content without forcing the inner ScrollView to
     // scroll on normal viewports. See `bodyMaxHeight` in the component.
   },
-  back: {
+  headerWrap: {
+    width: '100%',
+    gap: space('Spacing/8'),
+  },
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+  },
+  barAction: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space('Spacing/4'),
-    alignSelf: 'flex-start',
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    paddingRight: space('Spacing/12'),
+  },
+  barSpacer: {
+    width: 72,
   },
   title: {
     textAlign: 'center',
   },
   listScroll: {
     width: '100%',
+  },
+  listScrollWithHeader: {
+    marginTop: space('Spacing/8'),
   },
   row: {
     minHeight: space('Spacing/50'),

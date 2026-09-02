@@ -44,6 +44,7 @@ type SessionRow = {
   session_status: 'in_progress' | 'ended' | 'deleted';
   started_at: string;
   ended_at: string | null;
+  clock_times_explicit?: boolean | null;
 };
 
 type NoteRow = {
@@ -135,6 +136,7 @@ function mapWorkStatus(row: JobRow): JobDetailWorkStatus {
 function mapSession(row: SessionRow, attachments: JobDetailSessionAttachment[] = []): JobDetailSession {
   const start = new Date(row.started_at);
   const end = row.ended_at ? new Date(row.ended_at) : null;
+  const clockTimesExplicit = row.clock_times_explicit !== false;
   const timeFmt = new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -147,8 +149,9 @@ function mapSession(row: SessionRow, attachments: JobDetailSessionAttachment[] =
     id: row.id,
     startedAt: row.started_at,
     endedAt: row.ended_at,
+    clockTimesExplicit,
     dateLabel: formatDateLabel(row.started_at),
-    timeRangeLabel: `${startStr} – ${endStr}`,
+    timeRangeLabel: clockTimesExplicit ? `${startStr} – ${endStr}` : '',
     durationLabel: `${hours.toFixed(1)}h`,
     attachments,
   };
@@ -264,7 +267,7 @@ export async function fetchJobDetail(
 
   const { data: sessionsRaw, error: sErr } = await client
     .from('sessions')
-    .select('id, job_id, session_status, started_at, ended_at')
+    .select('id, job_id, session_status, started_at, ended_at, clock_times_explicit')
     .eq('job_id', jobId)
     .order('started_at', { ascending: true });
 

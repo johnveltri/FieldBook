@@ -9,10 +9,10 @@ import { screenHeaderA11y } from '../../lib/accessibility';
 
 export type ChooseSessionBottomSheetSession = {
   id: string;
-  /** Title row (e.g. "Mar 25, 2026"). */
+  /** Title (e.g. "Mar 25, 2026"). */
   dateLabel: string;
-  /** Subtitle row (e.g. "9:00 AM – 10:00 AM"). */
-  timeRangeLabel: string;
+  /** Right-aligned duration (e.g. "1.5h"). */
+  durationLabel: string;
 };
 
 type ChooseSessionBottomSheetProps = {
@@ -30,6 +30,8 @@ type ChooseSessionBottomSheetProps = {
   onClose?: () => void;
   onClosed?: () => void;
   onBack?: () => void;
+  /** When set, replaces the leading Back control with Clear. */
+  onClear?: () => void;
   onSelect: (sessionId: string) => void;
   /** Only wired in `edit` mode. */
   onRemove?: () => void;
@@ -52,6 +54,7 @@ export function ChooseSessionBottomSheet({
   onClose,
   onClosed,
   onBack,
+  onClear,
   onSelect,
   onRemove,
   registerInGlobalStack = true,
@@ -72,12 +75,25 @@ export function ChooseSessionBottomSheet({
       <View style={styles.body}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
-          onPress={onBack ?? onClose}
+          accessibilityLabel={onClear ? 'Clear' : 'Back'}
+          onPress={() => {
+            if (onClear) {
+              onClear();
+              onClose?.();
+              return;
+            }
+            (onBack ?? onClose)?.();
+          }}
           style={({ pressed }) => [styles.back, pressed && styles.pressed]}
         >
-          <SessionSheetBackIcon color={fg.secondary} />
-          <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
+          {onClear ? (
+            <Text style={[typography.bodyBold, { color: fg.secondary }]}>Clear</Text>
+          ) : (
+            <>
+              <SessionSheetBackIcon color={fg.secondary} />
+              <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
+            </>
+          )}
         </Pressable>
 
         <Text {...screenHeaderA11y()}
@@ -119,22 +135,21 @@ function SessionRow({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${session.dateLabel} ${session.timeRangeLabel}`}
+      accessibilityLabel={`${session.dateLabel}${session.durationLabel ? ` ${session.durationLabel}` : ''}`}
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View style={styles.rowTextStack}>
-        <Text
-          style={[typography.bodyBold, { color: fg.primary }]}
-        >
-          {session.dateLabel}
+      <Text
+        style={[typography.bodyBold, styles.rowDate, { color: fg.primary }]}
+        numberOfLines={1}
+      >
+        {session.dateLabel}
+      </Text>
+      {session.durationLabel ? (
+        <Text style={[typography.body, styles.rowDuration, { color: fg.primary }]}>
+          {session.durationLabel}
         </Text>
-        <Text
-          style={[typography.bodySmall, { color: fg.secondary }]}
-        >
-          {session.timeRangeLabel}
-        </Text>
-      </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -147,28 +162,15 @@ function RemoveFromSessionRow({
   onPress?: () => void;
 }) {
   const errorText = color('Semantic/Status/Error/Text');
-  const errorBg = color('Semantic/Status/Error/BG');
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Remove from session"
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => [
-        styles.row,
-        styles.removeRow,
-        { backgroundColor: errorBg },
-        pressed && onPress ? styles.pressed : null,
-      ]}
+      style={({ pressed }) => [styles.row, pressed && onPress ? styles.pressed : null]}
     >
-      <View style={styles.rowTextStack}>
-        <Text style={[typography.bodyBold, { color: errorText }]}>
-          Remove From Session
-        </Text>
-        <Text style={[typography.bodySmall, { color: fg.secondary }]}>
-          Save as unassigned — assign to a session later
-        </Text>
-      </View>
+      <Text style={[typography.bodyBold, { color: errorText }]}>Remove From Session</Text>
     </Pressable>
   );
 }
@@ -214,7 +216,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: space('Spacing/74'),
+    minHeight: 56,
     paddingHorizontal: space('Spacing/20'),
     paddingVertical: space('Spacing/16'),
     borderRadius: radius('Radius/16'),
@@ -227,13 +229,13 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  removeRow: {
-    minHeight: space('Spacing/80') + space('Spacing/4'),
-  },
-  rowTextStack: {
+  rowDate: {
     flex: 1,
     minWidth: 0,
-    gap: space('Spacing/4'),
+  },
+  rowDuration: {
+    marginLeft: space('Spacing/12'),
+    textAlign: 'right',
   },
   divider: {
     flexDirection: 'row',

@@ -71,6 +71,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, colorWithAlpha, radius } from '@fieldsolo/design-system/lib/tokens';
 import {
+  applyJobDetailEdit,
   createManualSession,
   createMaterial,
   createNote,
@@ -132,6 +133,8 @@ import {
 import type { TextStyles } from '../theme/nativeTokens';
 import { useContentColumn } from '../theme/useContentColumn';
 import type { EditJobBottomSheetValues } from '../components/ds/EditJobBottomSheet';
+import { JobDetailEditMode } from './jobDetailEdit/JobDetailEditMode';
+import { useJobEditDraft } from './jobDetailEdit/useJobEditDraft';
 
 type MarkCompleteWizardCloseOptions = {
   /** Successful wizard step — keep advancing instead of cancelling mark-complete. */
@@ -361,6 +364,10 @@ export function JobDetailScreen({
   const [jobSaving, setJobSaving] = useState(false);
   const [editSheetMounted, setEditSheetMounted] = useState(false);
   const [editSheetVisible, setEditSheetVisible] = useState(false);
+  type DetailMode = 'view' | 'edit';
+  const [detailMode, setDetailMode] = useState<DetailMode>('view');
+  const [editSaving, setEditSaving] = useState(false);
+  const editApi = useJobEditDraft(job);
   const [statusSheetMounted, setStatusSheetMounted] = useState(false);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [statusActionPending, setStatusActionPending] = useState(false);
@@ -475,14 +482,15 @@ export function JobDetailScreen({
 
   useEffect(() => {
     autoEditOpenedRef.current = false;
+    setDetailMode('view');
   }, [loadKey, jobId]);
 
   useEffect(() => {
     if (!initialEditOpen || jobLoading || !job || autoEditOpenedRef.current) return;
     autoEditOpenedRef.current = true;
-    setEditSheetMounted(true);
-    setEditSheetVisible(true);
-  }, [initialEditOpen, jobLoading, job]);
+    editApi.resetFromJob(job);
+    setDetailMode('edit');
+  }, [editApi, initialEditOpen, jobLoading, job]);
 
   useEffect(() => {
     if (!supabaseReady) {
@@ -560,6 +568,12 @@ export function JobDetailScreen({
     dismissY.setValue(0);
     dismissOpacity.setValue(1);
   }, [dismissOpacity, dismissY, loadKey, jobId]);
+  const openEditMode = useCallback(() => {
+    if (!job) return;
+    editApi.resetFromJob(job);
+    setDetailMode('edit');
+  }, [editApi, job]);
+
   const onEdit = useCallback(() => {
     if (job) {
       analytics.capture('job_edit_opened', {
@@ -571,9 +585,8 @@ export function JobDetailScreen({
         job_status: job.workStatus,
       });
     }
-    setEditSheetMounted(true);
-    setEditSheetVisible(true);
-  }, [job]);
+    openEditMode();
+  }, [job, openEditMode]);
   const onCloseEditSheet = useCallback(
     (options?: MarkCompleteWizardCloseOptions) => {
       if (completeWizardActiveRef.current && !options?.keepWizardActive) {
@@ -2196,7 +2209,7 @@ export function JobDetailScreen({
       allSessionsList.map((s) => ({
         id: s.id,
         dateLabel: s.dateLabel,
-        timeRangeLabel: s.timeRangeLabel,
+        durationLabel: s.durationLabel,
       })),
     [allSessionsList],
   );
@@ -2266,6 +2279,84 @@ export function JobDetailScreen({
       setJobSaving(false);
     }
   }, [job, onCloseEditSheet, onRequestClose]);
+
+  const leaveEditMode = useCallback(() => {
+    setDetailMode('view');
+  }, []);
+
+  const onBackFromEdit = useCallback(() => {
+    if (editApi.dirty) {
+      Alert.alert('Discard changes?', undefined, [
+        { text: 'Keep editing', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () => {
+            editApi.discardDraft();
+            leaveEditMode();
+          },
+        },
+      ]);
+      return;
+    }
+    leaveEditMode();
+  }, [editApi, leaveEditMode]);
+
+  const onDoneFromEdit = useCallback(async () => {
+    if (!job || editSaving) return;
+    const payload = editApi.buildPayload();
+    if (!payload) return;
+    setEditSaving(true);
+    try {
+      await applyJobDetailEdit(supabase, job.id, payload);
+      const refreshed = await fetchJobDetail(supabase, job.id);
+      if (refreshed) {
+        setJob(refreshed);
+        editApi.resetFromJob(refreshed);
+      }
+      leaveEditMode();
+      invalidateJobsList();
+      analytics.capture('job_saved', {
+        job_id: job.id,
+        changed_fields: ['job_detail_edit'],
+        completeness_before: jobDetailIsFinanciallyComplete(job) ? 'complete' : 'incomplete',
+        completeness_after:
+          refreshed && jobDetailIsFinanciallyComplete(refreshed) ? 'complete' : 'incomplete',
+        revenue_bucket: moneyBucket(refreshed?.earnings.revenueCents ?? null),
+      });
+    } catch {
+      analytics.capture('job_save_failed', {
+        job_id: job.id,
+        changed_fields: ['job_detail_edit'],
+      });
+      Alert.alert("Couldn't save this job. Try again.");
+    } finally {
+      setEditSaving(false);
+    }
+  }, [editApi, editSaving, invalidateJobsList, job, leaveEditMode]);
+
+  const onDeleteJobFromEdit = useCallback(async () => {
+    if (!job) return;
+    setEditSaving(true);
+    try {
+      await deleteJobById(supabase, job.id);
+      leaveEditMode();
+      onRequestClose?.();
+      invalidateJobsList();
+      analytics.capture('job_deleted', {
+        job_id: job.id,
+        source: 'job_detail_edit',
+      });
+    } catch {
+      analytics.capture('job_delete_failed', {
+        job_id: job.id,
+        source: 'job_detail_edit',
+      });
+      Alert.alert("Couldn't delete this job. Try again.");
+    } finally {
+      setEditSaving(false);
+    }
+  }, [invalidateJobsList, job, leaveEditMode, onRequestClose]);
 
   /** Spinner state: same canvas background as main screen so the transition does not flash a flat color. */
   if (!fontsLoaded || (supabaseReady && jobLoading)) {
@@ -2348,7 +2439,7 @@ export function JobDetailScreen({
   return (
     <PanGestureHandler
       ref={jobDetailPanRef}
-      enabled={!!onRequestClose && scrollAtTop}
+      enabled={!!onRequestClose && scrollAtTop && detailMode === 'view'}
       activeOffsetY={10}
       failOffsetY={-5}
       failOffsetX={[-24, 24]}
@@ -2372,6 +2463,24 @@ export function JobDetailScreen({
         scrollY={scrollY}
         contentHeight={scrollContentHeight}
       />
+      {detailMode === 'edit' ? (
+        <JobDetailEditMode
+          job={job}
+          typography={typography}
+          headerTopPad={headerTopPad}
+          bottomInset={bottomInset}
+          columnStyle={columnStyle}
+          saving={editSaving}
+          onBack={onBackFromEdit}
+          onDone={() => {
+            void onDoneFromEdit();
+          }}
+          onDeleteJob={() => {
+            void onDeleteJobFromEdit();
+          }}
+          editApi={editApi}
+        />
+      ) : (
       <GHScrollView
         waitFor={scrollAtTop ? jobDetailPanRef : undefined}
         style={[styles.scroll, styles.scrollTransparent]}
@@ -2556,6 +2665,7 @@ export function JobDetailScreen({
         )}
         </View>
       </GHScrollView>
+      )}
 
       {editSheetMounted ? (
         <EditJobBottomSheet

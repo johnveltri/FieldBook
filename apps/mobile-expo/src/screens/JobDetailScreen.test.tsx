@@ -380,7 +380,30 @@ jest.mock('../components/ds', () => ({
   },
 }));
 
+jest.mock('./jobDetailEdit/JobDetailEditMode', () => ({
+  JobDetailEditMode: ({
+    onBack,
+    onDone,
+  }: {
+    onBack: () => void;
+    onDone: () => void;
+  }) => {
+    const { Text } = require('react-native');
+    return (
+      <>
+        <Text accessibilityLabel="Back" onPress={onBack}>
+          Back
+        </Text>
+        <Text accessibilityLabel="Done" onPress={onDone}>
+          Done
+        </Text>
+      </>
+    );
+  },
+}));
+
 jest.mock('@fieldsolo/api-client', () => ({
+  applyJobDetailEdit: jest.fn(),
   countCompletedJobsForCurrentUser: jest.fn(),
   createManualSession: jest.fn(),
   createMaterial: jest.fn(),
@@ -441,6 +464,7 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 17, 2026',
         timeRangeLabel: '9:00 AM – 10:00 AM',
         durationLabel: '1.0h',
+        clockTimesExplicit: true,
         attachments: [],
       },
     ],
@@ -452,6 +476,7 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 17, 2026',
         timeRangeLabel: '9:00 AM – 10:00 AM',
         durationLabel: '1.0h',
+        clockTimesExplicit: true,
         attachments: [],
       },
     ],
@@ -727,6 +752,7 @@ describe('JobDetailScreen manual session and note flows', () => {
           dateLabel: 'Apr 18, 2026',
           timeRangeLabel: '9:00 AM – …',
           durationLabel: '0.2h',
+          clockTimesExplicit: true,
           attachments: [],
         },
       ],
@@ -737,6 +763,7 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 18, 2026',
         timeRangeLabel: '9:00 AM – …',
         durationLabel: '0.2h',
+        clockTimesExplicit: true,
         attachments: [],
       },
     });
@@ -1003,5 +1030,74 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
 
     jobState = { ...jobState, workStatus: 'inProgress' };
+  });
+});
+
+describe('JobDetailScreen edit mode', () => {
+  const apiClient = jest.requireMock('@fieldsolo/api-client') as any;
+
+  const baseJob: JobDetailViewModel = {
+    id: 'job-1',
+    shortDescription: 'Fixture install',
+    customerName: 'Alice',
+    serviceAddress: '1 Main St',
+    jobType: 'electrical',
+    lastWorkedLabel: 'Last worked Apr 18, 2026',
+    workStatus: 'inProgress',
+    earnings: {
+      revenueCents: 10000,
+      materialsCents: -500,
+      otherCostsCents: 0,
+      feesCents: 0,
+      netEarningsCents: 9500,
+    },
+    metrics: {
+      timeLabel: '2.0h',
+      netPerHrDisplay: '$47.50/hr',
+      sessionCount: 1,
+    },
+    displaySessions: [],
+    allSessions: [],
+    inProgressSession: null,
+    materialBuckets: [],
+    otherCostBuckets: [],
+    noteBuckets: [],
+    noMaterialsConfirmed: false,
+    noOtherCostsConfirmed: false,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    apiClient.fetchJobDetail.mockResolvedValue(baseJob);
+    apiClient.applyJobDetailEdit.mockResolvedValue(undefined);
+  });
+
+  it('opens edit mode from the header EDIT pill', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+    await waitFor(() => expect(screen.getByLabelText('Edit job')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Edit job'));
+    expect(screen.getByLabelText('Done')).toBeTruthy();
+    expect(screen.getByLabelText('Back')).toBeTruthy();
+  });
+
+  it('opens edit mode when initialEditOpen is set', async () => {
+    const screen = render(
+      <JobDetailScreen jobId="job-1" sessionUserId="user-1" initialEditOpen />,
+    );
+    await waitFor(() => expect(screen.getByLabelText('Done')).toBeTruthy());
+  });
+
+  it('calls applyJobDetailEdit when Done is pressed', async () => {
+    const refreshed = { ...baseJob, shortDescription: 'Updated' };
+    apiClient.fetchJobDetail
+      .mockResolvedValueOnce(baseJob)
+      .mockResolvedValueOnce(refreshed);
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+    await waitFor(() => expect(screen.getByLabelText('Edit job')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Edit job'));
+    fireEvent.press(screen.getByLabelText('Done'));
+    await waitFor(() =>
+      expect(apiClient.applyJobDetailEdit).toHaveBeenCalledWith({}, 'job-1', expect.any(Object)),
+    );
   });
 });

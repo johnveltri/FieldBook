@@ -419,6 +419,7 @@ export type Database = {
       }
       sessions: {
         Row: {
+          clock_times_explicit: boolean
           created_at: string
           deleted_at: string | null
           ended_at: string | null
@@ -432,6 +433,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          clock_times_explicit?: boolean
           created_at?: string
           deleted_at?: string | null
           ended_at?: string | null
@@ -445,6 +447,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          clock_times_explicit?: boolean
           created_at?: string
           deleted_at?: string | null
           ended_at?: string | null
@@ -548,6 +551,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_job_detail_edit: {
+        Args: { p_job_id: string; p_payload: Json }
+        Returns: Json
+      }
       consume_waitlist_rate_limit: {
         Args: { p_key_hash: string; p_limit?: number }
         Returns: boolean

@@ -42,6 +42,11 @@ export type JobDetailSession = {
   startedAt: string;
   /** ISO 8601 timestamp or null while a session is still in progress. */
   endedAt: string | null;
+  /**
+   * When false, View must not show a clock range — only date + duration.
+   * Synthesized `startedAt`/`endedAt` are storage-only.
+   */
+  clockTimesExplicit: boolean;
   dateLabel: string;
   timeRangeLabel: string;
   durationLabel: string;
