@@ -108,6 +108,7 @@ const managedValues = [
   ['EXPO_PUBLIC_SUPABASE_ANON_KEY', publishableKey],
   ['EXPO_PUBLIC_ANALYTICS_PROVIDER', 'none'],
   ['EXPO_PUBLIC_POSTHOG_KEY', ''],
+  ['EXPO_PUBLIC_JOB_DETAIL_FULLSCREEN_EDIT', 'true'],
   ['EXPO_PUBLIC_ANALYTICS_DEBUG_RICH', 'false'],
   ['EXPO_PUBLIC_IS_TESTFLIGHT', 'false'],
 ];

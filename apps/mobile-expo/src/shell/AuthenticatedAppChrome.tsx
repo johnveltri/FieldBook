@@ -110,6 +110,7 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
   const [jobDetailModalAnimation, setJobDetailModalAnimation] = useState<'slide' | 'none'>('slide');
   const [jobDetailExitAnimated, setJobDetailExitAnimated] = useState(true);
   const jobDetailSwipeClosingRef = useRef(false);
+  const jobDetailHardwareBackRef = useRef<(() => boolean) | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [jobDetailEntrySource, setJobDetailEntrySource] = useState<string>('unknown');
   const [jobDetailInitialEditOpen, setJobDetailInitialEditOpen] = useState(false);
@@ -262,6 +263,10 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
     setJobDetailModalAnimation('slide');
   }, []);
 
+  const onJobDetailHardwareBackHandlerChange = useCallback((handler: (() => boolean) | null) => {
+    jobDetailHardwareBackRef.current = handler;
+  }, []);
+
   const openJobDetail = useCallback(
     (
       jobId: string | null | undefined,
@@ -310,6 +315,7 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
         return true;
       }
       if (jobDetailSwipeClosingRef.current) return true;
+      if (jobDetailHardwareBackRef.current?.()) return true;
       closeJobDetail();
       return true;
     });
@@ -623,6 +629,7 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
                       onRequestClose={closeJobDetail}
                       onSwipeDismissStart={onJobDetailSwipeDismissStart}
                       onSwipeDismissCancel={onJobDetailSwipeDismissCancel}
+                      onAndroidHardwareBackHandlerChange={onJobDetailHardwareBackHandlerChange}
                     />
                   </View>
                 </OverlaySlideHost>
@@ -653,6 +660,7 @@ export function AuthenticatedAppChrome({ children }: AuthenticatedAppChromeProps
                     onRequestClose={closeJobDetail}
                     onSwipeDismissStart={onJobDetailSwipeDismissStart}
                     onSwipeDismissCancel={onJobDetailSwipeDismissCancel}
+                    onAndroidHardwareBackHandlerChange={onJobDetailHardwareBackHandlerChange}
                   />
                 </GestureHandlerRootView>
               </Modal>

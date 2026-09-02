@@ -32,6 +32,8 @@ type MaterialRow = {
   quantity: string | number | null;
   unit: string | null;
   unit_cost_cents: number | null;
+  quantity_explicit?: boolean | null;
+  unit_cost_explicit?: boolean | null;
   total_cost_cents: number;
   created_at: string;
 };
@@ -72,24 +74,29 @@ function mapNote(row: NoteRow): InboxNoteItem {
 
 function mapMaterial(row: MaterialRow): InboxMaterialItem {
   const quantityNum =
-    typeof row.quantity === 'string' ? Number(row.quantity) : (row.quantity ?? 0);
+    typeof row.quantity === 'string' ? Number(row.quantity) : row.quantity;
   const unit = row.unit?.trim() ?? '';
-  const unitCostCents = row.unit_cost_cents ?? 0;
+  const quantityExplicit = row.quantity_explicit !== false;
+  const unitCostExplicit = row.unit_cost_explicit !== false;
+  const unitCostCents = row.unit_cost_cents;
   const baseQtyLabel =
-    row.quantity != null && row.quantity !== ''
+    quantityExplicit && row.quantity != null && row.quantity !== ''
       ? `${row.quantity}${unit ? ` ${unit}` : ''}`
       : '—';
   const qtyLabel =
-    baseQtyLabel !== '—' && unitCostCents > 0
-      ? `${baseQtyLabel} @ ${formatUsd(unitCostCents)}`
+    baseQtyLabel !== '—' && unitCostExplicit && (unitCostCents ?? 0) > 0
+      ? `${baseQtyLabel} @ ${formatUsd(unitCostCents ?? 0)}`
       : baseQtyLabel;
   return {
     id: row.id,
     sessionId: null,
     name: row.description?.trim() || 'Material',
-    quantity: Number.isFinite(quantityNum) ? quantityNum : 0,
+    quantity: quantityExplicit && Number.isFinite(quantityNum) ? quantityNum : null,
+    quantityExplicit,
     unit,
     unitCostCents,
+    unitCostExplicit,
+    totalCostCents: row.total_cost_cents,
     quantityLabel: qtyLabel,
     priceLabel: formatUsd(row.total_cost_cents),
     createdAt: row.created_at,
@@ -117,7 +124,7 @@ export async function listInboxMaterials(
 ): Promise<InboxMaterialItem[]> {
   const { data, error } = await client
     .from('job_costs')
-    .select('id, description, quantity, unit, unit_cost_cents, total_cost_cents, created_at')
+    .select('id, description, quantity, quantity_explicit, unit, unit_cost_cents, unit_cost_explicit, total_cost_cents, created_at')
     .is('job_id', null)
     .is('session_id', null)
     .eq('cost_type', 'material')

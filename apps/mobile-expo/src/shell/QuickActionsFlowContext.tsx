@@ -8,7 +8,6 @@ import {
   createMaterial,
   createNote,
   deleteJobById,
-  fetchJobDetail,
   listRecentJobsForCurrentUser,
   tryBumpJobToInProgressIfNotStarted,
   type RecentJobItem,
@@ -26,19 +25,14 @@ import {
 import { Alert, Modal, Platform, StyleSheet, View } from 'react-native';
 
 import {
-  ChooseJobBottomSheet,
-  ChooseSessionBottomSheet,
   DropdownBottomSheet,
   EditMaterialBottomSheet,
   EditNoteBottomSheet,
   QuickActionsBottomSheet,
-  type ChooseJobBottomSheetJob,
-  type ChooseSessionBottomSheetSession,
   type EditMaterialBottomSheetValues,
   type EditNoteBottomSheetValues,
   type QuickActionsRecentJob,
   type QuickActionsStep,
-  type QuickCaptureKind,
 } from '../components/ds';
 import type { PrimaryActionMenuItemId } from '../components/platform/PlatformPrimaryAction';
 import { useJobsListInvalidation } from '../context/JobsListInvalidationContext';
@@ -56,11 +50,11 @@ import {
   CAPTURE_UNIT_OPTIONS,
   formatCaptureError,
   formatLiveSessionJobTitle,
-  listAllJobsForCapture,
-  type CaptureJob,
-  type CaptureMode,
   type CaptureStep,
 } from './quickActionsFlowHelpers';
+
+type QuickCaptureKind = 'note' | 'material';
+type CaptureMode = 'inbox' | 'job';
 
 type QuickActionsFlowContextValue = {
   handlePrimaryAction: (id: PrimaryActionMenuItemId) => void;
@@ -98,19 +92,12 @@ export function QuickActionsFlowProvider({
   const [qaStep, setQaStep] = useState<QuickActionsStep>('chooseJob');
   const [captureStep, setCaptureStep] = useState<CaptureStep>('idle');
   const [captureKind, setCaptureKind] = useState<QuickCaptureKind>('note');
-  const [captureMode, setCaptureMode] = useState<CaptureMode>('inbox');
-  const [captureJob, setCaptureJob] = useState<CaptureJob | null>(null);
-  const [captureSessions, setCaptureSessions] = useState<ChooseSessionBottomSheetSession[]>([]);
   const [captureSaving, setCaptureSaving] = useState(false);
   const [draftBody, setDraftBody] = useState('');
-  const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
   const [matDraftDescription, setMatDraftDescription] = useState('');
   const [matDraftUnitCostCents, setMatDraftUnitCostCents] = useState(0);
   const [matDraftQuantity, setMatDraftQuantity] = useState(1);
   const [matDraftUnit, setMatDraftUnit] = useState('ea');
-  const [chooseJobList, setChooseJobList] = useState<ChooseJobBottomSheetJob[]>([]);
-  const [chooseJobLoading, setChooseJobLoading] = useState(false);
-  const [chooseJobError, setChooseJobError] = useState<string | null>(null);
 
   const [fontsLoaded] = useFonts(fieldsoloExpoFontAssets);
 
@@ -121,7 +108,7 @@ export function QuickActionsFlowProvider({
   );
 
   useEffect(() => {
-    if (!quickActionsVisible) return;
+    if (!quickActionsVisible || captureStep !== 'idle') return;
     setActionError(null);
     let cancelled = false;
     setRecentJobsLoading(true);
@@ -156,7 +143,7 @@ export function QuickActionsFlowProvider({
     return () => {
       cancelled = true;
     };
-  }, [hasLiveSession, quickActionsVisible]);
+  }, [captureStep, hasLiveSession, quickActionsVisible]);
 
   const onSelectExistingJob = useCallback(
     async (job: RecentJobItem) => {
@@ -288,18 +275,12 @@ export function QuickActionsFlowProvider({
 
   const resetCapture = useCallback(() => {
     setCaptureStep('idle');
-    setCaptureMode('inbox');
-    setCaptureJob(null);
-    setCaptureSessions([]);
     setDraftBody('');
-    setDraftSessionId(null);
     setMatDraftDescription('');
     setMatDraftUnitCostCents(0);
     setMatDraftQuantity(1);
     setMatDraftUnit('ea');
     setCaptureSaving(false);
-    setChooseJobList([]);
-    setChooseJobError(null);
   }, []);
 
   const closeQuickActions = useCallback(() => {
@@ -317,26 +298,9 @@ export function QuickActionsFlowProvider({
     [resetCapture],
   );
 
-  const loadCaptureJobSessions = useCallback(async (jobId: string) => {
-    if (!isSupabaseConfigured()) {
-      setCaptureSessions([]);
-      return;
-    }
-    try {
-      const detail = await fetchJobDetail(supabase, jobId);
-      const sessions = (detail?.allSessions ?? []).map((s) => ({
-        id: s.id,
-        dateLabel: s.dateLabel,
-        timeRangeLabel: s.timeRangeLabel,
-      }));
-      setCaptureSessions(sessions);
-    } catch {
-      setCaptureSessions([]);
-    }
-  }, []);
-
   const beginInboxCapture = useCallback(
     (kind: QuickCaptureKind) => {
+      setQuickActionsVisible(true);
       analytics.capture('home_quick_action_selected', {
         action: kind === 'note' ? 'new_note' : 'new_material',
         recent_job_count: recentJobs.length,
@@ -346,10 +310,6 @@ export function QuickActionsFlowProvider({
         parent: 'inbox',
       });
       setCaptureKind(kind);
-      setCaptureMode('inbox');
-      setCaptureJob(null);
-      setCaptureSessions([]);
-      setDraftSessionId(null);
       if (kind === 'note') {
         setDraftBody('');
         setCaptureStep('noteEdit');
@@ -364,84 +324,6 @@ export function QuickActionsFlowProvider({
     [recentJobs.length],
   );
 
-  const beginJobCapture = useCallback(
-    (job: QuickActionsRecentJob, kind: QuickCaptureKind) => {
-      setCaptureKind(kind);
-      setCaptureMode('job');
-      setCaptureJob({
-        id: job.id,
-        shortDescription: job.shortDescription,
-        customerName: job.customerName,
-      });
-      setCaptureSessions([]);
-      setDraftSessionId(null);
-      void loadCaptureJobSessions(job.id);
-      analytics.capture('home_quick_action_selected', {
-        action: kind === 'note' ? 'new_note_existing_job' : 'new_material_existing_job',
-        recent_job_count: recentJobs.length,
-      });
-      analytics.capture(kind === 'note' ? 'note_create_opened' : 'material_create_opened', {
-        source: 'quick_actions',
-        parent: 'job',
-        job_id: job.id,
-      });
-      if (kind === 'note') {
-        setDraftBody('');
-        setCaptureStep('noteEdit');
-      } else {
-        setMatDraftDescription('');
-        setMatDraftUnitCostCents(0);
-        setMatDraftQuantity(1);
-        setMatDraftUnit('ea');
-        setCaptureStep('materialEdit');
-      }
-    },
-    [loadCaptureJobSessions, recentJobs.length],
-  );
-
-  const openChooseJob = useCallback(() => {
-    setCaptureStep('chooseJob');
-    setChooseJobError(null);
-    setChooseJobLoading(true);
-    void (async () => {
-      if (!isSupabaseConfigured()) {
-        setChooseJobError('Supabase is not configured.');
-        setChooseJobLoading(false);
-        return;
-      }
-      try {
-        setChooseJobList(await listAllJobsForCapture());
-      } catch (err) {
-        setChooseJobError(formatCaptureError(err) || 'Could not load jobs.');
-      } finally {
-        setChooseJobLoading(false);
-      }
-    })();
-  }, []);
-
-  const onChooseJobSelect = useCallback(
-    (jobId: string) => {
-      const job = chooseJobList.find((j) => j.id === jobId) ?? null;
-      setCaptureMode('job');
-      setCaptureJob(job);
-      setDraftSessionId(null);
-      setCaptureSessions([]);
-      if (job) void loadCaptureJobSessions(job.id);
-      setCaptureStep(captureKind === 'note' ? 'noteEdit' : 'materialEdit');
-    },
-    [captureKind, chooseJobList, loadCaptureJobSessions],
-  );
-
-  const returnToCaptureEdit = useCallback(() => {
-    setCaptureStep(captureKind === 'note' ? 'noteEdit' : 'materialEdit');
-  }, [captureKind]);
-
-  const draftAssignedSession = useMemo(() => {
-    if (!draftSessionId) return null;
-    const s = captureSessions.find((x) => x.id === draftSessionId);
-    return s ? { id: s.id, dateLabel: s.dateLabel, timeRangeLabel: s.timeRangeLabel } : null;
-  }, [captureSessions, draftSessionId]);
-
   const saveCaptureNote = useCallback(
     async ({ body }: EditNoteBottomSheetValues) => {
       if (captureSaving) return;
@@ -452,28 +334,28 @@ export function QuickActionsFlowProvider({
       setCaptureSaving(true);
       try {
         const noteId = await createNote(supabase, {
-          jobId: captureMode === 'job' && captureJob ? captureJob.id : null,
-          sessionId: captureMode === 'job' ? draftSessionId : null,
+          jobId: null,
+          sessionId: null,
           body,
         });
         analytics.capture('note_created', {
           source: 'quick_actions',
           note_id: noteId,
-          parent_type: captureMode === 'job' ? (draftSessionId ? 'session' : 'job') : 'inbox',
-          job_id: captureMode === 'job' && captureJob ? captureJob.id : null,
-          session_id: captureMode === 'job' ? draftSessionId : null,
+          parent_type: 'inbox',
+          job_id: null,
+          session_id: null,
           text_length_bucket: textLengthBucket(body),
         });
         closeQuickActions();
         invalidateJobsList();
         onQuickCaptureSaved?.({
-          mode: captureMode,
-          jobId: captureMode === 'job' && captureJob ? captureJob.id : null,
+          mode: 'inbox',
+          jobId: null,
         });
       } catch (e) {
         analytics.capture('note_create_failed', {
           source: 'quick_actions',
-          parent_type: captureMode === 'job' ? (draftSessionId ? 'session' : 'job') : 'inbox',
+          parent_type: 'inbox',
           ...errorProperties(e),
         });
         Alert.alert('Save failed', formatCaptureError(e) || 'Could not save note.');
@@ -481,7 +363,7 @@ export function QuickActionsFlowProvider({
         setCaptureSaving(false);
       }
     },
-    [captureJob, captureMode, captureSaving, closeQuickActions, draftSessionId, invalidateJobsList, onQuickCaptureSaved],
+    [captureSaving, closeQuickActions, invalidateJobsList, onQuickCaptureSaved],
   );
 
   const saveCaptureMaterial = useCallback(
@@ -494,8 +376,8 @@ export function QuickActionsFlowProvider({
       setCaptureSaving(true);
       try {
         const materialId = await createMaterial(supabase, {
-          jobId: captureMode === 'job' && captureJob ? captureJob.id : null,
-          sessionId: captureMode === 'job' ? draftSessionId : null,
+          jobId: null,
+          sessionId: null,
           description: values.description,
           quantity: values.quantity,
           unit: values.unit,
@@ -504,9 +386,9 @@ export function QuickActionsFlowProvider({
         analytics.capture('material_created', {
           source: 'quick_actions',
           material_id: materialId,
-          parent_type: captureMode === 'job' ? (draftSessionId ? 'session' : 'job') : 'inbox',
-          job_id: captureMode === 'job' && captureJob ? captureJob.id : null,
-          session_id: captureMode === 'job' ? draftSessionId : null,
+          parent_type: 'inbox',
+          job_id: null,
+          session_id: null,
           unit: values.unit,
           quantity_bucket: quantityBucket(values.quantity),
           cost_bucket: moneyBucket(values.unitCostCents),
@@ -515,13 +397,13 @@ export function QuickActionsFlowProvider({
         closeQuickActions();
         invalidateJobsList();
         onQuickCaptureSaved?.({
-          mode: captureMode,
-          jobId: captureMode === 'job' && captureJob ? captureJob.id : null,
+          mode: 'inbox',
+          jobId: null,
         });
       } catch (e) {
         analytics.capture('material_create_failed', {
           source: 'quick_actions',
-          parent_type: captureMode === 'job' ? (draftSessionId ? 'session' : 'job') : 'inbox',
+          parent_type: 'inbox',
           ...errorProperties(e),
         });
         Alert.alert('Save failed', formatCaptureError(e) || 'Could not save material.');
@@ -529,7 +411,7 @@ export function QuickActionsFlowProvider({
         setCaptureSaving(false);
       }
     },
-    [captureJob, captureMode, captureSaving, closeQuickActions, draftSessionId, invalidateJobsList, onQuickCaptureSaved],
+    [captureSaving, closeQuickActions, invalidateJobsList, onQuickCaptureSaved],
   );
 
   const handlePrimaryAction = useCallback(
@@ -556,10 +438,10 @@ export function QuickActionsFlowProvider({
           openQuickActionsAtStep('chooseJob');
           return;
         case 'quick_note':
-          openQuickActionsAtStep('noteCapture');
+          beginInboxCapture('note');
           return;
         case 'quick_material':
-          openQuickActionsAtStep('materialCapture');
+          beginInboxCapture('material');
           return;
         default: {
           const _exhaustive: never = id;
@@ -567,7 +449,7 @@ export function QuickActionsFlowProvider({
         }
       }
     },
-    [onCreateJob, openQuickActionsAtStep],
+    [beginInboxCapture, onCreateJob, openQuickActionsAtStep],
   );
 
   const contextValue = useMemo(
@@ -604,81 +486,41 @@ export function QuickActionsFlowProvider({
               onClose={closeQuickActions}
               onSelectExistingJob={onSelectExistingJob}
               onStartNewSession={onStartNewSession}
-              onSelectJobForCapture={beginJobCapture}
-              onCreateQuickCapture={beginInboxCapture}
             />
 
             <EditNoteBottomSheet
               typography={typography}
               visible={captureStep === 'noteEdit'}
-              title={captureMode === 'inbox' ? 'New Note' : 'Add Note'}
-              primaryLabel={captureMode === 'inbox' ? 'SAVE NOTE TO INBOX' : 'SAVE NEW NOTE'}
-              subtitle={captureMode === 'inbox' ? 'Unassigned quick capture note' : undefined}
+              title="New Note"
+              primaryLabel="SAVE NOTE TO INBOX"
+              subtitle="Unassigned quick capture note"
               values={{ body: draftBody }}
-              assignedSession={draftAssignedSession}
-              canAttachSession={captureMode === 'job' && captureSessions.length > 0}
+              assignedSession={null}
+              canAttachSession={false}
               registerInGlobalStack={false}
               onClose={closeQuickActions}
-              onBack={() => setCaptureStep('idle')}
-              onJobPillPress={
-                captureMode === 'inbox'
-                  ? (values) => {
-                      setDraftBody(values.body);
-                      openChooseJob();
-                    }
-                  : undefined
-              }
-              onSessionPillPress={
-                captureMode === 'job'
-                  ? (values) => {
-                      setDraftBody(values.body);
-                      setCaptureStep('noteSession');
-                    }
-                  : undefined
-              }
+              onBack={closeQuickActions}
               onSavePress={(values) => void saveCaptureNote(values)}
-              onDeletePress={() => setCaptureStep('idle')}
+              onDeletePress={closeQuickActions}
             />
 
             <EditMaterialBottomSheet
               typography={typography}
               visible={captureStep === 'materialEdit'}
-              title={captureMode === 'inbox' ? 'New Material' : 'Add Material'}
-              primaryLabel={captureMode === 'inbox' ? 'SAVE MATERIAL TO INBOX' : 'SAVE NEW MATERIAL'}
-              subtitle={captureMode === 'inbox' ? 'Unassigned quick capture material' : undefined}
+              title="New Material"
+              primaryLabel="SAVE MATERIAL TO INBOX"
+              subtitle="Unassigned quick capture material"
               values={{
                 description: matDraftDescription,
                 unitCostCents: matDraftUnitCostCents,
                 quantity: matDraftQuantity,
                 unit: matDraftUnit,
               }}
-              assignedSession={draftAssignedSession}
-              canAttachSession={captureMode === 'job' && captureSessions.length > 0}
+              assignedSession={null}
+              canAttachSession={false}
               registerInGlobalStack={false}
               onClose={closeQuickActions}
-              onBack={() => setCaptureStep('idle')}
-              onJobPillPress={
-                captureMode === 'inbox'
-                  ? (values) => {
-                      setMatDraftDescription(values.description);
-                      setMatDraftUnitCostCents(values.unitCostCents);
-                      setMatDraftQuantity(values.quantity);
-                      setMatDraftUnit(values.unit);
-                      openChooseJob();
-                    }
-                  : undefined
-              }
-              onSessionPillPress={
-                captureMode === 'job'
-                  ? (values) => {
-                      setMatDraftDescription(values.description);
-                      setMatDraftUnitCostCents(values.unitCostCents);
-                      setMatDraftQuantity(values.quantity);
-                      setMatDraftUnit(values.unit);
-                      setCaptureStep('materialSession');
-                    }
-                  : undefined
-              }
+              onBack={closeQuickActions}
               onUnitPress={(values) => {
                 setMatDraftDescription(values.description);
                 setMatDraftUnitCostCents(values.unitCostCents);
@@ -687,57 +529,7 @@ export function QuickActionsFlowProvider({
                 setCaptureStep('materialUnit');
               }}
               onSavePress={(values) => void saveCaptureMaterial(values)}
-              onDeletePress={() => setCaptureStep('idle')}
-            />
-
-            <ChooseJobBottomSheet
-              typography={typography}
-              visible={captureStep === 'chooseJob'}
-              jobs={chooseJobList}
-              loading={chooseJobLoading}
-              error={chooseJobError}
-              registerInGlobalStack={false}
-              onClose={closeQuickActions}
-              onBack={returnToCaptureEdit}
-              onSelect={onChooseJobSelect}
-            />
-
-            <ChooseSessionBottomSheet
-              typography={typography}
-              visible={captureStep === 'noteSession'}
-              mode={draftSessionId ? 'edit' : 'attach'}
-              sessions={captureSessions}
-              currentSessionId={draftSessionId}
-              registerInGlobalStack={false}
-              onClose={closeQuickActions}
-              onBack={() => setCaptureStep('noteEdit')}
-              onSelect={(sessionId) => {
-                setDraftSessionId(sessionId);
-                setCaptureStep('noteEdit');
-              }}
-              onRemove={() => {
-                setDraftSessionId(null);
-                setCaptureStep('noteEdit');
-              }}
-            />
-
-            <ChooseSessionBottomSheet
-              typography={typography}
-              visible={captureStep === 'materialSession'}
-              mode={draftSessionId ? 'edit' : 'attach'}
-              sessions={captureSessions}
-              currentSessionId={draftSessionId}
-              registerInGlobalStack={false}
-              onClose={closeQuickActions}
-              onBack={() => setCaptureStep('materialEdit')}
-              onSelect={(sessionId) => {
-                setDraftSessionId(sessionId);
-                setCaptureStep('materialEdit');
-              }}
-              onRemove={() => {
-                setDraftSessionId(null);
-                setCaptureStep('materialEdit');
-              }}
+              onDeletePress={closeQuickActions}
             />
 
             <DropdownBottomSheet

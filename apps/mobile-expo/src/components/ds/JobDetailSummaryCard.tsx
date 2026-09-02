@@ -35,7 +35,7 @@ export function JobDetailSummaryCard({
       <View style={styles.summaryRow}>
         <Text style={[typography.body, { color: fg.secondary, flex: 1 }]}>Revenue</Text>
         <Text style={[typography.bodyBold, styles.summaryMoney]}>
-          {formatUsdCombined(earnings.revenueCents)}
+          {earnings.revenueCents == null ? '—' : formatUsdCombined(earnings.revenueCents)}
         </Text>
       </View>
       <View style={styles.summaryRow}>

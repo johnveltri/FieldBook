@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert } from 'react-native';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { JobDetailScreen } from './JobDetailScreen';
@@ -12,6 +12,7 @@ const mockOpenFeedbackEmail = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockStartLiveSession = jest.fn<(...args: unknown[]) => Promise<{ id: string }>>();
 const mockRefreshLiveSession = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 const mockUpdateLiveSessionJobShortDescription = jest.fn();
+let mockFullscreenEditFlagState = { enabled: true, ready: true };
 
 jest.mock('../lib/feedback', () => ({
   claimFeedbackPromptMilestone: (...args: unknown[]) => mockClaimFeedbackPromptMilestone(...args),
@@ -85,7 +86,10 @@ jest.mock('../components/ds', () => ({
     if (status === 'completed') return 'paid';
     return 'completed';
   },
-  EditJobBottomSheet: () => null,
+  EditJobBottomSheet: ({ visible }: { visible: boolean }) => {
+    const { Text } = require('react-native');
+    return visible ? <Text accessibilityLabel="Legacy edit">Legacy Edit Job</Text> : null;
+  },
   ConfirmMinimumInfoBottomSheet: () => null,
   EditOtherCostBottomSheet: () => null,
   JobDetailCtaRow: ({ onPrimaryPress }: { onPrimaryPress: () => void }) => {
@@ -380,7 +384,41 @@ jest.mock('../components/ds', () => ({
   },
 }));
 
+jest.mock('../lib/featureFlags', () => ({
+  useJobDetailFullscreenEditFlag: () => mockFullscreenEditFlagState,
+}));
+
+jest.mock('./jobDetailEdit/JobDetailEditMode', () => ({
+  JobDetailEditMode: ({
+    onBack,
+    onDone,
+    onDeleteJob,
+    saving,
+  }: {
+    onBack: () => void;
+    onDone: () => void;
+    onDeleteJob: () => void;
+    saving: boolean;
+  }) => {
+    const { Pressable, Text } = require('react-native');
+    return (
+      <>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back" disabled={saving} onPress={onBack}>
+          <Text>Back</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Done" disabled={saving} onPress={onDone}>
+          <Text>Done</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Delete job" disabled={saving} onPress={onDeleteJob}>
+          <Text>Delete job</Text>
+        </Pressable>
+      </>
+    );
+  },
+}));
+
 jest.mock('@fieldsolo/api-client', () => ({
+  applyJobDetailEdit: jest.fn(),
   countCompletedJobsForCurrentUser: jest.fn(),
   createManualSession: jest.fn(),
   createMaterial: jest.fn(),
@@ -441,6 +479,10 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 17, 2026',
         timeRangeLabel: '9:00 AM – 10:00 AM',
         durationLabel: '1.0h',
+        clockTimesExplicit: true,
+        clockStartExplicit: true,
+        clockEndExplicit: true,
+        calendarDateExplicit: true,
         attachments: [],
       },
     ],
@@ -452,6 +494,10 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 17, 2026',
         timeRangeLabel: '9:00 AM – 10:00 AM',
         durationLabel: '1.0h',
+        clockTimesExplicit: true,
+        clockStartExplicit: true,
+        clockEndExplicit: true,
+        calendarDateExplicit: true,
         attachments: [],
       },
     ],
@@ -479,6 +525,7 @@ describe('JobDetailScreen manual session and note flows', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFullscreenEditFlagState = { enabled: true, ready: true };
     apiClient.fetchJobDetail.mockResolvedValue(baseJob);
     apiClient.createManualSession.mockResolvedValue('sess-new-1');
     apiClient.updateSessionTimes.mockResolvedValue(undefined);
@@ -727,6 +774,7 @@ describe('JobDetailScreen manual session and note flows', () => {
           dateLabel: 'Apr 18, 2026',
           timeRangeLabel: '9:00 AM – …',
           durationLabel: '0.2h',
+          clockTimesExplicit: true,
           attachments: [],
         },
       ],
@@ -737,6 +785,7 @@ describe('JobDetailScreen manual session and note flows', () => {
         dateLabel: 'Apr 18, 2026',
         timeRangeLabel: '9:00 AM – …',
         durationLabel: '0.2h',
+        clockTimesExplicit: true,
         attachments: [],
       },
     });
@@ -768,8 +817,11 @@ describe('JobDetailScreen manual session and note flows', () => {
             sessionId: null,
             name: 'Existing material',
             quantity: 2,
+            quantityExplicit: true,
             unit: 'ea',
             unitCostCents: 500,
+            unitCostExplicit: true,
+            totalCostCents: 1000,
             quantityLabel: '2 ea @ $5.00',
             priceLabel: '$10.00',
           },
@@ -1003,5 +1055,146 @@ describe('JobDetailScreen manual session and note flows', () => {
     });
 
     jobState = { ...jobState, workStatus: 'inProgress' };
+  });
+});
+
+describe('JobDetailScreen edit mode', () => {
+  const apiClient = jest.requireMock('@fieldsolo/api-client') as any;
+
+  const baseJob: JobDetailViewModel = {
+    id: 'job-1',
+    shortDescription: 'Fixture install',
+    customerName: 'Alice',
+    serviceAddress: '1 Main St',
+    jobType: 'electrical',
+    lastWorkedLabel: 'Last worked Apr 18, 2026',
+    workStatus: 'inProgress',
+    earnings: {
+      revenueCents: 10000,
+      materialsCents: -500,
+      otherCostsCents: 0,
+      feesCents: 0,
+      netEarningsCents: 9500,
+    },
+    metrics: {
+      timeLabel: '2.0h',
+      netPerHrDisplay: '$47.50/hr',
+      sessionCount: 1,
+    },
+    displaySessions: [],
+    allSessions: [],
+    inProgressSession: null,
+    materialBuckets: [],
+    otherCostBuckets: [],
+    noteBuckets: [],
+    noMaterialsConfirmed: false,
+    noOtherCostsConfirmed: false,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockFullscreenEditFlagState = { enabled: true, ready: true };
+    apiClient.fetchJobDetail.mockResolvedValue(baseJob);
+    apiClient.applyJobDetailEdit.mockResolvedValue(undefined);
+  });
+
+  it('opens edit mode from the header EDIT pill', async () => {
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+    await waitFor(() => expect(screen.getByLabelText('Edit job')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Edit job'));
+    expect(screen.getByLabelText('Done')).toBeTruthy();
+    expect(screen.getByLabelText('Back')).toBeTruthy();
+  });
+
+  it('opens the legacy edit sheet from the header when fullscreen editing is disabled', async () => {
+    mockFullscreenEditFlagState = { enabled: false, ready: true };
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+    await waitFor(() => expect(screen.getByLabelText('Edit job')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Edit job'));
+
+    await waitFor(() => expect(screen.getByLabelText('Legacy edit')).toBeTruthy());
+    expect(screen.queryByLabelText('Done')).toBeNull();
+  });
+
+  it('opens edit mode when initialEditOpen is set', async () => {
+    const screen = render(
+      <JobDetailScreen jobId="job-1" sessionUserId="user-1" initialEditOpen />,
+    );
+    await waitFor(() => expect(screen.getByLabelText('Done')).toBeTruthy());
+  });
+
+  it('opens the legacy edit sheet for initialEditOpen when fullscreen editing is disabled', async () => {
+    mockFullscreenEditFlagState = { enabled: false, ready: true };
+    const screen = render(
+      <JobDetailScreen jobId="job-1" sessionUserId="user-1" initialEditOpen />,
+    );
+
+    await waitFor(() => expect(screen.getByLabelText('Legacy edit')).toBeTruthy());
+    expect(screen.queryByLabelText('Done')).toBeNull();
+  });
+
+  it('fails closed to one legacy edit sheet when flag readiness resolves unavailable', async () => {
+    mockFullscreenEditFlagState = { enabled: false, ready: false };
+    const screen = render(
+      <JobDetailScreen jobId="job-1" sessionUserId="user-1" initialEditOpen />,
+    );
+
+    await waitFor(() => expect(screen.getByLabelText('Edit job')).toBeTruthy());
+    expect(screen.queryByLabelText('Legacy edit')).toBeNull();
+
+    mockFullscreenEditFlagState = { enabled: false, ready: true };
+    screen.rerender(
+      <JobDetailScreen jobId="job-1" sessionUserId="user-1" initialEditOpen />,
+    );
+    await waitFor(() => expect(screen.getByLabelText('Legacy edit')).toBeTruthy());
+
+    screen.rerender(
+      <JobDetailScreen jobId="job-1" sessionUserId="user-1" initialEditOpen />,
+    );
+    expect(screen.getAllByLabelText('Legacy edit')).toHaveLength(1);
+  });
+
+  it('calls applyJobDetailEdit when Done is pressed', async () => {
+    const refreshed = { ...baseJob, shortDescription: 'Updated' };
+    apiClient.fetchJobDetail
+      .mockResolvedValueOnce(baseJob)
+      .mockResolvedValueOnce(refreshed);
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+    await waitFor(() => expect(screen.getByLabelText('Edit job')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Edit job'));
+    fireEvent.press(screen.getByLabelText('Done'));
+    await waitFor(() =>
+      expect(apiClient.applyJobDetailEdit).toHaveBeenCalledWith({}, 'job-1', expect.any(Object)),
+    );
+  });
+
+  it('locks Done, Back, and Delete job while the apply request is pending', async () => {
+    let resolveApply: (() => void) | undefined;
+    apiClient.applyJobDetailEdit.mockImplementationOnce(
+      () => new Promise<void>((resolve) => {
+        resolveApply = resolve;
+      }),
+    );
+    const screen = render(<JobDetailScreen jobId="job-1" sessionUserId="user-1" />);
+    await waitFor(() => expect(screen.getByLabelText('Edit job')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Edit job'));
+    fireEvent.press(screen.getByLabelText('Done'));
+
+    await waitFor(() => expect(apiClient.applyJobDetailEdit).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText('Done').props.accessibilityState?.disabled).toBe(true);
+    expect(screen.getByLabelText('Back').props.accessibilityState?.disabled).toBe(true);
+    expect(screen.getByLabelText('Delete job').props.accessibilityState?.disabled).toBe(true);
+
+    fireEvent.press(screen.getByLabelText('Done'));
+    fireEvent.press(screen.getByLabelText('Back'));
+    fireEvent.press(screen.getByLabelText('Delete job'));
+    expect(apiClient.applyJobDetailEdit).toHaveBeenCalledTimes(1);
+    expect(apiClient.deleteJobById).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Done')).toBeTruthy();
+
+    await act(async () => {
+      resolveApply?.();
+    });
   });
 });

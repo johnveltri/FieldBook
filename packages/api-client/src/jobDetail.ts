@@ -14,6 +14,7 @@ import type {
 } from '@fieldsolo/shared-types';
 
 import type { FieldSoloSupabaseClient } from './client';
+import { JOB_DETAIL_EMPTY_LABELS } from './jobDetailLabels';
 
 type JobWorkStatusDb =
   | 'not_started'
@@ -44,6 +45,10 @@ type SessionRow = {
   session_status: 'in_progress' | 'ended' | 'deleted';
   started_at: string;
   ended_at: string | null;
+  clock_times_explicit?: boolean | null;
+  clock_start_explicit?: boolean | null;
+  clock_end_explicit?: boolean | null;
+  calendar_date_explicit?: boolean | null;
 };
 
 type NoteRow = {
@@ -66,6 +71,9 @@ type MaterialRow = {
   unit_cost_cents: number | null;
   total_cost_cents: number;
   cost_type: string;
+  cost_type_explicit?: boolean | null;
+  quantity_explicit?: boolean | null;
+  unit_cost_explicit?: boolean | null;
   created_at: string;
   updated_at: string;
 };
@@ -135,6 +143,10 @@ function mapWorkStatus(row: JobRow): JobDetailWorkStatus {
 function mapSession(row: SessionRow, attachments: JobDetailSessionAttachment[] = []): JobDetailSession {
   const start = new Date(row.started_at);
   const end = row.ended_at ? new Date(row.ended_at) : null;
+  const clockStartExplicit = row.clock_start_explicit === true;
+  const clockEndExplicit = row.clock_end_explicit === true;
+  const clockTimesExplicit = clockStartExplicit || clockEndExplicit;
+  const calendarDateExplicit = row.calendar_date_explicit !== false;
   const timeFmt = new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -142,14 +154,22 @@ function mapSession(row: SessionRow, attachments: JobDetailSessionAttachment[] =
   const startStr = timeFmt.format(start);
   const endStr = end ? timeFmt.format(end) : '…';
   const hours = sessionDurationHours(row.started_at, row.ended_at);
+  const durationLabel =
+    hours > 0.01 ? `${hours.toFixed(1)}h` : JOB_DETAIL_EMPTY_LABELS.sessionDuration;
 
   return {
     id: row.id,
     startedAt: row.started_at,
     endedAt: row.ended_at,
-    dateLabel: formatDateLabel(row.started_at),
-    timeRangeLabel: `${startStr} – ${endStr}`,
-    durationLabel: `${hours.toFixed(1)}h`,
+    clockTimesExplicit,
+    clockStartExplicit,
+    clockEndExplicit,
+    calendarDateExplicit,
+    dateLabel: calendarDateExplicit
+      ? formatDateLabel(row.started_at)
+      : JOB_DETAIL_EMPTY_LABELS.sessionDate,
+    timeRangeLabel: clockTimesExplicit ? `${startStr} – ${endStr}` : '',
+    durationLabel,
     attachments,
   };
 }
@@ -198,17 +218,25 @@ function mergeSessionAttachments(
   return merged;
 }
 
+function sessionDateLabelFromRow(row: SessionRow): string {
+  return row.calendar_date_explicit === false
+    ? JOB_DETAIL_EMPTY_LABELS.sessionDate
+    : formatDateLabel(row.started_at);
+}
+
 function materialLine(row: MaterialRow): JobDetailMaterialLine {
   // Normalize `numeric` (which may come back as string) to a JS number so
   // downstream UI forms don't need to re-parse it.
   const quantityNum =
     typeof row.quantity === 'string'
       ? Number(row.quantity)
-      : (row.quantity ?? 0);
+      : row.quantity;
   const unit = row.unit?.trim() ?? '';
-  const unitCostCents = row.unit_cost_cents ?? 0;
+  const quantityExplicit = row.quantity_explicit !== false;
+  const unitCostExplicit = row.unit_cost_explicit !== false;
+  const unitCostCents = row.unit_cost_cents;
   const baseQtyLabel =
-    row.quantity != null && row.quantity !== ''
+    quantityExplicit && row.quantity != null && row.quantity !== ''
       ? `${row.quantity}${unit ? ` ${unit}` : ''}`
       : '—';
   // Append the per-unit cost to the display label (e.g. "2 ea @ $37.50") so
@@ -217,16 +245,19 @@ function materialLine(row: MaterialRow): JobDetailMaterialLine {
   // the suffix when we have no quantity (`—`) or a zero unit cost (nothing
   // meaningful to show).
   const qtyLabel =
-    baseQtyLabel !== '—' && unitCostCents > 0
-      ? `${baseQtyLabel} @ ${formatUsd(unitCostCents)}`
+    baseQtyLabel !== '—' && unitCostExplicit && (unitCostCents ?? 0) > 0
+      ? `${baseQtyLabel} @ ${formatUsd(unitCostCents ?? 0)}`
       : baseQtyLabel;
   return {
     id: row.id,
     sessionId: row.session_id,
-    name: row.description?.trim() || 'Material',
-    quantity: Number.isFinite(quantityNum) ? quantityNum : 0,
+    name: row.description?.trim() || JOB_DETAIL_EMPTY_LABELS.materialDescription,
+    quantity: quantityExplicit && Number.isFinite(quantityNum) ? quantityNum : null,
+    quantityExplicit,
     unit,
     unitCostCents,
+    unitCostExplicit,
+    totalCostCents: row.total_cost_cents,
     quantityLabel: qtyLabel,
     priceLabel: formatUsd(row.total_cost_cents),
   };
@@ -235,11 +266,16 @@ function materialLine(row: MaterialRow): JobDetailMaterialLine {
 function otherCostLine(row: MaterialRow): JobDetailOtherCostLine {
   const costType = row.cost_type;
   const description = row.description?.trim() ?? '';
+  const typeLabel =
+    row.cost_type_explicit === false
+      ? JOB_DETAIL_EMPTY_LABELS.otherCostType
+      : otherCostTypeLabel(costType);
   return {
     id: row.id,
     sessionId: row.session_id,
     costType,
-    typeLabel: otherCostTypeLabel(costType),
+    costTypeExplicit: row.cost_type_explicit !== false,
+    typeLabel,
     description,
     costCents: row.total_cost_cents,
     priceLabel: formatUsd(row.total_cost_cents),
@@ -264,7 +300,9 @@ export async function fetchJobDetail(
 
   const { data: sessionsRaw, error: sErr } = await client
     .from('sessions')
-    .select('id, job_id, session_status, started_at, ended_at')
+    .select(
+      'id, job_id, session_status, started_at, ended_at, clock_times_explicit, clock_start_explicit, clock_end_explicit, calendar_date_explicit',
+    )
     .eq('job_id', jobId)
     .order('started_at', { ascending: true });
 
@@ -319,14 +357,14 @@ export async function fetchJobDetail(
 
   const notes = (notesRaw ?? []) as NoteRow[];
 
-  const revenueCents = j.revenue_cents ?? 0;
+  const revenueCents = j.revenue_cents;
   const materialsSpend = materials.reduce((s, m) => s + m.total_cost_cents, 0);
   const otherCostsSpend = otherCosts.reduce((s, cost) => s + cost.total_cost_cents, 0);
   const allCostsSpend = allCosts.reduce((s, cost) => s + cost.total_cost_cents, 0);
   const materialsCents = -materialsSpend;
   const otherCostsCents = -otherCostsSpend;
   const feesCents = 0;
-  const netEarningsCents = revenueCents - allCostsSpend + feesCents;
+  const netEarningsCents = (revenueCents ?? 0) - allCostsSpend + feesCents;
 
   let totalHours = 0;
   for (const s of activeSessions) {
@@ -376,7 +414,7 @@ export async function fetchJobDetail(
       materialBuckets.push({
         id: `mat-${s.id}`,
         kind: 'session',
-        sessionDateLabel: formatDateLabel(s.started_at),
+        sessionDateLabel: sessionDateLabelFromRow(s),
         items: ms.sort((a, b) => a.created_at.localeCompare(b.created_at)).map(materialLine),
       });
     }
@@ -406,7 +444,7 @@ export async function fetchJobDetail(
       otherCostBuckets.push({
         id: `oc-${s.id}`,
         kind: 'session',
-        sessionDateLabel: formatDateLabel(s.started_at),
+        sessionDateLabel: sessionDateLabelFromRow(s),
         items: lines.sort((a, b) => a.created_at.localeCompare(b.created_at)).map(otherCostLine),
       });
     }
@@ -453,7 +491,7 @@ export async function fetchJobDetail(
       noteBuckets.push({
         id: `note-${s.id}`,
         kind: 'session',
-        sessionDateLabel: formatDateLabel(s.started_at),
+        sessionDateLabel: sessionDateLabelFromRow(s),
         notes: ns.map(mapNote),
       });
     }

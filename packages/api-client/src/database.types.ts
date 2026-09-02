@@ -143,6 +143,7 @@ export type Database = {
       job_costs: {
         Row: {
           cost_type: string
+          cost_type_explicit: boolean
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -150,15 +151,18 @@ export type Database = {
           incurred_on: string | null
           job_id: string | null
           quantity: number | null
+          quantity_explicit: boolean
           session_id: string | null
           total_cost_cents: number
           unit: string | null
           unit_cost_cents: number | null
+          unit_cost_explicit: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           cost_type?: string
+          cost_type_explicit?: boolean
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -166,15 +170,18 @@ export type Database = {
           incurred_on?: string | null
           job_id?: string | null
           quantity?: number | null
+          quantity_explicit?: boolean
           session_id?: string | null
           total_cost_cents: number
           unit?: string | null
           unit_cost_cents?: number | null
+          unit_cost_explicit?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
           cost_type?: string
+          cost_type_explicit?: boolean
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -182,10 +189,12 @@ export type Database = {
           incurred_on?: string | null
           job_id?: string | null
           quantity?: number | null
+          quantity_explicit?: boolean
           session_id?: string | null
           total_cost_cents?: number
           unit?: string | null
           unit_cost_cents?: number | null
+          unit_cost_explicit?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -220,14 +229,83 @@ export type Database = {
           },
         ]
       }
+      job_export_requests: {
+        Row: {
+          byte_size: number | null
+          created_at: string
+          delivery_attempts: number
+          delivery_state: string
+          expires_at: string | null
+          failure_code: string | null
+          first_send_at: string | null
+          generated_at: string | null
+          generation_attempts: number
+          generation_state: string
+          id: string
+          next_retry_at: string | null
+          object_path: string | null
+          recipient_email: string
+          reporting_time_zone: string
+          reporting_year: number
+          resend_message_id: string | null
+          scrubbed_at: string | null
+          sent_at: string | null
+          token_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          byte_size?: number | null
+          created_at?: string
+          delivery_attempts?: number
+          delivery_state?: string
+          expires_at?: string | null
+          failure_code?: string | null
+          first_send_at?: string | null
+          generated_at?: string | null
+          generation_attempts?: number
+          generation_state?: string
+          id?: string
+          next_retry_at?: string | null
+          object_path?: string | null
+          recipient_email: string
+          reporting_time_zone: string
+          reporting_year: number
+          resend_message_id?: string | null
+          scrubbed_at?: string | null
+          sent_at?: string | null
+          token_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          byte_size?: number | null
+          created_at?: string
+          delivery_attempts?: number
+          delivery_state?: string
+          expires_at?: string | null
+          failure_code?: string | null
+          first_send_at?: string | null
+          generated_at?: string | null
+          generation_attempts?: number
+          generation_state?: string
+          id?: string
+          next_retry_at?: string | null
+          object_path?: string | null
+          recipient_email?: string
+          reporting_time_zone?: string
+          reporting_year?: number
+          resend_message_id?: string | null
+          scrubbed_at?: string | null
+          sent_at?: string | null
+          token_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           collected_cents: number
           completed_at: string | null
           costs_reviewed_at: string | null
-          materials_reviewed_at: string | null
-          other_costs_reviewed_at: string | null
-          paid_at: string | null
           created_at: string
           created_via: Database["public"]["Enums"]["job_created_via_enum"]
           customer_name: string | null
@@ -239,6 +317,9 @@ export type Database = {
           job_work_status: Database["public"]["Enums"]["job_work_status_enum"]
           last_worked_at: string | null
           list_recency_at: string | null
+          materials_reviewed_at: string | null
+          other_costs_reviewed_at: string | null
+          paid_at: string | null
           revenue_cents: number | null
           service_address: string | null
           short_description: string
@@ -249,9 +330,6 @@ export type Database = {
           collected_cents?: number
           completed_at?: string | null
           costs_reviewed_at?: string | null
-          materials_reviewed_at?: string | null
-          other_costs_reviewed_at?: string | null
-          paid_at?: string | null
           created_at?: string
           created_via?: Database["public"]["Enums"]["job_created_via_enum"]
           customer_name?: string | null
@@ -263,6 +341,9 @@ export type Database = {
           job_work_status?: Database["public"]["Enums"]["job_work_status_enum"]
           last_worked_at?: string | null
           list_recency_at?: string | null
+          materials_reviewed_at?: string | null
+          other_costs_reviewed_at?: string | null
+          paid_at?: string | null
           revenue_cents?: number | null
           service_address?: string | null
           short_description: string
@@ -273,9 +354,6 @@ export type Database = {
           collected_cents?: number
           completed_at?: string | null
           costs_reviewed_at?: string | null
-          materials_reviewed_at?: string | null
-          other_costs_reviewed_at?: string | null
-          paid_at?: string | null
           created_at?: string
           created_via?: Database["public"]["Enums"]["job_created_via_enum"]
           customer_name?: string | null
@@ -287,6 +365,9 @@ export type Database = {
           job_work_status?: Database["public"]["Enums"]["job_work_status_enum"]
           last_worked_at?: string | null
           list_recency_at?: string | null
+          materials_reviewed_at?: string | null
+          other_costs_reviewed_at?: string | null
+          paid_at?: string | null
           revenue_cents?: number | null
           service_address?: string | null
           short_description?: string
@@ -419,6 +500,10 @@ export type Database = {
       }
       sessions: {
         Row: {
+          calendar_date_explicit: boolean
+          clock_end_explicit: boolean
+          clock_start_explicit: boolean
+          clock_times_explicit: boolean
           created_at: string
           deleted_at: string | null
           ended_at: string | null
@@ -432,6 +517,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          calendar_date_explicit?: boolean
+          clock_end_explicit?: boolean
+          clock_start_explicit?: boolean
+          clock_times_explicit?: boolean
           created_at?: string
           deleted_at?: string | null
           ended_at?: string | null
@@ -445,6 +534,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          calendar_date_explicit?: boolean
+          clock_end_explicit?: boolean
+          clock_start_explicit?: boolean
+          clock_times_explicit?: boolean
           created_at?: string
           deleted_at?: string | null
           ended_at?: string | null
@@ -548,9 +641,62 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_job_export_request: {
+        Args: { p_time_zone: string; p_year: number }
+        Returns: Json
+      }
+      ack_job_export_queue_message: {
+        Args: { p_message_id: number }
+        Returns: boolean
+      }
+      apply_job_detail_edit: {
+        Args: { p_job_id: string; p_payload: Json }
+        Returns: Json
+      }
+      claim_job_export_queue_messages: {
+        Args: { p_quantity?: number }
+        Returns: {
+          message_id: number
+          read_count: number
+          request_id: string
+        }[]
+      }
       consume_waitlist_rate_limit: {
         Args: { p_key_hash: string; p_limit?: number }
         Returns: boolean
+      }
+      job_export_rows: {
+        Args: {
+          p_before_completed_at?: string
+          p_before_created_at?: string
+          p_before_id?: string
+          p_limit?: number
+          p_request_id: string
+        }
+        Returns: {
+          completed_at: string
+          created_at: string
+          customer_name: string
+          disposal_cost: number
+          equipment_rental_cost: number
+          helper_labor_cost: number
+          job_description: string
+          job_id: string
+          last_worked_at: string
+          material_cost: number
+          other_cost: number
+          paid_at: string
+          payment_status: string
+          permit_cost: number
+          revenue_cents: number
+          service_address: string
+          travel_parking_cost: number
+          work_status: string
+        }[]
+      }
+      retry_job_export_queue_message: {
+        Args: { p_delay_seconds: number; p_message_id: number }
+        Returns: undefined
       }
     }
     Enums: {
