@@ -31,9 +31,12 @@ export type ApplyJobDetailEditNoteRow = {
 export type ApplyJobDetailEditMaterialRow = {
   id: string;
   description: string;
-  quantity: number;
+  quantity: number | null;
+  quantityExplicit: boolean;
   unit: string;
-  unitCostCents: number;
+  unitCostCents: number | null;
+  unitCostExplicit: boolean;
+  totalCostCents: number;
   sessionId: string | null;
 };
 

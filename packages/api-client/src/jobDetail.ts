@@ -72,6 +72,8 @@ type MaterialRow = {
   total_cost_cents: number;
   cost_type: string;
   cost_type_explicit?: boolean | null;
+  quantity_explicit?: boolean | null;
+  unit_cost_explicit?: boolean | null;
   created_at: string;
   updated_at: string;
 };
@@ -228,11 +230,13 @@ function materialLine(row: MaterialRow): JobDetailMaterialLine {
   const quantityNum =
     typeof row.quantity === 'string'
       ? Number(row.quantity)
-      : (row.quantity ?? 0);
+      : row.quantity;
   const unit = row.unit?.trim() ?? '';
-  const unitCostCents = row.unit_cost_cents ?? 0;
+  const quantityExplicit = row.quantity_explicit !== false;
+  const unitCostExplicit = row.unit_cost_explicit !== false;
+  const unitCostCents = row.unit_cost_cents;
   const baseQtyLabel =
-    row.quantity != null && row.quantity !== ''
+    quantityExplicit && row.quantity != null && row.quantity !== ''
       ? `${row.quantity}${unit ? ` ${unit}` : ''}`
       : '—';
   // Append the per-unit cost to the display label (e.g. "2 ea @ $37.50") so
@@ -241,16 +245,19 @@ function materialLine(row: MaterialRow): JobDetailMaterialLine {
   // the suffix when we have no quantity (`—`) or a zero unit cost (nothing
   // meaningful to show).
   const qtyLabel =
-    baseQtyLabel !== '—' && unitCostCents > 0
-      ? `${baseQtyLabel} @ ${formatUsd(unitCostCents)}`
+    baseQtyLabel !== '—' && unitCostExplicit && (unitCostCents ?? 0) > 0
+      ? `${baseQtyLabel} @ ${formatUsd(unitCostCents ?? 0)}`
       : baseQtyLabel;
   return {
     id: row.id,
     sessionId: row.session_id,
     name: row.description?.trim() || JOB_DETAIL_EMPTY_LABELS.materialDescription,
-    quantity: Number.isFinite(quantityNum) ? quantityNum : 0,
+    quantity: quantityExplicit && Number.isFinite(quantityNum) ? quantityNum : null,
+    quantityExplicit,
     unit,
     unitCostCents,
+    unitCostExplicit,
+    totalCostCents: row.total_cost_cents,
     quantityLabel: qtyLabel,
     priceLabel: formatUsd(row.total_cost_cents),
   };
@@ -350,14 +357,14 @@ export async function fetchJobDetail(
 
   const notes = (notesRaw ?? []) as NoteRow[];
 
-  const revenueCents = j.revenue_cents ?? 0;
+  const revenueCents = j.revenue_cents;
   const materialsSpend = materials.reduce((s, m) => s + m.total_cost_cents, 0);
   const otherCostsSpend = otherCosts.reduce((s, cost) => s + cost.total_cost_cents, 0);
   const allCostsSpend = allCosts.reduce((s, cost) => s + cost.total_cost_cents, 0);
   const materialsCents = -materialsSpend;
   const otherCostsCents = -otherCostsSpend;
   const feesCents = 0;
-  const netEarningsCents = revenueCents - allCostsSpend + feesCents;
+  const netEarningsCents = (revenueCents ?? 0) - allCostsSpend + feesCents;
 
   let totalHours = 0;
   for (const s of activeSessions) {

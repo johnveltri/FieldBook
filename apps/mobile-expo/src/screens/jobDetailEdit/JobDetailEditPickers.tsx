@@ -14,6 +14,7 @@ import {
   formatSessionTimeLabel,
   JOB_DETAIL_EMPTY_LABELS,
   resolveSessionDraftTimes,
+  todayLocalDateString,
 } from '@fieldsolo/api-client';
 import type { DropdownBottomSheetOption } from '../../components/ds/DropdownBottomSheet';
 import { DropdownBottomSheet } from '../../components/ds/DropdownBottomSheet';
@@ -79,6 +80,16 @@ type JobDetailEditPickersProps = {
 
 function sessionHasExplicitClocks(row: DraftSessionRow): boolean {
   return row.explicitStartClock || row.explicitEndClock;
+}
+
+/** Shared synthesis requires a date; keep undated sessions undated in the
+ * draft while using today only as an internal wall-clock calculation base. */
+function sessionWithSafeDate(row: DraftSessionRow, patch: Partial<DraftSessionRow> = {}) {
+  return {
+    ...row,
+    date: row.date.trim() || todayLocalDateString(),
+    ...patch,
+  };
 }
 
 function sessionListFromDraft(draft: JobEditDraft) {
@@ -193,7 +204,7 @@ export function JobDetailEditPickers({
             return;
           }
           const resolved = resolveSessionDraftTimes({
-            ...sessionRow,
+            ...sessionWithSafeDate(sessionRow),
             durationHours: 0,
             clockTimesExplicit: false,
           });
@@ -224,7 +235,7 @@ export function JobDetailEditPickers({
             });
           } else {
             const resolved = resolveSessionDraftTimes({
-              ...sessionRow,
+              ...sessionWithSafeDate(sessionRow),
               durationHours: hours,
               clockTimesExplicit: false,
             });
@@ -270,7 +281,9 @@ export function JobDetailEditPickers({
         value={value}
         onClose={onClose}
         onSelect={(picked) => {
-          const dateBase = localDateStringToDate(sessionRow.date);
+          const dateBase = sessionRow.date
+            ? localDateStringToDate(sessionRow.date)
+            : new Date();
           const startedAt =
             field === 'start'
               ? combineDateAndTime(dateBase, picked).toISOString()
@@ -301,7 +314,7 @@ export function JobDetailEditPickers({
           const explicitEndClock = field === 'end' ? false : sessionRow.explicitEndClock;
           const hasExplicit = explicitStartClock || explicitEndClock;
           const resolved = resolveSessionDraftTimes({
-            ...sessionRow,
+            ...sessionWithSafeDate(sessionRow),
             clockTimesExplicit: hasExplicit,
           });
           onUpdateSession(sessionRow.id, {

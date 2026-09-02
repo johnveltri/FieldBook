@@ -10,7 +10,6 @@ import {
   View,
   type ScrollView,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 import type { JobDetailViewModel } from '@fieldsolo/shared-types';
 import {
@@ -39,11 +38,13 @@ import {
 } from '../../components/ds/edit-mode/EditFormRows';
 import { EditIconLink, EditIconLocation, EditIconPerson } from '../../components/ds/edit-mode/EditModeIcons';
 import { EditSwipeableRow } from '../../components/ds/edit-mode/EditSwipeableRow';
+import { PlatformHeaderAction } from '../../components/platform/PlatformHeaderAction';
 import {
   JobDetailIconSectionMaterials,
   JobDetailIconSectionNotes,
   JobDetailIconSectionOtherCosts,
   JobDetailIconSectionSessions,
+  JobDetailIconTopClose,
 } from '../../components/figma-icons/JobDetailScreenIcons';
 import { formatUsdCombined } from '../../lib/formatUsd';
 import { otherCostTypeLabel, type JobOtherCostType } from '../../lib/otherCostTypes';
@@ -54,7 +55,7 @@ import {
   type EditPickerTarget,
 } from './JobDetailEditPickers';
 import {
-  materialBreakdownTotalCents,
+  buildMaterialUnitPriceBlurPatch,
   materialHasBreakdown,
   useJobEditDraft,
   type DraftMaterialRow,
@@ -77,20 +78,6 @@ type JobDetailEditModeProps = {
 };
 
 const iconColor = fg.secondary;
-
-function BackIcon() {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
-      <Path
-        d="M12.5 15L7.5 10L12.5 5"
-        stroke={fg.secondary}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 function parseRevenueInput(text: string): number | null {
   const trimmed = text.trim().replace(/[@$,\s]/g, '');
@@ -116,7 +103,7 @@ function formatMoneyFieldOnBlur(text: string, setText: (value: string) => void) 
 
 function formatUnitPriceFieldOnBlur(text: string, setText: (value: string) => void) {
   const cents = parseRevenueInput(text);
-  setText(cents != null && cents > 0 ? `@ ${formatUsdCombined(cents)}` : '');
+  setText(cents != null ? `@ ${formatUsdCombined(cents)}` : '');
 }
 
 function parseQuantityInput(text: string): number | null {
@@ -127,9 +114,14 @@ function parseQuantityInput(text: string): number | null {
   return n;
 }
 
-function quantityToInput(quantity: number): string {
-  if (quantity <= 0) return '';
+function quantityToInput(quantity: number, explicit = false): string {
+  if (quantity <= 0 && !explicit) return '';
   return String(quantity);
+}
+
+function formatQuantityFieldOnBlur(text: string, setText: (value: string) => void) {
+  const quantity = parseQuantityInput(text);
+  setText(quantity != null ? String(quantity) : '');
 }
 
 function SessionAttachRow({
@@ -190,6 +182,9 @@ export function JobDetailEditMode({
   const [revenueText, setRevenueText] = useState(() =>
     revenueCentsToInput(draft?.revenueCents ?? null),
   );
+  const numericFieldFocusedRef = useRef(false);
+  const numericBlurCommitPendingRef = useRef(false);
+  const doneWaitingForNumericBlurRef = useRef(false);
   const openPicker = useCallback((target: EditPickerTarget) => {
     Keyboard.dismiss();
     setPickerTarget(target);
@@ -215,6 +210,38 @@ export function JobDetailEditMode({
       { text: 'Delete job', style: 'destructive', onPress: onDeleteJob },
     ]);
   }, [onDeleteJob]);
+
+  const handleNumericFieldFocus = useCallback(() => {
+    numericFieldFocusedRef.current = true;
+  }, []);
+  const handleNumericFieldBlur = useCallback(() => {
+    numericFieldFocusedRef.current = false;
+    numericBlurCommitPendingRef.current = true;
+    setTimeout(() => {
+      numericBlurCommitPendingRef.current = false;
+    }, 0);
+    if (!doneWaitingForNumericBlurRef.current) return;
+
+    doneWaitingForNumericBlurRef.current = false;
+    // The blur handler has just queued the local-input commit. Save on the
+    // next turn so buildPayload observes that committed draft value.
+    setTimeout(onDone, 0);
+  }, [onDone]);
+  const handleDonePress = useCallback(() => {
+    if (!numericFieldFocusedRef.current) {
+      if (numericBlurCommitPendingRef.current) {
+        // Native may blur before it dispatches the Done press. Preserve the
+        // same barrier in that ordering as well.
+        setTimeout(onDone, 0);
+        return;
+      }
+      onDone();
+      return;
+    }
+
+    doneWaitingForNumericBlurRef.current = true;
+    Keyboard.dismiss();
+  }, [onDone]);
 
   if (!draft) return null;
 
@@ -243,20 +270,20 @@ export function JobDetailEditMode({
       >
         <View ref={scrollContentRef} style={columnStyle} collapsable={false}>
           <View style={styles.topHeader}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              onPress={onBack}
-              style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+            <PlatformHeaderAction
+              accessibilityLabel="Close"
+              onPress={() => {
+                if (!saving) onBack();
+              }}
+              style={saving ? styles.controlDisabled : undefined}
             >
-              <BackIcon />
-              <Text style={[typography.bodyBold, { color: fg.secondary }]}>Back</Text>
-            </Pressable>
+              <JobDetailIconTopClose color={fg.primary} />
+            </PlatformHeaderAction>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Done"
               disabled={doneDisabled}
-              onPress={onDone}
+              onPress={handleDonePress}
               style={({ pressed }) => [
                 styles.doneButton,
                 doneDisabled && styles.doneButtonDisabled,
@@ -312,12 +339,15 @@ export function JobDetailEditMode({
                   if (draft.revenueCents != null && draft.revenueCents > 0) {
                     setRevenueText(centsToEditText(draft.revenueCents));
                   }
+                  handleNumericFieldFocus();
                 }}
-                onBlur={() => formatMoneyFieldOnBlur(revenueText, setRevenueText)}
-                onChangeText={(t) => {
-                  setRevenueText(t);
-                  updateDraft({ revenueCents: parseRevenueInput(t) });
+                onBlur={() => {
+                  const revenueCents = parseRevenueInput(revenueText);
+                  formatMoneyFieldOnBlur(revenueText, setRevenueText);
+                  updateDraft({ revenueCents });
+                  handleNumericFieldBlur();
                 }}
+                onChangeText={setRevenueText}
               />
             </EditIconRow>
           </EditSheet>
@@ -329,7 +359,9 @@ export function JobDetailEditMode({
                   row={row}
                   typography={typography}
                   showTopBorder={index > 0}
-                  onDelete={() => removeRow('sessions', row.id)}
+                  onDelete={() => {
+                    if (!saving) removeRow('sessions', row.id);
+                  }}
                   onOpenPicker={openPicker}
                 />
               ))}
@@ -350,9 +382,13 @@ export function JobDetailEditMode({
                   typography={typography}
                   sessions={endedSessionsForPicker}
                   showTopBorder={index > 0}
-                  onDelete={() => removeRow('materials', row.id)}
+                  onDelete={() => {
+                    if (!saving) removeRow('materials', row.id);
+                  }}
                   onChange={(patch) => updateMaterial(row.id, patch)}
                   onOpenPicker={openPicker}
+                  onNumericFieldFocus={handleNumericFieldFocus}
+                  onNumericFieldBlur={handleNumericFieldBlur}
                 />
               ))}
             <EditAddRow
@@ -372,9 +408,13 @@ export function JobDetailEditMode({
                   typography={typography}
                   sessions={endedSessionsForPicker}
                   showTopBorder={index > 0}
-                  onDelete={() => removeRow('otherCosts', row.id)}
+                  onDelete={() => {
+                    if (!saving) removeRow('otherCosts', row.id);
+                  }}
                   onChange={(patch) => updateOtherCost(row.id, patch)}
                   onOpenPicker={openPicker}
+                  onNumericFieldFocus={handleNumericFieldFocus}
+                  onNumericFieldBlur={handleNumericFieldBlur}
                 />
               ))}
             <EditAddRow
@@ -394,7 +434,9 @@ export function JobDetailEditMode({
                   typography={typography}
                   sessions={endedSessionsForPicker}
                   showTopBorder={index > 0}
-                  onDelete={() => removeRow('notes', row.id)}
+                  onDelete={() => {
+                    if (!saving) removeRow('notes', row.id);
+                  }}
                   onChange={(patch) => updateNote(row.id, patch)}
                   onOpenPicker={openPicker}
                 />
@@ -411,8 +453,13 @@ export function JobDetailEditMode({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Delete job"
+            disabled={saving}
             onPress={confirmDeleteJob}
-            style={({ pressed }) => [styles.deleteJob, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.deleteJob,
+              saving && styles.controlDisabled,
+              pressed && !saving && styles.pressed,
+            ]}
           >
             <Text style={[typography.body, { color: color('Semantic/Status/Error/Text') }]}>
               Delete job
@@ -524,6 +571,8 @@ function MaterialEditBlock({
   onDelete,
   onChange,
   onOpenPicker,
+  onNumericFieldFocus,
+  onNumericFieldBlur,
 }: {
   row: DraftMaterialRow;
   typography: TextStyles;
@@ -532,14 +581,27 @@ function MaterialEditBlock({
   onDelete: () => void;
   onChange: (patch: Partial<DraftMaterialRow>) => void;
   onOpenPicker: (target: EditPickerTarget) => void;
+  onNumericFieldFocus: () => void;
+  onNumericFieldBlur: () => void;
 }) {
   const [totalCostText, setTotalCostText] = useState(() =>
     revenueCentsToInput(row.totalCostCents),
   );
   const [unitPriceText, setUnitPriceText] = useState(() =>
-    row.unitCostCents > 0 ? `@ ${formatUsdCombined(row.unitCostCents)}` : '',
+    row.unitCostExplicit ? `@ ${formatUsdCombined(row.unitCostCents)}` : '',
   );
-  const [quantityText, setQuantityText] = useState(() => quantityToInput(row.quantity));
+  const [quantityText, setQuantityText] = useState(() =>
+    quantityToInput(row.quantity, row.quantityExplicit),
+  );
+  const [isTotalCostFocused, setIsTotalCostFocused] = useState(false);
+  const hasCompleteBreakdown = row.quantityExplicit && row.unitCostExplicit;
+  const displayedTotalCents = hasCompleteBreakdown
+    ? Math.round(row.quantity * row.unitCostCents)
+    : row.totalCostCents;
+  const totalCostDisplay =
+    displayedTotalCents > 0 || hasCompleteBreakdown
+      ? `${formatUsdCombined(displayedTotalCents)} total`
+      : '';
 
   useEffect(() => {
     if (!materialHasBreakdown(row)) return;
@@ -565,43 +627,27 @@ function MaterialEditBlock({
           typography={typography}
           placeholder="Total cost"
           accessibilityLabel="Total cost"
-          value={totalCostText}
+          value={
+            isTotalCostFocused && !hasCompleteBreakdown ? totalCostText : totalCostDisplay
+          }
           keyboardType="decimal-pad"
           inputMode="decimal"
+          editable={!hasCompleteBreakdown}
+          style={hasCompleteBreakdown ? { color: fg.secondary } : undefined}
           onFocus={() => {
             if (row.totalCostCents > 0) {
               setTotalCostText(centsToEditText(row.totalCostCents));
             }
+            setIsTotalCostFocused(true);
+            onNumericFieldFocus();
           }}
           onBlur={() => {
             formatMoneyFieldOnBlur(totalCostText, setTotalCostText);
-            if (totalCostText.trim().length === 0 && materialHasBreakdown(row)) {
-              const recomputed = materialBreakdownTotalCents(row);
-              onChange({
-                totalCostCents: recomputed,
-                showBreakdown: true,
-              });
-              if (recomputed > 0) {
-                setTotalCostText(revenueCentsToInput(recomputed));
-              }
-            }
+            onChange({ totalCostCents: parseRevenueInput(totalCostText) ?? 0 });
+            setIsTotalCostFocused(false);
+            onNumericFieldBlur();
           }}
-          onChangeText={(text) => {
-            setTotalCostText(text);
-            const hasBreakdown = materialHasBreakdown(row);
-            if (text.trim().length === 0) {
-              onChange({
-                totalCostCents: hasBreakdown ? materialBreakdownTotalCents(row) : 0,
-                showBreakdown: hasBreakdown,
-              });
-              return;
-            }
-            const cents = parseRevenueInput(text) ?? 0;
-            onChange({
-              totalCostCents: cents,
-              showBreakdown: hasBreakdown,
-            });
-          }}
+          onChangeText={setTotalCostText}
         />
         <EditMaterialBreakdownRow
           unitPrice={
@@ -613,24 +659,25 @@ function MaterialEditBlock({
               keyboardType="decimal-pad"
               inputMode="decimal"
               onFocus={() => {
-                if (row.unitCostCents > 0) {
+                if (row.unitCostExplicit) {
                   setUnitPriceText(centsToEditText(row.unitCostCents));
                 }
+                onNumericFieldFocus();
               }}
-              onBlur={() => formatUnitPriceFieldOnBlur(unitPriceText, setUnitPriceText)}
-              onChangeText={(text) => {
-                setUnitPriceText(text);
-                const unitCostCents = parseRevenueInput(text) ?? 0;
-                const keepBreakdown = text.trim().length > 0 || row.quantity > 0 || !!row.unit.trim();
-                const patch: Partial<DraftMaterialRow> = {
-                  unitCostCents,
-                  showBreakdown: keepBreakdown,
-                };
-                if (row.quantity > 0 && unitCostCents > 0) {
-                  patch.totalCostCents = Math.round(unitCostCents * row.quantity);
-                }
-                onChange(patch);
+              onBlur={() => {
+                const unitCostCents = parseRevenueInput(unitPriceText) ?? 0;
+                const unitCostExplicit = unitPriceText.trim().length > 0;
+                formatUnitPriceFieldOnBlur(unitPriceText, setUnitPriceText);
+                onChange(
+                  buildMaterialUnitPriceBlurPatch(
+                    row,
+                    unitCostCents,
+                    unitCostExplicit,
+                  ),
+                );
+                onNumericFieldBlur();
               }}
+              onChangeText={setUnitPriceText}
             />
           }
           quantity={
@@ -641,19 +688,23 @@ function MaterialEditBlock({
               value={quantityText}
               keyboardType="decimal-pad"
               inputMode="decimal"
-              onChangeText={(text) => {
-                setQuantityText(text);
-                const quantity = parseQuantityInput(text) ?? 0;
+              onFocus={onNumericFieldFocus}
+              onBlur={() => {
+                const quantity = parseQuantityInput(quantityText) ?? 0;
+                const quantityExplicit = quantityText.trim().length > 0;
+                formatQuantityFieldOnBlur(quantityText, setQuantityText);
                 const keepBreakdown =
-                  text.trim().length > 0 || row.unitCostCents > 0 || !!row.unit.trim();
+                  quantityExplicit || row.unitCostExplicit || !!row.unit.trim();
                 const patch: Partial<DraftMaterialRow> = {
                   quantity,
+                  quantityExplicit,
                   showBreakdown: keepBreakdown,
                 };
-                if (row.unitCostCents > 0 && quantity > 0) {
-                  patch.totalCostCents = Math.round(row.unitCostCents * quantity);
-                }
                 onChange(patch);
+                onNumericFieldBlur();
+              }}
+              onChangeText={(text) => {
+                setQuantityText(text);
               }}
             />
           }
@@ -691,6 +742,8 @@ function OtherCostEditBlock({
   onDelete,
   onChange,
   onOpenPicker,
+  onNumericFieldFocus,
+  onNumericFieldBlur,
 }: {
   row: DraftOtherCostRow;
   typography: TextStyles;
@@ -699,6 +752,8 @@ function OtherCostEditBlock({
   onDelete: () => void;
   onChange: (patch: Partial<DraftOtherCostRow>) => void;
   onOpenPicker: (target: EditPickerTarget) => void;
+  onNumericFieldFocus: () => void;
+  onNumericFieldBlur: () => void;
 }) {
   const [amountText, setAmountText] = useState(() => revenueCentsToInput(row.costCents));
 
@@ -731,12 +786,14 @@ function OtherCostEditBlock({
             if (row.costCents > 0) {
               setAmountText(centsToEditText(row.costCents));
             }
+            onNumericFieldFocus();
           }}
-          onBlur={() => formatMoneyFieldOnBlur(amountText, setAmountText)}
-          onChangeText={(text) => {
-            setAmountText(text);
-            onChange({ costCents: parseRevenueInput(text) ?? 0 });
+          onBlur={() => {
+            formatMoneyFieldOnBlur(amountText, setAmountText);
+            onChange({ costCents: parseRevenueInput(amountText) ?? 0 });
+            onNumericFieldBlur();
           }}
+          onChangeText={setAmountText}
         />
         <EditFieldInput
           typography={typography}
@@ -817,13 +874,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: space('Spacing/4'),
   },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space('Spacing/4'),
-    minHeight: 44,
-    minWidth: 44,
-  },
   doneButton: {
     minHeight: 44,
     minWidth: 44,
@@ -836,6 +886,9 @@ const styles = StyleSheet.create({
     ...cardShadowRn,
   },
   doneButtonDisabled: {
+    opacity: 0.45,
+  },
+  controlDisabled: {
     opacity: 0.45,
   },
   doneLabel: {

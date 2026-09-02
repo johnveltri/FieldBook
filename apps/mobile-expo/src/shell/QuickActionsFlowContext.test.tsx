@@ -1,8 +1,36 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import React from 'react';
 import { Alert, Pressable, Text } from 'react-native';
 
 import { QuickActionsFlowProvider, useQuickActionsFlow } from './QuickActionsFlowContext';
+
+let mockEditNoteProps: {
+  visible: boolean;
+  onSavePress: (values: { body: string }) => void;
+} | null = null;
+let mockEditMaterialProps: {
+  visible: boolean;
+  onSavePress: (values: {
+    description: string;
+    quantity: number;
+    unit: string;
+    unitCostCents: number;
+  }) => void;
+} | null = null;
+let mockQuickActionsVisible = false;
+
+class TestErrorBoundary extends React.Component<React.PropsWithChildren, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    return this.state.error ? <Text>{`Render error: ${this.state.error.message}`}</Text> : this.props.children;
+  }
+}
 
 jest.mock('expo-font', () => ({ useFonts: () => [true] }));
 
@@ -20,9 +48,18 @@ jest.mock('../components/ds', () => ({
   ChooseJobBottomSheet: () => null,
   ChooseSessionBottomSheet: () => null,
   DropdownBottomSheet: () => null,
-  EditMaterialBottomSheet: () => null,
-  EditNoteBottomSheet: () => null,
-  QuickActionsBottomSheet: () => null,
+  EditMaterialBottomSheet: (props: typeof mockEditMaterialProps) => {
+    mockEditMaterialProps = props;
+    return null;
+  },
+  EditNoteBottomSheet: (props: typeof mockEditNoteProps) => {
+    mockEditNoteProps = props;
+    return null;
+  },
+  QuickActionsBottomSheet: ({ visible }: { visible: boolean }) => {
+    mockQuickActionsVisible = visible;
+    return null;
+  },
 }));
 
 jest.mock('../context/JobsListInvalidationContext', () => ({
@@ -64,6 +101,16 @@ function Harness() {
         accessibilityLabel="Create job"
         onPress={() => handlePrimaryAction('new_job')}
       />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Quick note"
+        onPress={() => handlePrimaryAction('quick_note')}
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Quick material"
+        onPress={() => handlePrimaryAction('quick_material')}
+      />
       <Text>{creatingJob ? 'creating' : 'idle'}</Text>
     </>
   );
@@ -73,6 +120,11 @@ describe('QuickActionsFlowProvider New Job action', () => {
   let alertSpy: jest.SpiedFunction<typeof Alert.alert>;
 
   beforeEach(() => {
+    mockEditNoteProps = null;
+    mockEditMaterialProps = null;
+    mockQuickActionsVisible = false;
+    const apiClient = jest.requireMock('@fieldsolo/api-client') as any;
+    apiClient.listRecentJobsForCurrentUser.mockResolvedValue([]);
     alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
 
@@ -119,6 +171,74 @@ describe('QuickActionsFlowProvider New Job action', () => {
     await waitFor(() => {
       expect(alertSpy).toHaveBeenCalledWith('Create job failed', 'Network down');
       expect(screen.getByText('idle')).toBeTruthy();
+    });
+  });
+
+  it('opens Quick Note directly and saves it unassigned to Inbox', async () => {
+    const apiClient = jest.requireMock('@fieldsolo/api-client') as any;
+    apiClient.createNote.mockResolvedValue('note-1');
+    const onQuickCaptureSaved = jest.fn();
+    const screen = render(
+      <TestErrorBoundary>
+        <QuickActionsFlowProvider onCreateJob={async () => {}} onQuickCaptureSaved={onQuickCaptureSaved}>
+          <Harness />
+        </QuickActionsFlowProvider>
+      </TestErrorBoundary>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: 'Quick note' }));
+    await waitFor(() => expect(mockEditNoteProps?.visible).toBe(true));
+    expect(mockQuickActionsVisible).toBe(false);
+    await act(async () => {
+      mockEditNoteProps?.onSavePress({ body: 'Captured note' });
+    });
+
+    await waitFor(() => {
+      expect(apiClient.createNote).toHaveBeenCalledWith({}, {
+        jobId: null,
+        sessionId: null,
+        body: 'Captured note',
+      });
+      expect(onQuickCaptureSaved).toHaveBeenCalledWith({ mode: 'inbox', jobId: null });
+      expect(screen.queryByText(/^Render error:/)).toBeNull();
+    });
+  });
+
+  it('opens Quick Material directly and saves it unassigned to Inbox', async () => {
+    const apiClient = jest.requireMock('@fieldsolo/api-client') as any;
+    apiClient.createMaterial.mockResolvedValue('material-1');
+    const onQuickCaptureSaved = jest.fn();
+    const screen = render(
+      <TestErrorBoundary>
+        <QuickActionsFlowProvider onCreateJob={async () => {}} onQuickCaptureSaved={onQuickCaptureSaved}>
+          <Harness />
+        </QuickActionsFlowProvider>
+      </TestErrorBoundary>,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: 'Quick material' }));
+    await waitFor(() => expect(mockEditMaterialProps?.visible).toBe(true));
+    expect(mockQuickActionsVisible).toBe(false);
+    await act(async () => {
+      mockEditMaterialProps?.onSavePress({
+        description: 'Copper pipe',
+        quantity: 2,
+        unit: 'ft',
+        unitCostCents: 500,
+      });
+    });
+
+    await waitFor(() => {
+      expect(apiClient.createMaterial).toHaveBeenCalledWith({}, {
+        jobId: null,
+        sessionId: null,
+        description: 'Copper pipe',
+        quantity: 2,
+        unit: 'ft',
+        unitCostCents: 500,
+      });
+      expect(onQuickCaptureSaved).toHaveBeenCalledWith({ mode: 'inbox', jobId: null });
+      expect(screen.queryByText(/^Render error:/)).toBeNull();
     });
   });
 });

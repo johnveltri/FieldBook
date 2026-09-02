@@ -28,8 +28,6 @@ function renderChooser(step: QuickActionsStep) {
       onClose={jest.fn()}
       onSelectExistingJob={jest.fn()}
       onStartNewSession={jest.fn()}
-      onSelectJobForCapture={jest.fn()}
-      onCreateQuickCapture={jest.fn()}
     />,
   );
 }
@@ -37,8 +35,6 @@ function renderChooser(step: QuickActionsStep) {
 describe('QuickActionsBottomSheet', () => {
   const cases: { step: QuickActionsStep; title: string }[] = [
     { step: 'chooseJob', title: 'Start Session' },
-    { step: 'noteCapture', title: 'New Note' },
-    { step: 'materialCapture', title: 'New Material' },
   ];
 
   it.each(cases)('renders $step as a root chooser with no legacy Back path', ({ step, title }) => {

@@ -40,8 +40,10 @@ export type DraftMaterialRow = DraftRowBase & {
   totalCostCents: number;
   showBreakdown: boolean;
   quantity: number;
+  quantityExplicit: boolean;
   unit: string;
   unitCostCents: number;
+  unitCostExplicit: boolean;
   sessionId: string | null;
 };
 
@@ -90,7 +92,7 @@ export function createJobEditDraft(job: JobDetailViewModel): JobEditDraft {
     const durationHours = durationHoursBetween(s.startedAt, s.endedAt ?? s.startedAt);
     let explicitStartClock = s.clockStartExplicit;
     let explicitEndClock = s.clockEndExplicit;
-    if (!explicitStartClock && !explicitEndClock) {
+    if (!explicitStartClock && !explicitEndClock && calendarDateExplicit) {
       if (s.clockTimesExplicit) {
         explicitStartClock = true;
         explicitEndClock = true;
@@ -132,18 +134,32 @@ export function createJobEditDraft(job: JobDetailViewModel): JobEditDraft {
 
   const materials: DraftMaterialRow[] = job.materialBuckets.flatMap((b) =>
     b.items.map((m) => {
+      // Older rows did not persist explicitness. Preserve their existing
+      // total-only representation while treating a real breakdown as
+      // explicit when the new fields are absent.
+      const material = m as typeof m & {
+        quantityExplicit?: boolean;
+        unitCostExplicit?: boolean;
+      };
+      const quantityValue = material.quantity ?? 0;
+      const unitCostValue = material.unitCostCents ?? 0;
       const fastPath = isMaterialFastPath(m.quantity, m.unit);
+      const quantityExplicit = material.quantityExplicit ?? !fastPath;
+      const unitCostExplicit = material.unitCostExplicit ?? !fastPath;
       return {
         id: m.id,
         isNew: false,
         removed: false,
         description:
           m.name === JOB_DETAIL_EMPTY_LABELS.materialDescription ? '' : m.name,
-        totalCostCents: Math.round(m.unitCostCents * m.quantity),
-        showBreakdown: !fastPath,
-        quantity: fastPath ? 0 : m.quantity,
-        unit: fastPath ? '' : m.unit || '',
-        unitCostCents: fastPath ? 0 : m.unitCostCents,
+        totalCostCents:
+          material.totalCostCents ?? Math.round(unitCostValue * quantityValue),
+        showBreakdown: quantityExplicit || unitCostExplicit,
+        quantity: quantityExplicit ? quantityValue : 0,
+        quantityExplicit,
+        unit: quantityExplicit || unitCostExplicit ? m.unit || '' : '',
+        unitCostCents: unitCostExplicit ? unitCostValue : 0,
+        unitCostExplicit,
         sessionId: m.sessionId,
       };
     }),
@@ -182,6 +198,35 @@ export function isJobEditDraftDirty(snapshot: JobEditSnapshot, draft: JobEditDra
   return !rowsEqual(snapshot, draft);
 }
 
+/** Marks a row removed and detaches visible children when its session is removed. */
+export function removeJobEditDraftRow(
+  draft: JobEditDraft,
+  kind: 'sessions' | 'notes' | 'materials' | 'otherCosts',
+  id: string,
+): JobEditDraft {
+  if (kind === 'sessions') {
+    return {
+      ...draft,
+      sessions: draft.sessions.map((row) =>
+        row.id === id ? { ...row, removed: true } : row,
+      ),
+      notes: draft.notes.map((row) =>
+        !row.removed && row.sessionId === id ? { ...row, sessionId: null } : row,
+      ),
+      materials: draft.materials.map((row) =>
+        !row.removed && row.sessionId === id ? { ...row, sessionId: null } : row,
+      ),
+      otherCosts: draft.otherCosts.map((row) =>
+        !row.removed && row.sessionId === id ? { ...row, sessionId: null } : row,
+      ),
+    };
+  }
+  return {
+    ...draft,
+    [kind]: draft[kind].map((row) => (row.id === id ? { ...row, removed: true } : row)),
+  };
+}
+
 function isBlankNewSession(row: DraftSessionRow, draft: JobEditDraft): boolean {
   if (!row.isNew || row.removed) return false;
   if (sessionReferencedInDraft(draft, row.id)) return false;
@@ -214,6 +259,8 @@ function isBlankNewMaterial(row: DraftMaterialRow): boolean {
     row.description.trim() === '' &&
     row.totalCostCents <= 0 &&
     !row.showBreakdown &&
+    !row.quantityExplicit &&
+    !row.unitCostExplicit &&
     row.quantity <= 0 &&
     row.unitCostCents <= 0 &&
     !row.unit.trim() &&
@@ -226,7 +273,7 @@ function shouldDropNote(row: DraftNoteRow): boolean {
 }
 
 /** Stored as description + total only (qty 1, unit ea). Edit UI shows empty breakdown fields. */
-function isMaterialFastPath(quantity: number, unit: string | null | undefined): boolean {
+function isMaterialFastPath(quantity: number | null | undefined, unit: string | null | undefined): boolean {
   const u = (unit ?? '').trim();
   return quantity === 1 && (u === '' || u === 'ea');
 }
@@ -283,6 +330,8 @@ function resolveEditSessionTimes(row: DraftSessionRow): { startedAt: string; end
 export function materialHasBreakdown(row: DraftMaterialRow): boolean {
   return (
     row.showBreakdown ||
+    row.quantityExplicit ||
+    row.unitCostExplicit ||
     row.quantity > 0 ||
     row.unitCostCents > 0 ||
     !!row.unit.trim()
@@ -296,22 +345,44 @@ export function materialBreakdownTotalCents(row: DraftMaterialRow): number {
   return 0;
 }
 
+/**
+ * Commits a unit-price edit after its field loses focus. Totals are deliberately
+ * left alone here and are resolved from the final draft only when Done is pressed.
+ */
+export function buildMaterialUnitPriceBlurPatch(
+  row: Pick<DraftMaterialRow, 'quantityExplicit' | 'unit'>,
+  unitCostCents: number,
+  unitCostExplicit: boolean,
+): Partial<DraftMaterialRow> {
+  return {
+    unitCostCents,
+    unitCostExplicit,
+    showBreakdown: unitCostExplicit || row.quantityExplicit || !!row.unit.trim(),
+  };
+}
+
 function materialPersistFields(row: DraftMaterialRow): {
   quantity: number;
   unit: string;
   unitCostCents: number;
+  quantityExplicit: boolean;
+  unitCostExplicit: boolean;
+  totalCostCents: number;
 } {
-  if (materialHasBreakdown(row)) {
-    return {
-      quantity: Math.max(0, row.quantity),
-      unit: row.unit.trim() || 'ea',
-      unitCostCents: Math.max(0, row.unitCostCents),
-    };
-  }
+  const quantity = Math.max(0, row.quantity);
+  const unitCostCents = Math.max(0, row.unitCostCents);
   return {
-    quantity: row.totalCostCents > 0 || row.description.trim() ? 1 : 0,
-    unit: 'ea',
-    unitCostCents: Math.max(0, row.totalCostCents),
+    // Total remains authoritative until the breakdown is complete. Once both
+    // values are explicit, their product is the canonical total.
+    quantity,
+    unit: row.unit.trim() || 'ea',
+    unitCostCents,
+    quantityExplicit: row.quantityExplicit,
+    unitCostExplicit: row.unitCostExplicit,
+    totalCostCents:
+      row.quantityExplicit && row.unitCostExplicit
+        ? Math.round(quantity * unitCostCents)
+        : Math.max(0, row.totalCostCents),
   };
 }
 
@@ -381,13 +452,23 @@ export function buildApplyJobDetailEditPayload(
       continue;
     }
     if (isBlankNewMaterial(row)) continue;
-    const { quantity, unit, unitCostCents } = materialPersistFields(row);
-    const apiRow = {
-      id: row.id,
-      description: row.description.trim(),
+    const {
       quantity,
       unit,
       unitCostCents,
+      quantityExplicit,
+      unitCostExplicit,
+      totalCostCents,
+    } = materialPersistFields(row);
+    const apiRow = {
+      id: row.id,
+      description: row.description.trim(),
+      totalCostCents,
+      quantity,
+      quantityExplicit,
+      unit,
+      unitCostCents,
+      unitCostExplicit,
       sessionId: row.sessionId,
     };
     const snap = snapshot.materials.find((m) => m.id === row.id);
@@ -494,8 +575,10 @@ export function useJobEditDraft(job: JobDetailViewModel | null) {
                 totalCostCents: 0,
                 showBreakdown: false,
                 quantity: 0,
+                quantityExplicit: false,
                 unit: '',
                 unitCostCents: 0,
+                unitCostExplicit: false,
                 sessionId: null,
               },
             ],
@@ -531,11 +614,7 @@ export function useJobEditDraft(job: JobDetailViewModel | null) {
     (kind: 'sessions' | 'notes' | 'materials' | 'otherCosts', id: string) => {
       setDraft((prev) => {
         if (!prev) return prev;
-        const key = kind;
-        return {
-          ...prev,
-          [key]: prev[key].map((row) => (row.id === id ? { ...row, removed: true } : row)),
-        };
+        return removeJobEditDraftRow(prev, kind, id);
       });
     },
     [],

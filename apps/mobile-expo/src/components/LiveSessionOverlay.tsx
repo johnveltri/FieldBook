@@ -430,8 +430,8 @@ export function LiveSessionOverlay({ onSessionEnded }: LiveSessionOverlayProps) 
       if (!m) return;
       setEditingMaterialId(materialId);
       setMatDraftDescription(m.name);
-      setMatDraftUnitCostCents(m.unitCostCents);
-      setMatDraftQuantity(m.quantity);
+      setMatDraftUnitCostCents(m.unitCostCents ?? 0);
+      setMatDraftQuantity(m.quantity ?? 0);
       setMatDraftUnit(m.unit || 'ea');
       setMatDraftSessionId(m.sessionId);
       setMaterialFlow('editMaterial');

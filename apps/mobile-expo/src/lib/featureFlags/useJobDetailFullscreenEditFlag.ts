@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import { JOB_DETAIL_FULLSCREEN_EDIT_FLAG } from './constants';
-import { fetchPostHogBooleanFlag, normalizeDebugEmail } from './posthogFlags';
+import { isJobDetailFullscreenEditDevOverrideEnabled } from './devOverrides';
+import { fetchPostHogBooleanFlag } from './posthogFlags';
 
 export type JobDetailFullscreenEditFlagState = {
   enabled: boolean;
@@ -10,12 +11,18 @@ export type JobDetailFullscreenEditFlagState = {
 
 export function useJobDetailFullscreenEditFlag(
   userId: string | null | undefined,
-  email: string | null | undefined,
 ): JobDetailFullscreenEditFlagState {
-  const [enabled, setEnabled] = useState(false);
-  const [ready, setReady] = useState(false);
+  const devOverride = isJobDetailFullscreenEditDevOverrideEnabled();
+  const [enabled, setEnabled] = useState(devOverride);
+  const [ready, setReady] = useState(devOverride);
 
   useEffect(() => {
+    if (devOverride) {
+      setEnabled(true);
+      setReady(true);
+      return;
+    }
+
     const distinctId = (userId ?? '').trim();
     if (!distinctId) {
       setEnabled(false);
@@ -27,10 +34,8 @@ export function useJobDetailFullscreenEditFlag(
     setReady(false);
     setEnabled(false);
 
-    const debugEmail = normalizeDebugEmail(email);
     void fetchPostHogBooleanFlag(JOB_DETAIL_FULLSCREEN_EDIT_FLAG, {
       distinctId,
-      personProperties: debugEmail ? { debug_email: debugEmail } : undefined,
     }).then((value) => {
       if (cancelled) return;
       setEnabled(value);
@@ -40,7 +45,7 @@ export function useJobDetailFullscreenEditFlag(
     return () => {
       cancelled = true;
     };
-  }, [email, userId]);
+  }, [devOverride, userId]);
 
   return { enabled, ready };
 }

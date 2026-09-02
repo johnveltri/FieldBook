@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import {
   clearPostHogFlagCacheForTests,
   fetchPostHogBooleanFlag,
-  normalizeDebugEmail,
 } from './posthogFlags';
 
 jest.mock('../analytics/config', () => ({
@@ -12,17 +11,6 @@ jest.mock('../analytics/config', () => ({
     posthogHost: 'https://us.i.posthog.com',
   },
 }));
-
-describe('normalizeDebugEmail', () => {
-  it('lowercases and trims email', () => {
-    expect(normalizeDebugEmail('  User@Example.COM ')).toBe('user@example.com');
-  });
-
-  it('returns null for blank email', () => {
-    expect(normalizeDebugEmail('   ')).toBeNull();
-    expect(normalizeDebugEmail(null)).toBeNull();
-  });
-});
 
 describe('fetchPostHogBooleanFlag', () => {
   beforeEach(() => {
@@ -41,8 +29,8 @@ describe('fetchPostHogBooleanFlag', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it('posts distinct id and debug_email to PostHog flags endpoint', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+  it('posts only the Supabase user UUID as distinct id', async () => {
+    (global.fetch as jest.Mock<any>).mockResolvedValue({
       ok: true,
       json: async () => ({ featureFlags: { 'job-detail-fullscreen-edit': true } }),
     });
@@ -50,23 +38,22 @@ describe('fetchPostHogBooleanFlag', () => {
     await expect(
       fetchPostHogBooleanFlag('job-detail-fullscreen-edit', {
         distinctId: 'user-1',
-        personProperties: { debug_email: 'user@example.com' },
       }),
     ).resolves.toBe(true);
 
-    expect(global.fetch).toHaveBeenCalledWith('https://us.i.posthog.com/flags?v=2', {
+    expect(global.fetch).toHaveBeenCalledWith('https://us.i.posthog.com/flags?v=2', expect.objectContaining({
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         token: 'ph_test_key',
         distinct_id: 'user-1',
-        person_properties: { debug_email: 'user@example.com' },
       }),
-    });
+      signal: expect.any(AbortSignal),
+    }));
   });
 
   it('fails closed on HTTP errors', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+    (global.fetch as jest.Mock<any>).mockResolvedValue({ ok: false });
 
     await expect(
       fetchPostHogBooleanFlag('job-detail-fullscreen-edit', {
@@ -75,16 +62,36 @@ describe('fetchPostHogBooleanFlag', () => {
     ).resolves.toBe(false);
   });
 
+  it('fails closed when PostHog throws', async () => {
+    (global.fetch as jest.Mock<any>).mockRejectedValue(new Error('Network down'));
+
+    await expect(
+      fetchPostHogBooleanFlag('job-detail-fullscreen-edit', { distinctId: 'user-1' }),
+    ).resolves.toBe(false);
+  });
+
+  it('fails closed when PostHog never resolves', async () => {
+    jest.useFakeTimers();
+    (global.fetch as jest.Mock<any>).mockReturnValue(new Promise(() => {}));
+
+    const result = fetchPostHogBooleanFlag('job-detail-fullscreen-edit', {
+      distinctId: 'user-1',
+    });
+    await jest.advanceTimersByTimeAsync(4_000);
+
+    await expect(result).resolves.toBe(false);
+    const requestInit = (global.fetch as jest.Mock<any>).mock.calls[0]?.[1] as RequestInit;
+    expect(requestInit.signal?.aborted).toBe(true);
+    jest.useRealTimers();
+  });
+
   it('uses in-memory cache for repeated lookups', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+    (global.fetch as jest.Mock<any>).mockResolvedValue({
       ok: true,
       json: async () => ({ featureFlags: { 'job-detail-fullscreen-edit': true } }),
     });
 
-    const input = {
-      distinctId: 'user-1',
-      personProperties: { debug_email: 'user@example.com' },
-    };
+    const input = { distinctId: 'user-1' };
 
     await expect(fetchPostHogBooleanFlag('job-detail-fullscreen-edit', input)).resolves.toBe(true);
     await expect(fetchPostHogBooleanFlag('job-detail-fullscreen-edit', input)).resolves.toBe(true);

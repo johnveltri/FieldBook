@@ -70,11 +70,19 @@ export type JobDetailMaterialLine = {
   /** Description text — used as prefill when opening the Edit Material sheet. */
   name: string;
   /** Raw numeric quantity (matches `materials.quantity numeric(12,3)`). */
-  quantity: number;
+  /** Null when no quantity was captured. Zero is retained as an explicit value. */
+  quantity: number | null;
+  /** Whether the quantity was captured, independently of its numeric value. */
+  quantityExplicit: boolean;
   /** Unit of measure (e.g. "ea", "ft"). Stored verbatim, may be custom. */
   unit: string;
   /** Per-unit cost in cents (raw value for the Edit sheet's unit price input). */
-  unitCostCents: number;
+  /** Null when no unit cost was captured. Zero is retained as an explicit value. */
+  unitCostCents: number | null;
+  /** Whether the unit cost was captured, independently of its numeric value. */
+  unitCostExplicit: boolean;
+  /** Authoritative material total, including total-only partial materials. */
+  totalCostCents: number;
   /**
    * Precomputed display label for the view-only material row, combining
    * quantity, unit, and per-unit cost (e.g. `"2 ea @ $37.50"`). When
@@ -139,7 +147,8 @@ export type JobDetailViewModel = {
   lastWorkedLabel: string;
   workStatus: JobDetailWorkStatus;
   earnings: {
-    revenueCents: number;
+    /** Null means revenue has not been captured; zero is an explicit value. */
+    revenueCents: number | null;
     materialsCents: number;
     /** Non-material job costs (Phase 2 API); Phase 1 may supply from local UI state. */
     otherCostsCents: number;

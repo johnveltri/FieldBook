@@ -22,22 +22,22 @@
 
 | Surface | Loading | Empty | Ready | Saving/processing | Success | Error/retry | Offline/interrupted |
 |---|---|---|---|---|---|---|---|
-| Edit page | Entering Edit uses already-loaded job; no extra spinner required | Lists show only **Add …** rows | Scrollable Calendar-style form | Done disabled; dim or spinner on Done | Return to View | Banner or alert UX-12; Stay on Edit | Same as error; kill discards |
+| Edit page | Entering Edit uses already-loaded job; no extra spinner required | Lists show only **Add …** rows | Scrollable Calendar-style form | Done shows spinner; Done, Back, hardware/system Back, and Delete job are disabled or ignored | Return to View | Banner or alert UX-12; Stay on Edit | Same as error; kill discards |
 | Discard dialog | — | — | UX-04..06 | — | View | — | — |
 | Delete job dialog | — | — | UX-07..10 | Disable confirm while in flight | Job detail closes | UX-13 | Same as error |
-| View session row (duration-only) | — | — | Date + duration; **no** clock range | — | — | — | — |
+| View session row | — | Missing date/duration use honest placeholder copy | Date + duration; **no** invented clock range | — | — | — | — |
 
 ## Interaction rules
 
 - Primary action: **Done** (trailing header pill, View **EDIT** position, `Brand/Primary` fill). Secondary: **Back** (leading chevron + label, same family as other job sheets). Destructive: **Delete job** at bottom, then swipe-remove on rows.
-- Validation: Done disabled while title is blank or a visible row is partial-invalid. Empty brand-new rows are ignored, not errors. Disabled Done stays in the same slot (dimmed), not moved.
+- Validation: Done is disabled only while the title is blank or a save is running. Completely empty brand-new rows are ignored; non-empty partial rows are valid capture-now data. Disabled Done stays in the same slot (dimmed), not moved.
 - Back: pristine → View. Dirty → discard dialog. Hardware/system Back matches **Back**.
 - Swipe-remove: left swipe on session/material/note/other-cost rows; does not fight job-detail vertical dismiss (Edit should not use the View swipe-to-close dismiss, or should lock it while Edit is open).
-- Repeated Done: ignored while Saving.
+- Saving lock: repeated Done, Back, hardware/system Back, and Delete job are ignored while Saving; no discard or destructive dialog can open until the apply attempt finishes.
 - Keyboard: sheet/page lifts with keyboard; hero title and trailing fields remain tappable; safe-area below Delete job.
 - Optional session attach: trailing control on note/material/other-cost opens `ChooseSessionBottomSheet` to pick among **ended** sessions on this job, or none.
 - Session start and end clocks are always visible on each session row (no collapsed reveal).
-- Material unit price, quantity, and UOM are always visible on each material row (no collapsed reveal).
+- Material total is the primary field. Unit price, quantity, and UOM are always visible optional fields. Quantity and unit price show independently captured values; when both are present, their product updates total. With only one present, total is preserved and the other stays empty after reopen.
 - Live Session control is not present on Edit.
 - Customer is a **plain text** trailing field on the Customer icon row (UX-03). No typeahead, no “Add customer”, no nested customer form. A later Customers iteration may replace this control with search/select/create on the **same row**, still committing on Done; View may later Inspect the customer. Do not make the row a dead-end unlabeled input that cannot become a picker.
 
@@ -47,6 +47,7 @@
 - Backgrounding: draft remains until process death.
 - Termination: draft gone (REQ-13).
 - Mark-complete wizard, View ADD, and row taps: unchanged sheets (REQ-14).
+- FAB Quick Note and Quick Material skip job/session selection, open the capture form directly, and save to Inbox.
 
 ## Responsive and platform behavior
 
@@ -55,6 +56,7 @@
 - Keyboard: `KeyboardAvoidingView` / sheet already used on job detail; Edit mode must keep Delete job reachable.
 - iOS: job remains the existing fullscreen Modal; Edit is a mode inside it.
 - Android: existing vertical overlay; system Back = Edit **Back** (discard rules apply).
+- Android while Saving: system Back is consumed without leaving Edit or opening discard confirmation.
 - Reduced motion: skip non-essential swipe bounce; keep swipe-to-remove.
 
 ## Accessibility

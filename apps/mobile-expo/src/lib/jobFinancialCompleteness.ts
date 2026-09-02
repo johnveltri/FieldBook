@@ -25,7 +25,7 @@ export function isJobFinanciallyComplete(ctx: JobFinancialCompletenessContext): 
   const { job } = ctx;
   return (
     hasNamedJob(job) &&
-    job.earnings.revenueCents > 0 &&
+    (job.earnings.revenueCents ?? 0) > 0 &&
     job.metrics.sessionCount > 0 &&
     hasMaterialsComplete(job) &&
     hasOtherCostsComplete(job)
@@ -38,7 +38,7 @@ export function financialCompletenessGaps(
 ): FinancialCompletenessGap[] {
   const { job } = ctx;
   const gaps: FinancialCompletenessGap[] = [];
-  if (!hasNamedJob(job) || job.earnings.revenueCents <= 0) {
+  if (!hasNamedJob(job) || (job.earnings.revenueCents ?? 0) <= 0) {
     gaps.push('revenue');
   }
   if (job.metrics.sessionCount <= 0) {

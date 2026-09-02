@@ -9,10 +9,6 @@ import {
 import { color, radius, space } from '@fieldsolo/design-system/lib/tokens';
 
 import { SessionChooserRowPlayIcon } from '../figma-icons/JobDetailScreenIcons';
-import {
-  QuickCaptureNewMaterialIcon,
-  QuickCaptureNewNoteIcon,
-} from '../figma-icons/QuickActionsSheetIcons';
 import { bg, border, fg } from '../../theme/nativeTokens';
 import type { TextStyles } from '../../theme/nativeTokens';
 import { screenHeaderA11y } from '../../lib/accessibility';
@@ -24,10 +20,7 @@ export type QuickActionsRecentJob = {
   customerName: string | null;
 };
 
-/** Which sub-action the chooser step is attaching to. */
-export type QuickCaptureKind = 'note' | 'material';
-
-export type QuickActionsStep = 'chooseJob' | 'noteCapture' | 'materialCapture';
+export type QuickActionsStep = 'chooseJob';
 
 type QuickActionsBottomSheetProps = {
   typography: TextStyles;
@@ -46,10 +39,6 @@ type QuickActionsBottomSheetProps = {
   /** Start Session step: attach a live session to an existing job. */
   onSelectExistingJob: (job: QuickActionsRecentJob) => void;
   onStartNewSession: () => void;
-  /** Note / Material steps: attach the capture to an existing job. */
-  onSelectJobForCapture: (job: QuickActionsRecentJob, kind: QuickCaptureKind) => void;
-  /** Note / Material steps: save the capture to the Inbox (no job). */
-  onCreateQuickCapture: (kind: QuickCaptureKind) => void;
 };
 
 /**
@@ -69,22 +58,13 @@ export function QuickActionsBottomSheet({
   onClosed,
   onSelectExistingJob,
   onStartNewSession,
-  onSelectJobForCapture,
-  onCreateQuickCapture,
 }: QuickActionsBottomSheetProps) {
-  const sheetAccessibilityTitle =
-    step === 'chooseJob'
-      ? 'Start session'
-      : step === 'noteCapture'
-        ? 'New note'
-        : 'New material';
-
   return (
     <BottomSheetShell
       visible={visible}
       onClose={onClose}
       onClosed={onClosed}
-      accessibilityTitle={sheetAccessibilityTitle}
+      accessibilityTitle="Start session"
     >
       <View style={styles.stack}>
         <AttachChooserStepContent
@@ -97,15 +77,11 @@ export function QuickActionsBottomSheet({
           starting={starting}
           onSelectExistingJob={onSelectExistingJob}
           onStartNewSession={onStartNewSession}
-          onSelectJobForCapture={onSelectJobForCapture}
-          onCreateQuickCapture={onCreateQuickCapture}
         />
       </View>
     </BottomSheetShell>
   );
 }
-
-type ChooserVariant = QuickActionsStep;
 
 type ChooserConfig = {
   title: string;
@@ -115,24 +91,10 @@ type ChooserConfig = {
   icon: ReactNode;
 };
 
+type ChooserVariant = QuickActionsStep;
+
 function chooserConfig(variant: ChooserVariant): ChooserConfig {
   switch (variant) {
-    case 'noteCapture':
-      return {
-        title: 'New Note',
-        primaryLabel: 'Create Quick Note',
-        primarySubtitle: 'Save to Inbox — assign to a job later',
-        primaryColor: color('Semantic/Activity/Note'),
-        icon: <QuickCaptureNewNoteIcon color={fg.muted} size={20} />,
-      };
-    case 'materialCapture':
-      return {
-        title: 'New Material',
-        primaryLabel: 'Add Quick Material',
-        primarySubtitle: 'Save to Inbox — assign to a job later',
-        primaryColor: color('Semantic/Activity/Material'),
-        icon: <QuickCaptureNewMaterialIcon color={fg.muted} size={20} />,
-      };
     case 'chooseJob':
     default:
       return {
@@ -155,8 +117,6 @@ function AttachChooserStepContent({
   starting,
   onSelectExistingJob,
   onStartNewSession,
-  onSelectJobForCapture,
-  onCreateQuickCapture,
 }: {
   variant: ChooserVariant;
   typography: TextStyles;
@@ -167,28 +127,17 @@ function AttachChooserStepContent({
   starting: boolean;
   onSelectExistingJob: (job: QuickActionsRecentJob) => void;
   onStartNewSession: () => void;
-  onSelectJobForCapture: (job: QuickActionsRecentJob, kind: QuickCaptureKind) => void;
-  onCreateQuickCapture: (kind: QuickCaptureKind) => void;
 }) {
   const cfg = chooserConfig(variant);
   const isSession = variant === 'chooseJob';
-  const kind: QuickCaptureKind = variant === 'materialCapture' ? 'material' : 'note';
   // Only the Start Session path runs an inline mutation we must guard against.
   const busy = isSession && starting;
 
   const onPrimary = () => {
-    if (isSession) {
-      onStartNewSession();
-    } else {
-      onCreateQuickCapture(kind);
-    }
+    onStartNewSession();
   };
   const onSelectJob = (job: QuickActionsRecentJob) => {
-    if (isSession) {
-      onSelectExistingJob(job);
-    } else {
-      onSelectJobForCapture(job, kind);
-    }
+    onSelectExistingJob(job);
   };
 
   const showFetchError = recentJobsError != null && recentJobsError.length > 0;

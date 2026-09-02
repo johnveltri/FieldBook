@@ -371,9 +371,12 @@ export function JobDetailScreen({
   type DetailMode = 'view' | 'edit';
   const [detailMode, setDetailMode] = useState<DetailMode>('view');
   const [editSaving, setEditSaving] = useState(false);
+  // State updates are asynchronous; this ref closes the small double-tap /
+  // navigation window before the Saving render reaches the edit controls.
+  const editSavingRef = useRef(false);
   const editApi = useJobEditDraft(job);
   const { enabled: fullscreenEditEnabled, ready: fullscreenEditReady } =
-    useJobDetailFullscreenEditFlag(sessionUserId, sessionEmail);
+    useJobDetailFullscreenEditFlag(sessionUserId);
   const useFullscreenEdit = fullscreenEditReady && fullscreenEditEnabled;
   const [statusSheetMounted, setStatusSheetMounted] = useState(false);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
@@ -629,10 +632,12 @@ export function JobDetailScreen({
   );
 
   const toEditValues = useCallback((j: JobDetailViewModel): EditJobBottomSheetValues => {
-    const revenue = (j.earnings.revenueCents / 100).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    const revenue = j.earnings.revenueCents == null
+      ? ''
+      : (j.earnings.revenueCents / 100).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
     return {
       shortDescription: j.shortDescription,
       customerName: j.customerName,
@@ -1071,7 +1076,7 @@ export function JobDetailScreen({
   const onPrimaryStatusCta = useCallback(async () => {
     if (!job || statusActionPending) return;
     const next = nextStatusAfterPrimaryAction(job.workStatus);
-    if (next === 'paid' && job.earnings.revenueCents <= 0) {
+    if (next === 'paid' && (job.earnings.revenueCents ?? 0) <= 0) {
       Alert.alert(
         'Add revenue first',
         'Enter job revenue before marking this job paid.',
@@ -1546,8 +1551,8 @@ export function JobDetailScreen({
       if (!m) return;
       setEditingMaterialId(materialId);
       setMatDraftDescription(m.name);
-      setMatDraftUnitCostCents(m.unitCostCents);
-      setMatDraftQuantity(m.quantity);
+      setMatDraftUnitCostCents(m.unitCostCents ?? 0);
+      setMatDraftQuantity(m.quantity ?? 0);
       setMatDraftUnit(m.unit || 'ea');
       setMatDraftSessionId(m.sessionId);
       setMaterialSheetMounted(true);
@@ -2314,6 +2319,7 @@ export function JobDetailScreen({
   }, []);
 
   const onBackFromEdit = useCallback(() => {
+    if (editSavingRef.current) return;
     if (editApi.dirty) {
       Alert.alert('Discard changes?', undefined, [
         { text: 'Keep editing', style: 'cancel' },
@@ -2345,9 +2351,10 @@ export function JobDetailScreen({
   }, [detailMode, onAndroidHardwareBackHandlerChange, onBackFromEdit]);
 
   const onDoneFromEdit = useCallback(async () => {
-    if (!job || editSaving) return;
+    if (!job || editSavingRef.current) return;
     const payload = editApi.buildPayload();
     if (!payload) return;
+    editSavingRef.current = true;
     setEditSaving(true);
     try {
       await applyJobDetailEdit(supabase, job.id, payload);
@@ -2373,12 +2380,14 @@ export function JobDetailScreen({
       });
       Alert.alert("Couldn't save this job. Try again.");
     } finally {
+      editSavingRef.current = false;
       setEditSaving(false);
     }
-  }, [editApi, editSaving, invalidateJobsList, job, leaveEditMode]);
+  }, [editApi, invalidateJobsList, job, leaveEditMode]);
 
   const onDeleteJobFromEdit = useCallback(async () => {
-    if (!job) return;
+    if (!job || editSavingRef.current) return;
+    editSavingRef.current = true;
     setEditSaving(true);
     try {
       await deleteJobById(supabase, job.id);
@@ -2396,6 +2405,7 @@ export function JobDetailScreen({
       });
       Alert.alert("Couldn't delete this job. Try again.");
     } finally {
+      editSavingRef.current = false;
       setEditSaving(false);
     }
   }, [invalidateJobsList, job, leaveEditMode, onRequestClose]);

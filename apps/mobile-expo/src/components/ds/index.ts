@@ -62,7 +62,6 @@ export {
   QuickActionsBottomSheet,
   type QuickActionsRecentJob,
   type QuickActionsStep,
-  type QuickCaptureKind,
 } from './QuickActionsBottomSheet';
 export { SessionAddToSessionTiles } from './SessionAddToSessionTiles';
 export { SessionAttachmentList } from './SessionAttachmentList';
