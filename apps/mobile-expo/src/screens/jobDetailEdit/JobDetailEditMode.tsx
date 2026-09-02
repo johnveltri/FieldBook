@@ -17,6 +17,7 @@ import {
   formatLocalDateLabel,
   formatSessionDurationLabel,
   formatSessionTimeLabel,
+  JOB_DETAIL_EMPTY_LABELS,
 } from '@fieldsolo/api-client';
 
 import {
@@ -53,6 +54,8 @@ import {
   type EditPickerTarget,
 } from './JobDetailEditPickers';
 import {
+  materialBreakdownTotalCents,
+  materialHasBreakdown,
   useJobEditDraft,
   type DraftMaterialRow,
   type DraftNoteRow,
@@ -199,7 +202,9 @@ export function JobDetailEditMode({
         .filter((s) => !s.removed)
         .map((s) => ({
           id: s.id,
-          dateLabel: formatLocalDateLabel(s.date),
+          dateLabel: s.date
+            ? formatLocalDateLabel(s.date)
+            : JOB_DETAIL_EMPTY_LABELS.sessionDate,
         })),
     [draft?.sessions],
   );
@@ -537,9 +542,9 @@ function MaterialEditBlock({
   const [quantityText, setQuantityText] = useState(() => quantityToInput(row.quantity));
 
   useEffect(() => {
-    if (!row.showBreakdown) return;
+    if (!materialHasBreakdown(row)) return;
     setTotalCostText(revenueCentsToInput(row.totalCostCents));
-  }, [row.showBreakdown, row.totalCostCents]);
+  }, [row.quantity, row.unitCostCents, row.totalCostCents, row.showBreakdown, row.unit]);
 
   return (
     <EntityBlock
@@ -568,18 +573,34 @@ function MaterialEditBlock({
               setTotalCostText(centsToEditText(row.totalCostCents));
             }
           }}
-          onBlur={() => formatMoneyFieldOnBlur(totalCostText, setTotalCostText)}
+          onBlur={() => {
+            formatMoneyFieldOnBlur(totalCostText, setTotalCostText);
+            if (totalCostText.trim().length === 0 && materialHasBreakdown(row)) {
+              const recomputed = materialBreakdownTotalCents(row);
+              onChange({
+                totalCostCents: recomputed,
+                showBreakdown: true,
+              });
+              if (recomputed > 0) {
+                setTotalCostText(revenueCentsToInput(recomputed));
+              }
+            }
+          }}
           onChangeText={(text) => {
             setTotalCostText(text);
+            const hasBreakdown = materialHasBreakdown(row);
+            if (text.trim().length === 0) {
+              onChange({
+                totalCostCents: hasBreakdown ? materialBreakdownTotalCents(row) : 0,
+                showBreakdown: hasBreakdown,
+              });
+              return;
+            }
             const cents = parseRevenueInput(text) ?? 0;
             onChange({
               totalCostCents: cents,
-              showBreakdown: false,
+              showBreakdown: hasBreakdown,
             });
-            if (text.trim().length === 0) {
-              setUnitPriceText('');
-              setQuantityText('');
-            }
           }}
         />
         <EditMaterialBreakdownRow

@@ -14,6 +14,7 @@ import type {
 } from '@fieldsolo/shared-types';
 
 import type { FieldSoloSupabaseClient } from './client';
+import { JOB_DETAIL_EMPTY_LABELS } from './jobDetailLabels';
 
 type JobWorkStatusDb =
   | 'not_started'
@@ -45,6 +46,9 @@ type SessionRow = {
   started_at: string;
   ended_at: string | null;
   clock_times_explicit?: boolean | null;
+  clock_start_explicit?: boolean | null;
+  clock_end_explicit?: boolean | null;
+  calendar_date_explicit?: boolean | null;
 };
 
 type NoteRow = {
@@ -67,6 +71,7 @@ type MaterialRow = {
   unit_cost_cents: number | null;
   total_cost_cents: number;
   cost_type: string;
+  cost_type_explicit?: boolean | null;
   created_at: string;
   updated_at: string;
 };
@@ -136,7 +141,10 @@ function mapWorkStatus(row: JobRow): JobDetailWorkStatus {
 function mapSession(row: SessionRow, attachments: JobDetailSessionAttachment[] = []): JobDetailSession {
   const start = new Date(row.started_at);
   const end = row.ended_at ? new Date(row.ended_at) : null;
-  const clockTimesExplicit = row.clock_times_explicit !== false;
+  const clockStartExplicit = row.clock_start_explicit === true;
+  const clockEndExplicit = row.clock_end_explicit === true;
+  const clockTimesExplicit = clockStartExplicit || clockEndExplicit;
+  const calendarDateExplicit = row.calendar_date_explicit !== false;
   const timeFmt = new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -144,15 +152,22 @@ function mapSession(row: SessionRow, attachments: JobDetailSessionAttachment[] =
   const startStr = timeFmt.format(start);
   const endStr = end ? timeFmt.format(end) : '…';
   const hours = sessionDurationHours(row.started_at, row.ended_at);
+  const durationLabel =
+    hours > 0.01 ? `${hours.toFixed(1)}h` : JOB_DETAIL_EMPTY_LABELS.sessionDuration;
 
   return {
     id: row.id,
     startedAt: row.started_at,
     endedAt: row.ended_at,
     clockTimesExplicit,
-    dateLabel: formatDateLabel(row.started_at),
+    clockStartExplicit,
+    clockEndExplicit,
+    calendarDateExplicit,
+    dateLabel: calendarDateExplicit
+      ? formatDateLabel(row.started_at)
+      : JOB_DETAIL_EMPTY_LABELS.sessionDate,
     timeRangeLabel: clockTimesExplicit ? `${startStr} – ${endStr}` : '',
-    durationLabel: `${hours.toFixed(1)}h`,
+    durationLabel,
     attachments,
   };
 }
@@ -201,6 +216,12 @@ function mergeSessionAttachments(
   return merged;
 }
 
+function sessionDateLabelFromRow(row: SessionRow): string {
+  return row.calendar_date_explicit === false
+    ? JOB_DETAIL_EMPTY_LABELS.sessionDate
+    : formatDateLabel(row.started_at);
+}
+
 function materialLine(row: MaterialRow): JobDetailMaterialLine {
   // Normalize `numeric` (which may come back as string) to a JS number so
   // downstream UI forms don't need to re-parse it.
@@ -226,7 +247,7 @@ function materialLine(row: MaterialRow): JobDetailMaterialLine {
   return {
     id: row.id,
     sessionId: row.session_id,
-    name: row.description?.trim() || 'Material',
+    name: row.description?.trim() || JOB_DETAIL_EMPTY_LABELS.materialDescription,
     quantity: Number.isFinite(quantityNum) ? quantityNum : 0,
     unit,
     unitCostCents,
@@ -238,11 +259,16 @@ function materialLine(row: MaterialRow): JobDetailMaterialLine {
 function otherCostLine(row: MaterialRow): JobDetailOtherCostLine {
   const costType = row.cost_type;
   const description = row.description?.trim() ?? '';
+  const typeLabel =
+    row.cost_type_explicit === false
+      ? JOB_DETAIL_EMPTY_LABELS.otherCostType
+      : otherCostTypeLabel(costType);
   return {
     id: row.id,
     sessionId: row.session_id,
     costType,
-    typeLabel: otherCostTypeLabel(costType),
+    costTypeExplicit: row.cost_type_explicit !== false,
+    typeLabel,
     description,
     costCents: row.total_cost_cents,
     priceLabel: formatUsd(row.total_cost_cents),
@@ -267,7 +293,9 @@ export async function fetchJobDetail(
 
   const { data: sessionsRaw, error: sErr } = await client
     .from('sessions')
-    .select('id, job_id, session_status, started_at, ended_at, clock_times_explicit')
+    .select(
+      'id, job_id, session_status, started_at, ended_at, clock_times_explicit, clock_start_explicit, clock_end_explicit, calendar_date_explicit',
+    )
     .eq('job_id', jobId)
     .order('started_at', { ascending: true });
 
@@ -379,7 +407,7 @@ export async function fetchJobDetail(
       materialBuckets.push({
         id: `mat-${s.id}`,
         kind: 'session',
-        sessionDateLabel: formatDateLabel(s.started_at),
+        sessionDateLabel: sessionDateLabelFromRow(s),
         items: ms.sort((a, b) => a.created_at.localeCompare(b.created_at)).map(materialLine),
       });
     }
@@ -409,7 +437,7 @@ export async function fetchJobDetail(
       otherCostBuckets.push({
         id: `oc-${s.id}`,
         kind: 'session',
-        sessionDateLabel: formatDateLabel(s.started_at),
+        sessionDateLabel: sessionDateLabelFromRow(s),
         items: lines.sort((a, b) => a.created_at.localeCompare(b.created_at)).map(otherCostLine),
       });
     }
@@ -456,7 +484,7 @@ export async function fetchJobDetail(
       noteBuckets.push({
         id: `note-${s.id}`,
         kind: 'session',
-        sessionDateLabel: formatDateLabel(s.started_at),
+        sessionDateLabel: sessionDateLabelFromRow(s),
         notes: ns.map(mapNote),
       });
     }

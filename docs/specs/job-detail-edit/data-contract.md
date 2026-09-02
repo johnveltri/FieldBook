@@ -61,7 +61,7 @@ Child client ids: new rows use client-generated UUIDs so a retried Done is upser
 
 | Interface | Direction | Request/event/file shape | Response/result | Auth | Idempotency/versioning |
 |---|---|---|---|---|---|
-| `public.apply_job_detail_edit(p_job_id uuid, p_payload jsonb)` | Client → DB | See payload below | `{ "status": "ok" }` or `{ "status": "error", "code": "..." }` | `authenticated`; invoker RLS | Same payload retry is upsert by client ids; not a replace-all |
+| `public.apply_job_detail_edit(p_job_id uuid, p_payload jsonb)` | Client → DB | See payload below | `{ "status": "ok" }` on success; validation failures **raise** `apply_job_detail_edit:<code>` so the transaction rolls back | `authenticated`; invoker RLS | Same payload retry is upsert by client ids; not a replace-all |
 | `deleteJobById` | Client → DB | Existing | Existing | Existing | Existing |
 | `fetchJobDetail` | Client → DB | Existing + `clock_times_explicit` on sessions | View model includes `clockTimesExplicit` | Existing | — |
 

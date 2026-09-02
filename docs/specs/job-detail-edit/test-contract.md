@@ -4,7 +4,7 @@
 
 | Risk | Impact | Likelihood | Required proof |
 |---|---|---|---|
-| Partial writes if Done is not transactional | High | Medium | RPC tests: failure after first child write rolls back |
+| Partial writes if Done is not transactional | High | Medium | RPC raises on error; failure rolls back entire transaction (TEST-07) |
 | Fake clock times shown on View | High | High | View/model test for `clockTimesExplicit === false` |
 | Live session deleted from a snapshot replace | High | Medium | RPC rejects in_progress; diff omits it |
 | Draft believed saved after kill | High | Medium | Documented + unit: no persist without Done (manual kill) |

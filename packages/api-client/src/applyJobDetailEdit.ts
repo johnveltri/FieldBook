@@ -14,7 +14,11 @@ export type ApplyJobDetailEditSessionRow = {
   id: string;
   startedAt: string;
   endedAt: string;
+  /** True when either clock is explicit; kept for View compatibility. */
   clockTimesExplicit: boolean;
+  clockStartExplicit: boolean;
+  clockEndExplicit: boolean;
+  calendarDateExplicit: boolean;
   startedTz: string | null;
 };
 
@@ -36,6 +40,7 @@ export type ApplyJobDetailEditMaterialRow = {
 export type ApplyJobDetailEditOtherCostRow = {
   id: string;
   costType: OtherCostTypeDb;
+  costTypeExplicit: boolean;
   description: string;
   costCents: number;
   sessionId: string | null;
@@ -81,6 +86,17 @@ export class ApplyJobDetailEditError extends Error {
   }
 }
 
+const APPLY_RPC_ERROR_RE = /apply_job_detail_edit:(unauthorized|not_found|invalid|conflict)/;
+
+/** Maps PostgREST / Postgres RPC errors raised by apply_job_detail_edit. */
+export function parseApplyJobDetailEditError(error: unknown): ApplyJobDetailEditError | null {
+  if (!error || typeof error !== 'object') return null;
+  const message = 'message' in error && typeof error.message === 'string' ? error.message : '';
+  const match = message.match(APPLY_RPC_ERROR_RE);
+  if (!match) return null;
+  return new ApplyJobDetailEditError(match[1] as ApplyJobDetailEditErrorCode);
+}
+
 type RpcResult =
   | { status: 'ok' }
   | { status: 'error'; code: ApplyJobDetailEditErrorCode };
@@ -111,7 +127,11 @@ export async function applyJobDetailEdit(
     p_payload: toRpcPayload(payload) as import('./database.types').Json,
   });
 
-  if (error) throw error;
+  if (error) {
+    const parsed = parseApplyJobDetailEditError(error);
+    if (parsed) throw parsed;
+    throw error;
+  }
 
   const result = data as RpcResult | null;
   if (!result || result.status === 'ok') return;

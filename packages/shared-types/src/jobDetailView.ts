@@ -44,9 +44,15 @@ export type JobDetailSession = {
   endedAt: string | null;
   /**
    * When false, View must not show a clock range — only date + duration.
-   * Synthesized `startedAt`/`endedAt` are storage-only.
+   * True when either start or end clock was explicitly set on Edit.
    */
   clockTimesExplicit: boolean;
+  /** User explicitly set the start clock on Edit. */
+  clockStartExplicit: boolean;
+  /** User explicitly set the end clock on Edit. */
+  clockEndExplicit: boolean;
+  /** False when the user left the session date empty on Edit. */
+  calendarDateExplicit: boolean;
   dateLabel: string;
   timeRangeLabel: string;
   durationLabel: string;
@@ -109,6 +115,7 @@ export type JobDetailOtherCostLine = {
   id: string;
   sessionId: string | null;
   costType: string;
+  costTypeExplicit: boolean;
   typeLabel: string;
   description: string;
   costCents: number;

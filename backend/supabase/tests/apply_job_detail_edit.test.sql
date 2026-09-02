@@ -67,30 +67,52 @@ begin
     raise exception 'duration-only session not created';
   end if;
 
-  result := public.apply_job_detail_edit(job_a, jsonb_build_object(
-    'job', jsonb_build_object('shortDescription', 'X', 'customerName', '', 'serviceAddress', '', 'revenueCents', null),
-    'sessions', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', jsonb_build_array(session_live::text)),
-    'notes', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
-    'materials', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
-    'otherCosts', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb)
-  ));
-
-  if result ->> 'code' <> 'conflict' then
+  begin
+    result := public.apply_job_detail_edit(job_a, jsonb_build_object(
+      'job', jsonb_build_object(
+        'shortDescription', 'Should not stick',
+        'customerName', '',
+        'serviceAddress', '',
+        'revenueCents', null
+      ),
+      'sessions', jsonb_build_object(
+        'create', '[]'::jsonb,
+        'update', '[]'::jsonb,
+        'deleteIds', jsonb_build_array(session_live::text)
+      ),
+      'notes', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
+      'materials', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
+      'otherCosts', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb)
+    ));
     raise exception 'expected conflict deleting in_progress session, got %', result;
+  exception
+    when others then
+      if SQLERRM not like '%apply_job_detail_edit:conflict%' then
+        raise;
+      end if;
+  end;
+
+  if (select short_description from public.jobs where id = job_a) <> 'Updated title' then
+    raise exception 'job title rolled back after conflict';
   end if;
 
-  perform set_config('request.jwt.claim.sub', user_b::text, true);
-  result := public.apply_job_detail_edit(job_a, jsonb_build_object(
-    'job', jsonb_build_object('shortDescription', 'Hack', 'customerName', '', 'serviceAddress', '', 'revenueCents', null),
-    'sessions', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
-    'notes', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
-    'materials', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
-    'otherCosts', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb)
-  ));
-
-  if result ->> 'code' not in ('not_found', 'unauthorized') then
+  begin
+    perform set_config('request.jwt.claim.sub', user_b::text, true);
+    result := public.apply_job_detail_edit(job_a, jsonb_build_object(
+      'job', jsonb_build_object('shortDescription', 'Hack', 'customerName', '', 'serviceAddress', '', 'revenueCents', null),
+      'sessions', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
+      'notes', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
+      'materials', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb),
+      'otherCosts', jsonb_build_object('create', '[]'::jsonb, 'update', '[]'::jsonb, 'deleteIds', '[]'::jsonb)
+    ));
     raise exception 'expected unauthorized/not_found for other user, got %', result;
-  end if;
+  exception
+    when others then
+      if SQLERRM not like '%apply_job_detail_edit:not_found%'
+         and SQLERRM not like '%apply_job_detail_edit:unauthorized%' then
+        raise;
+      end if;
+  end;
 end;
 $$;
 

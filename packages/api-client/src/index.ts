@@ -1,5 +1,6 @@
 export { createFieldSoloClient, type FieldSoloSupabaseClient } from './client';
 export { fetchJobDetail } from './jobDetail';
+export { JOB_DETAIL_EMPTY_LABELS } from './jobDetailLabels';
 export {
   applyJobDetailEdit,
   ApplyJobDetailEditError,
@@ -15,6 +16,7 @@ export {
   formatLocalDateLabel,
   formatSessionDurationLabel,
   formatSessionTimeLabel,
+  inferSessionClockExplicitFlags,
   normalizeSessionStartedTz,
   resolveSessionDraftTimes,
   synthesizeSessionTimes,

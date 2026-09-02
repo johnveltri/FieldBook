@@ -36,10 +36,10 @@ A solo tradesperson can change everything that belongs on a job — identity, se
 | REQ-03 | Edit contains job title, customer, address, revenue, and editable lists for sessions, materials, other costs, and notes, including inline add. | TEST-02, TEST-03 |
 | REQ-04 | List changes (add, edit, swipe-remove) stay in the draft until Done. Back with a dirty draft asks to discard; confirming discard restores last persisted job. | TEST-04, TEST-05 |
 | REQ-05 | Done persists the draft in one transaction, refetches job detail, and returns to View. Failure keeps the draft and shows retry copy. | TEST-06, TEST-07 |
-| REQ-06 | Blank new rows are omitted on Done. A partial invalid row (for example a cost with no description) blocks Done with inline error. Job title cannot be blank. | TEST-08 |
-| REQ-07 | New session defaults to today and 1 hour. Duration is primary; start/end optional. Clock-less sessions store synthesized times with `clock_times_explicit = false` and View hides the clock range. | TEST-09, TEST-10 |
+| REQ-06 | Blank new rows are omitted on Done. A partial invalid row (for example a cost with no description) blocks Done with inline error. Job title cannot be blank. Sessions may have a date without duration when attaching notes, materials, or other costs. | TEST-08 |
+| REQ-07 | New session defaults to today with **no** duration until the user sets one. Duration is primary; start/end optional. Clock-less sessions store synthesized times with `clock_times_explicit = false` and View hides the clock range. | TEST-09, TEST-10 |
 | REQ-08 | Material fast path is description + total (`quantity=1`, `unit=ea`, `unitCost=total`). Optional unit price and quantity recompute total. | TEST-11 |
-| REQ-09 | Notes, materials, and other costs may optionally attach to an ended session on the Edit page (no chooser sheet). | TEST-12 |
+| REQ-09 | Notes, materials, and other costs may optionally attach to an ended session on the Edit page via `ChooseSessionBottomSheet` (date + duration label per row). | TEST-12 |
 | REQ-10 | Swipe-remove on a draft row hides it until Done (soft-delete) or Back (restore). | TEST-13 |
 | REQ-11 | **Delete job** at the bottom confirms, then soft-deletes immediately and closes job detail. It does not wait for Done. | TEST-14 |
 | REQ-12 | In-progress live sessions do not appear on Edit and cannot be deleted or rewritten by Done. | TEST-15 |
@@ -73,9 +73,9 @@ A solo tradesperson can change everything that belongs on a job — identity, se
 
 ## Agent-decided assumptions
 
-- Default duration for a new session is **1 hour**.
-- Synthesized clock when times are omitted: **09:00 local** on the session date, end = start + duration, `started_tz` = device IANA zone. These values are storage-only until `clock_times_explicit` is true.
-- Duration chips: **30m**, **1h**, **2h**, **4h**, plus a numeric field.
+- Default duration for a new session is **empty** (0h) until the user picks a preset, custom value, or explicit clock times.
+- Synthesized clock when times are omitted: **09:00 local** on the session date, end = start + duration (0h when duration unset), `started_tz` = device IANA zone. These values are storage-only until both start and end clocks are explicit.
+- Duration chips: **30m**, **1h**, **2h**, **4h**, **8h**, plus a numeric field. Picking a duration clears the end clock when a start clock was set; start clock is preserved.
 - Apply payload is a **diff** (creates/updates/deletes), not a replace-all child list, so a live session that ends while Edit is open is not destroyed.
 - RPC is `public.apply_job_detail_edit`, `SECURITY INVOKER`, owner RLS.
 - Exact copy in the UX contract unless later overridden.

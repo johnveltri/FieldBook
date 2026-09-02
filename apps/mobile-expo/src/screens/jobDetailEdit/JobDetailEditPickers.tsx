@@ -12,6 +12,7 @@ import {
   formatLocalDateLabel,
   formatSessionDurationLabel,
   formatSessionTimeLabel,
+  JOB_DETAIL_EMPTY_LABELS,
   resolveSessionDraftTimes,
 } from '@fieldsolo/api-client';
 import type { DropdownBottomSheetOption } from '../../components/ds/DropdownBottomSheet';
@@ -85,7 +86,9 @@ function sessionListFromDraft(draft: JobEditDraft) {
     .filter((s) => !s.removed)
     .map((s) => ({
       id: s.id,
-      dateLabel: formatLocalDateLabel(s.date),
+      dateLabel: s.date
+        ? formatLocalDateLabel(s.date)
+        : JOB_DETAIL_EMPTY_LABELS.sessionDate,
       durationLabel: s.durationHours > 0 ? formatSessionDurationLabel(s.durationHours) : '',
     }));
 }
@@ -207,19 +210,32 @@ export function JobDetailEditPickers({
             return;
           }
           const hours = Math.round(n * 100) / 100;
-          const resolved = resolveSessionDraftTimes({
-            ...sessionRow,
-            durationHours: hours,
-            clockTimesExplicit: false,
-          });
-          onUpdateSession(sessionRow.id, {
-            durationHours: hours,
-            clockTimesExplicit: false,
-            explicitStartClock: false,
-            explicitEndClock: false,
-            startedAt: resolved.startedAt,
-            endedAt: resolved.endedAt,
-          });
+          if (sessionRow.explicitStartClock) {
+            const startedAt = sessionRow.startedAt;
+            const endedAt = new Date(
+              new Date(startedAt).getTime() + hours * 3_600_000,
+            ).toISOString();
+            onUpdateSession(sessionRow.id, {
+              durationHours: hours,
+              clockTimesExplicit: false,
+              explicitEndClock: false,
+              startedAt,
+              endedAt,
+            });
+          } else {
+            const resolved = resolveSessionDraftTimes({
+              ...sessionRow,
+              durationHours: hours,
+              clockTimesExplicit: false,
+            });
+            onUpdateSession(sessionRow.id, {
+              durationHours: hours,
+              clockTimesExplicit: false,
+              explicitEndClock: false,
+              startedAt: resolved.startedAt,
+              endedAt: resolved.endedAt,
+            });
+          }
           onClose();
         }}
       />
@@ -272,7 +288,7 @@ export function JobDetailEditPickers({
             endedAt,
             explicitStartClock,
             explicitEndClock,
-            clockTimesExplicit: bothClocks,
+            clockTimesExplicit: explicitStartClock || explicitEndClock,
             durationHours: bothClocks
               ? durationHoursBetween(startedAt, endedAt)
               : sessionRow.durationHours,
@@ -291,7 +307,7 @@ export function JobDetailEditPickers({
           onUpdateSession(sessionRow.id, {
             explicitStartClock,
             explicitEndClock,
-            clockTimesExplicit: explicitStartClock && explicitEndClock,
+            clockTimesExplicit: explicitStartClock || explicitEndClock,
             startedAt: resolved.startedAt,
             endedAt: resolved.endedAt,
           });
@@ -367,10 +383,11 @@ export function JobDetailEditPickers({
         options={costTypeOptions}
         currentValue={row.costType || null}
         onClose={onClose}
-        onClear={() => onUpdateOtherCost(target.otherCostId, { costType: '' })}
+        onClear={() => onUpdateOtherCost(target.otherCostId, { costType: '', costTypeExplicit: false })}
         onSelect={(value) => {
           onUpdateOtherCost(target.otherCostId, {
             costType: value as DraftOtherCostRow['costType'],
+            costTypeExplicit: true,
           });
           onClose();
         }}

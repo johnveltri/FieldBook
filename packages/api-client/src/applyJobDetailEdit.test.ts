@@ -27,7 +27,10 @@ describe('applyJobDetailEdit', () => {
   });
 
   it('throws ApplyJobDetailEditError on conflict', async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: { status: 'error', code: 'conflict' }, error: null });
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'apply_job_detail_edit:conflict' },
+    });
     await expect(
       applyJobDetailEdit(makeClient(rpc), 'job-1', {
         job: {

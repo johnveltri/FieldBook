@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createDefaultSessionDraft,
   durationHoursBetween,
+  inferSessionClockExplicitFlags,
   synthesizeSessionTimes,
 } from './sessionDurationDraft';
 
@@ -54,5 +55,19 @@ describe('sessionDurationDraft', () => {
       startedTz: '2026-09-01',
     });
     expect(resolved.startedAt).toBe(resolved.endedAt);
+  });
+
+  it('infers start-only explicit clock from stored times', () => {
+    const { startedAt, endedAt } = synthesizeSessionTimes('2026-09-01', 1, 'UTC');
+    const startOnly = new Date(new Date(startedAt).getTime() - 3_600_000).toISOString();
+    const inferred = inferSessionClockExplicitFlags({
+      date: '2026-09-01',
+      durationHours: 1,
+      startedAt: startOnly,
+      endedAt: startedAt,
+      startedTz: 'UTC',
+    });
+    expect(inferred.explicitStartClock).toBe(true);
+    expect(inferred.explicitEndClock).toBe(false);
   });
 });

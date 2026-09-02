@@ -35,9 +35,9 @@
 - Swipe-remove: left swipe on session/material/note/other-cost rows; does not fight job-detail vertical dismiss (Edit should not use the View swipe-to-close dismiss, or should lock it while Edit is open).
 - Repeated Done: ignored while Saving.
 - Keyboard: sheet/page lifts with keyboard; hero title and trailing fields remain tappable; safe-area below Delete job.
-- Optional session attach: trailing control on note/material/other-cost choosing among **ended** sessions on this job, or none. No `ChooseSessionBottomSheet`.
-- Optional times: collapsed **Add start and end time** (UX-16). Setting either makes `clock_times_explicit` true.
-- Optional material breakdown: collapsed **Add unit price and quantity** (UX-17).
+- Optional session attach: trailing control on note/material/other-cost opens `ChooseSessionBottomSheet` to pick among **ended** sessions on this job, or none.
+- Session start and end clocks are always visible on each session row (no collapsed reveal).
+- Material unit price, quantity, and UOM are always visible on each material row (no collapsed reveal).
 - Live Session control is not present on Edit.
 - Customer is a **plain text** trailing field on the Customer icon row (UX-03). No typeahead, no “Add customer”, no nested customer form. A later Customers iteration may replace this control with search/select/create on the **same row**, still committing on Done; View may later Inspect the customer. Do not make the row a dead-end unlabeled input that cannot become a picker.
 
@@ -94,14 +94,14 @@
 | UX-13 | Delete error | Retry | `Couldn't delete this job. Try again.` | — | — |
 | UX-14 | Hero title | Placeholder | `Job title` | — | Unlabeled field; placeholder is the name |
 | UX-15 | Revenue row | Label | `Revenue` | `$` prefix in field as today | — |
-| UX-16 | Session | Optional clocks | `Add start and end time` | — | Reveals start, end |
-| UX-17 | Material | Optional breakdown | `Add unit price and quantity` | — | — |
+| UX-16 | Session | Start clock | `Start` | — | Always visible on session row |
+| UX-17 | Material | Breakdown fields | `Qty`, `UOM`, `@ unit price` | — | Always visible on material row |
 | UX-18 | Sessions | Add | `Add session` | — | — |
 | UX-19 | Materials | Add | `Add material` | — | — |
 | UX-20 | Other costs | Add | `Add other cost` | — | — |
 | UX-21 | Notes | Add | `Add note` | — | — |
 | UX-22 | Address row | Label | `Address` | — | — |
-| UX-23 | Session duration chips | Shortcuts | `30m`, `1h`, `2h`, `4h` | — | — |
+| UX-23 | Session duration chips | Shortcuts | `30m`, `1h`, `2h`, `4h`, `8h` | — | Picking a chip clears end clock only when start was set |
 | UX-24 | Section titles | Sections | `Sessions`, `Materials`, `Other costs`, `Notes` | — | Heading |
 
 - Canonical nouns: Job, Session, Material, Other cost, Note, Done, Back, Discard.

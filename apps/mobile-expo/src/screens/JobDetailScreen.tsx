@@ -201,6 +201,8 @@ export type JobDetailScreenProps = {
   loadKey?: number;
   /** When true, open the edit job sheet once after the job finishes loading (e.g. new job FAB). */
   initialEditOpen?: boolean;
+  /** Android hardware Back while Edit is open (discard rules apply). */
+  onAndroidHardwareBackHandlerChange?: (handler: (() => boolean) | null) => void;
 };
 
 export function JobDetailScreen({
@@ -213,6 +215,7 @@ export function JobDetailScreen({
   entrySource = 'unknown',
   loadKey = 0,
   initialEditOpen = false,
+  onAndroidHardwareBackHandlerChange,
 }: JobDetailScreenProps = {}) {
   /** Top safe area (status bar); bottom inset used for scroll padding + nav. */
   const insets = useSafeAreaInsets();
@@ -2301,6 +2304,19 @@ export function JobDetailScreen({
     }
     leaveEditMode();
   }, [editApi, leaveEditMode]);
+
+  useEffect(() => {
+    if (!onAndroidHardwareBackHandlerChange) return;
+    if (detailMode !== 'edit') {
+      onAndroidHardwareBackHandlerChange(null);
+      return;
+    }
+    onAndroidHardwareBackHandlerChange(() => {
+      onBackFromEdit();
+      return true;
+    });
+    return () => onAndroidHardwareBackHandlerChange(null);
+  }, [detailMode, onAndroidHardwareBackHandlerChange, onBackFromEdit]);
 
   const onDoneFromEdit = useCallback(async () => {
     if (!job || editSaving) return;

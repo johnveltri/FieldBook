@@ -8,8 +8,11 @@ import {
   createDefaultSessionDraft,
   deviceIanaTimeZone,
   durationHoursBetween,
+  inferSessionClockExplicitFlags,
+  JOB_DETAIL_EMPTY_LABELS,
   normalizeSessionStartedTz,
   resolveSessionDraftTimes,
+  todayLocalDateString,
 } from '@fieldsolo/api-client';
 import type { OtherCostTypeDb } from '@fieldsolo/api-client';
 
@@ -44,6 +47,7 @@ export type DraftMaterialRow = DraftRowBase & {
 
 export type DraftOtherCostRow = DraftRowBase & {
   costType: OtherCostTypeDb | '';
+  costTypeExplicit: boolean;
   description: string;
   costCents: number;
   sessionId: string | null;
@@ -80,19 +84,41 @@ function isoToLocalDate(iso: string): string {
 
 /** Builds an in-memory edit draft from a loaded job (excludes in-progress session). */
 export function createJobEditDraft(job: JobDetailViewModel): JobEditDraft {
-  const sessions: DraftSessionRow[] = job.displaySessions.map((s) => ({
-    id: s.id,
-    isNew: false,
-    removed: false,
-    date: isoToLocalDate(s.startedAt),
-    durationHours: durationHoursBetween(s.startedAt, s.endedAt ?? s.startedAt),
-    clockTimesExplicit: s.clockTimesExplicit,
-    explicitStartClock: s.clockTimesExplicit,
-    explicitEndClock: s.clockTimesExplicit,
-    startedAt: s.startedAt,
-    endedAt: s.endedAt ?? s.startedAt,
-    startedTz: deviceIanaTimeZone(),
-  }));
+  const sessions: DraftSessionRow[] = job.displaySessions.map((s) => {
+    const calendarDateExplicit = s.calendarDateExplicit !== false;
+    const date = calendarDateExplicit ? isoToLocalDate(s.startedAt) : '';
+    const durationHours = durationHoursBetween(s.startedAt, s.endedAt ?? s.startedAt);
+    let explicitStartClock = s.clockStartExplicit;
+    let explicitEndClock = s.clockEndExplicit;
+    if (!explicitStartClock && !explicitEndClock) {
+      if (s.clockTimesExplicit) {
+        explicitStartClock = true;
+        explicitEndClock = true;
+      } else {
+        const inferred = inferSessionClockExplicitFlags({
+          date,
+          durationHours,
+          startedAt: s.startedAt,
+          endedAt: s.endedAt ?? s.startedAt,
+        });
+        explicitStartClock = inferred.explicitStartClock;
+        explicitEndClock = inferred.explicitEndClock;
+      }
+    }
+    return {
+      id: s.id,
+      isNew: false,
+      removed: false,
+      date,
+      durationHours,
+      clockTimesExplicit: explicitStartClock || explicitEndClock,
+      explicitStartClock,
+      explicitEndClock,
+      startedAt: s.startedAt,
+      endedAt: s.endedAt ?? s.startedAt,
+      startedTz: deviceIanaTimeZone(),
+    };
+  });
 
   const notes: DraftNoteRow[] = job.noteBuckets.flatMap((b) =>
     b.notes.map((n) => ({
@@ -111,7 +137,8 @@ export function createJobEditDraft(job: JobDetailViewModel): JobEditDraft {
         id: m.id,
         isNew: false,
         removed: false,
-        description: m.name,
+        description:
+          m.name === JOB_DETAIL_EMPTY_LABELS.materialDescription ? '' : m.name,
         totalCostCents: Math.round(m.unitCostCents * m.quantity),
         showBreakdown: !fastPath,
         quantity: fastPath ? 0 : m.quantity,
@@ -127,7 +154,8 @@ export function createJobEditDraft(job: JobDetailViewModel): JobEditDraft {
       id: c.id,
       isNew: false,
       removed: false,
-      costType: c.costType as OtherCostTypeDb,
+      costType: c.costTypeExplicit === false ? '' : (c.costType as OtherCostTypeDb),
+      costTypeExplicit: c.costTypeExplicit !== false,
       description: c.description,
       costCents: c.costCents,
       sessionId: c.sessionId,
@@ -154,14 +182,26 @@ export function isJobEditDraftDirty(snapshot: JobEditSnapshot, draft: JobEditDra
   return !rowsEqual(snapshot, draft);
 }
 
-function isBlankNewSession(row: DraftSessionRow): boolean {
-  return (
-    row.isNew &&
-    !row.removed &&
-    row.durationHours <= 0 &&
-    !row.explicitStartClock &&
-    !row.explicitEndClock
-  );
+function isBlankNewSession(row: DraftSessionRow, draft: JobEditDraft): boolean {
+  if (!row.isNew || row.removed) return false;
+  if (sessionReferencedInDraft(draft, row.id)) return false;
+  const noDate = !row.date.trim();
+  const noTimeData =
+    row.durationHours <= 0 && !row.explicitStartClock && !row.explicitEndClock;
+  return noDate && noTimeData;
+}
+
+function sessionReferencedInDraft(draft: JobEditDraft, sessionId: string): boolean {
+  for (const row of draft.notes) {
+    if (!row.removed && row.sessionId === sessionId && !isBlankNewNote(row)) return true;
+  }
+  for (const row of draft.materials) {
+    if (!row.removed && row.sessionId === sessionId && !isBlankNewMaterial(row)) return true;
+  }
+  for (const row of draft.otherCosts) {
+    if (!row.removed && row.sessionId === sessionId && !isBlankNewOtherCost(row)) return true;
+  }
+  return false;
 }
 
 function isBlankNewNote(row: DraftNoteRow): boolean {
@@ -169,7 +209,20 @@ function isBlankNewNote(row: DraftNoteRow): boolean {
 }
 
 function isBlankNewMaterial(row: DraftMaterialRow): boolean {
-  return row.isNew && !row.removed && row.description.trim() === '' && row.totalCostCents <= 0;
+  if (!row.isNew || row.removed) return false;
+  return (
+    row.description.trim() === '' &&
+    row.totalCostCents <= 0 &&
+    !row.showBreakdown &&
+    row.quantity <= 0 &&
+    row.unitCostCents <= 0 &&
+    !row.unit.trim() &&
+    !row.sessionId
+  );
+}
+
+function shouldDropNote(row: DraftNoteRow): boolean {
+  return !row.removed && row.body.trim() === '';
 }
 
 /** Stored as description + total only (qty 1, unit ea). Edit UI shows empty breakdown fields. */
@@ -179,7 +232,13 @@ function isMaterialFastPath(quantity: number, unit: string | null | undefined): 
 }
 
 function isBlankNewOtherCost(row: DraftOtherCostRow): boolean {
-  return row.isNew && !row.removed && !row.costType && row.costCents <= 0;
+  if (!row.isNew || row.removed) return false;
+  return (
+    !row.costType &&
+    row.costCents <= 0 &&
+    row.description.trim() === '' &&
+    !row.sessionId
+  );
 }
 
 export type JobEditValidation = {
@@ -189,64 +248,52 @@ export type JobEditValidation = {
 };
 
 export function validateJobEditDraft(draft: JobEditDraft): JobEditValidation {
-  const partialInvalidRows: string[] = [];
   const titleBlank = draft.shortDescription.trim() === '';
-
-  for (const row of draft.sessions) {
-    if (row.removed || isBlankNewSession(row)) continue;
-    if (!row.date.trim() || row.durationHours <= 0) partialInvalidRows.push('session');
-  }
-
-  for (const row of draft.notes) {
-    if (row.removed || isBlankNewNote(row)) continue;
-    if (row.body.trim() === '') partialInvalidRows.push('note');
-  }
-
-  for (const row of draft.materials) {
-    if (row.removed || isBlankNewMaterial(row)) continue;
-    if (row.description.trim() === '') partialInvalidRows.push('material');
-    else if (row.totalCostCents <= 0 && !row.showBreakdown) partialInvalidRows.push('material');
-    else if (
-      row.showBreakdown &&
-      (row.quantity <= 0 || row.unitCostCents <= 0 || !row.unit.trim())
-    ) {
-      partialInvalidRows.push('material');
-    }
-  }
-
-  for (const row of draft.otherCosts) {
-    if (row.removed || isBlankNewOtherCost(row)) continue;
-    if (!row.costType) partialInvalidRows.push('otherCost');
-    else if (row.costCents <= 0) partialInvalidRows.push('otherCost');
-  }
-
   return {
-    canDone: !titleBlank && partialInvalidRows.length === 0,
+    canDone: !titleBlank,
     titleBlank,
-    partialInvalidRows,
+    partialInvalidRows: [],
   };
 }
 
 function resolveEditSessionTimes(row: DraftSessionRow): { startedAt: string; endedAt: string } {
-  if (row.explicitStartClock && row.explicitEndClock) {
-    return { startedAt: row.startedAt, endedAt: row.endedAt };
+  const date = row.date.trim() || todayLocalDateString();
+  const normalized = { ...row, date };
+  if (normalized.explicitStartClock && normalized.explicitEndClock) {
+    return { startedAt: normalized.startedAt, endedAt: normalized.endedAt };
   }
-  const hours = Math.max(0, row.durationHours);
-  if (row.explicitStartClock) {
-    const startedAt = row.startedAt;
+  const hours = Math.max(0, normalized.durationHours);
+  if (normalized.explicitStartClock) {
+    const startedAt = normalized.startedAt;
     return {
       startedAt,
       endedAt: new Date(new Date(startedAt).getTime() + hours * 3_600_000).toISOString(),
     };
   }
-  if (row.explicitEndClock) {
-    const endedAt = row.endedAt;
+  if (normalized.explicitEndClock) {
+    const endedAt = normalized.endedAt;
     return {
       startedAt: new Date(new Date(endedAt).getTime() - hours * 3_600_000).toISOString(),
       endedAt,
     };
   }
-  return resolveSessionDraftTimes({ ...row, clockTimesExplicit: false });
+  return resolveSessionDraftTimes({ ...normalized, clockTimesExplicit: false });
+}
+
+export function materialHasBreakdown(row: DraftMaterialRow): boolean {
+  return (
+    row.showBreakdown ||
+    row.quantity > 0 ||
+    row.unitCostCents > 0 ||
+    !!row.unit.trim()
+  );
+}
+
+export function materialBreakdownTotalCents(row: DraftMaterialRow): number {
+  if (row.quantity > 0 && row.unitCostCents > 0) {
+    return Math.round(row.unitCostCents * row.quantity);
+  }
+  return 0;
 }
 
 function materialPersistFields(row: DraftMaterialRow): {
@@ -254,14 +301,18 @@ function materialPersistFields(row: DraftMaterialRow): {
   unit: string;
   unitCostCents: number;
 } {
-  if (row.showBreakdown) {
+  if (materialHasBreakdown(row)) {
     return {
-      quantity: row.quantity,
-      unit: row.unit.trim(),
-      unitCostCents: row.unitCostCents,
+      quantity: Math.max(0, row.quantity),
+      unit: row.unit.trim() || 'ea',
+      unitCostCents: Math.max(0, row.unitCostCents),
     };
   }
-  return { quantity: 1, unit: 'ea', unitCostCents: row.totalCostCents };
+  return {
+    quantity: row.totalCostCents > 0 || row.description.trim() ? 1 : 0,
+    unit: 'ea',
+    unitCostCents: Math.max(0, row.totalCostCents),
+  };
 }
 
 /** Builds the apply RPC diff from snapshot + current draft. */
@@ -287,15 +338,17 @@ export function buildApplyJobDetailEditPayload(
       payload.sessions.deleteIds.push(row.id);
       continue;
     }
-    if (isBlankNewSession(row)) continue;
-    if (!row.date.trim()) continue;
+    if (isBlankNewSession(row, draft)) continue;
 
     const { startedAt, endedAt } = resolveEditSessionTimes(row);
     const apiRow = {
       id: row.id,
       startedAt,
       endedAt,
-      clockTimesExplicit: row.explicitStartClock && row.explicitEndClock,
+      clockTimesExplicit: row.explicitStartClock || row.explicitEndClock,
+      clockStartExplicit: row.explicitStartClock,
+      clockEndExplicit: row.explicitEndClock,
+      calendarDateExplicit: !!row.date.trim(),
       startedTz: normalizeSessionStartedTz(row.startedTz),
     };
 
@@ -312,7 +365,10 @@ export function buildApplyJobDetailEditPayload(
       payload.notes.deleteIds.push(row.id);
       continue;
     }
-    if (isBlankNewNote(row)) continue;
+    if (shouldDropNote(row)) {
+      if (!row.isNew) payload.notes.deleteIds.push(row.id);
+      continue;
+    }
     const apiRow = { id: row.id, body: row.body.trim(), sessionId: row.sessionId };
     const snap = snapshot.notes.find((n) => n.id === row.id);
     if (row.isNew) payload.notes.create.push(apiRow);
@@ -345,10 +401,10 @@ export function buildApplyJobDetailEditPayload(
       continue;
     }
     if (isBlankNewOtherCost(row)) continue;
-    if (!row.costType) continue;
     const apiRow = {
       id: row.id,
-      costType: row.costType,
+      costType: (row.costType || 'other') as OtherCostTypeDb,
+      costTypeExplicit: !!row.costType,
       description: row.description,
       costCents: row.costCents,
       sessionId: row.sessionId,
@@ -398,6 +454,7 @@ export function useJobEditDraft(job: JobDetailViewModel | null) {
                 isNew: true,
                 removed: false,
                 ...base,
+                date: '',
                 durationHours: 0,
                 explicitStartClock: false,
                 explicitEndClock: false,
@@ -459,6 +516,7 @@ export function useJobEditDraft(job: JobDetailViewModel | null) {
                 isNew: true,
                 removed: false,
                 costType: '',
+                costTypeExplicit: false,
                 description: '',
                 costCents: 0,
                 sessionId: null,

@@ -126,6 +126,34 @@ export function resolveSessionDraftTimes(draft: SessionDurationDraft): {
   );
 }
 
+const CLOCK_INFER_TOLERANCE_MS = 60_000;
+
+/**
+ * Infers which session clocks the user set when legacy rows lack explicit flags.
+ */
+export function inferSessionClockExplicitFlags(input: {
+  date: string;
+  durationHours: number;
+  startedAt: string;
+  endedAt: string;
+  startedTz?: string;
+}): { explicitStartClock: boolean; explicitEndClock: boolean } {
+  const tz = normalizeSessionStartedTz(input.startedTz);
+  const synth = synthesizeSessionTimes(input.date, input.durationHours, tz);
+  const startMs = new Date(input.startedAt).getTime();
+  const endMs = new Date(input.endedAt).getTime();
+  const synthStartMs = new Date(synth.startedAt).getTime();
+  const synthEndMs = new Date(synth.endedAt).getTime();
+  const startDiffers = Math.abs(startMs - synthStartMs) > CLOCK_INFER_TOLERANCE_MS;
+  const endDiffers = Math.abs(endMs - synthEndMs) > CLOCK_INFER_TOLERANCE_MS;
+  const endMatchesStartPlusDuration =
+    Math.abs(endMs - (startMs + input.durationHours * 3_600_000)) <= CLOCK_INFER_TOLERANCE_MS;
+  return {
+    explicitStartClock: startDiffers,
+    explicitEndClock: endDiffers && !endMatchesStartPlusDuration,
+  };
+}
+
 export const DURATION_CHIP_HOURS = [0.5, 1, 2, 4, 8] as const;
 
 export function formatDurationChipLabel(hours: number): string {
