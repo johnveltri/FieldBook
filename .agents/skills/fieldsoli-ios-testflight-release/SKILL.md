@@ -44,8 +44,15 @@ From the repository root:
 4. Validate the dynamic Expo config using the remote production environment, without creating local env files:
 
    ```bash
-   npx eas-cli@latest env:exec production "npx expo config --json >/dev/null" --non-interactive
+   npx eas-cli@latest env:exec production \
+     "EXPO_PUBLIC_APP_ENV=production npx expo config --json >/dev/null" \
+     --non-interactive
    ```
+
+   `eas env:exec` loads values stored in the EAS environment, but does not load
+   `eas.json` build-profile `env` values. `EXPO_PUBLIC_APP_ENV=production` is a
+   non-secret production-profile setting needed only to make this local config
+   evaluation follow the same environment branch as the remote build.
 
 `release-env.js` deliberately rejects a local Supabase URL during production config evaluation. If an ordinary `eas build` fails with that error, do not weaken the guard or export secrets locally: use the production-environment wrapper below.
 
