@@ -10,6 +10,9 @@ type FlagCacheEntry = {
 const flagCache = new Map<string, FlagCacheEntry>();
 
 type PostHogFlagsResponse = {
+  /** Current `/flags?v=2` response shape. */
+  flags?: Record<string, { enabled?: boolean }>;
+  /** Legacy response shape retained as a defensive fallback. */
   featureFlags?: Record<string, boolean | string>;
 };
 
@@ -80,7 +83,8 @@ export async function fetchPostHogBooleanFlag(
       return false;
     }
     const data = (await response.json()) as PostHogFlagsResponse;
-    const enabled = data.featureFlags?.[flagKey] === true;
+    const enabled =
+      data.flags?.[flagKey]?.enabled === true || data.featureFlags?.[flagKey] === true;
     writeCache(key, enabled);
     return enabled;
   } catch {

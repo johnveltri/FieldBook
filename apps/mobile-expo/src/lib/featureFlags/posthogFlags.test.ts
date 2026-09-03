@@ -29,10 +29,12 @@ describe('fetchPostHogBooleanFlag', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it('posts only the Supabase user UUID as distinct id', async () => {
+  it('posts only the Supabase user UUID as distinct id and reads the current flags response', async () => {
     (global.fetch as jest.Mock<any>).mockResolvedValue({
       ok: true,
-      json: async () => ({ featureFlags: { 'job-detail-fullscreen-edit': true } }),
+      json: async () => ({
+        flags: { 'job-detail-fullscreen-edit': { enabled: true } },
+      }),
     });
 
     await expect(
@@ -88,7 +90,9 @@ describe('fetchPostHogBooleanFlag', () => {
   it('uses in-memory cache for repeated lookups', async () => {
     (global.fetch as jest.Mock<any>).mockResolvedValue({
       ok: true,
-      json: async () => ({ featureFlags: { 'job-detail-fullscreen-edit': true } }),
+      json: async () => ({
+        flags: { 'job-detail-fullscreen-edit': { enabled: true } },
+      }),
     });
 
     const input = { distinctId: 'user-1' };
@@ -96,5 +100,16 @@ describe('fetchPostHogBooleanFlag', () => {
     await expect(fetchPostHogBooleanFlag('job-detail-fullscreen-edit', input)).resolves.toBe(true);
     await expect(fetchPostHogBooleanFlag('job-detail-fullscreen-edit', input)).resolves.toBe(true);
     expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts the legacy featureFlags response while PostHog clients migrate', async () => {
+    (global.fetch as jest.Mock<any>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ featureFlags: { 'job-detail-fullscreen-edit': true } }),
+    });
+
+    await expect(
+      fetchPostHogBooleanFlag('job-detail-fullscreen-edit', { distinctId: 'user-1' }),
+    ).resolves.toBe(true);
   });
 });
